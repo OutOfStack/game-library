@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"cloud.google.com/go/civil"
 )
 
 func main() {
@@ -16,7 +18,7 @@ func main() {
 
 	api := http.Server{
 		Addr:         ":8000",
-		Handler:      http.HandlerFunc(Echo),
+		Handler:      http.HandlerFunc(ListGames),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
@@ -52,6 +54,44 @@ func main() {
 	}
 }
 
-func Echo(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Method ", r.Method, "\nPath ", r.URL.Path)
+// Game represents game
+type Game struct {
+	Name        string
+	Developer   string
+	ReleaseDate civil.Date
+	Genre       []string
+}
+
+// ListGames returns all games
+func ListGames(w http.ResponseWriter, r *http.Request) {
+	list := []Game{
+		{
+			Name:        "Red Dead Redemption 2",
+			Developer:   "Rockstar Games",
+			Genre:       []string{"Action", "Western", "Adventure"},
+			ReleaseDate: civil.Date{Year: 2019, Month: 12, Day: 5},
+		},
+		{
+			Name:        "Ori and the Will of the Wisps",
+			Developer:   "Moon Studios GmbH",
+			Genre:       []string{"Action", "Platformer"},
+			ReleaseDate: civil.Date{Year: 2020, Month: 3, Day: 11},
+		},
+		{
+			Name:        "The Wolf Among Us",
+			Developer:   "Telltale",
+			Genre:       []string{"Adventure", "Episodic", "Detective"},
+			ReleaseDate: civil.Date{Year: 2013, Month: 10, Day: 11},
+		},
+	}
+	data, err := json.Marshal(list)
+	if err != nil {
+		log.Println("Error marshalling", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_, err = w.Write(data)
+	if err != nil {
+		log.Println("Error writing", err)
+	}
 }

@@ -5,16 +5,26 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"cloud.google.com/go/civil"
+
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	defer log.Println("Completed")
+
+	db, err := openDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
 	api := http.Server{
 		Addr:         ":8000",
@@ -54,12 +64,28 @@ func main() {
 	}
 }
 
+func openDB() (*sqlx.DB, error) {
+	query := url.Values{}
+	query.Set("sslmode", "disable")
+	query.Set("timezone", "utc")
+
+	conn := url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword("postgres", "postgres"),
+		Host:     "localhost",
+		Path:     "pastgres",
+		RawQuery: query.Encode(),
+	}
+
+	return sqlx.Open("postgres", conn.String())
+}
+
 // Game represents game
 type Game struct {
-	Name        string
-	Developer   string
-	ReleaseDate civil.Date
-	Genre       []string
+	Name        string     `json:"name"`
+	Developer   string     `json:"developer"`
+	ReleaseDate civil.Date `json:"releaseDate"`
+	Genre       []string   `json:"genre"`
 }
 
 // ListGames returns all games
@@ -90,6 +116,7 @@ func ListGames(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("content-type", "application/json;charset=utf-8")
 	_, err = w.Write(data)
 	if err != nil {
 		log.Println("Error writing", err)

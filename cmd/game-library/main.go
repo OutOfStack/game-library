@@ -13,18 +13,32 @@ import (
 
 	"cloud.google.com/go/civil"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	defer log.Println("Completed")
-
 	db, err := openDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
+	if err != nil {
+		log.Fatalf("Error connecting to db for migration: %v", err)
+	}
+	m, err := migrate.NewWithDatabaseInstance("file://./migrations", "games", driver)
+	if err != nil {
+		log.Fatalf("Error retrieveing migration information: %v", err)
+	}
+	err = m.Up()
+	if err != nil {
+		log.Printf("Error applying migrations: %v", err)
+	}
 
 	api := http.Server{
 		Addr:         ":8000",
@@ -73,9 +87,10 @@ func openDB() (*sqlx.DB, error) {
 		Scheme:   "postgres",
 		User:     url.UserPassword("postgres", "postgres"),
 		Host:     "localhost",
-		Path:     "pastgres",
+		Path:     "games",
 		RawQuery: query.Encode(),
 	}
+	log.Println(conn.String())
 
 	return sqlx.Open("postgres", conn.String())
 }

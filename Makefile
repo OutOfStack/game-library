@@ -14,4 +14,13 @@ createdb:
 dropdb:
 	docker exec -it games_db dropdb --username=postgres games
 
-.PHONY: build run runpg createdb dropdb
+migrate:
+	go run ./cmd/game-library/. migrate
+
+rollback:
+	go run ./cmd/game-library/. rollback
+
+seed:
+	go run ./cmd/game-library/. seed
+
+.PHONY: build run runpg createdb dropdb migrate rollback seed

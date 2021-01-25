@@ -1,6 +1,6 @@
 # game-library
 
-Makefile:
+## Makefile:
     make build      builds app
     make run        runs app
     make runpg      starts postgres server in container
@@ -11,7 +11,7 @@ Makefile:
     make seed       seeds test data to database
 
 
-migrate CLI
+## migrate CLI
 https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
 
 Creating migrations:

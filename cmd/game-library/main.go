@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,9 +13,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/civil"
-
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/OutOfStack/game-library/internal/schema"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -27,17 +26,26 @@ func main() {
 	}
 	defer db.Close()
 
-	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
-	if err != nil {
-		log.Fatalf("Error connecting to db for migration: %v", err)
-	}
-	m, err := migrate.NewWithDatabaseInstance("file://./migrations", "games", driver)
-	if err != nil {
-		log.Fatalf("Error retrieveing migration information: %v", err)
-	}
-	err = m.Up()
-	if err != nil {
-		log.Printf("Error applying migrations: %v", err)
+	flag.Parse()
+	switch flag.Arg(0) {
+	case "migrate":
+		if err := schema.Migrate(db, true); err != nil {
+			log.Fatalf("applying migrations %v", err)
+		}
+		log.Print("migration complete")
+		return
+	case "rollback":
+		if err := schema.Migrate(db, false); err != nil {
+			log.Fatalf("rollback last migration %v", err)
+		}
+		log.Print("migration rollback complete")
+		return
+	case "seed":
+		if err := schema.Seed(db); err != nil {
+			log.Fatalf("applying seeds %v", err)
+		}
+		log.Print("Seed data inserted")
+		return
 	}
 
 	api := http.Server{

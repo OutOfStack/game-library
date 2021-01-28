@@ -16,6 +16,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/schema"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -48,9 +49,11 @@ func main() {
 		return
 	}
 
+	svc := GameService{db: db}
+
 	api := http.Server{
 		Addr:         ":8000",
-		Handler:      http.HandlerFunc(ListGames),
+		Handler:      http.HandlerFunc(svc.List),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
@@ -103,40 +106,46 @@ func openDB() (*sqlx.DB, error) {
 	return sqlx.Open("postgres", conn.String())
 }
 
-// Game represents game
-type Game struct {
-	Name        string     `json:"name"`
-	Developer   string     `json:"developer"`
-	ReleaseDate civil.Date `json:"releaseDate"`
-	Genre       []string   `json:"genre"`
+// Date is date type
+type Date civil.Date
+
+// Scan casts time.Time date to Date type
+func (t *Date) Scan(v interface{}) error {
+	date := civil.DateOf(v.(time.Time))
+	*t = Date(date)
+	return nil
 }
 
-// ListGames returns all games
-func ListGames(w http.ResponseWriter, r *http.Request) {
-	list := []Game{
-		{
-			Name:        "Red Dead Redemption 2",
-			Developer:   "Rockstar Games",
-			Genre:       []string{"Action", "Western", "Adventure"},
-			ReleaseDate: civil.Date{Year: 2019, Month: 12, Day: 5},
-		},
-		{
-			Name:        "Ori and the Will of the Wisps",
-			Developer:   "Moon Studios GmbH",
-			Genre:       []string{"Action", "Platformer"},
-			ReleaseDate: civil.Date{Year: 2020, Month: 3, Day: 11},
-		},
-		{
-			Name:        "The Wolf Among Us",
-			Developer:   "Telltale",
-			Genre:       []string{"Adventure", "Episodic", "Detective"},
-			ReleaseDate: civil.Date{Year: 2013, Month: 10, Day: 11},
-		},
+// Game represents game
+type Game struct {
+	ID          uint32         `db:"id" json:"id"`
+	Name        string         `db:"name" json:"name"`
+	Developer   string         `db:"developer" json:"developer"`
+	ReleaseDate Date           `db:"releasedate" json:"releaseDate"`
+	Genre       pq.StringArray `db:"genre" json:"genre"`
+}
+
+// GameService has handler methods for dealing with games
+type GameService struct {
+	db *sqlx.DB
+}
+
+// List returns all games
+func (g *GameService) List(w http.ResponseWriter, r *http.Request) {
+	list := []Game{}
+
+	const q = `select id, name, developer, releasedate, genre from games`
+
+	if err := g.db.Select(&list, q); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("Error querying db", err)
+		return
 	}
+
 	data, err := json.Marshal(list)
 	if err != nil {
-		log.Println("Error marshalling", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("Error marshalling", err)
 		return
 	}
 	w.Header().Set("content-type", "application/json;charset=utf-8")

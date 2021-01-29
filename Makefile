@@ -1,9 +1,9 @@
 build:
 	mkdir -p bin
-	go build -o bin/game-library cmd/game-library/main.go
+	go build -o bin/game-library-api cmd/game-library-api/main.go
 
 run:
-	go run ./cmd/game-library/.
+	go run ./cmd/game-library-api/.
 
 runpg:
 	docker-compose up -d
@@ -15,12 +15,12 @@ dropdb:
 	docker exec -it games_db dropdb --username=postgres games
 
 migrate:
-	go run ./cmd/game-library/. migrate
+	go run ./cmd/game-library-manage/. migrate
 
 rollback:
-	go run ./cmd/game-library/. rollback
+	go run ./cmd/game-library-manage/. rollback
 
 seed:
-	go run ./cmd/game-library/. seed
+	go run ./cmd/game-library-manage/. seed
 
 .PHONY: build run runpg createdb dropdb migrate rollback seed

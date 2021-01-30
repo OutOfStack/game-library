@@ -1,11 +1,11 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
 	"log"
 	"net/http"
 
-	"github.com/OutOfStack/game-library/internal/app/game"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/game"
 	"github.com/jmoiron/sqlx"
 )
 

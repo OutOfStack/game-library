@@ -4,7 +4,8 @@ import (
 	"net/url"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // register postgres driver
+	// register postgres driver
+	_ "github.com/lib/pq"
 )
 
 // Open opens connection with database

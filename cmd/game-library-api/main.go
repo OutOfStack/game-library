@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/OutOfStack/game-library/cmd/game-library-api/internal/handlers"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 )
 
@@ -20,7 +20,7 @@ func main() {
 	}
 	defer db.Close()
 
-	svc := handlers.Game{DB: db}
+	svc := handler.Game{DB: db}
 
 	api := http.Server{
 		Addr:         ":8000",

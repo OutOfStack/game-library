@@ -4,8 +4,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/OutOfStack/game-library/internal/schema"
-	"github.com/OutOfStack/game-library/internal/schema/app/database"
+	"github.com/OutOfStack/game-library/internal/app/game-library-manage/schema"
+	"github.com/OutOfStack/game-library/internal/pkg/database"
 )
 
 func main() {

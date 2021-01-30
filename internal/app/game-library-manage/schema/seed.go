@@ -6,9 +6,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const path = "./scripts/seedgames.sql"
+
 //Seed seeds database
 func Seed(db *sqlx.DB) error {
-	q, err := ioutil.ReadFile("./internal/schema/scripts/seedgames.sql")
+	q, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}

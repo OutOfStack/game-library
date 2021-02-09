@@ -8,17 +8,31 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Config stores connection settings
+type Config struct {
+	Host       string
+	Name       string
+	User       string
+	Password   string
+	RequireSSL bool
+}
+
 // Open opens connection with database
-func Open() (*sqlx.DB, error) {
+func Open(cfg Config) (*sqlx.DB, error) {
 	query := url.Values{}
-	query.Set("sslmode", "disable")
+	if cfg.RequireSSL {
+		query.Set("sslmode", "require")
+	} else {
+		query.Set("sslmode", "disable")
+	}
+
 	query.Set("timezone", "utc")
 
 	conn := url.URL{
 		Scheme:   "postgres",
-		User:     url.UserPassword("postgres", "postgres"),
-		Host:     "localhost",
-		Path:     "games",
+		User:     url.UserPassword(cfg.User, cfg.Password),
+		Host:     cfg.Host,
+		Path:     cfg.Name,
 		RawQuery: query.Encode(),
 	}
 

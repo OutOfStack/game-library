@@ -11,10 +11,41 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
+	"github.com/OutOfStack/game-library/internal/pkg/util"
 )
 
 func main() {
-	db, err := database.Open()
+
+	type config struct {
+		DB struct {
+			Host       string `mapstructure:"APP_HOST"`
+			Name       string `mapstructure:"APP_NAME"`
+			User       string `mapstructure:"APP_USER"`
+			Password   string `mapstructure:"APP_PASSWORD"`
+			RequireSSL bool   `mapstructure:"APP_REQUIRESSL"`
+		} `mapstructure:",squash"`
+		Web struct {
+			Address         string        `mapstructure:"APP_ADDRESS"`
+			ReadTimeout     time.Duration `mapstructure:"APP_READTIMEOUT"`
+			WriteTimeout    time.Duration `mapstructure:"APP_WRITETIMEOUT"`
+			ShutdownTimeout time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
+		} `mapstructure:",squash"`
+	}
+
+	cfg := config{}
+	if err := util.LoadConfig(".", "app", "env", &cfg); err != nil {
+		log.Fatalf("error parsing config: %v", err)
+	}
+
+	//fmt.Printf("%+v\n", cfg)
+
+	db, err := database.Open(database.Config{
+		Host:       cfg.DB.Host,
+		Name:       cfg.DB.Name,
+		User:       cfg.DB.User,
+		Password:   cfg.DB.Password,
+		RequireSSL: cfg.DB.RequireSSL,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,10 +54,10 @@ func main() {
 	svc := handler.Game{DB: db}
 
 	api := http.Server{
-		Addr:         ":8000",
+		Addr:         cfg.Web.Address,
 		Handler:      http.HandlerFunc(svc.List),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  cfg.Web.ReadTimeout * time.Second,
+		WriteTimeout: cfg.Web.WriteTimeout * time.Second,
 	}
 
 	serverErrors := make(chan error, 1)
@@ -44,7 +75,7 @@ func main() {
 		log.Fatalf("Error listening and serving: %v", err)
 	case <-shutdown:
 		log.Println("Start shutdown")
-		const timeout = 5 * time.Second
+		timeout := cfg.Web.ShutdownTimeout
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 

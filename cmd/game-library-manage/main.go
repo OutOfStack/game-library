@@ -2,14 +2,39 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-manage/schema"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
+	"github.com/OutOfStack/game-library/internal/pkg/util"
 )
 
 func main() {
-	db, err := database.Open()
+	type config struct {
+		DB struct {
+			Host       string `mapstructure:"APP_HOST"`
+			Name       string `mapstructure:"APP_NAME"`
+			User       string `mapstructure:"APP_USER"`
+			Password   string `mapstructure:"APP_PASSWORD"`
+			RequireSSL bool   `mapstructure:"APP_REQUIRESSL"`
+		} `mapstructure:",squash"`
+	}
+
+	cfg := config{}
+	if err := util.LoadConfig(".", "app", "env", &cfg); err != nil {
+		log.Fatalf("error parsing config: %v", err)
+	}
+
+	fmt.Printf("%+v\n", cfg)
+
+	db, err := database.Open(database.Config{
+		Host:       cfg.DB.Host,
+		Name:       cfg.DB.Name,
+		User:       cfg.DB.User,
+		Password:   cfg.DB.Password,
+		RequireSSL: cfg.DB.RequireSSL,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +16,12 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
 
+func run() error {
 	type config struct {
 		DB struct {
 			Host       string `mapstructure:"APP_HOST"`
@@ -47,7 +53,7 @@ func main() {
 		RequireSSL: cfg.DB.RequireSSL,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("opening db: %w", err)
 	}
 	defer db.Close()
 
@@ -72,7 +78,7 @@ func main() {
 
 	select {
 	case err := <-serverErrors:
-		log.Fatalf("Error listening and serving: %v", err)
+		return fmt.Errorf("listening and serving: %w", err)
 	case <-shutdown:
 		log.Println("Start shutdown")
 		timeout := cfg.Web.ShutdownTimeout
@@ -86,7 +92,9 @@ func main() {
 		}
 
 		if err != nil {
-			log.Fatalf("could not stop server: %v", err)
+			return fmt.Errorf("shutdown: %w", err)
 		}
 	}
+
+	return nil
 }

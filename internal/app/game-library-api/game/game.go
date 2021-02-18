@@ -1,6 +1,11 @@
 package game
 
-import "github.com/jmoiron/sqlx"
+import (
+	"database/sql"
+	"errors"
+
+	"github.com/jmoiron/sqlx"
+)
 
 // List returns all games
 func List(db *sqlx.DB) ([]Game, error) {
@@ -13,4 +18,22 @@ func List(db *sqlx.DB) ([]Game, error) {
 	}
 
 	return list, nil
+}
+
+// Retrieve returns a single game
+func Retrieve(db *sqlx.DB, id uint64) (*Game, error) {
+	var g Game
+
+	const q = `select id, name, developer, releasedate, genre 
+		from games
+		where id = $1`
+
+	if err := db.Get(&g, q, id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &g, nil
 }

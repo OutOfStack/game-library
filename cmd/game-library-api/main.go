@@ -22,6 +22,8 @@ func main() {
 }
 
 func run() error {
+	log := log.New(os.Stdout, "GAMES : ", log.LstdFlags)
+
 	type config struct {
 		DB struct {
 			Host       string `mapstructure:"APP_HOST"`
@@ -57,11 +59,9 @@ func run() error {
 	}
 	defer db.Close()
 
-	svc := handler.Game{DB: db}
-
 	api := http.Server{
 		Addr:         cfg.Web.Address,
-		Handler:      http.HandlerFunc(svc.List),
+		Handler:      handler.Service(log, db),
 		ReadTimeout:  cfg.Web.ReadTimeout * time.Second,
 		WriteTimeout: cfg.Web.WriteTimeout * time.Second,
 	}

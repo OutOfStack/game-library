@@ -19,6 +19,7 @@ func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
 
 	app.Handle(http.MethodGet, "/api/games", g.List)
 	app.Handle(http.MethodGet, "/api/games/:id", g.Retrieve)
+	app.Handle(http.MethodPost, "/api/games", g.Create)
 
 	return app
 }

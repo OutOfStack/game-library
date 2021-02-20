@@ -3,7 +3,10 @@ package game
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
+	"cloud.google.com/go/civil"
+	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -33,6 +36,34 @@ func Retrieve(db *sqlx.DB, id uint64) (*Game, error) {
 			return nil, nil
 		}
 		return nil, err
+	}
+
+	return &g, nil
+}
+
+// Create creates a new game
+func Create(db *sqlx.DB, pm PostModel) (*Game, error) {
+	date, err := civil.ParseDate(pm.ReleaseDate)
+	if err != nil {
+		return nil, fmt.Errorf("parsing releaseDate: %w", err)
+	}
+	const q = `insert into games
+	(name, developer, releasedate, genre)
+	values ($1, $2, $3, $4)
+	returning id`
+
+	var lastInsertID uint64
+	err = db.QueryRow(q, pm.Name, pm.Developer, pm.ReleaseDate, pm.Genre).Scan(&lastInsertID)
+	if err != nil {
+		return nil, fmt.Errorf("inserting game %v: %w", pm, err)
+	}
+
+	g := Game{
+		ID:          lastInsertID,
+		Name:        pm.Name,
+		Developer:   pm.Developer,
+		ReleaseDate: types.Date(date),
+		Genre:       pm.Genre,
 	}
 
 	return &g, nil

@@ -51,7 +51,7 @@ func (g *Game) Retrieve(c *gin.Context) {
 		return
 	}
 
-	list, err := game.Retrieve(g.DB, id)
+	game, err := game.Retrieve(g.DB, id)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
@@ -59,19 +59,50 @@ func (g *Game) Retrieve(c *gin.Context) {
 		return
 	}
 
-	if list == nil {
+	if game == nil {
 		c.Status(http.StatusNotFound)
 		g.Log.Println("Not found for id", id)
 		return
 	}
 
-	data, err := json.Marshal(list)
+	data, err := json.Marshal(game)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		g.Log.Println("Error marshalling", err)
 		return
 	}
 	c.Header("content-type", "application/json;charset=utf-8")
+	_, err = c.Writer.Write(data)
+	if err != nil {
+		g.Log.Println("Error writing", err)
+	}
+}
+
+// Create decodes JSON and creates a new Game
+func (g *Game) Create(c *gin.Context) {
+	var pm game.PostModel
+	err := json.NewDecoder(c.Request.Body).Decode(&pm)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		g.Log.Println("Error decoding", err)
+		return
+	}
+
+	game, err := game.Create(g.DB, pm)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		g.Log.Println("Error querying db", err)
+		return
+	}
+
+	data, err := json.Marshal(game)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		g.Log.Println("Error marshalling", err)
+		return
+	}
+	c.Header("content-type", "application/json;charset=utf-8")
+	c.Status(http.StatusCreated)
 	_, err = c.Writer.Write(data)
 	if err != nil {
 		g.Log.Println("Error writing", err)

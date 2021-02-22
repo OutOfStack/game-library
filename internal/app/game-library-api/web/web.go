@@ -29,12 +29,11 @@ func (a *App) Handle(method, pattern string, h Handler) {
 	fn := func(c *gin.Context) {
 		err := h(c)
 		if err != nil {
-			response := ErrorResponse{
-				Error: err.Error(),
-			}
-			err = Respond(c, response, http.StatusInternalServerError)
+			a.log.Printf("ERROR: %v", err)
+
+			err = RespondError(c, err)
 			if err != nil {
-				a.log.Println(err)
+				a.log.Printf("ERROR: %v", err)
 			}
 		}
 	}

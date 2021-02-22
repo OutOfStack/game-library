@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -21,4 +22,20 @@ func Respond(c *gin.Context, val interface{}, statusCode int) error {
 	}
 
 	return nil
+}
+
+// RespondError handles otugoing errors
+func RespondError(c *gin.Context, err error) error {
+	webErr, ok := err.(*Error)
+	if ok {
+		response := ErrorResponse{
+			Error: webErr.Err.Error(),
+		}
+		return Respond(c, response, webErr.Status)
+	}
+
+	response := ErrorResponse{
+		Error: http.StatusText(http.StatusInternalServerError),
+	}
+	return Respond(c, response, http.StatusInternalServerError)
 }

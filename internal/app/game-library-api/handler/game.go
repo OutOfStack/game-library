@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -43,7 +44,7 @@ func (g *Game) Retrieve(c *gin.Context) error {
 	}
 
 	if game == nil {
-		return web.Respond(c, struct{}{}, http.StatusNotFound)
+		return web.NewErrorRequest(errors.New("Data not found"), http.StatusNotFound)
 	}
 
 	return web.Respond(c, game, http.StatusOK)

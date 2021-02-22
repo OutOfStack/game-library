@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/game"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
@@ -27,16 +27,10 @@ func (g *Game) List(c *gin.Context) {
 		return
 	}
 
-	data, err := json.Marshal(list)
+	err = web.Respond(c, list, http.StatusOK)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		g.Log.Println("Error marshalling", err)
+		g.Log.Println("Error responsing", err)
 		return
-	}
-	c.Header("content-type", "application/json;charset=utf-8")
-	_, err = c.Writer.Write(data)
-	if err != nil {
-		g.Log.Println("Error writing", err)
 	}
 }
 
@@ -65,23 +59,17 @@ func (g *Game) Retrieve(c *gin.Context) {
 		return
 	}
 
-	data, err := json.Marshal(game)
+	err = web.Respond(c, game, http.StatusOK)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		g.Log.Println("Error marshalling", err)
+		g.Log.Println("Error responsing", err)
 		return
-	}
-	c.Header("content-type", "application/json;charset=utf-8")
-	_, err = c.Writer.Write(data)
-	if err != nil {
-		g.Log.Println("Error writing", err)
 	}
 }
 
 // Create decodes JSON and creates a new Game
 func (g *Game) Create(c *gin.Context) {
 	var pm game.PostModel
-	err := json.NewDecoder(c.Request.Body).Decode(&pm)
+	err := web.Decode(c, &pm)
 	if err != nil {
 		c.Status(http.StatusBadRequest)
 		g.Log.Println("Error decoding", err)
@@ -95,16 +83,9 @@ func (g *Game) Create(c *gin.Context) {
 		return
 	}
 
-	data, err := json.Marshal(game)
+	err = web.Respond(c, game, http.StatusCreated)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		g.Log.Println("Error marshalling", err)
+		g.Log.Println("Error responsing", err)
 		return
-	}
-	c.Header("content-type", "application/json;charset=utf-8")
-	c.Status(http.StatusCreated)
-	_, err = c.Writer.Write(data)
-	if err != nil {
-		g.Log.Println("Error writing", err)
 	}
 }

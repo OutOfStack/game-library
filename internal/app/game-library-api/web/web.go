@@ -7,6 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Handler is a signature for all handler funcions
+type Handler func(*gin.Context) error
+
 // App abstacts specific web framework
 type App struct {
 	router *gin.Engine
@@ -22,7 +25,20 @@ func NewApp(logger *log.Logger) *App {
 }
 
 // Handle connect method and pattern to application handler
-func (a *App) Handle(method, pattern string, fn gin.HandlerFunc) {
+func (a *App) Handle(method, pattern string, h Handler) {
+	fn := func(c *gin.Context) {
+		err := h(c)
+		if err != nil {
+			response := ErrorResponse{
+				Error: err.Error(),
+			}
+			err = Respond(c, response, http.StatusInternalServerError)
+			if err != nil {
+				a.log.Println(err)
+			}
+		}
+	}
+
 	a.router.Handle(method, pattern, fn)
 }
 

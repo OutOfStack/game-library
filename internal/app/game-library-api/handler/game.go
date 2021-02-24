@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 // Game has handler methods for dealing with games
@@ -34,17 +34,17 @@ func (g *Game) Retrieve(c *gin.Context) error {
 	idparam := c.Param("id")
 	id, err := strconv.ParseUint(idparam, 10, 64)
 	if err != nil {
-		return err
+		return web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
 	}
 
 	game, err := game.Retrieve(g.DB, id)
 
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "retrieving game with id %q", idparam)
 	}
 
 	if game == nil {
-		return web.NewErrorRequest(errors.New("Data not found"), http.StatusNotFound)
+		return web.NewRequestError(errors.New("Data not found"), http.StatusNotFound)
 	}
 
 	return web.Respond(c, game, http.StatusOK)

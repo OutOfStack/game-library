@@ -11,8 +11,8 @@ type Error struct {
 	Status int
 }
 
-// NewErrorRequest is used for creating known error
-func NewErrorRequest(err error, status int) error {
+// NewRequestError is used for creating known error
+func NewRequestError(err error, status int) error {
 	return &Error{
 		Err:    err,
 		Status: status,

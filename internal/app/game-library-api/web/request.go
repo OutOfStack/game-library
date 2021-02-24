@@ -11,7 +11,7 @@ import (
 func Decode(c *gin.Context, val interface{}) error {
 	err := json.NewDecoder(c.Request.Body).Decode(val)
 	if err != nil {
-		return NewErrorRequest(err, http.StatusBadRequest)
+		return NewRequestError(err, http.StatusBadRequest)
 	}
 
 	return nil

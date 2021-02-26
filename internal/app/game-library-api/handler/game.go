@@ -20,7 +20,7 @@ type Game struct {
 
 // List returns all games
 func (g *Game) List(c *gin.Context) error {
-	list, err := game.List(g.DB)
+	list, err := game.List(c.Request.Context(), g.DB)
 
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (g *Game) Retrieve(c *gin.Context) error {
 		return web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
 	}
 
-	game, err := game.Retrieve(g.DB, id)
+	game, err := game.Retrieve(c.Request.Context(), g.DB, id)
 
 	if err != nil {
 		return errors.Wrapf(err, "retrieving game with id %q", idparam)
@@ -58,7 +58,7 @@ func (g *Game) Create(c *gin.Context) error {
 		return err
 	}
 
-	game, err := game.Create(g.DB, pm)
+	game, err := game.Create(c.Request.Context(), g.DB, pm)
 	if err != nil {
 		return err
 	}

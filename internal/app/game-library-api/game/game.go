@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -11,12 +12,12 @@ import (
 )
 
 // List returns all games
-func List(db *sqlx.DB) ([]Game, error) {
+func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 	list := []Game{}
 
 	const q = `select id, name, developer, releasedate, genre from games`
 
-	if err := db.Select(&list, q); err != nil {
+	if err := db.SelectContext(ctx, &list, q); err != nil {
 		return nil, err
 	}
 
@@ -24,14 +25,14 @@ func List(db *sqlx.DB) ([]Game, error) {
 }
 
 // Retrieve returns a single game
-func Retrieve(db *sqlx.DB, id uint64) (*Game, error) {
+func Retrieve(ctx context.Context, db *sqlx.DB, id uint64) (*Game, error) {
 	var g Game
 
 	const q = `select id, name, developer, releasedate, genre 
 		from games
 		where id = $1`
 
-	if err := db.Get(&g, q, id); err != nil {
+	if err := db.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -42,7 +43,7 @@ func Retrieve(db *sqlx.DB, id uint64) (*Game, error) {
 }
 
 // Create creates a new game
-func Create(db *sqlx.DB, pm PostModel) (*Game, error) {
+func Create(ctx context.Context, db *sqlx.DB, pm PostModel) (*Game, error) {
 	date, err := civil.ParseDate(pm.ReleaseDate)
 	if err != nil {
 		return nil, fmt.Errorf("parsing releaseDate: %w", err)
@@ -53,7 +54,7 @@ func Create(db *sqlx.DB, pm PostModel) (*Game, error) {
 	returning id`
 
 	var lastInsertID uint64
-	err = db.QueryRow(q, pm.Name, pm.Developer, pm.ReleaseDate, pm.Genre).Scan(&lastInsertID)
+	err = db.QueryRowContext(ctx, q, pm.Name, pm.Developer, pm.ReleaseDate, pm.Genre).Scan(&lastInsertID)
 	if err != nil {
 		return nil, fmt.Errorf("inserting game %v: %w", pm, err)
 	}

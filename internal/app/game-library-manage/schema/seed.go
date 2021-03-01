@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const path = "./scripts/seedgames.sql"
+const path = "./scripts/seed.sql"
 
 //Seed seeds database
 func Seed(db *sqlx.DB) error {

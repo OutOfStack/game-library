@@ -15,7 +15,7 @@ import (
 func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 	list := []Game{}
 
-	const q = `select id, name, developer, releasedate, genre from games`
+	const q = `select id, name, developer, release_date, genre from games`
 
 	if err := db.SelectContext(ctx, &list, q); err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 func Retrieve(ctx context.Context, db *sqlx.DB, id uint64) (*Game, error) {
 	var g Game
 
-	const q = `select id, name, developer, releasedate, genre 
+	const q = `select id, name, developer, release_date, genre 
 		from games
 		where id = $1`
 
@@ -49,11 +49,11 @@ func Create(ctx context.Context, db *sqlx.DB, pm PostModel) (*Game, error) {
 		return nil, fmt.Errorf("parsing releaseDate: %w", err)
 	}
 	const q = `insert into games
-	(name, developer, releasedate, genre)
+	(name, developer, release_date, genre)
 	values ($1, $2, $3, $4)
 	returning id`
 
-	var lastInsertID uint64
+	var lastInsertID int
 	err = db.QueryRowContext(ctx, q, pm.Name, pm.Developer, pm.ReleaseDate, pm.Genre).Scan(&lastInsertID)
 	if err != nil {
 		return nil, fmt.Errorf("inserting game %v: %w", pm, err)

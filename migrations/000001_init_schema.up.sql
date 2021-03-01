@@ -2,6 +2,6 @@ CREATE TABLE Games (
 	id serial PRIMARY key,
 	name varchar NOT NULL,
 	developer varchar NULL,
-	releasedate date NULL,
+	release_date date NULL,
 	genre text[] NULL
 );

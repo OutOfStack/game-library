@@ -7,10 +7,10 @@ import (
 
 // Game represents game
 type Game struct {
-	ID          uint64         `db:"id" json:"id"`
+	ID          int            `db:"id" json:"id"`
 	Name        string         `db:"name" json:"name"`
 	Developer   string         `db:"developer" json:"developer"`
-	ReleaseDate types.Date     `db:"releasedate" json:"releaseDate"`
+	ReleaseDate types.Date     `db:"release_date" json:"releaseDate"`
 	Genre       pq.StringArray `db:"genre" json:"genre"`
 }
 
@@ -21,4 +21,14 @@ type PostModel struct {
 	Developer   string         `json:"developer"`
 	ReleaseDate string         `json:"releaseDate"`
 	Genre       pq.StringArray `json:"genre"`
+}
+
+// Sale respresents information about game being on sale
+type Sale struct {
+	ID              int        `db:"id" json:"id"`
+	Name            string     `db:"name" json:"name"`
+	GameID          int        `db:"game_id" json:"gameId"`
+	BeginDate       types.Date `db:"begin_date" json:"beginDate"`
+	EndDate         types.Date `db:"end_date" json:"endDate"`
+	DiscountPercent uint8      `db:"discount_percent" json:"discountPercent"`
 }

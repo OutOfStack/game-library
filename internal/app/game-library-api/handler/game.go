@@ -32,8 +32,8 @@ func (g *Game) List(c *gin.Context) error {
 // Retrieve returns a game
 func (g *Game) Retrieve(c *gin.Context) error {
 	idparam := c.Param("id")
-	id, err := strconv.ParseUint(idparam, 10, 64)
-	if err != nil {
+	id, err := strconv.ParseUint(idparam, 10, 32)
+	if err != nil || id <= 0 {
 		return web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
 	}
 

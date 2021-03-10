@@ -25,7 +25,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 }
 
 // Retrieve returns a single game
-func Retrieve(ctx context.Context, db *sqlx.DB, id uint64) (*Game, error) {
+func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
 	const q = `select id, name, developer, release_date, genre 
@@ -43,8 +43,8 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id uint64) (*Game, error) {
 }
 
 // Create creates a new game
-func Create(ctx context.Context, db *sqlx.DB, pm PostModel) (*Game, error) {
-	date, err := civil.ParseDate(pm.ReleaseDate)
+func Create(ctx context.Context, db *sqlx.DB, ng NewGame) (*Game, error) {
+	date, err := civil.ParseDate(ng.ReleaseDate)
 	if err != nil {
 		return nil, fmt.Errorf("parsing releaseDate: %w", err)
 	}
@@ -53,18 +53,18 @@ func Create(ctx context.Context, db *sqlx.DB, pm PostModel) (*Game, error) {
 	values ($1, $2, $3, $4)
 	returning id`
 
-	var lastInsertID int
-	err = db.QueryRowContext(ctx, q, pm.Name, pm.Developer, pm.ReleaseDate, pm.Genre).Scan(&lastInsertID)
+	var lastInsertID int64
+	err = db.QueryRowContext(ctx, q, ng.Name, ng.Developer, ng.ReleaseDate, ng.Genre).Scan(&lastInsertID)
 	if err != nil {
-		return nil, fmt.Errorf("inserting game %v: %w", pm, err)
+		return nil, fmt.Errorf("inserting game %v: %w", ng, err)
 	}
 
 	g := Game{
 		ID:          lastInsertID,
-		Name:        pm.Name,
-		Developer:   pm.Developer,
+		Name:        ng.Name,
+		Developer:   ng.Developer,
 		ReleaseDate: types.Date(date),
-		Genre:       pm.Genre,
+		Genre:       ng.Genre,
 	}
 
 	return &g, nil

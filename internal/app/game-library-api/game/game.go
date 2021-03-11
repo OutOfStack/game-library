@@ -15,7 +15,14 @@ import (
 func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 	list := []Game{}
 
-	const q = `select id, name, developer, release_date, genre from games`
+	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
+	case 
+		when CURRENT_DATE >= max(s.begin_date) and CURRENT_DATE <= max(s.end_date) then g.price*((100 - max(s.discount_percent))/100.0)
+		else price
+	end as price
+	from games g
+	left join sales s on s.game_id = g.id
+	group by g.id, g.name`
 
 	if err := db.SelectContext(ctx, &list, q); err != nil {
 		return nil, err
@@ -28,9 +35,16 @@ func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
-	const q = `select id, name, developer, release_date, genre 
-		from games
-		where id = $1`
+	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
+		case 
+			when CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date then g.price*((100 - s.discount_percent)/100.0)
+			else price
+		end as price
+		from games g
+		left join sales s on s.game_id = g.id
+		where g.id = $1
+		order by price asc
+		limit 1`
 
 	if err := db.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

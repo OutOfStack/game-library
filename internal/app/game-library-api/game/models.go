@@ -11,6 +11,7 @@ type Game struct {
 	Name        string         `db:"name" json:"name"`
 	Developer   string         `db:"developer" json:"developer"`
 	ReleaseDate types.Date     `db:"release_date" json:"releaseDate"`
+	Price       float32        `db:"price" json:"price"`
 	Genre       pq.StringArray `db:"genre" json:"genre"`
 }
 
@@ -33,7 +34,7 @@ type Sale struct {
 	DiscountPercent uint8      `db:"discount_percent" json:"discountPercent"`
 }
 
-// NewSale represents sale date we receive from user
+// NewSale represents sale data we receive from user
 type NewSale struct {
 	Name            string `json:"name"`
 	BeginDate       string `json:"beginDate"`

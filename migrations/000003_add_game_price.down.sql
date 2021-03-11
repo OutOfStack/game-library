@@ -1,0 +1,2 @@
+ALTER TABLE Games 
+DROP COLUMN price;

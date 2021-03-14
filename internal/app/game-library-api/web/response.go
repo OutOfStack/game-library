@@ -26,16 +26,23 @@ func Respond(c *gin.Context, val interface{}, statusCode int) error {
 
 // RespondError handles otugoing errors
 func RespondError(c *gin.Context, err error) error {
-	webErr, ok := err.(*Error)
+	webErr, ok := errors.Cause(err).(*Error)
 	if ok {
 		response := ErrorResponse{
-			Error: webErr.Err.Error(),
+			Error:  webErr.Err.Error(),
+			Fields: webErr.Fields,
 		}
-		return Respond(c, response, webErr.Status)
+		if err = Respond(c, response, webErr.Status); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	response := ErrorResponse{
 		Error: http.StatusText(http.StatusInternalServerError),
 	}
-	return Respond(c, response, http.StatusInternalServerError)
+	if err := Respond(c, response, http.StatusInternalServerError); err != nil {
+		return err
+	}
+	return nil
 }

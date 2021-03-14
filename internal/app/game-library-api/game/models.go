@@ -18,8 +18,8 @@ type Game struct {
 // NewGame represents game data we receive from user
 // TODO: change releaseDate type to time.TIme (requires custom JSON marsaller and unmarhsller)
 type NewGame struct {
-	Name        string         `json:"name"`
-	Developer   string         `json:"developer"`
+	Name        string         `json:"name" validate:"required"`
+	Developer   string         `json:"developer" validate:"required"`
 	ReleaseDate string         `json:"releaseDate"`
 	Genre       pq.StringArray `json:"genre"`
 }
@@ -37,7 +37,7 @@ type Sale struct {
 // NewSale represents sale data we receive from user
 type NewSale struct {
 	Name            string `json:"name"`
-	BeginDate       string `json:"beginDate"`
-	EndDate         string `json:"endDate"`
-	DiscountPercent uint8  `json:"discountPercent"`
+	BeginDate       string `json:"beginDate" validate:"required"`
+	EndDate         string `json:"endDate" validate:"required"`
+	DiscountPercent uint8  `json:"discountPercent" validate:"gt=0,lte=100"`
 }

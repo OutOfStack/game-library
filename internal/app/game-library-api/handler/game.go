@@ -23,7 +23,7 @@ func (g *Game) List(c *gin.Context) error {
 	list, err := game.List(c.Request.Context(), g.DB)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "getting games list")
 	}
 
 	return web.Respond(c, list, http.StatusOK)
@@ -55,12 +55,12 @@ func (g *Game) Create(c *gin.Context) error {
 	var ng game.NewGame
 	err := web.Decode(c, &ng)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "decoding new game")
 	}
 
 	game, err := game.Create(c.Request.Context(), g.DB, ng)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "adding new game")
 	}
 
 	return web.Respond(c, game, http.StatusCreated)

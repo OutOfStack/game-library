@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/game"
+	repo "github.com/OutOfStack/game-library/internal/app/game-library-api/game"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -20,7 +20,7 @@ type Game struct {
 
 // List returns all games
 func (g *Game) List(c *gin.Context) error {
-	list, err := game.List(c.Request.Context(), g.DB)
+	list, err := repo.List(c.Request.Context(), g.DB)
 
 	if err != nil {
 		return errors.Wrap(err, "getting games list")
@@ -31,20 +31,18 @@ func (g *Game) List(c *gin.Context) error {
 
 // Retrieve returns a game
 func (g *Game) Retrieve(c *gin.Context) error {
-	idparam := c.Param("id")
-	id, err := strconv.ParseInt(idparam, 10, 64)
-	if err != nil || id <= 0 {
-		return web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
+	id, err := getIdPath(c)
+	if err != nil {
+		return err
 	}
 
-	game, err := game.Retrieve(c.Request.Context(), g.DB, id)
+	game, err := repo.Retrieve(c.Request.Context(), g.DB, id)
 
 	if err != nil {
-		return errors.Wrapf(err, "retrieving game with id %q", idparam)
-	}
-
-	if game == nil {
-		return web.NewRequestError(errors.New("Data not found"), http.StatusNotFound)
+		if errors.Is(err, repo.ErrNotFound) {
+			return web.NewRequestError(err, http.StatusNotFound)
+		}
+		return errors.Wrapf(err, "retrieving game with id %q", id)
 	}
 
 	return web.Respond(c, game, http.StatusOK)
@@ -52,13 +50,13 @@ func (g *Game) Retrieve(c *gin.Context) error {
 
 // Create decodes JSON and creates a new Game
 func (g *Game) Create(c *gin.Context) error {
-	var ng game.NewGame
+	var ng repo.NewGame
 	err := web.Decode(c, &ng)
 	if err != nil {
 		return errors.Wrap(err, "decoding new game")
 	}
 
-	game, err := game.Create(c.Request.Context(), g.DB, ng)
+	game, err := repo.Create(c.Request.Context(), g.DB, ng)
 	if err != nil {
 		return errors.Wrap(err, "adding new game")
 	}
@@ -68,18 +66,17 @@ func (g *Game) Create(c *gin.Context) error {
 
 // AddSale creates new sale for specified game
 func (g *Game) AddSale(c *gin.Context) error {
-	idparam := c.Param("id")
-	id, err := strconv.ParseInt(idparam, 10, 64)
-	if err != nil || id <= 0 {
-		return web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
+	id, err := getIdPath(c)
+	if err != nil {
+		return err
 	}
 
-	var ns game.NewSale
+	var ns repo.NewSale
 	err = web.Decode(c, &ns)
 	if err != nil {
 		return errors.Wrap(err, "decoding new sale")
 	}
-	sale, err := game.AddSale(c.Request.Context(), g.DB, ns, id)
+	sale, err := repo.AddSale(c.Request.Context(), g.DB, ns, id)
 
 	if err != nil {
 		return errors.Wrap(err, "adding new sale")
@@ -90,16 +87,45 @@ func (g *Game) AddSale(c *gin.Context) error {
 
 // ListSales returns sales for specified game
 func (g *Game) ListSales(c *gin.Context) error {
-	idparam := c.Param("id")
-	id, err := strconv.ParseInt(idparam, 10, 32)
-	if err != nil || id <= 0 {
-		return web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
+	id, err := getIdPath(c)
+	if err != nil {
+		return err
 	}
 
-	list, err := game.ListSales(c.Request.Context(), g.DB, id)
+	list, err := repo.ListSales(c.Request.Context(), g.DB, id)
 	if err != nil {
 		return errors.Wrap(err, "getting sales list")
 	}
 
 	return web.Respond(c, list, http.StatusOK)
+}
+
+// Update
+func (g *Game) Update(c *gin.Context) error {
+	id, err := getIdPath(c)
+	if err != nil {
+		return err
+	}
+	var update repo.UpdateGame
+	if err := web.Decode(c, &update); err != nil {
+		return errors.Wrap(err, "decoding game update")
+	}
+	err = repo.Update(c.Request.Context(), g.DB, id, update)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return web.NewRequestError(err, http.StatusNotFound)
+		}
+		return errors.Wrapf(err, "updating game with id %q", id)
+	}
+
+	return web.Respond(c, nil, http.StatusNoContent)
+}
+
+func getIdPath(c *gin.Context) (int64, error) {
+	idparam := c.Param("id")
+	id, err := strconv.ParseInt(idparam, 10, 32)
+	if err != nil || id <= 0 {
+		return 0, web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
+	}
+	return id, err
 }

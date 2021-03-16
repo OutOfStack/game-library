@@ -3,12 +3,17 @@ package game
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"cloud.google.com/go/civil"
 	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
+)
+
+var (
+	// ErrNotFound is used when a requested entity with id does not exist
+	ErrNotFound = errors.New("game not found")
 )
 
 // List returns all games
@@ -48,7 +53,7 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 
 	if err := db.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}
@@ -63,12 +68,12 @@ func Create(ctx context.Context, db *sqlx.DB, ng NewGame) (*Game, error) {
 		return nil, fmt.Errorf("parsing releaseDate: %w", err)
 	}
 	const q = `insert into games
-	(name, developer, release_date, genre)
-	values ($1, $2, $3, $4)
+	(name, developer, release_date, price, genre)
+	values ($1, $2, $3, $4, $5)
 	returning id`
 
 	var lastInsertID int64
-	err = db.QueryRowContext(ctx, q, ng.Name, ng.Developer, ng.ReleaseDate, ng.Genre).Scan(&lastInsertID)
+	err = db.QueryRowContext(ctx, q, ng.Name, ng.Developer, ng.ReleaseDate, ng.Price, ng.Genre).Scan(&lastInsertID)
 	if err != nil {
 		return nil, fmt.Errorf("inserting game %v: %w", ng, err)
 	}
@@ -82,4 +87,44 @@ func Create(ctx context.Context, db *sqlx.DB, ng NewGame) (*Game, error) {
 	}
 
 	return &g, nil
+}
+
+// Update modifes information about a game
+func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) error {
+	g, err := Retrieve(ctx, db, id)
+	if err != nil {
+		return err
+	}
+
+	if update.Name != nil {
+		g.Name = *update.Name
+	}
+	if update.Developer != nil {
+		g.Developer = *update.Developer
+	}
+	if update.ReleaseDate != nil {
+		date, err := civil.ParseDate(*update.ReleaseDate)
+		if err != nil {
+			return errors.Wrap(err, "parsing releaseDate")
+		}
+		g.ReleaseDate = types.Date(date)
+	}
+	if update.Price != nil {
+		g.Price = *update.Price
+	}
+	if update.Genre != nil {
+		g.Genre = *update.Genre
+	}
+	const q = `update games set 
+	 name = $1,
+	 developer = $2,
+	 release_date = $3,
+	 price = $4,
+	 genre = $5
+	 where id = $6;`
+	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate.String(), g.Price, g.Genre, id)
+	if err != nil {
+		return errors.Wrap(err, "updating product")
+	}
+	return nil
 }

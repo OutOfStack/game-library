@@ -128,3 +128,21 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) error
 	}
 	return nil
 }
+
+// Delete deletes specified game
+func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
+	const q = `delete from games where id = $1;`
+	res, err := db.ExecContext(ctx, q, id)
+	if err != nil {
+		return errors.Wrap(err, "deleting product")
+	} else {
+		count, err := res.RowsAffected()
+		if err != nil {
+			return errors.Wrap(err, "deleting product count")
+
+		} else if count == 0 {
+			return ErrNotFound
+		}
+	}
+	return nil
+}

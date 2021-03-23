@@ -31,7 +31,7 @@ func (g *Game) List(c *gin.Context) error {
 
 // Retrieve returns a game
 func (g *Game) Retrieve(c *gin.Context) error {
-	id, err := getIdPath(c)
+	id, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (g *Game) Create(c *gin.Context) error {
 
 // AddSale creates new sale for specified game
 func (g *Game) AddSale(c *gin.Context) error {
-	id, err := getIdPath(c)
+	id, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (g *Game) AddSale(c *gin.Context) error {
 
 // ListSales returns sales for specified game
 func (g *Game) ListSales(c *gin.Context) error {
-	id, err := getIdPath(c)
+	id, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (g *Game) ListSales(c *gin.Context) error {
 
 // Update
 func (g *Game) Update(c *gin.Context) error {
-	id, err := getIdPath(c)
+	id, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,24 @@ func (g *Game) Update(c *gin.Context) error {
 	return web.Respond(c, nil, http.StatusNoContent)
 }
 
-func getIdPath(c *gin.Context) (int64, error) {
+func (g *Game) Delete(c *gin.Context) error {
+	id, err := getIdParam(c)
+	if err != nil {
+		return err
+	}
+
+	err = repo.Delete(c.Request.Context(), g.DB, id)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return web.NewRequestError(err, http.StatusNotFound)
+		}
+		return errors.Wrapf(err, "deleting game with id %q", id)
+	}
+
+	return web.Respond(c, nil, http.StatusNoContent)
+}
+
+func getIdParam(c *gin.Context) (int64, error) {
 	idparam := c.Param("id")
 	id, err := strconv.ParseInt(idparam, 10, 32)
 	if err != nil || id <= 0 {

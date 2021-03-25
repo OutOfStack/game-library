@@ -12,6 +12,11 @@ import (
 func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
 	app := web.NewApp(logger)
 
+	c := Check{
+		DB: db,
+	}
+	app.Handle(http.MethodGet, "/api/health", c.Health)
+
 	g := Game{
 		DB:  db,
 		Log: logger,

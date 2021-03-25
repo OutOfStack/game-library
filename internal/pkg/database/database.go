@@ -38,3 +38,8 @@ func Open(cfg Config) (*sqlx.DB, error) {
 
 	return sqlx.Open("postgres", conn.String())
 }
+
+// StatusCheck returns nil if connection with db is ok
+func StatusCheck(db *sqlx.DB) error {
+	return db.Ping()
+}

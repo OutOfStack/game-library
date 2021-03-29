@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,6 +35,7 @@ func run() error {
 		} `mapstructure:",squash"`
 		Web struct {
 			Address         string        `mapstructure:"APP_ADDRESS"`
+			Debug           string        `mapstructure:"DEBUG"`
 			ReadTimeout     time.Duration `mapstructure:"APP_READTIMEOUT"`
 			WriteTimeout    time.Duration `mapstructure:"APP_WRITETIMEOUT"`
 			ShutdownTimeout time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
@@ -59,6 +61,14 @@ func run() error {
 	}
 	defer db.Close()
 
+	// start debug service
+	go func() {
+		log.Printf("Debug service listening on %s", cfg.Web.Debug)
+		err := http.ListenAndServe(cfg.Web.Debug, nil)
+		log.Printf("Debug service stopped %v", err)
+	}()
+
+	// start API service
 	api := http.Server{
 		Addr:         cfg.Web.Address,
 		Handler:      handler.Service(log, db),
@@ -69,7 +79,7 @@ func run() error {
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		log.Printf("Server listening on %s", api.Addr)
+		log.Printf("API service listening on %s", api.Addr)
 		serverErrors <- api.ListenAndServe()
 	}()
 

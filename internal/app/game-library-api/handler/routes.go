@@ -5,12 +5,15 @@ import (
 	"net/http"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/jmoiron/sqlx"
 )
 
 // Service constructs that contains all API routes
 func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
-	app := web.NewApp(logger)
+	app := web.NewApp(logger, middleware.Errors(logger))
+
+	//app.UseMiddleware()
 
 	c := Check{
 		DB: db,

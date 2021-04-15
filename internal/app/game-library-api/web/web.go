@@ -14,28 +14,28 @@ type Handler func(*gin.Context) error
 type App struct {
 	router *gin.Engine
 	log    *log.Logger
+	mw     []Middleware
 }
 
 // NewApp constructs entrypoint for web
-func NewApp(logger *log.Logger) *App {
+func NewApp(logger *log.Logger, mw ...Middleware) *App {
 	return &App{
 		router: gin.Default(),
 		log:    logger,
+		mw:     mw,
 	}
 }
 
 // Handle connect method and pattern to application handler
 func (a *App) Handle(method, pattern string, h Handler) {
-	fn := func(c *gin.Context) {
-		err := h(c)
-		if err != nil {
-			a.log.Printf("ERROR: %v", err)
 
-			err = RespondError(c, err)
-			if err != nil {
-				a.log.Printf("ERROR: %v", err)
-			}
+	h = chainMiddleware(h, a.mw)
+
+	fn := func(c *gin.Context) {
+		if err := h(c); err != nil {
+			a.log.Printf("ERROR: Unhandled error %v", err)
 		}
+
 	}
 
 	a.router.Handle(method, pattern, fn)

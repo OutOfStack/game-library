@@ -11,9 +11,7 @@ import (
 
 // Service constructs that contains all API routes
 func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
-	app := web.NewApp(logger, middleware.Errors(logger))
-
-	//app.UseMiddleware()
+	app := web.NewApp(logger, middleware.Errors(logger), middleware.Metrics())
 
 	c := Check{
 		DB: db,

@@ -13,3 +13,7 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+.vscode/targets.log
+.vscode/dryrun.log
+.vscode/configurationCache.log
+.vscode/settings.json

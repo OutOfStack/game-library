@@ -100,7 +100,7 @@ func (g *Game) ListSales(c *gin.Context) error {
 	return web.Respond(c, list, http.StatusOK)
 }
 
-// Update
+// Update updates specified game
 func (g *Game) Update(c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
@@ -121,6 +121,7 @@ func (g *Game) Update(c *gin.Context) error {
 	return web.Respond(c, nil, http.StatusNoContent)
 }
 
+// Delete removes specified game
 func (g *Game) Delete(c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {

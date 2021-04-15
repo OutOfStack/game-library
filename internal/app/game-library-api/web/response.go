@@ -29,7 +29,7 @@ func Respond(c *gin.Context, val interface{}, statusCode int) error {
 	return nil
 }
 
-// RespondError handles otugoing errors
+// RespondError handles outgoing errors
 func RespondError(c *gin.Context, err error) error {
 	webErr, ok := errors.Cause(err).(*Error)
 	if ok {

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Respond marshals a value to JSON and sends it to client
-func Respond(c *gin.Context, val interface{}, statusCode int) error {
+func Respond(ctx context.Context, c *gin.Context, val interface{}, statusCode int) error {
 	if statusCode == http.StatusNoContent {
 		c.Writer.WriteHeader(statusCode)
 		return nil
@@ -30,14 +31,14 @@ func Respond(c *gin.Context, val interface{}, statusCode int) error {
 }
 
 // RespondError handles outgoing errors
-func RespondError(c *gin.Context, err error) error {
+func RespondError(ctx context.Context, c *gin.Context, err error) error {
 	webErr, ok := errors.Cause(err).(*Error)
 	if ok {
 		response := ErrorResponse{
 			Error:  webErr.Err.Error(),
 			Fields: webErr.Fields,
 		}
-		if err = Respond(c, response, webErr.Status); err != nil {
+		if err = Respond(ctx, c, response, webErr.Status); err != nil {
 			return err
 		}
 		return nil
@@ -46,7 +47,7 @@ func RespondError(c *gin.Context, err error) error {
 	response := ErrorResponse{
 		Error: http.StatusText(http.StatusInternalServerError),
 	}
-	if err := Respond(c, response, http.StatusInternalServerError); err != nil {
+	if err := Respond(ctx, c, response, http.StatusInternalServerError); err != nil {
 		return err
 	}
 	return nil

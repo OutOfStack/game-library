@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -8,7 +9,7 @@ import (
 )
 
 // Handler is a signature for all handler funcions
-type Handler func(*gin.Context) error
+type Handler func(context.Context, *gin.Context) error
 
 // App abstacts specific web framework
 type App struct {
@@ -31,11 +32,12 @@ func (a *App) Handle(method, pattern string, h Handler) {
 
 	h = chainMiddleware(h, a.mw)
 
+	ctx := context.Background()
+
 	fn := func(c *gin.Context) {
-		if err := h(c); err != nil {
+		if err := h(ctx, c); err != nil {
 			a.log.Printf("ERROR: Unhandled error %v", err)
 		}
-
 	}
 
 	a.router.Handle(method, pattern, fn)

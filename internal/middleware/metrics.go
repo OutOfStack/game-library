@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"expvar"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
@@ -20,8 +21,8 @@ func Metrics() web.Middleware {
 
 	f := func(before web.Handler) web.Handler {
 
-		h := func(c *gin.Context) error {
-			err := before(c)
+		h := func(ctx context.Context, c *gin.Context) error {
+			err := before(ctx, c)
 			m.req.Add(1)
 
 			if err != nil {

@@ -139,7 +139,6 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 		count, err := res.RowsAffected()
 		if err != nil {
 			return errors.Wrap(err, "deleting product count")
-
 		} else if count == 0 {
 			return ErrNotFound
 		}

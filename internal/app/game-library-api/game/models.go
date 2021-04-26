@@ -16,21 +16,20 @@ type Game struct {
 }
 
 // NewGame represents game data we receive from user
-// TODO: change releaseDate type to time.TIme (requires custom JSON marsaller and unmarhsller)
 type NewGame struct {
 	Name        string         `json:"name" validate:"required"`
 	Developer   string         `json:"developer" validate:"required"`
-	ReleaseDate string         `json:"releaseDate"`
+	ReleaseDate string         `json:"releaseDate" validate:"date"`
 	Price       float32        `json:"price" validate:"gte=0"`
 	Genre       pq.StringArray `json:"genre"`
 }
 
-// UpdtaeGame represents model for updating information about game.
+// UpdateGame represents model for updating information about game.
 // All fields are optional
 type UpdateGame struct {
 	Name        *string         `json:"name"`
 	Developer   *string         `json:"developer" validate:"omitempty"`
-	ReleaseDate *string         `json:"releaseDate" validate:"omitempty"`
+	ReleaseDate *string         `json:"releaseDate" validate:"omitempty,date"`
 	Price       *float32        `json:"price" validate:"gte=0"`
 	Genre       *pq.StringArray `json:"genre" validate:"omitempty"`
 }
@@ -48,7 +47,7 @@ type Sale struct {
 // NewSale represents sale data we receive from user
 type NewSale struct {
 	Name            string `json:"name"`
-	BeginDate       string `json:"beginDate" validate:"required"`
-	EndDate         string `json:"endDate" validate:"required"`
+	BeginDate       string `json:"beginDate" validate:"required,date"`
+	EndDate         string `json:"endDate" validate:"required,date"`
 	DiscountPercent uint8  `json:"discountPercent" validate:"gt=0,lte=100"`
 }

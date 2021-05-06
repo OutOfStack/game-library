@@ -9,6 +9,7 @@
     make migrate    applies all migrations to database
     make rollback   rollbacks one last migration on database
     make seed       seeds test data to database
+    make swaggen    generates documentation for swagger UI
 
 
 ### migrate CLI

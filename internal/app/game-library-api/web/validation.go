@@ -1,8 +1,7 @@
 package web
 
 import (
-	"regexp"
-
+	"cloud.google.com/go/civil"
 	en "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -39,9 +38,8 @@ func validateDate(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	regex, _ := regexp.Compile(`\d{4}-\d{2}-\d{2}`)
-	result := regex.MatchString(date)
-	return result
+	_, err := civil.ParseDate(date)
+	return err == nil
 }
 
 // addTranslation adds error message for specified tag

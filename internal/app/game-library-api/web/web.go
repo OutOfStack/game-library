@@ -11,6 +11,14 @@ import (
 // Handler is a signature for all handler funcions
 type Handler func(context.Context, *gin.Context) error
 
+// WrapGinHandlerFunc wraps gin.HandlerFunc and returns Handler
+func WrapGinHandlerFunc(ghf gin.HandlerFunc) Handler {
+	return func(ctx context.Context, c *gin.Context) error {
+		ghf(c)
+		return nil
+	}
+}
+
 // App abstacts specific web framework
 type App struct {
 	router *gin.Engine

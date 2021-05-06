@@ -23,4 +23,7 @@ rollback:
 seed:
 	go run ./cmd/game-library-manage/. seed
 
-.PHONY: build run runpg createdb dropdb migrate rollback seed
+swaggen:
+	./tools/swag init -g cmd/game-library-api/main.go
+
+.PHONY: build run runpg createdb dropdb migrate rollback seed swaggen

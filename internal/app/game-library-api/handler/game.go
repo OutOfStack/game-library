@@ -19,7 +19,14 @@ type Game struct {
 	Log *log.Logger
 }
 
-// List returns all games
+// List godoc
+// @Summary List all games
+// @Description returns all games
+// @ID get-all-games
+// @Produce json
+// @Success 200 {array} game.GetGame
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games [get]
 func (g *Game) List(ctx context.Context, c *gin.Context) error {
 	list, err := repo.List(c.Request.Context(), g.DB)
 
@@ -30,7 +37,17 @@ func (g *Game) List(ctx context.Context, c *gin.Context) error {
 	return web.Respond(ctx, c, list, http.StatusOK)
 }
 
-// Retrieve returns a game
+// Retrieve godoc
+// @Summary Show a game
+// @Description returns game by ID
+// @ID get-game-by-id
+// @Produce json
+// @Param id path int64 true "Game ID"
+// @Success 200 {object} game.GetGame
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 404 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/{id} [get]
 func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
@@ -49,7 +66,17 @@ func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
 	return web.Respond(ctx, c, game, http.StatusOK)
 }
 
-// Create decodes JSON and creates a new Game
+// Create godoc
+// @Summary Create a game
+// @Description creates new game
+// @ID create-game
+// @Accept  json
+// @Produce  json
+// @Param  game body game.NewGame true "create game"
+// @Success 200 {object} game.GetGame
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games [post]
 func (g *Game) Create(ctx context.Context, c *gin.Context) error {
 	var ng repo.NewGame
 	err := web.Decode(c, &ng)
@@ -65,43 +92,19 @@ func (g *Game) Create(ctx context.Context, c *gin.Context) error {
 	return web.Respond(ctx, c, game, http.StatusCreated)
 }
 
-// AddSale creates new sale for specified game
-func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
-	id, err := getIdParam(c)
-	if err != nil {
-		return err
-	}
-
-	var ns repo.NewSale
-	err = web.Decode(c, &ns)
-	if err != nil {
-		return errors.Wrap(err, "decoding new sale")
-	}
-	sale, err := repo.AddSale(c.Request.Context(), g.DB, ns, id)
-
-	if err != nil {
-		return errors.Wrap(err, "adding new sale")
-	}
-
-	return web.Respond(ctx, c, sale, http.StatusCreated)
-}
-
-// ListSales returns sales for specified game
-func (g *Game) ListSales(ctx context.Context, c *gin.Context) error {
-	id, err := getIdParam(c)
-	if err != nil {
-		return err
-	}
-
-	list, err := repo.ListSales(c.Request.Context(), g.DB, id)
-	if err != nil {
-		return errors.Wrap(err, "getting sales list")
-	}
-
-	return web.Respond(ctx, c, list, http.StatusOK)
-}
-
-// Update updates specified game
+// Update godoc
+// @Summary Update game
+// @Description updates game by ID
+// @ID update-game-by-id
+// @Accept  json
+// @Produce  json
+// @Param  id path int64 true "Game ID"
+// @Param  game body game.UpdateGame true "update game"
+// @Success 200 {object} game.GetGame
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 404 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/{id} [patch]
 func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
@@ -111,7 +114,7 @@ func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 	if err := web.Decode(c, &update); err != nil {
 		return errors.Wrap(err, "decoding game update")
 	}
-	err = repo.Update(c.Request.Context(), g.DB, id, update)
+	game, err := repo.Update(c.Request.Context(), g.DB, id, update)
 	if err != nil {
 		if errors.Is(err, repo.ErrNotFound) {
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -119,10 +122,21 @@ func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 		return errors.Wrapf(err, "updating game with id %q", id)
 	}
 
-	return web.Respond(ctx, c, nil, http.StatusNoContent)
+	return web.Respond(ctx, c, game, http.StatusOK)
 }
 
-// Delete removes specified game
+// Delete godoc
+// @Summary Delete a game
+// @Description deletes game by ID
+// @ID delete-game-by-id
+// @Accept  json
+// @Produce  json
+// @Param  id path int64 true "Game ID"
+// @Success 204
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 404 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/{id} [delete]
 func (g *Game) Delete(ctx context.Context, c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
@@ -138,6 +152,66 @@ func (g *Game) Delete(ctx context.Context, c *gin.Context) error {
 	}
 
 	return web.Respond(ctx, c, nil, http.StatusNoContent)
+}
+
+// AddSale godoc
+// @Summary Create a sale
+// @Description Creates new sale
+// @ID create-sale
+// @Accept  json
+// @Produce  json
+// @Param id path int64 true "Game ID"
+// @Param  sale body game.NewSale true "create sale"
+// @Success 200 {object} game.GetSale
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 404 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/{id}/sales [post]
+func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
+	id, err := getIdParam(c)
+	if err != nil {
+		return err
+	}
+
+	var ns repo.NewSale
+	err = web.Decode(c, &ns)
+	if err != nil {
+		return errors.Wrap(err, "decoding new sale")
+	}
+
+	sale, err := repo.AddSale(c.Request.Context(), g.DB, ns, id)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return web.NewRequestError(err, http.StatusNotFound)
+		}
+		return errors.Wrapf(err, "adding new sale for gameID %q", id)
+	}
+
+	return web.Respond(ctx, c, sale, http.StatusCreated)
+}
+
+// ListSales godoc
+// @Summary List all sales
+// @Description Returns all sales
+// @ID get-sales-for-game
+// @Produce json
+// @Param id path int64 true "Game ID"
+// @Success 200 {array} game.GetSale
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/{id}/sales [get]
+func (g *Game) ListSales(ctx context.Context, c *gin.Context) error {
+	id, err := getIdParam(c)
+	if err != nil {
+		return err
+	}
+
+	list, err := repo.ListSales(c.Request.Context(), g.DB, id)
+	if err != nil {
+		return errors.Wrap(err, "getting sales list")
+	}
+
+	return web.Respond(ctx, c, list, http.StatusOK)
 }
 
 func getIdParam(c *gin.Context) (int64, error) {

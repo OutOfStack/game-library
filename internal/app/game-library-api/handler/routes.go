@@ -4,9 +4,12 @@ import (
 	"log"
 	"net/http"
 
+	_ "github.com/OutOfStack/game-library/docs"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/jmoiron/sqlx"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // Service constructs that contains all API routes
@@ -31,6 +34,8 @@ func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
 
 	app.Handle(http.MethodPost, "/api/games/:id/sales", g.AddSale)
 	app.Handle(http.MethodGet, "api/games/:id/sales", g.ListSales)
+
+	app.Handle(http.MethodGet, "/swagger/*any", web.WrapGinHandlerFunc(ginSwagger.WrapHandler(swaggerFiles.Handler)))
 
 	return app
 }

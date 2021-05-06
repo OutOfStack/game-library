@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"cloud.google.com/go/civil"
-	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +16,7 @@ var (
 )
 
 // List returns all games
-func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
+func List(ctx context.Context, db *sqlx.DB) ([]GetGame, error) {
 	list := []Game{}
 
 	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
@@ -33,11 +32,16 @@ func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 		return nil, err
 	}
 
-	return list, nil
+	getGames := []GetGame{}
+	for _, g := range list {
+		getGames = append(getGames, *g.mapToGetGame())
+	}
+
+	return getGames, nil
 }
 
 // Retrieve returns a single game
-func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
+func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*GetGame, error) {
 	var g Game
 
 	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
@@ -58,42 +62,34 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 		return nil, err
 	}
 
-	return &g, nil
+	getGame := g.mapToGetGame()
+
+	return getGame, nil
 }
 
 // Create creates a new game
-func Create(ctx context.Context, db *sqlx.DB, ng NewGame) (*Game, error) {
-	date, err := civil.ParseDate(ng.ReleaseDate)
-	if err != nil {
-		return nil, fmt.Errorf("parsing releaseDate: %w", err)
-	}
+func Create(ctx context.Context, db *sqlx.DB, ng NewGame) (*GetGame, error) {
 	const q = `insert into games
 	(name, developer, release_date, price, genre)
 	values ($1, $2, $3, $4, $5)
 	returning id`
 
 	var lastInsertID int64
-	err = db.QueryRowContext(ctx, q, ng.Name, ng.Developer, ng.ReleaseDate, ng.Price, ng.Genre).Scan(&lastInsertID)
+	err := db.QueryRowContext(ctx, q, ng.Name, ng.Developer, ng.ReleaseDate, ng.Price, pq.StringArray(ng.Genre)).Scan(&lastInsertID)
 	if err != nil {
 		return nil, fmt.Errorf("inserting game %v: %w", ng, err)
 	}
 
-	g := Game{
-		ID:          lastInsertID,
-		Name:        ng.Name,
-		Developer:   ng.Developer,
-		ReleaseDate: types.Date(date),
-		Genre:       ng.Genre,
-	}
+	getGame := ng.mapToGetGame(lastInsertID)
 
-	return &g, nil
+	return getGame, nil
 }
 
 // Update modifes information about a game
-func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) error {
+func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*GetGame, error) {
 	g, err := Retrieve(ctx, db, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if update.Name != nil {
@@ -103,11 +99,7 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) error
 		g.Developer = *update.Developer
 	}
 	if update.ReleaseDate != nil {
-		date, err := civil.ParseDate(*update.ReleaseDate)
-		if err != nil {
-			return errors.Wrap(err, "parsing releaseDate")
-		}
-		g.ReleaseDate = types.Date(date)
+		g.ReleaseDate = *update.ReleaseDate
 	}
 	if update.Price != nil {
 		g.Price = *update.Price
@@ -122,11 +114,11 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) error
 	 price = $4,
 	 genre = $5
 	 where id = $6;`
-	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate.String(), g.Price, g.Genre, id)
+	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate, g.Price, pq.StringArray(g.Genre), id)
 	if err != nil {
-		return errors.Wrap(err, "updating product")
+		return nil, errors.Wrap(err, "updating product")
 	}
-	return nil
+	return g, nil
 }
 
 // Delete deletes specified game

@@ -1,0 +1,318 @@
+basePath: /api
+definitions:
+  game.GetGame:
+    properties:
+      developer:
+        type: string
+      genre:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      releaseDate:
+        type: string
+    type: object
+  game.GetSale:
+    properties:
+      beginDate:
+        type: string
+      discountPercent:
+        type: integer
+      endDate:
+        type: string
+      gameId:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  game.NewGame:
+    properties:
+      developer:
+        type: string
+      genre:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      releaseDate:
+        type: string
+    required:
+    - developer
+    - name
+    type: object
+  game.NewSale:
+    properties:
+      beginDate:
+        type: string
+      discountPercent:
+        type: integer
+      endDate:
+        type: string
+      name:
+        type: string
+    required:
+    - beginDate
+    - endDate
+    type: object
+  game.UpdateGame:
+    properties:
+      developer:
+        type: string
+      genre:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      releaseDate:
+        type: string
+    type: object
+  web.ErrorResponse:
+    properties:
+      error:
+        type: string
+      fields:
+        items:
+          $ref: '#/definitions/web.FieldError'
+        type: array
+    type: object
+  web.FieldError:
+    properties:
+      error:
+        type: string
+      field:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API for game library service
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Game library API
+  version: "0.1"
+paths:
+  /games:
+    get:
+      description: returns all games
+      operationId: get-all-games
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/game.GetGame'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: List all games
+    post:
+      consumes:
+      - application/json
+      description: creates new game
+      operationId: create-game
+      parameters:
+      - description: create game
+        in: body
+        name: game
+        required: true
+        schema:
+          $ref: '#/definitions/game.NewGame'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.GetGame'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Create a game
+  /games/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: deletes game by ID
+      operationId: delete-game-by-id
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Delete a game
+    get:
+      description: returns game by ID
+      operationId: get-game-by-id
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.GetGame'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Show a game
+    patch:
+      consumes:
+      - application/json
+      description: updates game by ID
+      operationId: update-game-by-id
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: update game
+        in: body
+        name: game
+        required: true
+        schema:
+          $ref: '#/definitions/game.UpdateGame'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.GetGame'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Update game
+  /games/{id}/sales:
+    get:
+      description: Returns all sales
+      operationId: get-sales-for-game
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/game.GetSale'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: List all sales
+    post:
+      consumes:
+      - application/json
+      description: Creates new sale
+      operationId: create-sale
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: create sale
+        in: body
+        name: sale
+        required: true
+        schema:
+          $ref: '#/definitions/game.NewSale'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.GetSale'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Create a sale
+schemes:
+- http
+swagger: "2.0"

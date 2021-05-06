@@ -4,21 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"cloud.google.com/go/civil"
-	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
 
 // AddSale records information about game being on sale
-func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, gameID int64) (*Sale, error) {
-	beginDate, err := civil.ParseDate(ns.BeginDate)
+func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, gameID int64) (*GetSale, error) {
+	_, err := Retrieve(ctx, db, gameID)
 	if err != nil {
-		return nil, fmt.Errorf("parsing beginDate: %w", err)
-	}
-	endDate, err := civil.ParseDate(ns.EndDate)
-	if err != nil {
-		return nil, fmt.Errorf("parsing endDate: %w", err)
+		return nil, err
 	}
 
 	const q = `insert into sales 
@@ -32,20 +26,13 @@ func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, gameID int64) (*Sale,
 		return nil, fmt.Errorf("inserting sale %v: %w", ns, err)
 	}
 
-	s := Sale{
-		ID:              lastInsertID,
-		Name:            ns.Name,
-		GameID:          gameID,
-		BeginDate:       types.Date(beginDate),
-		EndDate:         types.Date(endDate),
-		DiscountPercent: ns.DiscountPercent,
-	}
+	getSale := ns.mapToGetSale(lastInsertID, gameID)
 
-	return &s, nil
+	return getSale, nil
 }
 
 // ListSales returns all sales for specified game
-func ListSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]Sale, error) {
+func ListSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GetSale, error) {
 	sales := []Sale{}
 
 	const q = `select id, name, game_id, begin_date, end_date, discount_percent
@@ -55,5 +42,10 @@ func ListSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]Sale, error) {
 		return nil, errors.Wrap(err, "selecting sales")
 	}
 
-	return sales, nil
+	getSales := []GetSale{}
+	for _, s := range sales {
+		getSales = append(getSales, *s.mapToGetSale())
+	}
+
+	return getSales, nil
 }

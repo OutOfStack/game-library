@@ -17,6 +17,18 @@ import (
 	"github.com/OutOfStack/game-library/internal/pkg/util"
 )
 
+// @title Game library API
+// @version 0.1
+// @description API for game library service
+// @termsOfService http://swagger.io/terms/
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8000
+// @BasePath /api
+// @query.collection.format multi
+// @schemes http
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
@@ -47,8 +59,6 @@ func run() error {
 	if err := util.LoadConfig(".", "app", "env", &cfg); err != nil {
 		log.Fatalf("error parsing config: %v", err)
 	}
-
-	//fmt.Printf("%+v\n", cfg)
 
 	db, err := database.Open(database.Config{
 		Host:       cfg.DB.Host,

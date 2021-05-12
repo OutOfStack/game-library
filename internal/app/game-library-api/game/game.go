@@ -21,11 +21,12 @@ func List(ctx context.Context, db *sqlx.DB) ([]GetGame, error) {
 
 	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
 	case 
-		when CURRENT_DATE >= max(s.begin_date) and CURRENT_DATE <= max(s.end_date) then g.price*((100 - max(s.discount_percent))/100.0)
+		when CURRENT_DATE >= max(s.begin_date) and CURRENT_DATE <= max(s.end_date) then g.price*((100 - max(sg.discount_percent))/100.0)
 		else price
 	end as price
 	from games g
-	left join sales s on s.game_id = g.id
+	left join sales_games sg on sg.game_id = g.id
+	inner join sales s on s.id = sg.sale_id
 	group by g.id, g.name`
 
 	if err := db.SelectContext(ctx, &list, q); err != nil {
@@ -45,12 +46,13 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*GetGame, error) {
 	var g Game
 
 	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
-		case 
-			when CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date then g.price*((100 - s.discount_percent)/100.0)
+		case
+			when CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date then g.price*((100 - sg.discount_percent)/100.0)
 			else price
 		end as price
 		from games g
-		left join sales s on s.game_id = g.id
+		left join sales_games sg on sg.game_id = g.id
+		left join sales s on s.id = sg.sale_id
 		where g.id = $1
 		order by price asc
 		limit 1`
@@ -116,7 +118,7 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Get
 	 where id = $6;`
 	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate, g.Price, pq.StringArray(g.Genre), id)
 	if err != nil {
-		return nil, errors.Wrap(err, "updating product")
+		return nil, errors.Wrap(err, "updating game")
 	}
 	return g, nil
 }
@@ -126,14 +128,59 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 	const q = `delete from games where id = $1;`
 	res, err := db.ExecContext(ctx, q, id)
 	if err != nil {
-		return errors.Wrap(err, "deleting product")
+		return errors.Wrap(err, "deleting game")
 	} else {
 		count, err := res.RowsAffected()
 		if err != nil {
-			return errors.Wrap(err, "deleting product count")
+			return errors.Wrap(err, "deleting game. count")
 		} else if count == 0 {
 			return ErrNotFound
 		}
 	}
 	return nil
+}
+
+// AddGameOnSale connects game with a sale
+func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, ngs NewGameSale) (*GetGameSale, error) {
+	g, err := Retrieve(ctx, db, gameID)
+	if err != nil {
+		return nil, err
+	}
+	s, err := RetrieveSale(ctx, db, ngs.SaleID)
+	if err != nil {
+		return nil, err
+	}
+	const q = `insert into sales_games
+	(game_id, sale_id, discount_percent)
+	values ($1, $2, $3)`
+
+	_, err = db.ExecContext(ctx, q, g.ID, s.ID, ngs.DiscountPercent)
+	if err != nil {
+		return nil, fmt.Errorf("adding game with id %q on sale %v: %w", gameID, ngs, err)
+	}
+
+	getGameSale := ngs.mapToGetGameSale(s.Name, gameID)
+
+	return getGameSale, nil
+}
+
+// ListGameSales returns all sales for specified game
+func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GetGameSale, error) {
+	gameSales := []GameSale{}
+
+	const q = `select sg.game_id, sg.sale_id, s.name as sale, discount_percent
+	from sales_games sg
+	left join sales s on s.id = sg.sale_id
+	left join games g on g.id = sg.game_id
+	where sg.game_id = $1`
+	if err := db.SelectContext(ctx, &gameSales, q, gameID); err != nil {
+		return nil, errors.Wrapf(err, "selecting sales of game with id %q", gameID)
+	}
+
+	getGameSales := []GetGameSale{}
+	for _, gs := range gameSales {
+		getGameSales = append(getGameSales, *gs.mapToGetGameSale())
+	}
+
+	return getGameSales, nil
 }

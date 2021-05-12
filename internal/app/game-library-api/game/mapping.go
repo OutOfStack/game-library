@@ -24,22 +24,36 @@ func (ng *NewGame) mapToGetGame(id int64) *GetGame {
 
 func (s *Sale) mapToGetSale() *GetSale {
 	return &GetSale{
-		ID:              s.ID,
-		Name:            s.Name,
-		GameID:          s.GameID,
-		BeginDate:       s.BeginDate.String(),
-		EndDate:         s.EndDate.String(),
-		DiscountPercent: s.DiscountPercent,
+		ID:        s.ID,
+		Name:      s.Name,
+		BeginDate: s.BeginDate.String(),
+		EndDate:   s.EndDate.String(),
 	}
 }
 
-func (ns *NewSale) mapToGetSale(id, gameID int64) *GetSale {
+func (ns *NewSale) mapToGetSale(id int64) *GetSale {
 	return &GetSale{
-		ID:              id,
-		Name:            ns.Name,
-		GameID:          gameID,
-		BeginDate:       ns.BeginDate,
-		EndDate:         ns.EndDate,
-		DiscountPercent: ns.DiscountPercent,
+		ID:        id,
+		Name:      ns.Name,
+		BeginDate: ns.BeginDate,
+		EndDate:   ns.EndDate,
+	}
+}
+
+func (gs *GameSale) mapToGetGameSale() *GetGameSale {
+	return &GetGameSale{
+		GameID:          gs.GameID,
+		SaleID:          gs.SaleID,
+		Sale:            gs.Sale,
+		DiscountPercent: gs.DiscountPercent,
+	}
+}
+
+func (ngs *NewGameSale) mapToGetGameSale(sale string, gameId int64) *GetGameSale {
+	return &GetGameSale{
+		GameID:          gameId,
+		SaleID:          ngs.SaleID,
+		Sale:            sale,
+		DiscountPercent: ngs.DiscountPercent,
 	}
 }

@@ -42,7 +42,7 @@ func (g *Game) List(ctx context.Context, c *gin.Context) error {
 // @Description returns game by ID
 // @ID get-game-by-id
 // @Produce json
-// @Param id path int64 true "Game ID"
+// @Param 	id  path int64 true "Game ID"
 // @Success 200 {object} game.GetGame
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
@@ -71,9 +71,9 @@ func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
 // @Description creates new game
 // @ID create-game
 // @Accept  json
-// @Produce  json
-// @Param  game body game.NewGame true "create game"
-// @Success 200 {object} game.GetGame
+// @Produce json
+// @Param   game body game.NewGame true "create game"
+// @Success 201 {object} game.GetGame
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
@@ -97,9 +97,9 @@ func (g *Game) Create(ctx context.Context, c *gin.Context) error {
 // @Description updates game by ID
 // @ID update-game-by-id
 // @Accept  json
-// @Produce  json
-// @Param  id path int64 true "Game ID"
-// @Param  game body game.UpdateGame true "update game"
+// @Produce json
+// @Param  	id   path int64 			true "Game ID"
+// @Param  	game body game.UpdateGame 	true "update game"
 // @Success 200 {object} game.GetGame
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
@@ -130,8 +130,8 @@ func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 // @Description deletes game by ID
 // @ID delete-game-by-id
 // @Accept  json
-// @Produce  json
-// @Param  id path int64 true "Game ID"
+// @Produce json
+// @Param  	id path int64 true "Game ID"
 // @Success 204
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
@@ -154,37 +154,92 @@ func (g *Game) Delete(ctx context.Context, c *gin.Context) error {
 	return web.Respond(ctx, c, nil, http.StatusNoContent)
 }
 
-// AddSale godoc
-// @Summary Create a sale
-// @Description Creates new sale
-// @ID create-sale
+// AddGameOnSale godoc
+// @Summary Adds game on sale
+// @Description adds game on sale
+// @ID add-game-on-sale
 // @Accept  json
-// @Produce  json
-// @Param id path int64 true "Game ID"
-// @Param  sale body game.NewSale true "create sale"
-// @Success 200 {object} game.GetSale
+// @Produce json
+// @Param  id 		path int64 				true "Game ID"
+// @Param  gamesale body game.NewGameSale 	true "game sale"
+// @Success 200 {object} game.GetGameSale
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/sales [post]
-func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
+func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
+	id, err := getIdParam(c)
+	if err != nil {
+		return err
+	}
+	var gamesale repo.NewGameSale
+	if err := web.Decode(c, &gamesale); err != nil {
+		return errors.Wrap(err, "decoding game sale")
+	}
+	gameSale, err := repo.AddGameOnSale(c.Request.Context(), g.DB, id, gamesale)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return web.NewRequestError(err, http.StatusNotFound)
+		}
+		return errors.Wrapf(err, "add game with id %v on sale", id)
+	}
+
+	return web.Respond(ctx, c, gameSale, http.StatusOK)
+}
+
+// ListGameSales godoc
+// @Summary Lists game sales
+// @Description returns sales for specified game
+// @ID get-game-sales-by-id
+// @Produce json
+// @Param 	id  path int64 true "Game ID"
+// @Success 200 {array}  game.GetGameSale
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 404 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/{id}/sales [get]
+func (g *Game) ListGameSales(ctx context.Context, c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
 
-	var ns repo.NewSale
-	err = web.Decode(c, &ns)
-	if err != nil {
-		return errors.Wrap(err, "decoding new sale")
-	}
+	gameSales, err := repo.ListGameSales(c.Request.Context(), g.DB, id)
 
-	sale, err := repo.AddSale(c.Request.Context(), g.DB, ns, id)
 	if err != nil {
 		if errors.Is(err, repo.ErrNotFound) {
 			return web.NewRequestError(err, http.StatusNotFound)
 		}
-		return errors.Wrapf(err, "adding new sale for gameID %q", id)
+		return errors.Wrapf(err, "retrieving sales for game with id %q", id)
+	}
+
+	return web.Respond(ctx, c, gameSales, http.StatusOK)
+}
+
+// AddSale godoc
+// @Summary Create a sale
+// @Description Creates new sale
+// @ID create-sale
+// @Accept  json
+// @Produce json
+// @Param  	sale body game.NewSale true "create sale"
+// @Success 201 {object} game.GetSale
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /sales [post]
+func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
+	var ns repo.NewSale
+	err := web.Decode(c, &ns)
+	if err != nil {
+		return errors.Wrap(err, "decoding new sale")
+	}
+
+	sale, err := repo.AddSale(c.Request.Context(), g.DB, ns)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return web.NewRequestError(err, http.StatusNotFound)
+		}
+		return errors.Wrapf(err, "adding new sale")
 	}
 
 	return web.Respond(ctx, c, sale, http.StatusCreated)
@@ -193,20 +248,13 @@ func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
 // ListSales godoc
 // @Summary List all sales
 // @Description Returns all sales
-// @ID get-sales-for-game
+// @ID get-sales
 // @Produce json
-// @Param id path int64 true "Game ID"
-// @Success 200 {array} game.GetSale
-// @Failure 400 {object} web.ErrorResponse
+// @Success 200 {array}  game.GetSale
 // @Failure 500 {object} web.ErrorResponse
-// @Router /games/{id}/sales [get]
+// @Router /sales [get]
 func (g *Game) ListSales(ctx context.Context, c *gin.Context) error {
-	id, err := getIdParam(c)
-	if err != nil {
-		return err
-	}
-
-	list, err := repo.ListSales(c.Request.Context(), g.DB, id)
+	list, err := repo.ListSales(c.Request.Context(), g.DB)
 	if err != nil {
 		return errors.Wrap(err, "getting sales list")
 	}

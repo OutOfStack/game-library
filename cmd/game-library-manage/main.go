@@ -26,7 +26,7 @@ func main() {
 		log.Fatalf("error parsing config: %v", err)
 	}
 
-	fmt.Printf("%+v\n", cfg)
+	fmt.Printf("Host: %s, Name: %s, User: %s, RequireSSL: %v\n", cfg.DB.Host, cfg.DB.Name, cfg.DB.User, cfg.DB.RequireSSL)
 
 	db, err := database.Open(database.Config{
 		Host:       cfg.DB.Host,

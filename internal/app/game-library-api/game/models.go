@@ -46,28 +46,45 @@ type UpdateGame struct {
 
 // Sale respresents database sale model
 type Sale struct {
-	ID              int64      `db:"id"`
-	Name            string     `db:"name"`
-	GameID          int64      `db:"game_id"`
-	BeginDate       types.Date `db:"begin_date"`
-	EndDate         types.Date `db:"end_date"`
-	DiscountPercent uint8      `db:"discount_percent"`
+	ID        int64      `db:"id"`
+	Name      string     `db:"name"`
+	BeginDate types.Date `db:"begin_date"`
+	EndDate   types.Date `db:"end_date"`
 }
 
 // GetSale respresents sale get model
 type GetSale struct {
-	ID              int64  `json:"id"`
-	Name            string `json:"name"`
-	GameID          int64  `json:"gameId"`
-	BeginDate       string `json:"beginDate"`
-	EndDate         string `json:"endDate"`
-	DiscountPercent uint8  `json:"discountPercent"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	BeginDate string `json:"beginDate"`
+	EndDate   string `json:"endDate"`
 }
 
 // NewSale represents sale data we receive from user
 type NewSale struct {
-	Name            string `json:"name"`
-	BeginDate       string `json:"beginDate" validate:"required,date"`
-	EndDate         string `json:"endDate" validate:"required,date"`
-	DiscountPercent uint8  `json:"discountPercent" validate:"gt=0,lte=100"`
+	Name      string `json:"name"`
+	BeginDate string `json:"beginDate" validate:"required,date"`
+	EndDate   string `json:"endDate" validate:"required,date"`
+}
+
+// GameSale represents database GameSale model
+type GameSale struct {
+	SaleID          int64 `db:"sale_id"`
+	GameID          int64 `db:"game_id"`
+	Sale            string
+	DiscountPercent uint8 `db:"discount_percent"`
+}
+
+// NewGameSale represents data about game being on sale
+type NewGameSale struct {
+	SaleID          int64 `json:"saleId"`
+	DiscountPercent uint8 `json:"discountPercent" validate:"gt=0,lte=100"`
+}
+
+// GetGameSale represents game sale get model
+type GetGameSale struct {
+	GameID          int64  `json:"gameId"`
+	SaleID          int64  `json:"saleId"`
+	Sale            string `json:"sale"`
+	DiscountPercent uint8  `json:"discountPercent"`
 }

@@ -17,16 +17,23 @@ definitions:
       releaseDate:
         type: string
     type: object
+  game.GetGameSale:
+    properties:
+      discountPercent:
+        type: integer
+      gameId:
+        type: integer
+      sale:
+        type: string
+      saleId:
+        type: integer
+    type: object
   game.GetSale:
     properties:
       beginDate:
         type: string
-      discountPercent:
-        type: integer
       endDate:
         type: string
-      gameId:
-        type: integer
       id:
         type: integer
       name:
@@ -50,12 +57,17 @@ definitions:
     - developer
     - name
     type: object
+  game.NewGameSale:
+    properties:
+      discountPercent:
+        type: integer
+      saleId:
+        type: integer
+    type: object
   game.NewSale:
     properties:
       beginDate:
         type: string
-      discountPercent:
-        type: integer
       endDate:
         type: string
       name:
@@ -139,8 +151,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/game.GetGame'
         "400":
@@ -250,8 +262,8 @@ paths:
       summary: Update game
   /games/{id}/sales:
     get:
-      description: Returns all sales
-      operationId: get-sales-for-game
+      description: returns sales for specified game
+      operationId: get-game-sales-by-id
       parameters:
       - description: Game ID
         in: path
@@ -265,12 +277,71 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GetSale'
+              $ref: '#/definitions/game.GetGameSale'
             type: array
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Lists game sales
+    post:
+      consumes:
+      - application/json
+      description: adds game on sale
+      operationId: add-game-on-sale
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: game sale
+        in: body
+        name: gamesale
+        required: true
+        schema:
+          $ref: '#/definitions/game.NewGameSale'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.GetGameSale'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Adds game on sale
+  /sales:
+    get:
+      description: Returns all sales
+      operationId: get-sales
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/game.GetSale'
+            type: array
         "500":
           description: Internal Server Error
           schema:
@@ -282,11 +353,6 @@ paths:
       description: Creates new sale
       operationId: create-sale
       parameters:
-      - description: Game ID
-        in: path
-        name: id
-        required: true
-        type: integer
       - description: create sale
         in: body
         name: sale
@@ -296,16 +362,12 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/game.GetSale'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/web.ErrorResponse'
         "500":

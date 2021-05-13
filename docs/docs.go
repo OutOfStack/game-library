@@ -72,7 +72,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.NewGame"
+                            "$ref": "#/definitions/game.CreateGame"
                         }
                     }
                 ],
@@ -250,7 +250,7 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Adds game on sale",
+                "summary": "Add game on sale",
                 "operationId": "add-game-on-sale",
                 "parameters": [
                     {
@@ -266,7 +266,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.NewGameSale"
+                            "$ref": "#/definitions/game.CreateGameSale"
                         }
                     }
                 ],
@@ -341,7 +341,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.NewSale"
+                            "$ref": "#/definitions/game.CreateSale"
                         }
                     }
                 ],
@@ -373,7 +373,7 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Lists game sales",
+                "summary": "List game sales",
                 "operationId": "get-sales-by-game-id",
                 "parameters": [
                     {
@@ -417,6 +417,62 @@ var doc = `{
         }
     },
     "definitions": {
+        "game.CreateGame": {
+            "type": "object",
+            "required": [
+                "developer",
+                "name"
+            ],
+            "properties": {
+                "developer": {
+                    "type": "string"
+                },
+                "genre": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "releaseDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.CreateGameSale": {
+            "type": "object",
+            "properties": {
+                "discountPercent": {
+                    "type": "integer"
+                },
+                "saleId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.CreateSale": {
+            "type": "object",
+            "required": [
+                "beginDate",
+                "endDate"
+            ],
+            "properties": {
+                "beginDate": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "game.GetGame": {
             "type": "object",
             "properties": {
@@ -477,62 +533,6 @@ var doc = `{
                 },
                 "id": {
                     "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "game.NewGame": {
-            "type": "object",
-            "required": [
-                "developer",
-                "name"
-            ],
-            "properties": {
-                "developer": {
-                    "type": "string"
-                },
-                "genre": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "releaseDate": {
-                    "type": "string"
-                }
-            }
-        },
-        "game.NewGameSale": {
-            "type": "object",
-            "properties": {
-                "discountPercent": {
-                    "type": "integer"
-                },
-                "saleId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "game.NewSale": {
-            "type": "object",
-            "required": [
-                "beginDate",
-                "endDate"
-            ],
-            "properties": {
-                "beginDate": {
-                    "type": "string"
-                },
-                "endDate": {
-                    "type": "string"
                 },
                 "name": {
                     "type": "string"

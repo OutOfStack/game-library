@@ -16,24 +16,26 @@ import (
 // @ID create-sale
 // @Accept  json
 // @Produce json
-// @Param  	sale body game.NewSale true "create sale"
+// @Param  	sale body 	 game.CreateSale true "create sale"
 // @Success 201 {object} game.GetSale
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [post]
 func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
-	var ns repo.NewSale
-	err := web.Decode(c, &ns)
+	var cs repo.CreateSale
+	err := web.Decode(c, &cs)
 	if err != nil {
 		return errors.Wrap(err, "decoding new sale")
 	}
 
-	sale, err := repo.AddSale(c.Request.Context(), g.DB, ns)
+	saleId, err := repo.AddSale(c.Request.Context(), g.DB, cs)
 	if err != nil {
 		return errors.Wrapf(err, "adding new sale")
 	}
 
-	return web.Respond(ctx, c, sale, http.StatusCreated)
+	getSale := cs.MapToGetSale(saleId)
+
+	return web.Respond(ctx, c, getSale, http.StatusCreated)
 }
 
 // ListSales godoc
@@ -50,7 +52,12 @@ func (g *Game) ListSales(ctx context.Context, c *gin.Context) error {
 		return errors.Wrap(err, "getting sales list")
 	}
 
-	return web.Respond(ctx, c, list, http.StatusOK)
+	getSales := []repo.GetSale{}
+	for _, s := range list {
+		getSales = append(getSales, *s.MapToGetSale())
+	}
+
+	return web.Respond(ctx, c, getSales, http.StatusOK)
 }
 
 // ListGameSales godoc
@@ -78,5 +85,10 @@ func (g *Game) ListGameSales(ctx context.Context, c *gin.Context) error {
 		return errors.Wrapf(err, "retrieving sales for game")
 	}
 
-	return web.Respond(ctx, c, gameSales, http.StatusOK)
+	getGameSales := []repo.GetGameSale{}
+	for _, gs := range gameSales {
+		getGameSales = append(getGameSales, *gs.MapToGetGameSale())
+	}
+
+	return web.Respond(ctx, c, getGameSales, http.StatusOK)
 }

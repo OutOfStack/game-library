@@ -34,7 +34,12 @@ func (g *Game) List(ctx context.Context, c *gin.Context) error {
 		return errors.Wrap(err, "getting games list")
 	}
 
-	return web.Respond(ctx, c, list, http.StatusOK)
+	getGames := []repo.GetGame{}
+	for _, g := range list {
+		getGames = append(getGames, *g.MapToGetGame())
+	}
+
+	return web.Respond(ctx, c, getGames, http.StatusOK)
 }
 
 // Retrieve godoc
@@ -63,7 +68,9 @@ func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
 		return errors.Wrapf(err, "retrieving game with id %v", id)
 	}
 
-	return web.Respond(ctx, c, game, http.StatusOK)
+	getGame := game.MapToGetGame()
+
+	return web.Respond(ctx, c, getGame, http.StatusOK)
 }
 
 // Create godoc
@@ -72,24 +79,26 @@ func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
 // @ID create-game
 // @Accept  json
 // @Produce json
-// @Param   game body game.NewGame true "create game"
+// @Param   game body game.CreateGame true "create game"
 // @Success 201 {object} game.GetGame
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
 func (g *Game) Create(ctx context.Context, c *gin.Context) error {
-	var ng repo.NewGame
-	err := web.Decode(c, &ng)
+	var cg repo.CreateGame
+	err := web.Decode(c, &cg)
 	if err != nil {
 		return errors.Wrap(err, "decoding new game")
 	}
 
-	game, err := repo.Create(c.Request.Context(), g.DB, ng)
+	gameId, err := repo.Create(c.Request.Context(), g.DB, cg)
 	if err != nil {
 		return errors.Wrap(err, "adding new game")
 	}
 
-	return web.Respond(ctx, c, game, http.StatusCreated)
+	getGame := cg.MapToGetGame(gameId)
+
+	return web.Respond(ctx, c, getGame, http.StatusCreated)
 }
 
 // Update godoc
@@ -122,7 +131,9 @@ func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 		return errors.Wrapf(err, "updating game with id %v", id)
 	}
 
-	return web.Respond(ctx, c, game, http.StatusOK)
+	getGame := game.MapToGetGame()
+
+	return web.Respond(ctx, c, getGame, http.StatusOK)
 }
 
 // Delete godoc
@@ -160,8 +171,8 @@ func (g *Game) Delete(ctx context.Context, c *gin.Context) error {
 // @ID add-game-on-sale
 // @Accept  json
 // @Produce json
-// @Param  id 		path int64 				true "Game ID"
-// @Param  gamesale body game.NewGameSale 	true "game sale"
+// @Param  id 		path int64 				 true "Game ID"
+// @Param  gamesale body game.CreateGameSale true "game sale"
 // @Success 200 {object} game.GetGameSale
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
@@ -172,11 +183,11 @@ func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	var gamesale repo.NewGameSale
-	if err := web.Decode(c, &gamesale); err != nil {
+	var cgs repo.CreateGameSale
+	if err := web.Decode(c, &cgs); err != nil {
 		return errors.Wrap(err, "decoding game sale")
 	}
-	gameSale, err := repo.AddGameOnSale(c.Request.Context(), g.DB, id, gamesale)
+	gameSale, err := repo.AddGameOnSale(c.Request.Context(), g.DB, id, cgs)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -184,7 +195,9 @@ func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
 		return errors.Wrap(err, "add game on sale")
 	}
 
-	return web.Respond(ctx, c, gameSale, http.StatusOK)
+	getGameSale := gameSale.MapToGetGameSale()
+
+	return web.Respond(ctx, c, getGameSale, http.StatusOK)
 }
 
 func getIdParam(c *gin.Context) (int64, error) {

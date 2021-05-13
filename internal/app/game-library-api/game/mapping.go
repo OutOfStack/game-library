@@ -1,6 +1,7 @@
 package game
 
-func (g *Game) mapToGetGame() *GetGame {
+// MapToGetGame maps Game to GetGame
+func (g *Game) MapToGetGame() *GetGame {
 	return &GetGame{
 		ID:          g.ID,
 		Name:        g.Name,
@@ -11,7 +12,8 @@ func (g *Game) mapToGetGame() *GetGame {
 	}
 }
 
-func (ng *NewGame) mapToGetGame(id int64) *GetGame {
+// MapToGetGame maps NewGame to GetGame
+func (ng *CreateGame) MapToGetGame(id int64) *GetGame {
 	return &GetGame{
 		ID:          id,
 		Name:        ng.Name,
@@ -22,7 +24,8 @@ func (ng *NewGame) mapToGetGame(id int64) *GetGame {
 	}
 }
 
-func (s *Sale) mapToGetSale() *GetSale {
+// MapToGetSale maps Sale to GetSale
+func (s *Sale) MapToGetSale() *GetSale {
 	return &GetSale{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -31,7 +34,8 @@ func (s *Sale) mapToGetSale() *GetSale {
 	}
 }
 
-func (ns *NewSale) mapToGetSale(id int64) *GetSale {
+// MapToGetSale maps NewSale to GetSale
+func (ns *CreateSale) MapToGetSale(id int64) *GetSale {
 	return &GetSale{
 		ID:        id,
 		Name:      ns.Name,
@@ -40,7 +44,8 @@ func (ns *NewSale) mapToGetSale(id int64) *GetSale {
 	}
 }
 
-func (gs *GameSale) mapToGetGameSale() *GetGameSale {
+// MapToGetGameSale maps GameSale to GetGameSale
+func (gs *GameSale) MapToGetGameSale() *GetGameSale {
 	return &GetGameSale{
 		GameID:          gs.GameID,
 		SaleID:          gs.SaleID,
@@ -51,13 +56,14 @@ func (gs *GameSale) mapToGetGameSale() *GetGameSale {
 	}
 }
 
-func (ngs *NewGameSale) mapToGetGameSale(sale *GetSale, gameId int64) *GetGameSale {
-	return &GetGameSale{
-		GameID:          gameId,
+// NewGameSale creates new GameSale from Sale and gameID
+func (ngs *CreateGameSale) NewGameSale(sale *Sale, gameID int64) *GameSale {
+	return &GameSale{
+		GameID:          gameID,
 		SaleID:          ngs.SaleID,
 		Sale:            sale.Name,
-		BeginDate:       sale.BeginDate,
-		EndDate:         sale.EndDate,
+		BeginDate:       sale.BeginDate.String(),
+		EndDate:         sale.EndDate.String(),
 		DiscountPercent: ngs.DiscountPercent,
 	}
 }

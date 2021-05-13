@@ -10,25 +10,23 @@ import (
 )
 
 // AddSale records information about game being on sale
-func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale) (*GetSale, error) {
+func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSale) (int64, error) {
 	const q = `insert into sales 
 	(name, begin_date, end_date)
 	values ($1, $2, $3)
 	returning id`
 
 	var lastInsertID int64
-	err := db.QueryRowContext(ctx, q, ns.Name, ns.BeginDate, ns.EndDate).Scan(&lastInsertID)
+	err := db.QueryRowContext(ctx, q, cs.Name, cs.BeginDate, cs.EndDate).Scan(&lastInsertID)
 	if err != nil {
-		return nil, fmt.Errorf("inserting sale %v: %w", ns, err)
+		return 0, fmt.Errorf("inserting sale %v: %w", cs, err)
 	}
 
-	getSale := ns.mapToGetSale(lastInsertID)
-
-	return getSale, nil
+	return lastInsertID, nil
 }
 
 // ListSales returns all sales
-func ListSales(ctx context.Context, db *sqlx.DB) ([]GetSale, error) {
+func ListSales(ctx context.Context, db *sqlx.DB) ([]Sale, error) {
 	sales := []Sale{}
 
 	const q = `select id, name, begin_date, end_date
@@ -37,16 +35,11 @@ func ListSales(ctx context.Context, db *sqlx.DB) ([]GetSale, error) {
 		return nil, errors.Wrap(err, "selecting sales")
 	}
 
-	getSales := []GetSale{}
-	for _, s := range sales {
-		getSales = append(getSales, *s.mapToGetSale())
-	}
-
-	return getSales, nil
+	return sales, nil
 }
 
 // RetrieveSale returns sale by id
-func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*GetSale, error) {
+func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*Sale, error) {
 	var sale Sale
 
 	const q = `select id, name, begin_date, end_date
@@ -60,13 +53,11 @@ func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*GetSale, err
 		return nil, err
 	}
 
-	getSale := sale.mapToGetSale()
-
-	return getSale, nil
+	return &sale, nil
 }
 
 // ListGameSales returns all sales for specified game
-func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GetGameSale, error) {
+func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GameSale, error) {
 	_, err := Retrieve(ctx, db, gameID)
 	if err != nil {
 		return nil, err
@@ -74,7 +65,7 @@ func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GetGameSal
 
 	gameSales := []GameSale{}
 
-	const q = `select sg.game_id, sg.sale_id, s.name as sale, s.begin_date, s.end_date, discount_percent
+	const q = `select sg.game_id, sg.sale_id, s.name as sale, s.begin_date, s.end_date, sg.discount_percent
 	from sales_games sg
 	left join sales s on s.id = sg.sale_id
 	left join games g on g.id = sg.game_id
@@ -83,10 +74,5 @@ func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GetGameSal
 		return nil, errors.Wrapf(err, "selecting sales of game with id %q", gameID)
 	}
 
-	getGameSales := []GetGameSale{}
-	for _, gs := range gameSales {
-		getGameSales = append(getGameSales, *gs.mapToGetGameSale())
-	}
-
-	return getGameSales, nil
+	return gameSales, nil
 }

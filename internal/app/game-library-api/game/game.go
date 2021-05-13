@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -21,7 +22,7 @@ func (e ErrNotFound) Error() string {
 }
 
 // List returns all games
-func List(ctx context.Context, db *sqlx.DB) ([]GetGame, error) {
+func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 	list := []Game{}
 
 	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
@@ -38,16 +39,11 @@ func List(ctx context.Context, db *sqlx.DB) ([]GetGame, error) {
 		return nil, err
 	}
 
-	getGames := []GetGame{}
-	for _, g := range list {
-		getGames = append(getGames, *g.mapToGetGame())
-	}
-
-	return getGames, nil
+	return list, nil
 }
 
 // Retrieve returns a single game
-func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*GetGame, error) {
+func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
 	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
@@ -69,31 +65,27 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*GetGame, error) {
 		return nil, err
 	}
 
-	getGame := g.mapToGetGame()
-
-	return getGame, nil
+	return &g, nil
 }
 
 // Create creates a new game
-func Create(ctx context.Context, db *sqlx.DB, ng NewGame) (*GetGame, error) {
+func Create(ctx context.Context, db *sqlx.DB, cg CreateGame) (int64, error) {
 	const q = `insert into games
 	(name, developer, release_date, price, genre)
 	values ($1, $2, $3, $4, $5)
 	returning id`
 
 	var lastInsertID int64
-	err := db.QueryRowContext(ctx, q, ng.Name, ng.Developer, ng.ReleaseDate, ng.Price, pq.StringArray(ng.Genre)).Scan(&lastInsertID)
+	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre)).Scan(&lastInsertID)
 	if err != nil {
-		return nil, fmt.Errorf("inserting game %v: %w", ng, err)
+		return 0, fmt.Errorf("inserting game %v: %w", cg, err)
 	}
 
-	getGame := ng.mapToGetGame(lastInsertID)
-
-	return getGame, nil
+	return lastInsertID, nil
 }
 
 // Update modifes information about a game
-func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*GetGame, error) {
+func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Game, error) {
 	g, err := Retrieve(ctx, db, id)
 	if err != nil {
 		return nil, err
@@ -106,7 +98,8 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Get
 		g.Developer = *update.Developer
 	}
 	if update.ReleaseDate != nil {
-		g.ReleaseDate = *update.ReleaseDate
+		releaseDate, _ := types.ParseDate(*update.ReleaseDate)
+		g.ReleaseDate = releaseDate
 	}
 	if update.Price != nil {
 		g.Price = *update.Price
@@ -121,7 +114,7 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Get
 	 price = $4,
 	 genre = $5
 	 where id = $6;`
-	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate, g.Price, pq.StringArray(g.Genre), id)
+	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), id)
 	if err != nil {
 		return nil, errors.Wrap(err, "updating game")
 	}
@@ -146,12 +139,12 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 }
 
 // AddGameOnSale connects game with a sale
-func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, ngs NewGameSale) (*GetGameSale, error) {
+func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, cgs CreateGameSale) (*GameSale, error) {
 	g, err := Retrieve(ctx, db, gameID)
 	if err != nil {
 		return nil, err
 	}
-	s, err := RetrieveSale(ctx, db, ngs.SaleID)
+	s, err := RetrieveSale(ctx, db, cgs.SaleID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,12 +152,12 @@ func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, ngs NewGameSa
 	(game_id, sale_id, discount_percent)
 	values ($1, $2, $3)`
 
-	_, err = db.ExecContext(ctx, q, g.ID, s.ID, ngs.DiscountPercent)
+	_, err = db.ExecContext(ctx, q, g.ID, s.ID, cgs.DiscountPercent)
 	if err != nil {
-		return nil, fmt.Errorf("adding game with id %v on sale  with id %v: %w", gameID, ngs.SaleID, err)
+		return nil, fmt.Errorf("adding game with id %v on sale  with id %v: %w", gameID, cgs.SaleID, err)
 	}
 
-	getGameSale := ngs.mapToGetGameSale(s, gameID)
+	gameSale := cgs.NewGameSale(s, gameID)
 
-	return getGameSale, nil
+	return gameSale, nil
 }

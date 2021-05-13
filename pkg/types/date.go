@@ -21,3 +21,12 @@ func (t *Date) Scan(v interface{}) error {
 func (t Date) String() string {
 	return fmt.Sprintf("%04d-%02d-%02d", t.Year, t.Month, t.Day)
 }
+
+// ParseDate parses a string in 'YYYY-MM-DD' format and returns the date value it represents.
+func ParseDate(s string) (Date, error) {
+	d, err := civil.ParseDate(s)
+	if err != nil {
+		return Date{}, err
+	}
+	return Date(d), nil
+}

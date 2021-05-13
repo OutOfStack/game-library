@@ -1,5 +1,42 @@
 basePath: /api
 definitions:
+  game.CreateGame:
+    properties:
+      developer:
+        type: string
+      genre:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      releaseDate:
+        type: string
+    required:
+    - developer
+    - name
+    type: object
+  game.CreateGameSale:
+    properties:
+      discountPercent:
+        type: integer
+      saleId:
+        type: integer
+    type: object
+  game.CreateSale:
+    properties:
+      beginDate:
+        type: string
+      endDate:
+        type: string
+      name:
+        type: string
+    required:
+    - beginDate
+    - endDate
+    type: object
   game.GetGame:
     properties:
       developer:
@@ -42,43 +79,6 @@ definitions:
         type: integer
       name:
         type: string
-    type: object
-  game.NewGame:
-    properties:
-      developer:
-        type: string
-      genre:
-        items:
-          type: string
-        type: array
-      name:
-        type: string
-      price:
-        type: number
-      releaseDate:
-        type: string
-    required:
-    - developer
-    - name
-    type: object
-  game.NewGameSale:
-    properties:
-      discountPercent:
-        type: integer
-      saleId:
-        type: integer
-    type: object
-  game.NewSale:
-    properties:
-      beginDate:
-        type: string
-      endDate:
-        type: string
-      name:
-        type: string
-    required:
-    - beginDate
-    - endDate
     type: object
   game.UpdateGame:
     properties:
@@ -151,7 +151,7 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/game.NewGame'
+          $ref: '#/definitions/game.CreateGame'
       produces:
       - application/json
       responses:
@@ -281,7 +281,7 @@ paths:
         name: gamesale
         required: true
         schema:
-          $ref: '#/definitions/game.NewGameSale'
+          $ref: '#/definitions/game.CreateGameSale'
       produces:
       - application/json
       responses:
@@ -301,7 +301,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Adds game on sale
+      summary: Add game on sale
   /sales:
     get:
       description: Returns all sales
@@ -331,7 +331,7 @@ paths:
         name: sale
         required: true
         schema:
-          $ref: '#/definitions/game.NewSale'
+          $ref: '#/definitions/game.CreateSale'
       produces:
       - application/json
       responses:
@@ -379,7 +379,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Lists game sales
+      summary: List game sales
 schemes:
 - http
 swagger: "2.0"

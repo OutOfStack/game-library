@@ -25,8 +25,8 @@ type GetGame struct {
 	Genre       []string `json:"genre"`
 }
 
-// NewGame represents game data we receive from user
-type NewGame struct {
+// CreateGame represents game data we receive from user
+type CreateGame struct {
 	Name        string   `json:"name" validate:"required"`
 	Developer   string   `json:"developer" validate:"required"`
 	ReleaseDate string   `json:"releaseDate" validate:"date"`
@@ -60,8 +60,8 @@ type GetSale struct {
 	EndDate   string `json:"endDate"`
 }
 
-// NewSale represents sale data we receive from user
-type NewSale struct {
+// CreateSale represents sale data we receive from user
+type CreateSale struct {
 	Name      string `json:"name"`
 	BeginDate string `json:"beginDate" validate:"required,date"`
 	EndDate   string `json:"endDate" validate:"required,date"`
@@ -77,8 +77,8 @@ type GameSale struct {
 	DiscountPercent uint8  `db:"discount_percent"`
 }
 
-// NewGameSale represents data about game being on sale
-type NewGameSale struct {
+// CreateGameSale represents data about game being on sale
+type CreateGameSale struct {
 	SaleID          int64 `json:"saleId"`
 	DiscountPercent uint8 `json:"discountPercent" validate:"gt=0,lte=100"`
 }

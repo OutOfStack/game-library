@@ -51,10 +51,11 @@ func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*GetSale, err
 
 	const q = `select id, name, begin_date, end_date
 	from sales
+	where id = $1
 	limit 1`
-	if err := db.GetContext(ctx, &sale, q); err != nil {
+	if err := db.GetContext(ctx, &sale, q, saleID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, ErrNotFound{"sale", saleID}
 		}
 		return nil, err
 	}
@@ -62,4 +63,30 @@ func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*GetSale, err
 	getSale := sale.mapToGetSale()
 
 	return getSale, nil
+}
+
+// ListGameSales returns all sales for specified game
+func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GetGameSale, error) {
+	_, err := Retrieve(ctx, db, gameID)
+	if err != nil {
+		return nil, err
+	}
+
+	gameSales := []GameSale{}
+
+	const q = `select sg.game_id, sg.sale_id, s.name as sale, s.begin_date, s.end_date, discount_percent
+	from sales_games sg
+	left join sales s on s.id = sg.sale_id
+	left join games g on g.id = sg.game_id
+	where sg.game_id = $1`
+	if err := db.SelectContext(ctx, &gameSales, q, gameID); err != nil {
+		return nil, errors.Wrapf(err, "selecting sales of game with id %q", gameID)
+	}
+
+	getGameSales := []GetGameSale{}
+	for _, gs := range gameSales {
+		getGameSales = append(getGameSales, *gs.mapToGetGameSale())
+	}
+
+	return getGameSales, nil
 }

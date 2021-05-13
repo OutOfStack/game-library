@@ -10,10 +10,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	// ErrNotFound is used when a requested entity with id does not exist
-	ErrNotFound = errors.New("game not found")
-)
+// ErrNotFound is used when a requested entity with id does not exist
+type ErrNotFound struct {
+	Entity string
+	ID     int64
+}
+
+func (e ErrNotFound) Error() string {
+	return fmt.Sprintf("%v with id %v was not found", e.Entity, e.ID)
+}
 
 // List returns all games
 func List(ctx context.Context, db *sqlx.DB) ([]GetGame, error) {
@@ -59,7 +64,7 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*GetGame, error) {
 
 	if err := db.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, ErrNotFound{"game", id}
 		}
 		return nil, err
 	}
@@ -134,7 +139,7 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 		if err != nil {
 			return errors.Wrap(err, "deleting game. count")
 		} else if count == 0 {
-			return ErrNotFound
+			return ErrNotFound{"game", id}
 		}
 	}
 	return nil
@@ -156,31 +161,10 @@ func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, ngs NewGameSa
 
 	_, err = db.ExecContext(ctx, q, g.ID, s.ID, ngs.DiscountPercent)
 	if err != nil {
-		return nil, fmt.Errorf("adding game with id %q on sale %v: %w", gameID, ngs, err)
+		return nil, fmt.Errorf("adding game with id %v on sale  with id %v: %w", gameID, ngs.SaleID, err)
 	}
 
-	getGameSale := ngs.mapToGetGameSale(s.Name, gameID)
+	getGameSale := ngs.mapToGetGameSale(s, gameID)
 
 	return getGameSale, nil
-}
-
-// ListGameSales returns all sales for specified game
-func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GetGameSale, error) {
-	gameSales := []GameSale{}
-
-	const q = `select sg.game_id, sg.sale_id, s.name as sale, discount_percent
-	from sales_games sg
-	left join sales s on s.id = sg.sale_id
-	left join games g on g.id = sg.game_id
-	where sg.game_id = $1`
-	if err := db.SelectContext(ctx, &gameSales, q, gameID); err != nil {
-		return nil, errors.Wrapf(err, "selecting sales of game with id %q", gameID)
-	}
-
-	getGameSales := []GetGameSale{}
-	for _, gs := range gameSales {
-		getGameSales = append(getGameSales, *gs.mapToGetGameSale())
-	}
-
-	return getGameSales, nil
 }

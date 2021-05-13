@@ -45,15 +45,19 @@ func (gs *GameSale) mapToGetGameSale() *GetGameSale {
 		GameID:          gs.GameID,
 		SaleID:          gs.SaleID,
 		Sale:            gs.Sale,
+		BeginDate:       gs.BeginDate,
+		EndDate:         gs.EndDate,
 		DiscountPercent: gs.DiscountPercent,
 	}
 }
 
-func (ngs *NewGameSale) mapToGetGameSale(sale string, gameId int64) *GetGameSale {
+func (ngs *NewGameSale) mapToGetGameSale(sale *GetSale, gameId int64) *GetGameSale {
 	return &GetGameSale{
 		GameID:          gameId,
 		SaleID:          ngs.SaleID,
-		Sale:            sale,
+		Sale:            sale.Name,
+		BeginDate:       sale.BeginDate,
+		EndDate:         sale.EndDate,
 		DiscountPercent: ngs.DiscountPercent,
 	}
 }

@@ -32,10 +32,10 @@ func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
 	app.Handle(http.MethodPatch, "/api/games/:id", g.Update)
 	app.Handle(http.MethodDelete, "/api/games/:id", g.Delete)
 	app.Handle(http.MethodPost, "/api/games/:id/sales", g.AddGameOnSale)
-	app.Handle(http.MethodGet, "/api/games/:id/sales", g.ListGameSales)
 
 	app.Handle(http.MethodPost, "/api/sales", g.AddSale)
 	app.Handle(http.MethodGet, "/api/sales", g.ListSales)
+	app.Handle(http.MethodGet, "/api/sales/game/:id", g.ListGameSales)
 
 	app.Handle(http.MethodGet, "/swagger/*any", web.WrapGinHandlerFunc(ginSwagger.WrapHandler(swaggerFiles.Handler)))
 

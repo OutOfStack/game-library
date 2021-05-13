@@ -67,12 +67,14 @@ type NewSale struct {
 	EndDate   string `json:"endDate" validate:"required,date"`
 }
 
-// GameSale represents database GameSale model
+// GameSale represents GameSale model for reading from db
 type GameSale struct {
 	SaleID          int64 `db:"sale_id"`
 	GameID          int64 `db:"game_id"`
 	Sale            string
-	DiscountPercent uint8 `db:"discount_percent"`
+	BeginDate       string `db:"begin_date"`
+	EndDate         string `db:"end_date"`
+	DiscountPercent uint8  `db:"discount_percent"`
 }
 
 // NewGameSale represents data about game being on sale
@@ -87,4 +89,6 @@ type GetGameSale struct {
 	SaleID          int64  `json:"saleId"`
 	Sale            string `json:"sale"`
 	DiscountPercent uint8  `json:"discountPercent"`
+	BeginDate       string `json:"beginDate"`
+	EndDate         string `json:"endDate"`
 }

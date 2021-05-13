@@ -242,52 +242,6 @@ var doc = `{
             }
         },
         "/games/{id}/sales": {
-            "get": {
-                "description": "returns sales for specified game",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Lists game sales",
-                "operationId": "get-game-sales-by-id",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Game ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/game.GetGameSale"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "adds game on sale",
                 "consumes": [
@@ -412,6 +366,54 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/sales/game/{id}": {
+            "get": {
+                "description": "returns sales for specified game",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Lists game sales",
+                "operationId": "get-sales-by-game-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/game.GetGameSale"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -444,8 +446,14 @@ var doc = `{
         "game.GetGameSale": {
             "type": "object",
             "properties": {
+                "beginDate": {
+                    "type": "string"
+                },
                 "discountPercent": {
                     "type": "integer"
+                },
+                "endDate": {
+                    "type": "string"
                 },
                 "gameId": {
                     "type": "integer"

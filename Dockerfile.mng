@@ -1,0 +1,23 @@
+# build
+FROM golang:1.16-alpine as builder
+
+WORKDIR /tmp/game-library-manage
+
+COPY go.mod .
+COPY go.sum .
+COPY ./app.env ./out/
+
+RUN go mod download
+
+COPY . .
+
+RUN go build -o ./out/game-library-manage cmd/game-library-manage/main.go
+
+# run
+FROM alpine:3.14
+
+WORKDIR /app
+
+COPY --from=builder /tmp/game-library-manage/out ./
+
+ENTRYPOINT ["./game-library-manage"]

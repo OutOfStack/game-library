@@ -10,3 +10,16 @@ services:
     restart: on-failure:5
     environment:
     - POSTGRES_PASSWORD=
+
+  web:
+    container_name: game-library-web
+    image: game-library-web:latest
+    ports:
+      - 8000:8000
+      - 6060:6060
+    environment:
+      APP_HOST: games_db
+      APP_ADDRESS: 0.0.0.0:8000
+      DEBUG: 0.0.0.0:6060
+    depends_on: 
+      - db

@@ -5,8 +5,8 @@ build:
 run:
 	go run ./cmd/game-library-api/.
 
-runpg:
-	docker-compose up -d
+dockerrunpg:
+	docker-compose up -d db
 
 createdb:
 	docker exec -it games_db createdb --username=postgres --owner=postgres games
@@ -26,4 +26,8 @@ seed:
 swaggen:
 	./tools/swag init -g cmd/game-library-api/main.go
 
-.PHONY: build run runpg createdb dropdb migrate rollback seed swaggen
+dockerbuildweb:
+	docker build -f Dockerfile.web -t game-library-web:latest .
+
+dockerrunweb:
+	docker-compose up -d web

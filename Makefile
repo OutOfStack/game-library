@@ -31,3 +31,6 @@ dockerbuildweb:
 
 dockerrunweb:
 	docker-compose up -d web
+
+dockerbuildmng:
+	docker build -f Dockerfile.mng -t game-library-mng:latest .

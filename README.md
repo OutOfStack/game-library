@@ -12,7 +12,7 @@
     make swaggen        generates documentation for swagger UI
     make dockerbuildweb builds web app docker image
     make dockerrunweb   runs web app in docker container
-
+    make dockerbuildmng builds manage app docker image
 
 ### migrate CLI
 https://github.com/golang-migrate/migrate/tree/master/cmd/migrate

@@ -1,0 +1,25 @@
+# build
+FROM golang:1.16-alpine as builder
+
+WORKDIR /tmp/game-library-api
+
+COPY go.mod .
+COPY go.sum .
+COPY ./app.env ./out/
+
+RUN go mod download
+
+COPY . .
+
+RUN go build -o ./out/game-library-api cmd/game-library-api/main.go
+
+# run
+FROM alpine:3.14
+
+WORKDIR /app
+
+COPY --from=builder /tmp/game-library-api/out ./
+
+EXPOSE 8000
+
+ENTRYPOINT ["./game-library-api"]

@@ -13,11 +13,11 @@ import (
 func main() {
 	type config struct {
 		DB struct {
-			Host       string `mapstructure:"APP_HOST"`
-			Name       string `mapstructure:"APP_NAME"`
-			User       string `mapstructure:"APP_USER"`
-			Password   string `mapstructure:"APP_PASSWORD"`
-			RequireSSL bool   `mapstructure:"APP_REQUIRESSL"`
+			Host       string `mapstructure:"DB_HOST"`
+			Name       string `mapstructure:"DB_NAME"`
+			User       string `mapstructure:"DB_USER"`
+			Password   string `mapstructure:"DB_PASSWORD"`
+			RequireSSL bool   `mapstructure:"DB_REQUIRESSL"`
 		} `mapstructure:",squash"`
 	}
 

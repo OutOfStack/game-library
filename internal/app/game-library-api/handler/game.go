@@ -200,6 +200,39 @@ func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
 	return web.Respond(ctx, c, getGameSale, http.StatusOK)
 }
 
+// ListGameSales godoc
+// @Summary List game sales
+// @Description returns sales for specified game
+// @ID get-game-sales-by-game-id
+// @Produce json
+// @Param 	id  path int64 true "Game ID"
+// @Success 200 {array}  game.GetGameSale
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 404 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/{id}/sales [get]
+func (g *Game) ListGameSales(ctx context.Context, c *gin.Context) error {
+	gameId, err := getIdParam(c)
+	if err != nil {
+		return err
+	}
+
+	gameSales, err := repo.ListGameSales(c.Request.Context(), g.DB, gameId)
+	if err != nil {
+		if errors.As(err, &repo.ErrNotFound{}) {
+			return web.NewRequestError(err, http.StatusNotFound)
+		}
+		return errors.Wrapf(err, "retrieving sales for game")
+	}
+
+	getGameSales := []repo.GetGameSale{}
+	for _, gs := range gameSales {
+		getGameSales = append(getGameSales, *gs.MapToGetGameSale())
+	}
+
+	return web.Respond(ctx, c, getGameSales, http.StatusOK)
+}
+
 func getIdParam(c *gin.Context) (int64, error) {
 	idparam := c.Param("id")
 	id, err := strconv.ParseInt(idparam, 10, 32)

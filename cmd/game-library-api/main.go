@@ -40,15 +40,15 @@ func run() error {
 
 	type config struct {
 		DB struct {
-			Host       string `mapstructure:"APP_HOST"`
-			Name       string `mapstructure:"APP_NAME"`
-			User       string `mapstructure:"APP_USER"`
-			Password   string `mapstructure:"APP_PASSWORD"`
-			RequireSSL bool   `mapstructure:"APP_REQUIRESSL"`
+			Host       string `mapstructure:"DB_HOST"`
+			Name       string `mapstructure:"DB_NAME"`
+			User       string `mapstructure:"DB_USER"`
+			Password   string `mapstructure:"DB_PASSWORD"`
+			RequireSSL bool   `mapstructure:"DB_REQUIRESSL"`
 		} `mapstructure:",squash"`
 		Web struct {
 			Address         string        `mapstructure:"APP_ADDRESS"`
-			Debug           string        `mapstructure:"DEBUG"`
+			DebugAddress    string        `mapstructure:"DEBUG_ADDRESS"`
 			ReadTimeout     time.Duration `mapstructure:"APP_READTIMEOUT"`
 			WriteTimeout    time.Duration `mapstructure:"APP_WRITETIMEOUT"`
 			ShutdownTimeout time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
@@ -74,8 +74,8 @@ func run() error {
 
 	// start debug service
 	go func() {
-		log.Printf("Debug service listening on %s", cfg.Web.Debug)
-		err := http.ListenAndServe(cfg.Web.Debug, nil)
+		log.Printf("Debug service listening on %s", cfg.Web.DebugAddress)
+		err := http.ListenAndServe(cfg.Web.DebugAddress, nil)
 		log.Printf("Debug service stopped %v", err)
 	}()
 

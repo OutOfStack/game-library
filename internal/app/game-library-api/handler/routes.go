@@ -26,16 +26,18 @@ func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
 		Log: logger,
 	}
 
+	// games
 	app.Handle(http.MethodGet, "/api/games", g.List)
 	app.Handle(http.MethodGet, "/api/games/:id", g.Retrieve)
 	app.Handle(http.MethodPost, "/api/games", g.Create)
 	app.Handle(http.MethodPatch, "/api/games/:id", g.Update)
 	app.Handle(http.MethodDelete, "/api/games/:id", g.Delete)
 	app.Handle(http.MethodPost, "/api/games/:id/sales", g.AddGameOnSale)
+	app.Handle(http.MethodGet, "/api/games/:id/sales", g.ListGameSales)
 
+	// sales
 	app.Handle(http.MethodPost, "/api/sales", g.AddSale)
 	app.Handle(http.MethodGet, "/api/sales", g.ListSales)
-	app.Handle(http.MethodGet, "/api/sales/game/:id", g.ListGameSales)
 
 	app.Handle(http.MethodGet, "/swagger/*any", web.WrapGinHandlerFunc(ginSwagger.WrapHandler(swaggerFiles.Handler)))
 

@@ -44,7 +44,7 @@ type UpdateGame struct {
 	Genre       *[]string `json:"genre" validate:"omitempty"`
 }
 
-// Sale respresents database sale model
+// Sale represents database sale model
 type Sale struct {
 	ID        int64      `db:"id"`
 	Name      string     `db:"name"`
@@ -52,7 +52,7 @@ type Sale struct {
 	EndDate   types.Date `db:"end_date"`
 }
 
-// GetSale respresents sale get model
+// GetSale represents sale get model
 type GetSale struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`

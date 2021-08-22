@@ -265,6 +265,37 @@ paths:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Update game
   /games/{id}/sales:
+    get:
+      description: returns sales for specified game
+      operationId: get-game-sales-by-game-id
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/game.GetGameSale'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: List game sales
     post:
       consumes:
       - application/json
@@ -348,38 +379,6 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Create a sale
-  /sales/game/{id}:
-    get:
-      description: returns sales for specified game
-      operationId: get-sales-by-game-id
-      parameters:
-      - description: Game ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/game.GetGameSale'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: List game sales
 schemes:
 - http
 swagger: "2.0"

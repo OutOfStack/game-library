@@ -59,36 +59,3 @@ func (g *Game) ListSales(ctx context.Context, c *gin.Context) error {
 
 	return web.Respond(ctx, c, getSales, http.StatusOK)
 }
-
-// ListGameSales godoc
-// @Summary List game sales
-// @Description returns sales for specified game
-// @ID get-sales-by-game-id
-// @Produce json
-// @Param 	id  path int64 true "Game ID"
-// @Success 200 {array}  game.GetGameSale
-// @Failure 400 {object} web.ErrorResponse
-// @Failure 404 {object} web.ErrorResponse
-// @Failure 500 {object} web.ErrorResponse
-// @Router /sales/game/{id} [get]
-func (g *Game) ListGameSales(ctx context.Context, c *gin.Context) error {
-	gameId, err := getIdParam(c)
-	if err != nil {
-		return err
-	}
-
-	gameSales, err := repo.ListGameSales(c.Request.Context(), g.DB, gameId)
-	if err != nil {
-		if errors.As(err, &repo.ErrNotFound{}) {
-			return web.NewRequestError(err, http.StatusNotFound)
-		}
-		return errors.Wrapf(err, "retrieving sales for game")
-	}
-
-	getGameSales := []repo.GetGameSale{}
-	for _, gs := range gameSales {
-		getGameSales = append(getGameSales, *gs.MapToGetGameSale())
-	}
-
-	return web.Respond(ctx, c, getGameSales, http.StatusOK)
-}

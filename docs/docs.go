@@ -242,6 +242,52 @@ var doc = `{
             }
         },
         "/games/{id}/sales": {
+            "get": {
+                "description": "returns sales for specified game",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List game sales",
+                "operationId": "get-game-sales-by-game-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/game.GetGameSale"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "adds game on sale",
                 "consumes": [
@@ -354,54 +400,6 @@ var doc = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/sales/game/{id}": {
-            "get": {
-                "description": "returns sales for specified game",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "List game sales",
-                "operationId": "get-sales-by-game-id",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Game ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/game.GetGameSale"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
                         }

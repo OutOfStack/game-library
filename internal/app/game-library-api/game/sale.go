@@ -55,24 +55,3 @@ func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*Sale, error)
 
 	return &sale, nil
 }
-
-// ListGameSales returns all sales for specified game
-func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GameSale, error) {
-	_, err := Retrieve(ctx, db, gameID)
-	if err != nil {
-		return nil, err
-	}
-
-	gameSales := []GameSale{}
-
-	const q = `select sg.game_id, sg.sale_id, s.name as sale, s.begin_date, s.end_date, sg.discount_percent
-	from sales_games sg
-	left join sales s on s.id = sg.sale_id
-	left join games g on g.id = sg.game_id
-	where sg.game_id = $1`
-	if err := db.SelectContext(ctx, &gameSales, q, gameID); err != nil {
-		return nil, errors.Wrapf(err, "selecting sales of game with id %q", gameID)
-	}
-
-	return gameSales, nil
-}

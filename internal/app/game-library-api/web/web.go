@@ -1,7 +1,6 @@
 package web
 
 import (
-	"context"
 	"log"
 	"net/http"
 
@@ -9,11 +8,11 @@ import (
 )
 
 // Handler is a signature for all handler funcions
-type Handler func(context.Context, *gin.Context) error
+type Handler func(*gin.Context) error
 
 // WrapGinHandlerFunc wraps gin.HandlerFunc and returns Handler
 func WrapGinHandlerFunc(ghf gin.HandlerFunc) Handler {
-	return func(ctx context.Context, c *gin.Context) error {
+	return func(c *gin.Context) error {
 		ghf(c)
 		return nil
 	}
@@ -28,6 +27,8 @@ type App struct {
 
 // NewApp constructs entrypoint for web
 func NewApp(logger *log.Logger, mw ...Middleware) *App {
+	r := gin.Default()
+	r.Use()
 	return &App{
 		router: gin.Default(),
 		log:    logger,
@@ -40,10 +41,8 @@ func (a *App) Handle(method, pattern string, h Handler) {
 
 	h = chainMiddleware(h, a.mw)
 
-	ctx := context.Background()
-
 	fn := func(c *gin.Context) {
-		if err := h(ctx, c); err != nil {
+		if err := h(c); err != nil {
 			a.log.Printf("ERROR: Unhandled error %v", err)
 		}
 	}

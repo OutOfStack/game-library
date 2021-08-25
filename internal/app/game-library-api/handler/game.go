@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,8 +26,8 @@ type Game struct {
 // @Success 200 {array} game.GetGame
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
-func (g *Game) List(ctx context.Context, c *gin.Context) error {
-	list, err := repo.List(c.Request.Context(), g.DB)
+func (g *Game) List(c *gin.Context) error {
+	list, err := repo.List(c, g.DB)
 
 	if err != nil {
 		return errors.Wrap(err, "getting games list")
@@ -39,7 +38,7 @@ func (g *Game) List(ctx context.Context, c *gin.Context) error {
 		getGames = append(getGames, *g.MapToGetGame())
 	}
 
-	return web.Respond(ctx, c, getGames, http.StatusOK)
+	return web.Respond(c, getGames, http.StatusOK)
 }
 
 // Retrieve godoc
@@ -53,13 +52,13 @@ func (g *Game) List(ctx context.Context, c *gin.Context) error {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
-func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
+func (g *Game) Retrieve(c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
 
-	game, err := repo.Retrieve(c.Request.Context(), g.DB, id)
+	game, err := repo.Retrieve(c, g.DB, id)
 
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
@@ -70,7 +69,7 @@ func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
 
 	getGame := game.MapToGetGame()
 
-	return web.Respond(ctx, c, getGame, http.StatusOK)
+	return web.Respond(c, getGame, http.StatusOK)
 }
 
 // Create godoc
@@ -84,21 +83,21 @@ func (g *Game) Retrieve(ctx context.Context, c *gin.Context) error {
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
-func (g *Game) Create(ctx context.Context, c *gin.Context) error {
+func (g *Game) Create(c *gin.Context) error {
 	var cg repo.CreateGame
 	err := web.Decode(c, &cg)
 	if err != nil {
 		return errors.Wrap(err, "decoding new game")
 	}
 
-	gameId, err := repo.Create(c.Request.Context(), g.DB, cg)
+	gameId, err := repo.Create(c, g.DB, cg)
 	if err != nil {
 		return errors.Wrap(err, "adding new game")
 	}
 
 	getGame := cg.MapToGetGame(gameId)
 
-	return web.Respond(ctx, c, getGame, http.StatusCreated)
+	return web.Respond(c, getGame, http.StatusCreated)
 }
 
 // Update godoc
@@ -114,7 +113,7 @@ func (g *Game) Create(ctx context.Context, c *gin.Context) error {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [patch]
-func (g *Game) Update(ctx context.Context, c *gin.Context) error {
+func (g *Game) Update(c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
 		return err
@@ -123,7 +122,7 @@ func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 	if err := web.Decode(c, &update); err != nil {
 		return errors.Wrap(err, "decoding game update")
 	}
-	game, err := repo.Update(c.Request.Context(), g.DB, id, update)
+	game, err := repo.Update(c, g.DB, id, update)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -133,7 +132,7 @@ func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 
 	getGame := game.MapToGetGame()
 
-	return web.Respond(ctx, c, getGame, http.StatusOK)
+	return web.Respond(c, getGame, http.StatusOK)
 }
 
 // Delete godoc
@@ -148,13 +147,13 @@ func (g *Game) Update(ctx context.Context, c *gin.Context) error {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [delete]
-func (g *Game) Delete(ctx context.Context, c *gin.Context) error {
+func (g *Game) Delete(c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
 
-	err = repo.Delete(c.Request.Context(), g.DB, id)
+	err = repo.Delete(c, g.DB, id)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -162,7 +161,7 @@ func (g *Game) Delete(ctx context.Context, c *gin.Context) error {
 		return errors.Wrapf(err, "deleting game with id %v", id)
 	}
 
-	return web.Respond(ctx, c, nil, http.StatusNoContent)
+	return web.Respond(c, nil, http.StatusNoContent)
 }
 
 // AddGameOnSale godoc
@@ -178,7 +177,7 @@ func (g *Game) Delete(ctx context.Context, c *gin.Context) error {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/sales [post]
-func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
+func (g *Game) AddGameOnSale(c *gin.Context) error {
 	id, err := getIdParam(c)
 	if err != nil {
 		return err
@@ -187,7 +186,7 @@ func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
 	if err := web.Decode(c, &cgs); err != nil {
 		return errors.Wrap(err, "decoding game sale")
 	}
-	gameSale, err := repo.AddGameOnSale(c.Request.Context(), g.DB, id, cgs)
+	gameSale, err := repo.AddGameOnSale(c, g.DB, id, cgs)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -197,7 +196,7 @@ func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
 
 	getGameSale := gameSale.MapToGetGameSale()
 
-	return web.Respond(ctx, c, getGameSale, http.StatusOK)
+	return web.Respond(c, getGameSale, http.StatusOK)
 }
 
 // ListGameSales godoc
@@ -211,13 +210,13 @@ func (g *Game) AddGameOnSale(ctx context.Context, c *gin.Context) error {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/sales [get]
-func (g *Game) ListGameSales(ctx context.Context, c *gin.Context) error {
+func (g *Game) ListGameSales(c *gin.Context) error {
 	gameId, err := getIdParam(c)
 	if err != nil {
 		return err
 	}
 
-	gameSales, err := repo.ListGameSales(c.Request.Context(), g.DB, gameId)
+	gameSales, err := repo.ListGameSales(c, g.DB, gameId)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -230,7 +229,7 @@ func (g *Game) ListGameSales(ctx context.Context, c *gin.Context) error {
 		getGameSales = append(getGameSales, *gs.MapToGetGameSale())
 	}
 
-	return web.Respond(ctx, c, getGameSales, http.StatusOK)
+	return web.Respond(c, getGameSales, http.StatusOK)
 }
 
 func getIdParam(c *gin.Context) (int64, error) {

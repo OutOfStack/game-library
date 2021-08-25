@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 
 	repo "github.com/OutOfStack/game-library/internal/app/game-library-api/game"
@@ -21,7 +20,7 @@ import (
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [post]
-func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
+func (g *Game) AddSale(c *gin.Context) error {
 	var cs repo.CreateSale
 	err := web.Decode(c, &cs)
 	if err != nil {
@@ -35,7 +34,7 @@ func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
 
 	getSale := cs.MapToGetSale(saleId)
 
-	return web.Respond(ctx, c, getSale, http.StatusCreated)
+	return web.Respond(c, getSale, http.StatusCreated)
 }
 
 // ListSales godoc
@@ -46,8 +45,8 @@ func (g *Game) AddSale(ctx context.Context, c *gin.Context) error {
 // @Success 200 {array}  game.GetSale
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [get]
-func (g *Game) ListSales(ctx context.Context, c *gin.Context) error {
-	list, err := repo.ListSales(c.Request.Context(), g.DB)
+func (g *Game) ListSales(c *gin.Context) error {
+	list, err := repo.ListSales(c, g.DB)
 	if err != nil {
 		return errors.Wrap(err, "getting sales list")
 	}
@@ -57,5 +56,5 @@ func (g *Game) ListSales(ctx context.Context, c *gin.Context) error {
 		getSales = append(getSales, *s.MapToGetSale())
 	}
 
-	return web.Respond(ctx, c, getSales, http.StatusOK)
+	return web.Respond(c, getSales, http.StatusOK)
 }

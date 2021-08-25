@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"log"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
@@ -13,11 +12,11 @@ func Errors(log *log.Logger) web.Middleware {
 
 	f := func(before web.Handler) web.Handler {
 
-		h := func(ctx context.Context, c *gin.Context) error {
-			if err := before(ctx, c); err != nil {
+		h := func(c *gin.Context) error {
+			if err := before(c); err != nil {
 				log.Printf("ERROR: %v", err)
 
-				if err := web.RespondError(ctx, c, err); err != nil {
+				if err := web.RespondError(c, err); err != nil {
 					return err
 				}
 			}

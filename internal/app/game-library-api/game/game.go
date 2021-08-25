@@ -113,7 +113,7 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Gam
 	 release_date = $3,
 	 price = $4,
 	 genre = $5
-	 where id = $6;`
+	 where id = $6`
 	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), id)
 	if err != nil {
 		return nil, errors.Wrap(err, "updating game")
@@ -123,7 +123,7 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Gam
 
 // Delete deletes specified game
 func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
-	const q = `delete from games where id = $1;`
+	const q = `delete from games where id = $1`
 	res, err := db.ExecContext(ctx, q, id)
 	if err != nil {
 		return errors.Wrap(err, "deleting game")
@@ -150,7 +150,8 @@ func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, cgs CreateGam
 	}
 	const q = `insert into sales_games
 	(game_id, sale_id, discount_percent)
-	values ($1, $2, $3)`
+	values ($1, $2, $3)
+	on conflict (game_id, sale_id) do update set discount_percent = $3`
 
 	_, err = db.ExecContext(ctx, q, g.ID, s.ID, cgs.DiscountPercent)
 	if err != nil {

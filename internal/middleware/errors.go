@@ -8,24 +8,25 @@ import (
 )
 
 // Errors handles errors in middleware chain
-func Errors(log *log.Logger) web.Middleware {
+func Errors(log *log.Logger) gin.HandlerFunc {
 
-	f := func(before web.Handler) web.Handler {
+	h := func(c *gin.Context) {
+		c.Next()
 
-		h := func(c *gin.Context) error {
-			if err := before(c); err != nil {
-				log.Printf("ERROR: %v", err)
+		if len(c.Errors) > 0 {
 
-				if err := web.RespondError(c, err); err != nil {
-					return err
-				}
+			for _, e := range c.Errors.Errors() {
+				log.Printf("ERROR: %s", e)
 			}
 
-			return nil
-		}
+			err := c.Errors.Last().Err
 
-		return h
+			// reset errors as they were logged
+			c.Errors = c.Errors[0:0]
+
+			web.RespondError(c, err)
+		}
 	}
 
-	return f
+	return h
 }

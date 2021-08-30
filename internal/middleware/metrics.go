@@ -3,7 +3,6 @@ package middleware
 import (
 	"expvar"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,23 +15,18 @@ var m = struct {
 }
 
 // Metrics updates program counters
-func Metrics() web.Middleware {
+func Metrics() gin.HandlerFunc {
 
-	f := func(before web.Handler) web.Handler {
+	h := func(c *gin.Context) {
 
-		h := func(c *gin.Context) error {
-			err := before(c)
-			m.req.Add(1)
+		c.Next()
 
-			if err != nil {
-				m.err.Add(1)
-			}
+		m.req.Add(1)
 
-			return err
+		if len(c.Errors) > 0 {
+			m.err.Add(1)
 		}
-
-		return h
 	}
 
-	return f
+	return h
 }

@@ -39,7 +39,7 @@ func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
 	app.Handle(http.MethodPost, "/api/sales", g.AddSale)
 	app.Handle(http.MethodGet, "/api/sales", g.ListSales)
 
-	app.Handle(http.MethodGet, "/swagger/*any", web.WrapGinHandlerFunc(ginSwagger.WrapHandler(swaggerFiles.Handler)))
+	app.Handle(http.MethodGet, "/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return app
 }

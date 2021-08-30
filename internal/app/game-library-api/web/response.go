@@ -9,45 +9,40 @@ import (
 )
 
 // Respond marshals a value to JSON and sends it to client
-func Respond(c *gin.Context, val interface{}, statusCode int) error {
+func Respond(c *gin.Context, val interface{}, statusCode int) {
 	if statusCode == http.StatusNoContent {
 		c.Writer.WriteHeader(statusCode)
-		return nil
+		return
 	}
 
 	data, err := json.Marshal(val)
 	if err != nil {
-		return errors.Wrap(err, "marshalling value to json")
+		c.Error(errors.Wrap(err, "marshalling value to json"))
+		return
 	}
 	c.Header("content-type", "application/json;charset=utf-8")
 	c.Status(statusCode)
 	_, err = c.Writer.Write(data)
 	if err != nil {
-		return errors.Wrap(err, "writing to client")
+		c.Error(errors.Wrap(err, "writing to client"))
+		return
 	}
-
-	return nil
 }
 
 // RespondError handles outgoing errors
-func RespondError(c *gin.Context, err error) error {
+func RespondError(c *gin.Context, err error) {
 	webErr, ok := errors.Cause(err).(*Error)
 	if ok {
 		response := ErrorResponse{
 			Error:  webErr.Err.Error(),
 			Fields: webErr.Fields,
 		}
-		if err = Respond(c, response, webErr.Status); err != nil {
-			return err
-		}
-		return nil
+		Respond(c, response, webErr.Status)
+		return
 	}
 
 	response := ErrorResponse{
 		Error: http.StatusText(http.StatusInternalServerError),
 	}
-	if err := Respond(c, response, http.StatusInternalServerError); err != nil {
-		return err
-	}
-	return nil
+	Respond(c, response, http.StatusInternalServerError)
 }

@@ -20,21 +20,23 @@ import (
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [post]
-func (g *Game) AddSale(c *gin.Context) error {
+func (g *Game) AddSale(c *gin.Context) {
 	var cs repo.CreateSale
 	err := web.Decode(c, &cs)
 	if err != nil {
-		return errors.Wrap(err, "decoding new sale")
+		c.Error(errors.Wrap(err, "decoding new sale"))
+		return
 	}
 
 	saleId, err := repo.AddSale(c.Request.Context(), g.DB, cs)
 	if err != nil {
-		return errors.Wrapf(err, "adding new sale")
+		c.Error(errors.Wrapf(err, "adding new sale"))
+		return
 	}
 
 	getSale := cs.MapToGetSale(saleId)
 
-	return web.Respond(c, getSale, http.StatusCreated)
+	web.Respond(c, getSale, http.StatusCreated)
 }
 
 // ListSales godoc
@@ -45,10 +47,11 @@ func (g *Game) AddSale(c *gin.Context) error {
 // @Success 200 {array}  game.GetSale
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [get]
-func (g *Game) ListSales(c *gin.Context) error {
+func (g *Game) ListSales(c *gin.Context) {
 	list, err := repo.ListSales(c, g.DB)
 	if err != nil {
-		return errors.Wrap(err, "getting sales list")
+		c.Error(errors.Wrap(err, "getting sales list"))
+		return
 	}
 
 	getSales := []repo.GetSale{}
@@ -56,5 +59,5 @@ func (g *Game) ListSales(c *gin.Context) error {
 		getSales = append(getSales, *s.MapToGetSale())
 	}
 
-	return web.Respond(c, getSales, http.StatusOK)
+	web.Respond(c, getSales, http.StatusOK)
 }

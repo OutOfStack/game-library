@@ -7,47 +7,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Handler is a signature for all handler funcions
-type Handler func(*gin.Context) error
-
-// WrapGinHandlerFunc wraps gin.HandlerFunc and returns Handler
-func WrapGinHandlerFunc(ghf gin.HandlerFunc) Handler {
-	return func(c *gin.Context) error {
-		ghf(c)
-		return nil
-	}
-}
-
 // App abstacts specific web framework
 type App struct {
 	router *gin.Engine
 	log    *log.Logger
-	mw     []Middleware
 }
 
 // NewApp constructs entrypoint for web
-func NewApp(logger *log.Logger, mw ...Middleware) *App {
+func NewApp(logger *log.Logger, mw ...gin.HandlerFunc) *App {
 	r := gin.Default()
-	r.Use()
+	r.Use(mw...)
 	return &App{
-		router: gin.Default(),
+		router: r,
 		log:    logger,
-		mw:     mw,
 	}
 }
 
 // Handle connect method and pattern to application handler
-func (a *App) Handle(method, pattern string, h Handler) {
-
-	h = chainMiddleware(h, a.mw)
-
-	fn := func(c *gin.Context) {
-		if err := h(c); err != nil {
-			a.log.Printf("ERROR: Unhandled error %v", err)
-		}
-	}
-
-	a.router.Handle(method, pattern, fn)
+func (a *App) Handle(method, pattern string, h gin.HandlerFunc) {
+	a.router.Handle(method, pattern, h)
 }
 
 // ServeHTTP serves http server

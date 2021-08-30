@@ -15,7 +15,7 @@ type Check struct {
 }
 
 // Health determines whether service is healthy
-func (che *Check) Health(c *gin.Context) error {
+func (che *Check) Health(c *gin.Context) {
 	var health struct {
 		Status string `json:"status"`
 	}
@@ -23,8 +23,9 @@ func (che *Check) Health(c *gin.Context) error {
 	err := database.StatusCheck(che.DB)
 	if err != nil {
 		health.Status = "database not ready"
-		return web.Respond(c, health, http.StatusInternalServerError)
+		web.Respond(c, health, http.StatusInternalServerError)
+		return
 	}
 	health.Status = "OK"
-	return web.Respond(c, health, http.StatusOK)
+	web.Respond(c, health, http.StatusOK)
 }

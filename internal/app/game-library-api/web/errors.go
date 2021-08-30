@@ -1,5 +1,7 @@
 package web
 
+import "fmt"
+
 // FieldError represents error in a struct field
 type FieldError struct {
 	Field string `json:"field"`
@@ -28,5 +30,9 @@ func NewRequestError(err error, status int) error {
 }
 
 func (e *Error) Error() string {
-	return e.Err.Error()
+	var fieldsMsg string
+	if len(e.Fields) > 0 {
+		fieldsMsg = fmt.Sprintf(" - fields: %v", e.Fields)
+	}
+	return fmt.Sprintf("%s%s", e.Err.Error(), fieldsMsg)
 }

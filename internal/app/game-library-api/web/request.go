@@ -32,7 +32,6 @@ func Decode(c *gin.Context, val interface{}) error {
 			}
 			fields = append(fields, field)
 		}
-
 		return &Error{
 			Err:    errors.New("validation error"),
 			Status: http.StatusBadRequest,

@@ -5,41 +5,48 @@ import (
 	"net/http"
 
 	_ "github.com/OutOfStack/game-library/docs"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
+	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// Service constructs that contains all API routes
-func Service(logger *log.Logger, db *sqlx.DB) http.Handler {
-	app := web.NewApp(logger, middleware.Errors(logger), middleware.Metrics())
+// Service constructs router with all API routes
+func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth) http.Handler {
+	r := gin.Default()
+	r.Use(middleware.Errors(logger), middleware.Metrics())
 
 	c := Check{
 		DB: db,
 	}
-	app.Handle(http.MethodGet, "/api/health", c.Health)
 
 	g := Game{
 		DB:  db,
 		Log: logger,
 	}
 
+	// readiness
+	r.GET("/api/health", c.Health)
+
 	// games
-	app.Handle(http.MethodGet, "/api/games", g.List)
-	app.Handle(http.MethodGet, "/api/games/:id", g.Retrieve)
-	app.Handle(http.MethodPost, "/api/games", g.Create)
-	app.Handle(http.MethodPatch, "/api/games/:id", g.Update)
-	app.Handle(http.MethodDelete, "/api/games/:id", g.Delete)
-	app.Handle(http.MethodPost, "/api/games/:id/sales", g.AddGameOnSale)
-	app.Handle(http.MethodGet, "/api/games/:id/sales", g.ListGameSales)
+	r.GET("/api/games", g.List)
+	r.GET("/api/games/:id", g.Retrieve)
+	// authorization required
+	r.POST("/api/games", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Create)
+	r.DELETE("/api/games/:id", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Delete)
+	r.PATCH("/api/games/:id", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Update)
+	r.POST("/api/games/:id/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.AddGameOnSale)
+	r.GET("/api/games/:id/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.ListGameSales)
 
 	// sales
-	app.Handle(http.MethodPost, "/api/sales", g.AddSale)
-	app.Handle(http.MethodGet, "/api/sales", g.ListSales)
+	r.GET("/api/sales", g.ListSales)
+	// authorization required
+	r.POST("/api/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleModerator), g.AddSale)
 
-	app.Handle(http.MethodGet, "/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	return app
+	return r
 }

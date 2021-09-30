@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-manage/schema"
+	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
-	"github.com/OutOfStack/game-library/internal/pkg/util"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	}
 
 	cfg := config{}
-	if err := util.LoadConfig(".", "app", "env", &cfg); err != nil {
+	if err := conf.Load(".", "app", "env", &cfg); err != nil {
 		log.Fatalf("error parsing config: %v", err)
 	}
 

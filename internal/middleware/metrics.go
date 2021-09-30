@@ -18,7 +18,6 @@ var m = struct {
 func Metrics() gin.HandlerFunc {
 
 	h := func(c *gin.Context) {
-
 		c.Next()
 
 		m.req.Add(1)

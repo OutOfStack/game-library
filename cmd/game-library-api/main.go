@@ -13,9 +13,18 @@ import (
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
+	"github.com/OutOfStack/game-library/internal/appconf"
+	"github.com/OutOfStack/game-library/internal/auth"
+	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
-	"github.com/OutOfStack/game-library/internal/pkg/util"
+	"github.com/pkg/errors"
 )
+
+type config struct {
+	DB   appconf.DB   `mapstructure:",squash"`
+	Web  appconf.Web  `mapstructure:",squash"`
+	Auth appconf.Auth `mapstructure:",squash"`
+}
 
 // @title Game library API
 // @version 0.1
@@ -36,27 +45,10 @@ func main() {
 }
 
 func run() error {
-	log := log.New(os.Stdout, "GAMES : ", log.LstdFlags)
-
-	type config struct {
-		DB struct {
-			Host       string `mapstructure:"DB_HOST"`
-			Name       string `mapstructure:"DB_NAME"`
-			User       string `mapstructure:"DB_USER"`
-			Password   string `mapstructure:"DB_PASSWORD"`
-			RequireSSL bool   `mapstructure:"DB_REQUIRESSL"`
-		} `mapstructure:",squash"`
-		Web struct {
-			Address         string        `mapstructure:"APP_ADDRESS"`
-			DebugAddress    string        `mapstructure:"DEBUG_ADDRESS"`
-			ReadTimeout     time.Duration `mapstructure:"APP_READTIMEOUT"`
-			WriteTimeout    time.Duration `mapstructure:"APP_WRITETIMEOUT"`
-			ShutdownTimeout time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
-		} `mapstructure:",squash"`
-	}
+	log := log.New(os.Stdout, "GAMES", log.LstdFlags)
 
 	cfg := config{}
-	if err := util.LoadConfig(".", "app", "env", &cfg); err != nil {
+	if err := conf.Load(".", "app", "env", &cfg); err != nil {
 		log.Fatalf("error parsing config: %v", err)
 	}
 
@@ -79,10 +71,16 @@ func run() error {
 		log.Printf("Debug service stopped %v", err)
 	}()
 
+	// create auth module
+	a, err := auth.New(cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenApiUrl)
+	if err != nil {
+		return errors.Wrap(err, "constructing Auth")
+	}
+
 	// start API service
 	api := http.Server{
 		Addr:         cfg.Web.Address,
-		Handler:      handler.Service(log, db),
+		Handler:      handler.Service(log, db, a),
 		ReadTimeout:  cfg.Web.ReadTimeout * time.Second,
 		WriteTimeout: cfg.Web.WriteTimeout * time.Second,
 	}

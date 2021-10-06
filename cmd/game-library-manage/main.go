@@ -47,18 +47,20 @@ func main() {
 			log.Fatalf("applying migrations %v", err)
 		}
 		log.Print("migration complete")
-		return
 	case "rollback":
 		if err := schema.Migrate(db, false); err != nil {
 			log.Fatalf("rollback last migration %v", err)
 		}
 		log.Print("migration rollback complete")
-		return
 	case "seed":
 		if err := schema.Seed(db); err != nil {
 			log.Fatalf("applying seeds %v", err)
 		}
 		log.Print("Seed data inserted")
-		return
+	default:
+		fmt.Println("Unknown command, available commands:")
+		fmt.Println("migrate: applies all migrations to database")
+		fmt.Println("rollback: roll backs one last migration of database")
+		fmt.Println("seed: applies seed data (games, sales) to database")
 	}
 }

@@ -419,7 +419,8 @@ var doc = `{
             "type": "object",
             "required": [
                 "developer",
-                "name"
+                "name",
+                "publisher"
             ],
             "properties": {
                 "developer": {
@@ -436,6 +437,9 @@ var doc = `{
                 },
                 "price": {
                     "type": "number"
+                },
+                "publisher": {
+                    "type": "string"
                 },
                 "releaseDate": {
                     "type": "string"
@@ -491,6 +495,9 @@ var doc = `{
                 },
                 "price": {
                     "type": "number"
+                },
+                "publisher": {
+                    "type": "string"
                 },
                 "releaseDate": {
                     "type": "string"
@@ -554,6 +561,9 @@ var doc = `{
                 },
                 "price": {
                     "type": "number"
+                },
+                "publisher": {
+                    "type": "string"
                 },
                 "releaseDate": {
                     "type": "string"

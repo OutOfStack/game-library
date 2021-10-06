@@ -25,7 +25,7 @@ func (e ErrNotFound) Error() string {
 func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 	list := []Game{}
 
-	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
+	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre,
 	case 
 		when CURRENT_DATE >= max(s.begin_date) and CURRENT_DATE <= max(s.end_date) then g.price*((100 - max(sg.discount_percent))/100.0)
 		else price
@@ -46,7 +46,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
-	const q = `select g.id, g.name, g.developer, g.release_date, g.genre,
+	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre,
 		case
 			when CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date then g.price*((100 - sg.discount_percent)/100.0)
 			else price
@@ -71,12 +71,12 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 // Create creates a new game
 func Create(ctx context.Context, db *sqlx.DB, cg CreateGame) (int64, error) {
 	const q = `insert into games
-	(name, developer, release_date, price, genre)
-	values ($1, $2, $3, $4, $5)
+	(name, developer, publisher, release_date, price, genre)
+	values ($1, $2, $3, $4, $5, $6)
 	returning id`
 
 	var lastInsertID int64
-	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre)).Scan(&lastInsertID)
+	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre)).Scan(&lastInsertID)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %v: %w", cg, err)
 	}
@@ -97,6 +97,9 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Gam
 	if update.Developer != nil {
 		g.Developer = *update.Developer
 	}
+	if update.Publisher != nil {
+		g.Publisher = *update.Publisher
+	}
 	if update.ReleaseDate != nil {
 		releaseDate, _ := types.ParseDate(*update.ReleaseDate)
 		g.ReleaseDate = releaseDate
@@ -110,11 +113,12 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Gam
 	const q = `update games set 
 	 name = $1,
 	 developer = $2,
-	 release_date = $3,
-	 price = $4,
-	 genre = $5
-	 where id = $6`
-	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), id)
+	 publisher = $3,
+	 release_date = $4,
+	 price = $5,
+	 genre = $6
+	 where id = $7`
+	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.Publisher, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), id)
 	if err != nil {
 		return nil, errors.Wrap(err, "updating game")
 	}

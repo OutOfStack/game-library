@@ -407,7 +407,8 @@
             "type": "object",
             "required": [
                 "developer",
-                "name"
+                "name",
+                "publisher"
             ],
             "properties": {
                 "developer": {
@@ -424,6 +425,9 @@
                 },
                 "price": {
                     "type": "number"
+                },
+                "publisher": {
+                    "type": "string"
                 },
                 "releaseDate": {
                     "type": "string"
@@ -479,6 +483,9 @@
                 },
                 "price": {
                     "type": "number"
+                },
+                "publisher": {
+                    "type": "string"
                 },
                 "releaseDate": {
                     "type": "string"
@@ -542,6 +549,9 @@
                 },
                 "price": {
                     "type": "number"
+                },
+                "publisher": {
+                    "type": "string"
                 },
                 "releaseDate": {
                     "type": "string"

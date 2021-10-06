@@ -12,11 +12,14 @@ definitions:
         type: string
       price:
         type: number
+      publisher:
+        type: string
       releaseDate:
         type: string
     required:
     - developer
     - name
+    - publisher
     type: object
   game.CreateGameSale:
     properties:
@@ -51,6 +54,8 @@ definitions:
         type: string
       price:
         type: number
+      publisher:
+        type: string
       releaseDate:
         type: string
     type: object
@@ -92,6 +97,8 @@ definitions:
         type: string
       price:
         type: number
+      publisher:
+        type: string
       releaseDate:
         type: string
     type: object

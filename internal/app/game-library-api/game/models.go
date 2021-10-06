@@ -10,6 +10,7 @@ type Game struct {
 	ID          int64          `db:"id"`
 	Name        string         `db:"name"`
 	Developer   string         `db:"developer"`
+	Publisher   string         `db:"publisher"`
 	ReleaseDate types.Date     `db:"release_date"`
 	Price       float32        `db:"price"`
 	Genre       pq.StringArray `db:"genre"`
@@ -20,6 +21,7 @@ type GetGame struct {
 	ID          int64    `json:"id"`
 	Name        string   `json:"name"`
 	Developer   string   `json:"developer"`
+	Publisher   string   `json:"publisher"`
 	ReleaseDate string   `json:"releaseDate"`
 	Price       float32  `json:"price"`
 	Genre       []string `json:"genre"`
@@ -29,6 +31,7 @@ type GetGame struct {
 type CreateGame struct {
 	Name        string   `json:"name" validate:"required"`
 	Developer   string   `json:"developer" validate:"required"`
+	Publisher   string   `json:"publisher" validate:"required"`
 	ReleaseDate string   `json:"releaseDate" validate:"date"`
 	Price       float32  `json:"price" validate:"gte=0,lt=10000"`
 	Genre       []string `json:"genre"`
@@ -39,6 +42,7 @@ type CreateGame struct {
 type UpdateGame struct {
 	Name        *string   `json:"name"`
 	Developer   *string   `json:"developer" validate:"omitempty"`
+	Publisher   *string   `json:"publisher" validate:"omitempty"`
 	ReleaseDate *string   `json:"releaseDate" validate:"omitempty,date"`
 	Price       *float32  `json:"price" validate:"omitempty,gte=0,lt=10000"`
 	Genre       *[]string `json:"genre" validate:"omitempty"`

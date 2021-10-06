@@ -1,14 +1,16 @@
 # build
-FROM golang:1.16-alpine as builder
+FROM golang:1.17-alpine as builder
 
 WORKDIR /tmp/game-library-manage
 
-COPY go.mod .
-COPY go.sum .
-COPY ./app.env ./out/
-
+# copy and download dependencies
+COPY go.mod go.sum  ./
 RUN go mod download
 
+# copy config, scripts and code into container
+COPY ./app.env ./out/
+COPY ./migrations ./out/migrations
+COPY ./scripts ./out/scripts
 COPY . .
 
 RUN go build -o ./out/game-library-manage cmd/game-library-manage/main.go

@@ -6,7 +6,7 @@ run:
 	go run ./cmd/game-library-api/.
 
 dockerrunpg:
-	docker-compose up -d db
+	docker-compose up -d --no-recreate db
 
 createdb:
 	docker exec -it games_db createdb --username=postgres --owner=postgres games
@@ -34,3 +34,12 @@ dockerrunweb:
 
 dockerbuildmng:
 	docker build -f Dockerfile.mng -t game-library-mng:latest .
+
+dockerrunmng-m:
+	docker compose run --rm mng migrate
+
+dockerrunmng-r:
+	docker compose run --rm mng rollback
+
+dockerrunmng-s:
+	docker compose run --rm mng seed

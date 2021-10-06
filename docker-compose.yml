@@ -4,12 +4,12 @@ services:
 
   db:
     container_name: games_db
-    image: postgres:13-alpine
+    image: postgres:14-alpine
     ports:
       - 5432:5432
     restart: on-failure:5
     environment:
-    - POSTGRES_PASSWORD=
+    - POSTGRES_PASSWORD=temp_pwd
 
   web:
     container_name: game-library-web
@@ -18,8 +18,18 @@ services:
       - 8000:8000
       - 6060:6060
     environment:
-      DB_HOST: games_db
+      DB_HOST: db
+      DB_PASSWORD: temp_pwd
       APP_ADDRESS: 0.0.0.0:8000
       DEBUG_ADDRESS: 0.0.0.0:6060
     depends_on: 
+      - db
+  
+  mng:
+    container_name: game-library-mng
+    image: game-library-mng:latest
+    environment:
+      DB_HOST: db
+      DB_PASSWORD: temp_pwd
+    depends_on:
       - db

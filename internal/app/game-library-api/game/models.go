@@ -16,6 +16,13 @@ type Game struct {
 	Genre       pq.StringArray `db:"genre"`
 }
 
+// GameInfo represents extended info about game
+type GameInfo struct {
+	Game
+	CurrentPrice float32 `db:"current_price"`
+	Rating       float32 `db:"rating"`
+}
+
 // GetGame represents game get model
 type GetGame struct {
 	ID          int64    `json:"id"`
@@ -25,6 +32,13 @@ type GetGame struct {
 	ReleaseDate string   `json:"releaseDate"`
 	Price       float32  `json:"price"`
 	Genre       []string `json:"genre"`
+}
+
+// GetGameInfo represents extended game info get model
+type GetGameInfo struct {
+	GetGame
+	CurrentPrice float32 `json:"currentPrice"`
+	Rating       float32 `json:"rating"`
 }
 
 // CreateGame represents game data we receive from user
@@ -95,4 +109,17 @@ type GetGameSale struct {
 	DiscountPercent uint8  `json:"discountPercent"`
 	BeginDate       string `json:"beginDate"`
 	EndDate         string `json:"endDate"`
+}
+
+// Rating represents database rating model
+type Rating struct {
+	GameID int64  `db:"game_id"`
+	UserID string `db:"user_id"`
+	Rating uint8  `db:"rating"`
+}
+
+// CreateRating represents rating data we receive from user
+type CreateRating struct {
+	GameID int64 `json:"gameId"`
+	Rating uint8 `json:"rating" validate:"gte=1,lte=4"`
 }

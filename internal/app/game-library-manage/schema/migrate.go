@@ -21,13 +21,8 @@ func Migrate(db *sqlx.DB, up bool) error {
 		return err
 	}
 	if up {
-		err = m.Up()
+		return m.Up()
 	} else {
-		err = m.Steps(-1)
+		return m.Steps(-1)
 	}
-
-	if err != nil {
-		return err
-	}
-	return nil
 }

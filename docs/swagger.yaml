@@ -59,6 +59,29 @@ definitions:
       releaseDate:
         type: string
     type: object
+  game.GetGameInfo:
+    properties:
+      currentPrice:
+        type: number
+      developer:
+        type: string
+      genre:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      publisher:
+        type: string
+      rating:
+        type: number
+      releaseDate:
+        type: string
+    type: object
   game.GetGameSale:
     properties:
       beginDate:
@@ -131,8 +154,8 @@ info:
 paths:
   /games:
     get:
-      description: returns all games
-      operationId: get-all-games
+      description: returns all games with extended properties
+      operationId: get-all-games-info
       produces:
       - application/json
       responses:
@@ -140,13 +163,13 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GetGame'
+              $ref: '#/definitions/game.GetGameInfo'
             type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: List all games
+      summary: List all games info
     post:
       consumes:
       - application/json
@@ -206,8 +229,8 @@ paths:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Delete a game
     get:
-      description: returns game by ID
-      operationId: get-game-by-id
+      description: returns game with extended properties by ID
+      operationId: get-game-info-by-id
       parameters:
       - description: Game ID
         in: path
@@ -220,7 +243,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.GetGame'
+            $ref: '#/definitions/game.GetGameInfo'
         "400":
           description: Bad Request
           schema:
@@ -233,7 +256,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Show a game
+      summary: Show a game info
     patch:
       consumes:
       - application/json

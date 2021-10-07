@@ -19,36 +19,36 @@ type Game struct {
 }
 
 // List godoc
-// @Summary List all games
-// @Description returns all games
-// @ID get-all-games
+// @Summary List all games info
+// @Description returns all games with extended properties
+// @ID get-all-games-info
 // @Produce json
-// @Success 200 {array} game.GetGame
+// @Success 200 {array} game.GetGameInfo
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
 func (g *Game) List(c *gin.Context) {
-	list, err := repo.List(c, g.DB)
+	list, err := repo.ListInfo(c, g.DB)
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
 		return
 	}
 
-	getGames := []repo.GetGame{}
+	getGamesInfo := []repo.GetGameInfo{}
 	for _, g := range list {
-		getGames = append(getGames, *g.MapToGetGame())
+		getGamesInfo = append(getGamesInfo, *g.MapToGetGameInfo())
 	}
 
-	web.Respond(c, getGames, http.StatusOK)
+	web.Respond(c, getGamesInfo, http.StatusOK)
 }
 
 // Retrieve godoc
-// @Summary Show a game
-// @Description returns game by ID
-// @ID get-game-by-id
+// @Summary Show a game info
+// @Description returns game with extended properties by ID
+// @ID get-game-info-by-id
 // @Produce json
 // @Param 	id  path int64 true "Game ID"
-// @Success 200 {object} game.GetGame
+// @Success 200 {object} game.GetGameInfo
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -60,7 +60,7 @@ func (g *Game) Retrieve(c *gin.Context) {
 		return
 	}
 
-	game, err := repo.Retrieve(c, g.DB, id)
+	game, err := repo.RetrieveInfo(c, g.DB, id)
 
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
@@ -71,9 +71,9 @@ func (g *Game) Retrieve(c *gin.Context) {
 		return
 	}
 
-	getGame := game.MapToGetGame()
+	getGameInfo := game.MapToGetGameInfo()
 
-	web.Respond(c, getGame, http.StatusOK)
+	web.Respond(c, getGameInfo, http.StatusOK)
 }
 
 // Create godoc

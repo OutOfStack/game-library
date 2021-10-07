@@ -1,5 +1,5 @@
 CREATE TABLE Sales (
-	id serial PRIMARY key,
+	id serial PRIMARY KEY,
 	name varchar NOT NULL,
 	game_id int NOT NULL references Games(id) ON DELETE CASCADE,
 	begin_date date NULL,

@@ -13,6 +13,23 @@ func (g *Game) MapToGetGame() *GetGame {
 	}
 }
 
+// MapToGetGameInfo maps GameInfo to GetGameInfo
+func (g *GameInfo) MapToGetGameInfo() *GetGameInfo {
+	return &GetGameInfo{
+		GetGame: GetGame{
+			ID:          g.ID,
+			Name:        g.Name,
+			Developer:   g.Developer,
+			Publisher:   g.Publisher,
+			ReleaseDate: g.ReleaseDate.String(),
+			Price:       g.Price,
+			Genre:       []string(g.Genre),
+		},
+		CurrentPrice: g.CurrentPrice,
+		Rating:       g.Rating,
+	}
+}
+
 // MapToGetGame maps NewGame to GetGame
 func (ng *CreateGame) MapToGetGame(id int64) *GetGame {
 	return &GetGame{

@@ -1,1 +1,1 @@
-drop table if exists Games;
+DROP TABLE IF EXISTS Games;

@@ -31,19 +31,19 @@ var doc = `{
     "paths": {
         "/games": {
             "get": {
-                "description": "returns all games",
+                "description": "returns all games with extended properties",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "List all games",
-                "operationId": "get-all-games",
+                "summary": "List all games info",
+                "operationId": "get-all-games-info",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/game.GetGame"
+                                "$ref": "#/definitions/game.GetGameInfo"
                             }
                         }
                     },
@@ -100,12 +100,12 @@ var doc = `{
         },
         "/games/{id}": {
             "get": {
-                "description": "returns game by ID",
+                "description": "returns game with extended properties by ID",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Show a game",
-                "operationId": "get-game-by-id",
+                "summary": "Show a game info",
+                "operationId": "get-game-info-by-id",
                 "parameters": [
                     {
                         "type": "integer",
@@ -119,7 +119,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/game.GetGame"
+                            "$ref": "#/definitions/game.GetGameInfo"
                         }
                     },
                     "400": {
@@ -498,6 +498,41 @@ var doc = `{
                 },
                 "publisher": {
                     "type": "string"
+                },
+                "releaseDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.GetGameInfo": {
+            "type": "object",
+            "properties": {
+                "currentPrice": {
+                    "type": "number"
+                },
+                "developer": {
+                    "type": "string"
+                },
+                "genre": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "publisher": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "number"
                 },
                 "releaseDate": {
                     "type": "string"

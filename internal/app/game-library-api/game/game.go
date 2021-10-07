@@ -21,19 +21,33 @@ func (e ErrNotFound) Error() string {
 	return fmt.Sprintf("%v with id %v was not found", e.Entity, e.ID)
 }
 
-// List returns all games
-func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
-	list := []Game{}
+// ListInfo returns all games with extended properties
+func ListInfo(ctx context.Context, db *sqlx.DB) ([]GameInfo, error) {
+	list := []GameInfo{}
 
-	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre,
-	case 
-		when CURRENT_DATE >= max(s.begin_date) and CURRENT_DATE <= max(s.end_date) then g.price*((100 - max(sg.discount_percent))/100.0)
-		else price
-	end as price
-	from games g
-	left join sales_games sg on sg.game_id = g.id
-	inner join sales s on s.id = sg.sale_id
-	group by g.id, g.name`
+	// here we unite two groups of games - games which are currently on sale and the rest ones
+	// if there are currently more than one sale (maybe should be restricted) and a game is on both sales we choose max discount
+	// after uniting we count rating for all games
+	const q = `
+	select all_g.*, coalesce(avg(r.rating), 0) as rating from (
+		with games_on_sale as (
+			select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, max(sg.discount_percent) as discount
+			from sales s
+			inner join sales_games sg on sg.sale_id = s.id
+			inner join games g on g.id = sg.game_id
+			where CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date
+			group by g.id
+		)
+		select gs.id, gs.name, gs.developer, gs.publisher, gs.release_date, gs.genre, gs.price, gs.price * ((100 - gs.discount) / 100.0) as current_price 
+		from games_on_sale gs
+		union
+		select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, g.price
+		from games g
+		where g.id not in (select id from games_on_sale)
+	) all_g
+	left join ratings r on r.game_id = all_g.id
+	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price
+	order by all_g.id`
 
 	if err := db.SelectContext(ctx, &list, q); err != nil {
 		return nil, err
@@ -42,21 +56,43 @@ func List(ctx context.Context, db *sqlx.DB) ([]Game, error) {
 	return list, nil
 }
 
+// RetrieveInfo returns a single game with extended properties
+func RetrieveInfo(ctx context.Context, db *sqlx.DB, id int64) (*GameInfo, error) {
+	var g GameInfo
+
+	const q = `
+	select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, 
+		g.price * (100 - coalesce(
+			(select discount_percent
+			from sales_games sg 
+			inner join sales s on s.id = sg.sale_id 
+			where sg.game_id = g.id and CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date
+			order by discount_percent desc
+			limit 1),
+			0)) / 100.0 as current_price,
+			coalesce(avg(r.rating), 0) as rating
+	from games g
+	left join ratings r on r.game_id = g.id
+	where g.id = $1
+	group by g.id`
+
+	if err := db.GetContext(ctx, &g, q, id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound{"game", id}
+		}
+		return nil, err
+	}
+
+	return &g, nil
+}
+
 // Retrieve returns a single game
 func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
-	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre,
-		case
-			when CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date then g.price*((100 - sg.discount_percent)/100.0)
-			else price
-		end as price
-		from games g
-		left join sales_games sg on sg.game_id = g.id
-		left join sales s on s.id = sg.sale_id
-		where g.id = $1
-		order by price asc
-		limit 1`
+	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price
+	from games g
+	where g.id = $1`
 
 	if err := db.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

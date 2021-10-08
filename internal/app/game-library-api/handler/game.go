@@ -43,7 +43,7 @@ func (g *Game) List(c *gin.Context) {
 }
 
 // Retrieve godoc
-// @Summary Show a game info
+// @Summary Show game info
 // @Description returns game with extended properties by ID
 // @ID get-game-info-by-id
 // @Produce json
@@ -77,7 +77,7 @@ func (g *Game) Retrieve(c *gin.Context) {
 }
 
 // Create godoc
-// @Summary Create a game
+// @Summary Create game
 // @Description creates new game
 // @ID create-game
 // @Accept  json
@@ -146,7 +146,7 @@ func (g *Game) Update(c *gin.Context) {
 }
 
 // Delete godoc
-// @Summary Delete a game
+// @Summary Delete game
 // @Description deletes game by ID
 // @ID delete-game-by-id
 // @Accept  json

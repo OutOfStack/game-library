@@ -28,6 +28,13 @@ definitions:
       saleId:
         type: integer
     type: object
+  game.CreateRating:
+    properties:
+      gameId:
+        type: integer
+      rating:
+        type: integer
+    type: object
   game.CreateSale:
     properties:
       beginDate:
@@ -106,6 +113,15 @@ definitions:
       id:
         type: integer
       name:
+        type: string
+    type: object
+  game.Rating:
+    properties:
+      gameID:
+        type: integer
+      rating:
+        type: integer
+      userID:
         type: string
     type: object
   game.UpdateGame:
@@ -197,7 +213,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Create a game
+      summary: Create game
   /games/{id}:
     delete:
       consumes:
@@ -227,7 +243,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Delete a game
+      summary: Delete game
     get:
       description: returns game with extended properties by ID
       operationId: get-game-info-by-id
@@ -256,7 +272,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Show a game info
+      summary: Show game info
     patch:
       consumes:
       - application/json
@@ -363,6 +379,39 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Add game on sale
+  /games/rate:
+    post:
+      consumes:
+      - application/json
+      description: rates game
+      operationId: rate-game
+      parameters:
+      - description: game rating
+        in: body
+        name: rating
+        required: true
+        schema:
+          $ref: '#/definitions/game.CreateRating'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.Rating'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Rate game
   /sales:
     get:
       description: Returns all sales
@@ -408,7 +457,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Create a sale
+      summary: Create sale
 schemes:
 - http
 swagger: "2.0"

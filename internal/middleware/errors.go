@@ -15,7 +15,7 @@ func Errors(log *log.Logger) gin.HandlerFunc {
 
 		if len(c.Errors) > 0 {
 			for _, e := range c.Errors.Errors() {
-				log.Printf("ERROR: %s", e)
+				log.Printf("ERROR: %s\n", e)
 			}
 
 			err := c.Errors.Last().Err

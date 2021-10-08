@@ -42,7 +42,7 @@ func Authenticate(log *log.Logger, a *auth.Auth) gin.HandlerFunc {
 			return
 		}
 
-		c.Set(auth.CtxKey, tokenStr)
+		c.Set(auth.CtxTokenKey, tokenStr)
 
 		c.Next()
 	}
@@ -54,7 +54,7 @@ func Authenticate(log *log.Logger, a *auth.Auth) gin.HandlerFunc {
 func Authorize(log *log.Logger, a *auth.Auth, requiredRole string) gin.HandlerFunc {
 
 	h := func(c *gin.Context) {
-		token, ok := c.Get(auth.CtxKey)
+		token, ok := c.Get(auth.CtxTokenKey)
 		// if no value in context return 500 as it is unexpected
 		if !ok {
 			log.Println("no Token in request context")
@@ -78,6 +78,8 @@ func Authorize(log *log.Logger, a *auth.Auth, requiredRole string) gin.HandlerFu
 			c.Abort()
 			return
 		}
+
+		c.Set(auth.CtxClaimsKey, *claims)
 
 		c.Next()
 	}

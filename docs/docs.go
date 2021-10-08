@@ -63,7 +63,7 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Create a game",
+                "summary": "Create game",
                 "operationId": "create-game",
                 "parameters": [
                     {
@@ -98,13 +98,63 @@ var doc = `{
                 }
             }
         },
+        "/games/rate": {
+            "post": {
+                "description": "rates game",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Rate game",
+                "operationId": "rate-game",
+                "parameters": [
+                    {
+                        "description": "game rating",
+                        "name": "rating",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.CreateRating"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.Rating"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/games/{id}": {
             "get": {
                 "description": "returns game with extended properties by ID",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Show a game info",
+                "summary": "Show game info",
                 "operationId": "get-game-info-by-id",
                 "parameters": [
                     {
@@ -150,7 +200,7 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Delete a game",
+                "summary": "Delete game",
                 "operationId": "delete-game-by-id",
                 "parameters": [
                     {
@@ -378,7 +428,7 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Create a sale",
+                "summary": "Create sale",
                 "operationId": "create-sale",
                 "parameters": [
                     {
@@ -453,6 +503,17 @@ var doc = `{
                     "type": "integer"
                 },
                 "saleId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "game.CreateRating": {
+            "type": "object",
+            "properties": {
+                "gameId": {
+                    "type": "integer"
+                },
+                "rating": {
                     "type": "integer"
                 }
             }
@@ -575,6 +636,20 @@ var doc = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "game.Rating": {
+            "type": "object",
+            "properties": {
+                "gameID": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "userID": {
                     "type": "string"
                 }
             }

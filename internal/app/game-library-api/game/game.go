@@ -198,7 +198,7 @@ func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, cgs CreateGam
 		return nil, fmt.Errorf("adding game with id %v on sale  with id %v: %w", gameID, cgs.SaleID, err)
 	}
 
-	gameSale := cgs.NewGameSale(s, gameID)
+	gameSale := cgs.MapToGameSale(s, gameID)
 
 	return gameSale, nil
 }

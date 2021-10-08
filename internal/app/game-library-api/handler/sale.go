@@ -10,7 +10,7 @@ import (
 )
 
 // AddSale godoc
-// @Summary Create a sale
+// @Summary Create sale
 // @Description Creates new sale
 // @ID create-sale
 // @Accept  json

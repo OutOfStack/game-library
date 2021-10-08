@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	CtxKey = "auth_tkn"
+	CtxTokenKey  string = "auth_tkn"
+	CtxClaimsKey string = "auth_clms"
 
-	RoleModerator = "moderator"
-	RolePublisher = "publisher"
-	RoleUesr      = "user"
+	RoleModerator      = "moderator"
+	RolePublisher      = "publisher"
+	RoleRegisteredUser = "user"
 )
 
 var ErrVerifyAPIUnavailable = errors.New("verify API is unavailable")

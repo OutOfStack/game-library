@@ -75,8 +75,8 @@ func (gs *GameSale) MapToGetGameSale() *GetGameSale {
 	}
 }
 
-// NewGameSale creates new GameSale from Sale and gameID
-func (ngs *CreateGameSale) NewGameSale(sale *Sale, gameID int64) *GameSale {
+// MapToGameSale maps CreateGameSale and Sale to GameSale
+func (ngs *CreateGameSale) MapToGameSale(sale *Sale, gameID int64) *GameSale {
 	return &GameSale{
 		GameID:          gameID,
 		SaleID:          ngs.SaleID,

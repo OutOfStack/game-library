@@ -47,3 +47,43 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	web.Respond(c, rating, http.StatusOK)
 }
+
+// GetUserRatings godoc
+// @Summary Get user ratings for specified games
+// @Description returns user ratings for specified games
+// @ID get-user-ratings
+// @Produce json
+// @Success 200 {object} map[int64]uint8
+// @Failure 400 {object} web.ErrorResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /user/ratings [post]
+func (g *Game) GetUserRatings(c *gin.Context) {
+	var ur repo.UserRatings
+	err := web.Decode(c, &ur)
+	if err != nil {
+		c.Error(errors.Wrap(err, "decoding user ratings"))
+		return
+	}
+
+	claims, err := web.GetClaims(c)
+	if err != nil {
+		c.Error(errors.Wrap(err, "getting claims from context"))
+		return
+	}
+
+	userID := claims.Subject
+
+	ratings, err := repo.GetUserRatings(c, g.DB, userID, ur.GameIDs)
+
+	if err != nil {
+		c.Error(errors.Wrap(err, "getting user ratings"))
+		return
+	}
+
+	userRatings := make(map[int64]uint8)
+	for _, r := range ratings {
+		userRatings[r.GameID] = r.Rating
+	}
+
+	web.Respond(c, userRatings, http.StatusOK)
+}

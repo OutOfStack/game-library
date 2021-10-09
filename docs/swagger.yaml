@@ -47,26 +47,7 @@ definitions:
     - beginDate
     - endDate
     type: object
-  game.GetGame:
-    properties:
-      developer:
-        type: string
-      genre:
-        items:
-          type: string
-        type: array
-      id:
-        type: integer
-      name:
-        type: string
-      price:
-        type: number
-      publisher:
-        type: string
-      releaseDate:
-        type: string
-    type: object
-  game.GetGameInfo:
+  game.GameInfoResp:
     properties:
       currentPrice:
         type: number
@@ -89,7 +70,26 @@ definitions:
       releaseDate:
         type: string
     type: object
-  game.GetGameSale:
+  game.GameResp:
+    properties:
+      developer:
+        type: string
+      genre:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      publisher:
+        type: string
+      releaseDate:
+        type: string
+    type: object
+  game.GameSaleResp:
     properties:
       beginDate:
         type: string
@@ -104,7 +104,16 @@ definitions:
       saleId:
         type: integer
     type: object
-  game.GetSale:
+  game.Rating:
+    properties:
+      gameID:
+        type: integer
+      rating:
+        type: integer
+      userID:
+        type: string
+    type: object
+  game.SaleResp:
     properties:
       beginDate:
         type: string
@@ -113,15 +122,6 @@ definitions:
       id:
         type: integer
       name:
-        type: string
-    type: object
-  game.Rating:
-    properties:
-      gameID:
-        type: integer
-      rating:
-        type: integer
-      userID:
         type: string
     type: object
   game.UpdateGame:
@@ -179,7 +179,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GetGameInfo'
+              $ref: '#/definitions/game.GameInfoResp'
             type: array
         "500":
           description: Internal Server Error
@@ -204,7 +204,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/game.GetGame'
+            $ref: '#/definitions/game.GameResp'
         "400":
           description: Bad Request
           schema:
@@ -259,7 +259,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.GetGameInfo'
+            $ref: '#/definitions/game.GameInfoResp'
         "400":
           description: Bad Request
           schema:
@@ -296,7 +296,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.GetGame'
+            $ref: '#/definitions/game.GameResp'
         "400":
           description: Bad Request
           schema:
@@ -327,7 +327,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GetGameSale'
+              $ref: '#/definitions/game.GameSaleResp'
             type: array
         "400":
           description: Bad Request
@@ -365,7 +365,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.GetGameSale'
+            $ref: '#/definitions/game.GameSaleResp'
         "400":
           description: Bad Request
           schema:
@@ -423,7 +423,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GetSale'
+              $ref: '#/definitions/game.SaleResp'
             type: array
         "500":
           description: Internal Server Error
@@ -448,7 +448,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/game.GetSale'
+            $ref: '#/definitions/game.SaleResp'
         "400":
           description: Bad Request
           schema:
@@ -458,6 +458,28 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Create sale
+  /user/ratings:
+    post:
+      description: returns user ratings for specified games
+      operationId: get-user-ratings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get user ratings for specified games
 schemes:
 - http
 swagger: "2.0"

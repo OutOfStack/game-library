@@ -23,8 +23,8 @@ type GameInfo struct {
 	Rating       float32 `db:"rating"`
 }
 
-// GetGame represents game get model
-type GetGame struct {
+// GameResp represents game response
+type GameResp struct {
 	ID          int64    `json:"id"`
 	Name        string   `json:"name"`
 	Developer   string   `json:"developer"`
@@ -34,9 +34,9 @@ type GetGame struct {
 	Genre       []string `json:"genre"`
 }
 
-// GetGameInfo represents extended game info get model
-type GetGameInfo struct {
-	GetGame
+// GameInfoResp represents extended game info response
+type GameInfoResp struct {
+	GameResp
 	CurrentPrice float32 `json:"currentPrice"`
 	Rating       float32 `json:"rating"`
 }
@@ -70,8 +70,8 @@ type Sale struct {
 	EndDate   types.Date `db:"end_date"`
 }
 
-// GetSale represents sale get model
-type GetSale struct {
+// SaleResp represents sale response
+type SaleResp struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	BeginDate string `json:"beginDate"`
@@ -101,8 +101,8 @@ type CreateGameSale struct {
 	DiscountPercent uint8 `json:"discountPercent" validate:"gt=0,lte=100"`
 }
 
-// GetGameSale represents game sale get model
-type GetGameSale struct {
+// GameSaleResp represents game sale response
+type GameSaleResp struct {
 	GameID          int64  `json:"gameId"`
 	SaleID          int64  `json:"saleId"`
 	Sale            string `json:"sale"`
@@ -122,4 +122,15 @@ type Rating struct {
 type CreateRating struct {
 	GameID int64 `json:"gameId"`
 	Rating uint8 `json:"rating" validate:"gte=1,lte=4"`
+}
+
+// UserRating represents user rating entity
+type UserRating struct {
+	GameID int64 `db:"game_id"`
+	Rating uint8 `db:"rating"`
+}
+
+// UserRatings represents get user ratings request
+type UserRatings struct {
+	GameIDs []int64 `json:"gameIds"`
 }

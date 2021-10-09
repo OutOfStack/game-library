@@ -23,20 +23,20 @@ type Game struct {
 // @Description returns all games with extended properties
 // @ID get-all-games-info
 // @Produce json
-// @Success 200 {array} game.GetGameInfo
+// @Success 200 {array} game.GameInfoResp
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
 func (g *Game) List(c *gin.Context) {
-	list, err := repo.ListInfo(c, g.DB)
+	list, err := repo.GetInfos(c, g.DB)
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
 		return
 	}
 
-	getGamesInfo := []repo.GetGameInfo{}
+	getGamesInfo := []repo.GameInfoResp{}
 	for _, g := range list {
-		getGamesInfo = append(getGamesInfo, *g.MapToGetGameInfo())
+		getGamesInfo = append(getGamesInfo, *g.MapToGameInfoResp())
 	}
 
 	web.Respond(c, getGamesInfo, http.StatusOK)
@@ -48,7 +48,7 @@ func (g *Game) List(c *gin.Context) {
 // @ID get-game-info-by-id
 // @Produce json
 // @Param 	id  path int64 true "Game ID"
-// @Success 200 {object} game.GetGameInfo
+// @Success 200 {object} game.GameInfoResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -71,7 +71,7 @@ func (g *Game) Retrieve(c *gin.Context) {
 		return
 	}
 
-	getGameInfo := game.MapToGetGameInfo()
+	getGameInfo := game.MapToGameInfoResp()
 
 	web.Respond(c, getGameInfo, http.StatusOK)
 }
@@ -83,7 +83,7 @@ func (g *Game) Retrieve(c *gin.Context) {
 // @Accept  json
 // @Produce json
 // @Param   game body game.CreateGame true "create game"
-// @Success 201 {object} game.GetGame
+// @Success 201 {object} game.GameResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
@@ -101,7 +101,7 @@ func (g *Game) Create(c *gin.Context) {
 		return
 	}
 
-	getGame := cg.MapToGetGame(gameId)
+	getGame := cg.MapToGameResp(gameId)
 
 	web.Respond(c, getGame, http.StatusCreated)
 }
@@ -114,7 +114,7 @@ func (g *Game) Create(c *gin.Context) {
 // @Produce json
 // @Param  	id   path int64 			true "Game ID"
 // @Param  	game body game.UpdateGame 	true "update game"
-// @Success 200 {object} game.GetGame
+// @Success 200 {object} game.GameResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -140,7 +140,7 @@ func (g *Game) Update(c *gin.Context) {
 		return
 	}
 
-	getGame := game.MapToGetGame()
+	getGame := game.MapToGameResp()
 
 	web.Respond(c, getGame, http.StatusOK)
 }
@@ -185,7 +185,7 @@ func (g *Game) Delete(c *gin.Context) {
 // @Produce json
 // @Param  id 		path int64 				 true "Game ID"
 // @Param  gamesale body game.CreateGameSale true "game sale"
-// @Success 200 {object} game.GetGameSale
+// @Success 200 {object} game.GameSaleResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -211,7 +211,7 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 		return
 	}
 
-	getGameSale := gameSale.MapToGetGameSale()
+	getGameSale := gameSale.MapToGameSaleResp()
 
 	web.Respond(c, getGameSale, http.StatusOK)
 }
@@ -222,7 +222,7 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 // @ID get-game-sales-by-game-id
 // @Produce json
 // @Param 	id  path int64 true "Game ID"
-// @Success 200 {array}  game.GetGameSale
+// @Success 200 {array}  game.GameSaleResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -244,9 +244,9 @@ func (g *Game) ListGameSales(c *gin.Context) {
 		return
 	}
 
-	getGameSales := []repo.GetGameSale{}
+	getGameSales := []repo.GameSaleResp{}
 	for _, gs := range gameSales {
-		getGameSales = append(getGameSales, *gs.MapToGetGameSale())
+		getGameSales = append(getGameSales, *gs.MapToGameSaleResp())
 	}
 
 	web.Respond(c, getGameSales, http.StatusOK)

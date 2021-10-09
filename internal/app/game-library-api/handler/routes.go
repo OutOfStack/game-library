@@ -46,6 +46,10 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth) http.Handler {
 	// authorization required
 	r.POST("/api/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleModerator), g.AddSale)
 
+	// user
+	// authorization required
+	r.POST("/api/user/ratings", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser), g.GetUserRatings)
+
 	// swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

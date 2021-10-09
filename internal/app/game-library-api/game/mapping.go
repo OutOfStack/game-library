@@ -1,8 +1,8 @@
 package game
 
-// MapToGetGame maps Game to GetGame
-func (g *Game) MapToGetGame() *GetGame {
-	return &GetGame{
+// MapToGameResp maps Game to GameResp
+func (g *Game) MapToGameResp() *GameResp {
+	return &GameResp{
 		ID:          g.ID,
 		Name:        g.Name,
 		Developer:   g.Developer,
@@ -13,10 +13,10 @@ func (g *Game) MapToGetGame() *GetGame {
 	}
 }
 
-// MapToGetGameInfo maps GameInfo to GetGameInfo
-func (g *GameInfo) MapToGetGameInfo() *GetGameInfo {
-	return &GetGameInfo{
-		GetGame: GetGame{
+// MapToGameInfoResp maps GameInfo to GameInfoResp
+func (g *GameInfo) MapToGameInfoResp() *GameInfoResp {
+	return &GameInfoResp{
+		GameResp: GameResp{
 			ID:          g.ID,
 			Name:        g.Name,
 			Developer:   g.Developer,
@@ -30,9 +30,9 @@ func (g *GameInfo) MapToGetGameInfo() *GetGameInfo {
 	}
 }
 
-// MapToGetGame maps NewGame to GetGame
-func (ng *CreateGame) MapToGetGame(id int64) *GetGame {
-	return &GetGame{
+// MapToGameResp maps NewGame to GameResp
+func (ng *CreateGame) MapToGameResp(id int64) *GameResp {
+	return &GameResp{
 		ID:          id,
 		Name:        ng.Name,
 		Developer:   ng.Developer,
@@ -43,9 +43,9 @@ func (ng *CreateGame) MapToGetGame(id int64) *GetGame {
 	}
 }
 
-// MapToGetSale maps Sale to GetSale
-func (s *Sale) MapToGetSale() *GetSale {
-	return &GetSale{
+// MapToSaleResp maps Sale to SaleResp
+func (s *Sale) MapToSaleResp() *SaleResp {
+	return &SaleResp{
 		ID:        s.ID,
 		Name:      s.Name,
 		BeginDate: s.BeginDate.String(),
@@ -53,9 +53,9 @@ func (s *Sale) MapToGetSale() *GetSale {
 	}
 }
 
-// MapToGetSale maps NewSale to GetSale
-func (ns *CreateSale) MapToGetSale(id int64) *GetSale {
-	return &GetSale{
+// MapToSaleResp maps NewSale to SaleResp
+func (ns *CreateSale) MapToSaleResp(id int64) *SaleResp {
+	return &SaleResp{
 		ID:        id,
 		Name:      ns.Name,
 		BeginDate: ns.BeginDate,
@@ -63,9 +63,9 @@ func (ns *CreateSale) MapToGetSale(id int64) *GetSale {
 	}
 }
 
-// MapToGetGameSale maps GameSale to GetGameSale
-func (gs *GameSale) MapToGetGameSale() *GetGameSale {
-	return &GetGameSale{
+// MapToGameSaleResp maps GameSale to GameSaleResp
+func (gs *GameSale) MapToGameSaleResp() *GameSaleResp {
+	return &GameSaleResp{
 		GameID:          gs.GameID,
 		SaleID:          gs.SaleID,
 		Sale:            gs.Sale,

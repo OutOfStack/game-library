@@ -21,8 +21,8 @@ func (e ErrNotFound) Error() string {
 	return fmt.Sprintf("%v with id %v was not found", e.Entity, e.ID)
 }
 
-// ListInfo returns all games with extended properties
-func ListInfo(ctx context.Context, db *sqlx.DB) ([]GameInfo, error) {
+// GetInfos returns all games with extended properties
+func GetInfos(ctx context.Context, db *sqlx.DB) ([]GameInfo, error) {
 	list := []GameInfo{}
 
 	// here we unite two groups of games - games which are currently on sale and the rest ones

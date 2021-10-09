@@ -16,7 +16,7 @@ import (
 // @Accept  json
 // @Produce json
 // @Param  	sale body 	 game.CreateSale true "create sale"
-// @Success 201 {object} game.GetSale
+// @Success 201 {object} game.SaleResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [post]
@@ -34,7 +34,7 @@ func (g *Game) AddSale(c *gin.Context) {
 		return
 	}
 
-	getSale := cs.MapToGetSale(saleId)
+	getSale := cs.MapToSaleResp(saleId)
 
 	web.Respond(c, getSale, http.StatusCreated)
 }
@@ -44,19 +44,19 @@ func (g *Game) AddSale(c *gin.Context) {
 // @Description Returns all sales
 // @ID get-sales
 // @Produce json
-// @Success 200 {array}  game.GetSale
+// @Success 200 {array}  game.SaleResp
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [get]
 func (g *Game) ListSales(c *gin.Context) {
-	list, err := repo.ListSales(c, g.DB)
+	list, err := repo.GetSales(c, g.DB)
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting sales list"))
 		return
 	}
 
-	getSales := []repo.GetSale{}
+	getSales := []repo.SaleResp{}
 	for _, s := range list {
-		getSales = append(getSales, *s.MapToGetSale())
+		getSales = append(getSales, *s.MapToSaleResp())
 	}
 
 	web.Respond(c, getSales, http.StatusOK)

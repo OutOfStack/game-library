@@ -25,8 +25,8 @@ func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSale) (int64, error) {
 	return lastInsertID, nil
 }
 
-// ListSales returns all sales
-func ListSales(ctx context.Context, db *sqlx.DB) ([]Sale, error) {
+// GetSales returns all sales
+func GetSales(ctx context.Context, db *sqlx.DB) ([]Sale, error) {
 	sales := []Sale{}
 
 	const q = `select id, name, begin_date, end_date

@@ -170,8 +170,17 @@ info:
 paths:
   /games:
     get:
-      description: returns all games with extended properties
+      description: returns paginated games with extended properties
       operationId: get-all-games-info
+      parameters:
+      - description: page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: last fetched Id
+        in: query
+        name: lastId
+        type: integer
       produces:
       - application/json
       responses:
@@ -185,7 +194,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: List all games info
+      summary: List games info
     post:
       consumes:
       - application/json
@@ -272,7 +281,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Show game info
+      summary: Get game info
     patch:
       consumes:
       - application/json

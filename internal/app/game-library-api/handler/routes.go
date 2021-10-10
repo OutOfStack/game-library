@@ -31,8 +31,8 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth) http.Handler {
 	r.GET("/api/health", c.Health)
 
 	// games
-	r.GET("/api/games", g.List)
-	r.GET("/api/games/:id", g.Retrieve)
+	r.GET("/api/games", g.GetList)
+	r.GET("/api/games/:id", g.Get)
 	// authorization required
 	r.POST("/api/games", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Create)
 	r.DELETE("/api/games/:id", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Delete)

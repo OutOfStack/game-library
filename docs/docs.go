@@ -31,12 +31,26 @@ var doc = `{
     "paths": {
         "/games": {
             "get": {
-                "description": "returns all games with extended properties",
+                "description": "returns paginated games with extended properties",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "List all games info",
+                "summary": "List games info",
                 "operationId": "get-all-games-info",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "last fetched Id",
+                        "name": "lastId",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -154,7 +168,7 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Show game info",
+                "summary": "Get game info",
                 "operationId": "get-game-info-by-id",
                 "parameters": [
                     {

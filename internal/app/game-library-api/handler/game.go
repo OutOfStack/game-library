@@ -18,16 +18,31 @@ type Game struct {
 	Log *log.Logger
 }
 
-// List godoc
-// @Summary List all games info
-// @Description returns all games with extended properties
+// GetList godoc
+// @Summary List games info
+// @Description returns paginated games with extended properties
 // @ID get-all-games-info
 // @Produce json
+// @Param pageSize query integer false "page size"
+// @Param lastId   query integer false "last fetched Id"
 // @Success 200 {array} game.GameInfoResp
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
-func (g *Game) List(c *gin.Context) {
-	list, err := repo.GetInfos(c, g.DB)
+func (g *Game) GetList(c *gin.Context) {
+	psParam := c.DefaultQuery("pageSize", "20")
+	liParam := c.DefaultQuery("lastId", "0")
+	pageSize, err := strconv.ParseInt(psParam, 10, 32)
+	if err != nil || pageSize <= 0 {
+		c.Error(web.NewRequestError(errors.New("Incorrect page size. Should be greater than 0"), http.StatusBadRequest))
+		return
+	}
+	lastId, err := strconv.ParseInt(liParam, 10, 64)
+	if err != nil || lastId < 0 {
+		c.Error(web.NewRequestError(errors.New("Incorrect last Id. Should be greater or equal to 0"), http.StatusBadRequest))
+		return
+	}
+
+	list, err := repo.GetInfos(c, g.DB, int(pageSize), lastId)
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
@@ -42,8 +57,8 @@ func (g *Game) List(c *gin.Context) {
 	web.Respond(c, getGamesInfo, http.StatusOK)
 }
 
-// Retrieve godoc
-// @Summary Show game info
+// Get godoc
+// @Summary Get game info
 // @Description returns game with extended properties by ID
 // @ID get-game-info-by-id
 // @Produce json
@@ -53,7 +68,7 @@ func (g *Game) List(c *gin.Context) {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
-func (g *Game) Retrieve(c *gin.Context) {
+func (g *Game) Get(c *gin.Context) {
 	id, err := getIdParam(c)
 	if err != nil {
 		c.Error(err)

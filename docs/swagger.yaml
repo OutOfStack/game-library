@@ -421,6 +421,29 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Rate game
+  /games/search:
+    get:
+      description: returns list of games filtered by provided name
+      operationId: search-games-info
+      parameters:
+      - description: name to search by
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/game.GameInfoResp'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Searches games by part of name
   /sales:
     get:
       description: Returns all sales

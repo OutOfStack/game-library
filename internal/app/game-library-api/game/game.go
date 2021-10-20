@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
@@ -53,7 +54,7 @@ func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastId int64) ([]G
 	) all_g
 	left join ratings r on r.game_id = all_g.id
 	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price
-	order by all_g.id;`
+	order by all_g.id`
 
 	if err := db.SelectContext(ctx, &list, q, lastId, pageSize); err != nil {
 		return nil, err
@@ -90,6 +91,44 @@ func RetrieveInfo(ctx context.Context, db *sqlx.DB, id int64) (*GameInfo, error)
 	}
 
 	return &g, nil
+}
+
+// SearchInfos returns list of games with extended properties limited by search query
+func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameInfo, error) {
+	list := []GameInfo{}
+
+	// first, data set is limited by search query,
+	// then we unite two groups of games - games which are currently on sale and the rest ones,
+	// if there are currently more than one sale (maybe should be restricted) and a game is on both sales we choose max discount
+	// after uniting we count rating for selected games
+	const q = `
+	select all_g.*, coalesce(avg(r.rating), 0) as rating from (
+		with filtered as (select id, name, developer, publisher, release_date, genre, price
+				from games
+				where lower(name) like $1),
+		on_sale as (
+			select f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price, max(sg.discount_percent) as discount
+			from filtered f
+			inner join sales_games sg on sg.game_id = f.id
+			inner join sales s on s.id = sg.sale_id
+			where CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date
+			group by f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price
+		)
+		select os.id, os.name, os.developer, os.publisher, os.release_date, os.genre, os.price, os.price * ((100 - os.discount) / 100.0) as current_price 
+		from on_sale os
+		union all
+		select f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price, f.price
+		from filtered f
+		where f.id not in (select id from on_sale)
+	) all_g
+	left join ratings r on r.game_id = all_g.id
+	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price`
+
+	if err := db.SelectContext(ctx, &list, q, strings.ToLower(search)+"%"); err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 // Retrieve returns a single game

@@ -43,6 +43,7 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web) ht
 	// games
 	r.GET("/api/games", g.GetList)
 	r.GET("/api/games/:id", g.Get)
+	r.GET("/api/games/search", g.Search)
 	// authorization required
 	r.POST("/api/games", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Create)
 	r.DELETE("/api/games/:id", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Delete)

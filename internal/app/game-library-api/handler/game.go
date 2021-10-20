@@ -91,6 +91,37 @@ func (g *Game) Get(c *gin.Context) {
 	web.Respond(c, getGameInfo, http.StatusOK)
 }
 
+// Search godoc
+// @Summary Searches games by part of name
+// @Description returns list of games filtered by provided name
+// @ID search-games-info
+// @Produce json
+// @Param name query string false "name to search by"
+// @Success 200 {array} game.GameInfoResp
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/search [get]
+func (g *Game) Search(c *gin.Context) {
+	nameParam := c.DefaultQuery("name", "")
+	if len(nameParam) < 2 {
+		c.Error(web.NewRequestError(errors.New("Length of name to be searched by should be at least 2 characters"), http.StatusBadRequest))
+		return
+	}
+
+	list, err := repo.SearchInfos(c, g.DB, nameParam)
+
+	if err != nil {
+		c.Error(errors.Wrap(err, "searching games list"))
+		return
+	}
+
+	getGamesInfo := []repo.GameInfoResp{}
+	for _, g := range list {
+		getGamesInfo = append(getGamesInfo, *g.MapToGameInfoResp())
+	}
+
+	web.Respond(c, getGamesInfo, http.StatusOK)
+}
+
 // Create godoc
 // @Summary Create game
 // @Description creates new game

@@ -13,11 +13,12 @@ type DB struct {
 
 // Auth represents settings related to web server
 type Web struct {
-	Address         string        `mapstructure:"APP_ADDRESS"`
-	DebugAddress    string        `mapstructure:"DEBUG_ADDRESS"`
-	ReadTimeout     time.Duration `mapstructure:"APP_READTIMEOUT"`
-	WriteTimeout    time.Duration `mapstructure:"APP_WRITETIMEOUT"`
-	ShutdownTimeout time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
+	Address           string        `mapstructure:"APP_ADDRESS"`
+	DebugAddress      string        `mapstructure:"DEBUG_ADDRESS"`
+	ReadTimeout       time.Duration `mapstructure:"APP_READTIMEOUT"`
+	WriteTimeout      time.Duration `mapstructure:"APP_WRITETIMEOUT"`
+	ShutdownTimeout   time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
+	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
 }
 
 // Auth represents settings related to authentication and authorization

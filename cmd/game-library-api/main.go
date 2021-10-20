@@ -80,7 +80,7 @@ func run() error {
 	// start API service
 	api := http.Server{
 		Addr:         cfg.Web.Address,
-		Handler:      handler.Service(log, db, a),
+		Handler:      handler.Service(log, db, a, cfg.Web),
 		ReadTimeout:  cfg.Web.ReadTimeout * time.Second,
 		WriteTimeout: cfg.Web.WriteTimeout * time.Second,
 	}

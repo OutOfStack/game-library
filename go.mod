@@ -5,6 +5,7 @@ go 1.17
 require (
 	cloud.google.com/go v0.97.0
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
+	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-openapi/spec v0.20.4 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect

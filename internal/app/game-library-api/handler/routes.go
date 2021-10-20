@@ -3,10 +3,13 @@ package handler
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	_ "github.com/OutOfStack/game-library/docs"
+	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	swaggerFiles "github.com/swaggo/files"
@@ -14,9 +17,16 @@ import (
 )
 
 // Service constructs router with all API routes
-func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth) http.Handler {
+func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web) http.Handler {
 	r := gin.Default()
-	r.Use(middleware.Errors(logger), middleware.Metrics())
+	r.Use(middleware.Errors(logger), middleware.Metrics(), cors.New(cors.Config{
+		AllowMethods:     []string{"GET", "POST", "PATCH", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-type"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return strings.Contains(conf.AllowedCORSOrigin, origin)
+		},
+	}))
 
 	c := Check{
 		DB: db,

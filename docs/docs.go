@@ -162,6 +162,41 @@ var doc = `{
                 }
             }
         },
+        "/games/search": {
+            "get": {
+                "description": "returns list of games filtered by provided name",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Searches games by part of name",
+                "operationId": "search-games-info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "name to search by",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/game.GameInfoResp"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/games/{id}": {
             "get": {
                 "description": "returns game with extended properties by ID",

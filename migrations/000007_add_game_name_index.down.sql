@@ -1,0 +1,1 @@
+DROP INDEX games_lower_name_idx;

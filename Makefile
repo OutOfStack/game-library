@@ -27,7 +27,7 @@ swaggen:
 	./tools/swag init -g cmd/game-library-api/main.go
 
 dockerbuildweb:
-	docker build -f Dockerfile.web -t game-library-web:latest .
+	docker build -t game-library-web:latest .
 
 dockerrunweb:
 	docker-compose up -d web

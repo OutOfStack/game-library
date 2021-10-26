@@ -19,7 +19,6 @@ definitions:
     required:
     - developer
     - name
-    - publisher
     type: object
   game.CreateGameSale:
     properties:
@@ -106,11 +105,11 @@ definitions:
     type: object
   game.Rating:
     properties:
-      gameID:
+      gameId:
         type: integer
       rating:
         type: integer
-      userID:
+      userId:
         type: string
     type: object
   game.SaleResp:
@@ -140,6 +139,13 @@ definitions:
         type: string
       releaseDate:
         type: string
+    type: object
+  game.UserRatings:
+    properties:
+      gameIds:
+        items:
+          type: integer
+        type: array
     type: object
   web.ErrorResponse:
     properties:
@@ -494,6 +500,13 @@ paths:
     post:
       description: returns user ratings for specified games
       operationId: get-user-ratings
+      parameters:
+      - description: games ids
+        in: body
+        name: gameIds
+        required: true
+        schema:
+          $ref: '#/definitions/game.UserRatings'
       produces:
       - application/json
       responses:

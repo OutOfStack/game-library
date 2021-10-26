@@ -45,7 +45,7 @@ type GameInfoResp struct {
 type CreateGame struct {
 	Name        string   `json:"name" validate:"required"`
 	Developer   string   `json:"developer" validate:"required"`
-	Publisher   string   `json:"publisher" validate:"required"`
+	Publisher   string   `json:"publisher"`
 	ReleaseDate string   `json:"releaseDate" validate:"date"`
 	Price       float32  `json:"price" validate:"gte=0,lt=10000"`
 	Genre       []string `json:"genre"`
@@ -113,9 +113,9 @@ type GameSaleResp struct {
 
 // Rating represents database rating model
 type Rating struct {
-	GameID int64  `db:"game_id"`
-	UserID string `db:"user_id"`
-	Rating uint8  `db:"rating"`
+	GameID int64  `db:"game_id" json:"gameId"`
+	UserID string `db:"user_id" json:"userId"`
+	Rating uint8  `db:"rating" json:"rating"`
 }
 
 // CreateRating represents rating data we receive from user

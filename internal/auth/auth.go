@@ -25,6 +25,8 @@ var ErrVerifyAPIUnavailable = errors.New("verify API is unavailable")
 type Claims struct {
 	jwt.RegisteredClaims
 	UserRole string `json:"user_role,omitempty"`
+	Username string `json:"username,omitempty"`
+	Name     string `json:"name,omitempty"`
 }
 
 // VerifyToken is a request type for JWT verification

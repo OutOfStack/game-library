@@ -21,7 +21,7 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web) ht
 	r := gin.Default()
 	r.Use(middleware.Errors(logger), middleware.Metrics(), cors.New(cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PATCH", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-type"},
+		AllowHeaders:     []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			return strings.Contains(conf.AllowedCORSOrigin, origin)

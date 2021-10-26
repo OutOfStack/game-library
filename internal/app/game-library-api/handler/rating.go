@@ -53,6 +53,7 @@ func (g *Game) RateGame(c *gin.Context) {
 // @Description returns user ratings for specified games
 // @ID get-user-ratings
 // @Produce json
+// @Param   gameIds body game.UserRatings true "games ids"
 // @Success 200 {object} map[int64]uint8
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse

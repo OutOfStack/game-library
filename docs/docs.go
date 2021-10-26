@@ -520,6 +520,17 @@ var doc = `{
                 ],
                 "summary": "Get user ratings for specified games",
                 "operationId": "get-user-ratings",
+                "parameters": [
+                    {
+                        "description": "games ids",
+                        "name": "gameIds",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.UserRatings"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -551,8 +562,7 @@ var doc = `{
             "type": "object",
             "required": [
                 "developer",
-                "name",
-                "publisher"
+                "name"
             ],
             "properties": {
                 "developer": {
@@ -708,13 +718,13 @@ var doc = `{
         "game.Rating": {
             "type": "object",
             "properties": {
-                "gameID": {
+                "gameId": {
                     "type": "integer"
                 },
                 "rating": {
                     "type": "integer"
                 },
-                "userID": {
+                "userId": {
                     "type": "string"
                 }
             }
@@ -759,6 +769,17 @@ var doc = `{
                 },
                 "releaseDate": {
                     "type": "string"
+                }
+            }
+        },
+        "game.UserRatings": {
+            "type": "object",
+            "properties": {
+                "gameIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },

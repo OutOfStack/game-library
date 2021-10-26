@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -41,12 +42,13 @@ type VerifyTokenResp struct {
 
 // Auth represents dependencies for auth methods
 type Auth struct {
+	log          *log.Logger
 	parser       *jwt.Parser
 	verifyApiUrl string
 }
 
 // New constructs Auth instance
-func New(algorithm string, verifyApiUrl string) (*Auth, error) {
+func New(log *log.Logger, algorithm string, verifyApiUrl string) (*Auth, error) {
 	if jwt.GetSigningMethod(algorithm) == nil {
 		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
 	}
@@ -56,6 +58,7 @@ func New(algorithm string, verifyApiUrl string) (*Auth, error) {
 	}
 
 	a := Auth{
+		log:          log,
 		parser:       parser,
 		verifyApiUrl: verifyApiUrl,
 	}
@@ -86,6 +89,7 @@ func (a *Auth) Verify(tokenStr string) error {
 
 	resp, err := http.Post(a.verifyApiUrl, "application/json", bytes.NewBuffer(body))
 	if err != nil {
+		log.Printf("error calling verify api at %s: %v\n", a.verifyApiUrl, err)
 		return ErrVerifyAPIUnavailable
 	}
 

@@ -45,7 +45,7 @@ func main() {
 }
 
 func run() error {
-	log := log.New(os.Stdout, "GAMES", log.LstdFlags)
+	log := log.New(os.Stdout, "GAMES ", log.LstdFlags)
 
 	cfg := config{}
 	if err := conf.Load(".", "app", "env", &cfg); err != nil {
@@ -72,7 +72,7 @@ func run() error {
 	}()
 
 	// create auth module
-	a, err := auth.New(cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenApiUrl)
+	a, err := auth.New(log, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenApiUrl)
 	if err != nil {
 		return errors.Wrap(err, "constructing Auth")
 	}

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: game-library-deployment
+    namespace: game-library
+    labels:
+        app: game-library
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: game-library
+    template:
+        metadata:
+            labels:
+                app: game-library
+        spec:
+            containers:
+              - name: game-library
+                image: asctod/game-library:latest
+                livenessProbe:
+                    httpGet:
+                        path: /api/health
+                        port: 8000
+                    initialDelaySeconds: 15
+                    periodSeconds: 45
+                    timeoutSeconds: 1
+                    failureThreshold: 3
+                ports:
+                  - containerPort: 8000
+                envFrom:
+                  - secretRef:
+                        name: game-library-dbconfig
+                  - configMapRef:
+                        name: game-library-config
+                imagePullPolicy: Always
+            hostAliases:
+              - ip: 194.163.162.21
+                hostnames:
+                  - vmi644117.contaboserver.net

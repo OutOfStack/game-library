@@ -7,8 +7,8 @@ data:
     GIN_MODE: release
     APP_ADDRESS: 0.0.0.0:8000
     DEBUG_ADDRESS: 0.0.0.0:6060
-    APP_ALLOWEDCORSORIGIN: http://vmi644117.contaboserver.net
-    AUTH_VERIFYTOKENURL: http://vmi644117.contaboserver.net/_auth/token/verify
+    APP_ALLOWEDCORSORIGIN: https://vmi644117.contaboserver.net
+    AUTH_VERIFYTOKENURL: https://vmi644117.contaboserver.net/_auth/token/verify
 ---
 kind: Service
 apiVersion: v1

@@ -9,8 +9,8 @@ import (
 )
 
 // AddRating adds rating to game
-func AddRating(ctx context.Context, db *sqlx.DB, cr CreateRating, userID string) (*Rating, error) {
-	_, err := Retrieve(ctx, db, cr.GameID)
+func AddRating(ctx context.Context, db *sqlx.DB, r *Rating) (*RatingResp, error) {
+	_, err := Retrieve(ctx, db, r.GameID)
 	if err != nil {
 		return nil, err
 	}
@@ -21,18 +21,17 @@ func AddRating(ctx context.Context, db *sqlx.DB, cr CreateRating, userID string)
 	values ($1, $2, $3)
 	on conflict (game_id, user_id) do update set rating = $3`
 
-	_, err = db.ExecContext(ctx, q, cr.GameID, userID, cr.Rating)
+	_, err = db.ExecContext(ctx, q, r.GameID, r.UserID, r.Rating)
 	if err != nil {
-		return nil, fmt.Errorf("adding ratings to game with id %v from user with id %v: %w", cr.GameID, userID, err)
+		return nil, fmt.Errorf("adding ratings to game with id %v from user with id %v: %w", r.GameID, r.UserID, err)
 	}
 
-	rating := &Rating{
-		GameID: cr.GameID,
-		UserID: userID,
-		Rating: cr.Rating,
+	rr := &RatingResp{
+		GameID: r.GameID,
+		Rating: r.Rating,
 	}
 
-	return rating, nil
+	return rr, nil
 }
 
 // GetUserRatings returns ratings of user for specified games

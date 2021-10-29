@@ -15,13 +15,13 @@ import (
 // @ID create-sale
 // @Accept  json
 // @Produce json
-// @Param  	sale body 	 game.CreateSale true "create sale"
+// @Param  	sale body 	 game.CreateSaleReq true "create sale"
 // @Success 201 {object} game.SaleResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [post]
 func (g *Game) AddSale(c *gin.Context) {
-	var cs repo.CreateSale
+	var cs repo.CreateSaleReq
 	err := web.Decode(c, &cs)
 	if err != nil {
 		c.Error(errors.Wrap(err, "decoding new sale"))

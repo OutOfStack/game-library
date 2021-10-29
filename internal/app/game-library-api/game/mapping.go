@@ -30,8 +30,8 @@ func (g *GameInfo) MapToGameInfoResp() *GameInfoResp {
 	}
 }
 
-// MapToGameResp maps NewGame to GameResp
-func (ng *CreateGame) MapToGameResp(id int64) *GameResp {
+// MapToGameResp maps CreateGameReq to GameResp
+func (ng *CreateGameReq) MapToGameResp(id int64) *GameResp {
 	return &GameResp{
 		ID:          id,
 		Name:        ng.Name,
@@ -53,8 +53,8 @@ func (s *Sale) MapToSaleResp() *SaleResp {
 	}
 }
 
-// MapToSaleResp maps NewSale to SaleResp
-func (ns *CreateSale) MapToSaleResp(id int64) *SaleResp {
+// MapToSaleResp maps CreateSaleReq to SaleResp
+func (ns *CreateSaleReq) MapToSaleResp(id int64) *SaleResp {
 	return &SaleResp{
 		ID:        id,
 		Name:      ns.Name,
@@ -75,8 +75,8 @@ func (gs *GameSale) MapToGameSaleResp() *GameSaleResp {
 	}
 }
 
-// MapToGameSale maps CreateGameSale and Sale to GameSale
-func (ngs *CreateGameSale) MapToGameSale(sale *Sale, gameID int64) *GameSale {
+// MapToGameSale maps CreateGameSaleReq and Sale to GameSale
+func (ngs *CreateGameSaleReq) MapToGameSale(sale *Sale, gameID int64) *GameSale {
 	return &GameSale{
 		GameID:          gameID,
 		SaleID:          ngs.SaleID,

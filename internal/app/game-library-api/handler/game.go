@@ -69,7 +69,7 @@ func (g *Game) GetList(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
 func (g *Game) Get(c *gin.Context) {
-	id, err := getIdParam(c)
+	id, err := web.GetIdParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -128,18 +128,26 @@ func (g *Game) Search(c *gin.Context) {
 // @ID create-game
 // @Accept  json
 // @Produce json
-// @Param   game body game.CreateGame true "create game"
+// @Param   game body game.CreateGameReq true "create game"
 // @Success 201 {object} game.GameResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
 func (g *Game) Create(c *gin.Context) {
-	var cg repo.CreateGame
+	var cg repo.CreateGameReq
 	err := web.Decode(c, &cg)
 	if err != nil {
 		c.Error(errors.Wrap(err, "decoding new game"))
 		return
 	}
+
+	claims, err := web.GetClaims(c)
+	if err != nil {
+		c.Error(errors.Wrap(err, "getting claims from context"))
+		return
+	}
+
+	cg.Publisher = claims.Name
 
 	gameId, err := repo.Create(c, g.DB, cg)
 	if err != nil {
@@ -158,20 +166,20 @@ func (g *Game) Create(c *gin.Context) {
 // @ID update-game-by-id
 // @Accept  json
 // @Produce json
-// @Param  	id   path int64 			true "Game ID"
-// @Param  	game body game.UpdateGame 	true "update game"
+// @Param  	id   path int64 			 true "Game ID"
+// @Param  	game body game.UpdateGameReq true "update game"
 // @Success 200 {object} game.GameResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [patch]
 func (g *Game) Update(c *gin.Context) {
-	id, err := getIdParam(c)
+	id, err := web.GetIdParam(c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
-	var update repo.UpdateGame
+	var update repo.UpdateGameReq
 	if err := web.Decode(c, &update); err != nil {
 		c.Error(errors.Wrap(err, "decoding game update"))
 		return
@@ -204,7 +212,7 @@ func (g *Game) Update(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [delete]
 func (g *Game) Delete(c *gin.Context) {
-	id, err := getIdParam(c)
+	id, err := web.GetIdParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -229,20 +237,20 @@ func (g *Game) Delete(c *gin.Context) {
 // @ID add-game-on-sale
 // @Accept  json
 // @Produce json
-// @Param  id 		path int64 				 true "Game ID"
-// @Param  gamesale body game.CreateGameSale true "game sale"
+// @Param  id 		path int64 				    true "Game ID"
+// @Param  gamesale body game.CreateGameSaleReq true "game sale"
 // @Success 200 {object} game.GameSaleResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/sales [post]
 func (g *Game) AddGameOnSale(c *gin.Context) {
-	id, err := getIdParam(c)
+	id, err := web.GetIdParam(c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
-	var cgs repo.CreateGameSale
+	var cgs repo.CreateGameSaleReq
 	if err := web.Decode(c, &cgs); err != nil {
 		c.Error(errors.Wrap(err, "decoding game sale"))
 		return
@@ -274,7 +282,7 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/sales [get]
 func (g *Game) ListGameSales(c *gin.Context) {
-	gameId, err := getIdParam(c)
+	gameId, err := web.GetIdParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -296,13 +304,4 @@ func (g *Game) ListGameSales(c *gin.Context) {
 	}
 
 	web.Respond(c, getGameSales, http.StatusOK)
-}
-
-func getIdParam(c *gin.Context) (int64, error) {
-	idparam := c.Param("id")
-	id, err := strconv.ParseInt(idparam, 10, 32)
-	if err != nil || id <= 0 {
-		return 0, web.NewRequestError(errors.New("Invalid id"), http.StatusBadRequest)
-	}
-	return id, err
 }

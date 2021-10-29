@@ -42,10 +42,10 @@ type GameInfoResp struct {
 }
 
 // CreateGame represents game data we receive from user
-type CreateGame struct {
+type CreateGameReq struct {
 	Name        string   `json:"name" validate:"required"`
 	Developer   string   `json:"developer" validate:"required"`
-	Publisher   string   `json:"publisher"`
+	Publisher   string   `json:"-"`
 	ReleaseDate string   `json:"releaseDate" validate:"date"`
 	Price       float32  `json:"price" validate:"gte=0,lt=10000"`
 	Genre       []string `json:"genre"`
@@ -53,7 +53,7 @@ type CreateGame struct {
 
 // UpdateGame represents model for updating information about game.
 // All fields are optional
-type UpdateGame struct {
+type UpdateGameReq struct {
 	Name        *string   `json:"name"`
 	Developer   *string   `json:"developer" validate:"omitempty"`
 	Publisher   *string   `json:"publisher" validate:"omitempty"`
@@ -79,7 +79,7 @@ type SaleResp struct {
 }
 
 // CreateSale represents sale data we receive from user
-type CreateSale struct {
+type CreateSaleReq struct {
 	Name      string `json:"name"`
 	BeginDate string `json:"beginDate" validate:"required,date"`
 	EndDate   string `json:"endDate" validate:"required,date"`
@@ -96,7 +96,7 @@ type GameSale struct {
 }
 
 // CreateGameSale represents data about game being on sale
-type CreateGameSale struct {
+type CreateGameSaleReq struct {
 	SaleID          int64 `json:"saleId"`
 	DiscountPercent uint8 `json:"discountPercent" validate:"gt=0,lte=100"`
 }
@@ -113,15 +113,20 @@ type GameSaleResp struct {
 
 // Rating represents database rating model
 type Rating struct {
-	GameID int64  `db:"game_id" json:"gameId"`
-	UserID string `db:"user_id" json:"userId"`
-	Rating uint8  `db:"rating" json:"rating"`
+	GameID int64  `db:"game_id"`
+	UserID string `db:"user_id"`
+	Rating uint8  `db:"rating"`
 }
 
 // CreateRating represents rating data we receive from user
-type CreateRating struct {
-	GameID int64 `json:"gameId"`
+type CreateRatingReq struct {
 	Rating uint8 `json:"rating" validate:"gte=1,lte=4"`
+}
+
+// RatingResp represents response to rating request
+type RatingResp struct {
+	GameID int64 `json:"gameId"`
+	Rating uint8 `json:"rating"`
 }
 
 // UserRating represents user rating entity
@@ -131,6 +136,6 @@ type UserRating struct {
 }
 
 // UserRatings represents get user ratings request
-type UserRatings struct {
+type UserRatingsReq struct {
 	GameIDs []int64 `json:"gameIds"`
 }

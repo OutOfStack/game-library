@@ -10,7 +10,7 @@ import (
 )
 
 // AddSale records information about game being on sale
-func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSale) (int64, error) {
+func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSaleReq) (int64, error) {
 	const q = `insert into sales 
 	(name, begin_date, end_date)
 	values ($1, $2, $3)

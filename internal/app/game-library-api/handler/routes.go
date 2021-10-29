@@ -50,7 +50,7 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web) ht
 	r.PATCH("/api/games/:id", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Update)
 	r.POST("/api/games/:id/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.AddGameOnSale)
 	r.GET("/api/games/:id/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.ListGameSales)
-	r.POST("/api/games/rate", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser), g.RateGame)
+	r.POST("/api/games/:id/rate", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser), g.RateGame)
 
 	// sales
 	r.GET("/api/sales", g.ListSales)

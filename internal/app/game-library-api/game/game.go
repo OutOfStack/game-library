@@ -150,7 +150,7 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 }
 
 // Create creates a new game
-func Create(ctx context.Context, db *sqlx.DB, cg CreateGame) (int64, error) {
+func Create(ctx context.Context, db *sqlx.DB, cg CreateGameReq) (int64, error) {
 	const q = `insert into games
 	(name, developer, publisher, release_date, price, genre)
 	values ($1, $2, $3, $4, $5, $6)
@@ -166,7 +166,7 @@ func Create(ctx context.Context, db *sqlx.DB, cg CreateGame) (int64, error) {
 }
 
 // Update modifes information about a game
-func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGame) (*Game, error) {
+func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGameReq) (*Game, error) {
 	g, err := Retrieve(ctx, db, id)
 	if err != nil {
 		return nil, err
@@ -224,7 +224,7 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 }
 
 // AddGameOnSale connects game with a sale
-func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, cgs CreateGameSale) (*GameSale, error) {
+func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, cgs CreateGameSaleReq) (*GameSale, error) {
 	g, err := Retrieve(ctx, db, gameID)
 	if err != nil {
 		return nil, err

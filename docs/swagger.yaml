@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  game.CreateGame:
+  game.CreateGameReq:
     properties:
       developer:
         type: string
@@ -12,29 +12,25 @@ definitions:
         type: string
       price:
         type: number
-      publisher:
-        type: string
       releaseDate:
         type: string
     required:
     - developer
     - name
     type: object
-  game.CreateGameSale:
+  game.CreateGameSaleReq:
     properties:
       discountPercent:
         type: integer
       saleId:
         type: integer
     type: object
-  game.CreateRating:
+  game.CreateRatingReq:
     properties:
-      gameId:
-        type: integer
       rating:
         type: integer
     type: object
-  game.CreateSale:
+  game.CreateSaleReq:
     properties:
       beginDate:
         type: string
@@ -103,14 +99,12 @@ definitions:
       saleId:
         type: integer
     type: object
-  game.Rating:
+  game.RatingResp:
     properties:
       gameId:
         type: integer
       rating:
         type: integer
-      userId:
-        type: string
     type: object
   game.SaleResp:
     properties:
@@ -123,7 +117,7 @@ definitions:
       name:
         type: string
     type: object
-  game.UpdateGame:
+  game.UpdateGameReq:
     properties:
       developer:
         type: string
@@ -140,7 +134,7 @@ definitions:
       releaseDate:
         type: string
     type: object
-  game.UserRatings:
+  game.UserRatingsReq:
     properties:
       gameIds:
         items:
@@ -212,7 +206,7 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/game.CreateGame'
+          $ref: '#/definitions/game.CreateGameReq'
       produces:
       - application/json
       responses:
@@ -304,7 +298,7 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/game.UpdateGame'
+          $ref: '#/definitions/game.UpdateGameReq'
       produces:
       - application/json
       responses:
@@ -325,6 +319,44 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Update game
+  /games/{id}/rate:
+    post:
+      consumes:
+      - application/json
+      description: rates game
+      operationId: rate-game
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: game rating
+        in: body
+        name: rating
+        required: true
+        schema:
+          $ref: '#/definitions/game.CreateRatingReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/game.RatingResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Rate game
   /games/{id}/sales:
     get:
       description: returns sales for specified game
@@ -373,7 +405,7 @@ paths:
         name: gamesale
         required: true
         schema:
-          $ref: '#/definitions/game.CreateGameSale'
+          $ref: '#/definitions/game.CreateGameSaleReq'
       produces:
       - application/json
       responses:
@@ -394,39 +426,6 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Add game on sale
-  /games/rate:
-    post:
-      consumes:
-      - application/json
-      description: rates game
-      operationId: rate-game
-      parameters:
-      - description: game rating
-        in: body
-        name: rating
-        required: true
-        schema:
-          $ref: '#/definitions/game.CreateRating'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/game.Rating'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: Rate game
   /games/search:
     get:
       description: returns list of games filtered by provided name
@@ -479,7 +478,7 @@ paths:
         name: sale
         required: true
         schema:
-          $ref: '#/definitions/game.CreateSale'
+          $ref: '#/definitions/game.CreateSaleReq'
       produces:
       - application/json
       responses:
@@ -506,7 +505,7 @@ paths:
         name: gameIds
         required: true
         schema:
-          $ref: '#/definitions/game.UserRatings'
+          $ref: '#/definitions/game.UserRatingsReq'
       produces:
       - application/json
       responses:

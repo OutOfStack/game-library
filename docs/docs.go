@@ -86,7 +86,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateGame"
+                            "$ref": "#/definitions/game.CreateGameReq"
                         }
                     }
                 ],
@@ -99,56 +99,6 @@ var doc = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/games/rate": {
-            "post": {
-                "description": "rates game",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Rate game",
-                "operationId": "rate-game",
-                "parameters": [
-                    {
-                        "description": "game rating",
-                        "name": "rating",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/game.CreateRating"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/game.Rating"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
@@ -308,7 +258,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.UpdateGame"
+                            "$ref": "#/definitions/game.UpdateGameReq"
                         }
                     }
                 ],
@@ -317,6 +267,63 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/game.GameResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{id}/rate": {
+            "post": {
+                "description": "rates game",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Rate game",
+                "operationId": "rate-game",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "game rating",
+                        "name": "rating",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.CreateRatingReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.RatingResp"
                         }
                     },
                     "400": {
@@ -411,7 +418,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateGameSale"
+                            "$ref": "#/definitions/game.CreateGameSaleReq"
                         }
                     }
                 ],
@@ -486,7 +493,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateSale"
+                            "$ref": "#/definitions/game.CreateSaleReq"
                         }
                     }
                 ],
@@ -527,7 +534,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.UserRatings"
+                            "$ref": "#/definitions/game.UserRatingsReq"
                         }
                     }
                 ],
@@ -558,7 +565,7 @@ var doc = `{
         }
     },
     "definitions": {
-        "game.CreateGame": {
+        "game.CreateGameReq": {
             "type": "object",
             "required": [
                 "developer",
@@ -580,15 +587,12 @@ var doc = `{
                 "price": {
                     "type": "number"
                 },
-                "publisher": {
-                    "type": "string"
-                },
                 "releaseDate": {
                     "type": "string"
                 }
             }
         },
-        "game.CreateGameSale": {
+        "game.CreateGameSaleReq": {
             "type": "object",
             "properties": {
                 "discountPercent": {
@@ -599,18 +603,15 @@ var doc = `{
                 }
             }
         },
-        "game.CreateRating": {
+        "game.CreateRatingReq": {
             "type": "object",
             "properties": {
-                "gameId": {
-                    "type": "integer"
-                },
                 "rating": {
                     "type": "integer"
                 }
             }
         },
-        "game.CreateSale": {
+        "game.CreateSaleReq": {
             "type": "object",
             "required": [
                 "beginDate",
@@ -715,7 +716,7 @@ var doc = `{
                 }
             }
         },
-        "game.Rating": {
+        "game.RatingResp": {
             "type": "object",
             "properties": {
                 "gameId": {
@@ -723,9 +724,6 @@ var doc = `{
                 },
                 "rating": {
                     "type": "integer"
-                },
-                "userId": {
-                    "type": "string"
                 }
             }
         },
@@ -746,7 +744,7 @@ var doc = `{
                 }
             }
         },
-        "game.UpdateGame": {
+        "game.UpdateGameReq": {
             "type": "object",
             "properties": {
                 "developer": {
@@ -772,7 +770,7 @@ var doc = `{
                 }
             }
         },
-        "game.UserRatings": {
+        "game.UserRatingsReq": {
             "type": "object",
             "properties": {
                 "gameIds": {

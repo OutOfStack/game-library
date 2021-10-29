@@ -15,14 +15,21 @@ import (
 // @ID rate-game
 // @Accept  json
 // @Produce json
-// @Param   rating body game.CreateRating true "game rating"
-// @Success 200 {object} game.Rating
+// @Param   id 		path int64 				    true "Game ID"
+// @Param	rating 	body game.CreateRatingReq 	true "game rating"
+// @Success 200 {object} game.RatingResp
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
-// @Router /games/rate [post]
+// @Router /games/{id}/rate [post]
 func (g *Game) RateGame(c *gin.Context) {
-	var cr repo.CreateRating
+	gameId, err := web.GetIdParam(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	var cr repo.CreateRatingReq
 	if err := web.Decode(c, &cr); err != nil {
 		c.Error(errors.Wrap(err, "decoding rating"))
 		return
@@ -35,7 +42,12 @@ func (g *Game) RateGame(c *gin.Context) {
 	}
 
 	userID := claims.Subject
-	rating, err := repo.AddRating(c, g.DB, cr, userID)
+	r := &repo.Rating{
+		GameID: gameId,
+		UserID: userID,
+		Rating: cr.Rating,
+	}
+	rating, err := repo.AddRating(c, g.DB, r)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -53,13 +65,13 @@ func (g *Game) RateGame(c *gin.Context) {
 // @Description returns user ratings for specified games
 // @ID get-user-ratings
 // @Produce json
-// @Param   gameIds body game.UserRatings true "games ids"
+// @Param   gameIds body game.UserRatingsReq true "games ids"
 // @Success 200 {object} map[int64]uint8
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]
 func (g *Game) GetUserRatings(c *gin.Context) {
-	var ur repo.UserRatings
+	var ur repo.UserRatingsReq
 	err := web.Decode(c, &ur)
 	if err != nil {
 		c.Error(errors.Wrap(err, "decoding user ratings"))

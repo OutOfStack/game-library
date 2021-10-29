@@ -2,6 +2,8 @@ package web
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
 
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/gin-gonic/gin"
@@ -18,4 +20,14 @@ func GetClaims(c *gin.Context) (*auth.Claims, error) {
 		return nil, errors.New("cannot convert claims value to claims")
 	}
 	return &claims, nil
+}
+
+// GameIdParam return url id param
+func GetIdParam(c *gin.Context) (int64, error) {
+	idparam := c.Param("id")
+	id, err := strconv.ParseInt(idparam, 10, 32)
+	if err != nil || id <= 0 {
+		return 0, NewRequestError(errors.New("invalid id"), http.StatusBadRequest)
+	}
+	return id, err
 }

@@ -74,7 +74,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateGame"
+                            "$ref": "#/definitions/game.CreateGameReq"
                         }
                     }
                 ],
@@ -87,56 +87,6 @@
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/games/rate": {
-            "post": {
-                "description": "rates game",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Rate game",
-                "operationId": "rate-game",
-                "parameters": [
-                    {
-                        "description": "game rating",
-                        "name": "rating",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/game.CreateRating"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/game.Rating"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
@@ -296,7 +246,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.UpdateGame"
+                            "$ref": "#/definitions/game.UpdateGameReq"
                         }
                     }
                 ],
@@ -305,6 +255,63 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/game.GameResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/{id}/rate": {
+            "post": {
+                "description": "rates game",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Rate game",
+                "operationId": "rate-game",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "game rating",
+                        "name": "rating",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/game.CreateRatingReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/game.RatingResp"
                         }
                     },
                     "400": {
@@ -399,7 +406,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateGameSale"
+                            "$ref": "#/definitions/game.CreateGameSaleReq"
                         }
                     }
                 ],
@@ -474,7 +481,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateSale"
+                            "$ref": "#/definitions/game.CreateSaleReq"
                         }
                     }
                 ],
@@ -515,7 +522,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.UserRatings"
+                            "$ref": "#/definitions/game.UserRatingsReq"
                         }
                     }
                 ],
@@ -546,7 +553,7 @@
         }
     },
     "definitions": {
-        "game.CreateGame": {
+        "game.CreateGameReq": {
             "type": "object",
             "required": [
                 "developer",
@@ -568,15 +575,12 @@
                 "price": {
                     "type": "number"
                 },
-                "publisher": {
-                    "type": "string"
-                },
                 "releaseDate": {
                     "type": "string"
                 }
             }
         },
-        "game.CreateGameSale": {
+        "game.CreateGameSaleReq": {
             "type": "object",
             "properties": {
                 "discountPercent": {
@@ -587,18 +591,15 @@
                 }
             }
         },
-        "game.CreateRating": {
+        "game.CreateRatingReq": {
             "type": "object",
             "properties": {
-                "gameId": {
-                    "type": "integer"
-                },
                 "rating": {
                     "type": "integer"
                 }
             }
         },
-        "game.CreateSale": {
+        "game.CreateSaleReq": {
             "type": "object",
             "required": [
                 "beginDate",
@@ -703,7 +704,7 @@
                 }
             }
         },
-        "game.Rating": {
+        "game.RatingResp": {
             "type": "object",
             "properties": {
                 "gameId": {
@@ -711,9 +712,6 @@
                 },
                 "rating": {
                     "type": "integer"
-                },
-                "userId": {
-                    "type": "string"
                 }
             }
         },
@@ -734,7 +732,7 @@
                 }
             }
         },
-        "game.UpdateGame": {
+        "game.UpdateGameReq": {
             "type": "object",
             "properties": {
                 "developer": {
@@ -760,7 +758,7 @@
                 }
             }
         },
-        "game.UserRatings": {
+        "game.UserRatingsReq": {
             "type": "object",
             "properties": {
                 "gameIds": {

@@ -10,7 +10,7 @@ import (
 )
 
 // Migrate applies migrations
-// if up is true migrates everything othrwise rollbacks last migration
+// if up is true applies all migrations otherwise rollbacks last migration
 func Migrate(db *sqlx.DB, up bool) error {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {

@@ -1,4 +1,4 @@
-package tests_test
+package game_test
 
 import (
 	"fmt"
@@ -6,6 +6,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/ory/dockertest/v3"
@@ -75,23 +78,45 @@ func TestMain(m *testing.M) {
 	}
 	log.Println("Database connection established")
 
+	// runs tests in current package
 	code := m.Run()
 
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
 		log.Fatalf("Could not purge resource: %s", err)
 	}
-	log.Println("Container deleted")
+	log.Println("Docker container deleted")
 
 	os.Exit(code)
 }
 
-func TestDbConnection(t *testing.T) {
-	t.Logf("Testing postgres connection with docker\n")
-
-	err := db.Ping()
+func setup(db *sqlx.DB) error {
+	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
-		t.Fatalf("Failed: %v", err)
+		return err
 	}
-	t.Logf("Succeeded\n")
+	m, err := migrate.NewWithDatabaseInstance("file://../../../../migrations", "games", driver)
+	if err != nil {
+		return err
+	}
+	return m.Up()
+}
+
+func teardown(db *sqlx.DB) error {
+	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
+	if err != nil {
+		return err
+	}
+	m, err := migrate.NewWithDatabaseInstance("file://../../../../migrations", "games", driver)
+	if err != nil {
+		return err
+	}
+	return m.Down()
+}
+
+func recovery(t *testing.T) {
+	if msg := recover(); msg != nil {
+		log.Println(msg)
+		t.Fatalf("panicked with: %v", msg)
+	}
 }

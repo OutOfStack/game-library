@@ -569,6 +569,9 @@
                         "type": "string"
                     }
                 },
+                "logoUrl": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -635,6 +638,9 @@
                 "id": {
                     "type": "integer"
                 },
+                "logoUrl": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -666,6 +672,9 @@
                 },
                 "id": {
                     "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -743,6 +752,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "logoUrl": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"

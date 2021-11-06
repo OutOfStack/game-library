@@ -55,6 +55,7 @@ func TestGetInfos_DataExists_Equals(t *testing.T) {
 		ReleaseDate: "2021-11-03",
 		Price:       100,
 		Genre:       []string{"rpg"},
+		LogoUrl:     "http://images/123",
 	}
 
 	_, err := game.Create(context.Background(), db, g)
@@ -90,6 +91,9 @@ func TestGetInfos_DataExists_Equals(t *testing.T) {
 	}
 	if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to retrieve game with genre %s, got %s", want.Genre[0], got.Genre[0])
+	}
+	if want.LogoUrl != got.LogoUrl.String {
+		t.Errorf("Expected to retrieve game with logo url %s, got %s", want.LogoUrl, got.LogoUrl.String)
 	}
 }
 
@@ -146,6 +150,7 @@ func TestRetrieveInfo_DataExists_Equals(t *testing.T) {
 		ReleaseDate: "2021-11-03",
 		Price:       100,
 		Genre:       []string{"rpg"},
+		LogoUrl:     "http://images/123",
 	}
 
 	id, err := game.Create(context.Background(), db, g)
@@ -177,5 +182,8 @@ func TestRetrieveInfo_DataExists_Equals(t *testing.T) {
 	}
 	if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to retrieve game with genre %s, got %s", want.Genre[0], got.Genre[0])
+	}
+	if want.LogoUrl != got.LogoUrl.String {
+		t.Errorf("Expected to retrieve game with logo url %s, got %s", want.LogoUrl, got.LogoUrl.String)
 	}
 }

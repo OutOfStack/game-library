@@ -581,6 +581,9 @@ var doc = `{
                         "type": "string"
                     }
                 },
+                "logoUrl": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -647,6 +650,9 @@ var doc = `{
                 "id": {
                     "type": "integer"
                 },
+                "logoUrl": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -678,6 +684,9 @@ var doc = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -755,6 +764,9 @@ var doc = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "logoUrl": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"

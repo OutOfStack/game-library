@@ -32,28 +32,28 @@ func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastId int64) ([]G
 	// after uniting we count rating for selected games
 	const q = `
 	select all_g.*, coalesce(avg(r.rating), 0) as rating from (
-		with page as (select id, name, developer, publisher, release_date, genre, price
+		with page as (select id, name, developer, publisher, release_date, genre, price, logo_url
 				from games
 				where id > $1
 				order by id
 				fetch first $2 rows only),
 		on_sale as (
-			select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, max(sg.discount_percent) as discount
+			select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, max(sg.discount_percent) as discount, g.logo_url
 			from page g
 			inner join sales_games sg on sg.game_id = g.id
 			inner join sales s on s.id = sg.sale_id
 			where CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date
-			group by g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price
+			group by g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, g.logo_url
 		)
-		select os.id, os.name, os.developer, os.publisher, os.release_date, os.genre, os.price, os.price * ((100 - os.discount) / 100.0) as current_price 
+		select os.id, os.name, os.developer, os.publisher, os.release_date, os.genre, os.price, os.price * ((100 - os.discount) / 100.0) as current_price, os.logo_url
 		from on_sale os
 		union all
-		select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, g.price
+		select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, g.price as current_price, g.logo_url
 		from page g
 		where g.id not in (select id from on_sale)
 	) all_g
 	left join ratings r on r.game_id = all_g.id
-	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price
+	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price, all_g.logo_url
 	order by all_g.id`
 
 	if err := db.SelectContext(ctx, &list, q, lastId, pageSize); err != nil {
@@ -68,15 +68,16 @@ func RetrieveInfo(ctx context.Context, db *sqlx.DB, id int64) (*GameInfo, error)
 	var g GameInfo
 
 	const q = `
-	select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, 
+	select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price,
 		g.price * (100 - coalesce(
 			(select discount_percent
-			from sales_games sg 
+			from sales_games sg
 			inner join sales s on s.id = sg.sale_id 
 			where sg.game_id = g.id and CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date
 			order by discount_percent desc
 			limit 1),
 			0)) / 100.0 as current_price,
+		g.logo_url,
 		coalesce(avg(r.rating), 0) as rating
 	from games g
 	left join ratings r on r.game_id = g.id
@@ -103,26 +104,26 @@ func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameInfo, e
 	// after uniting we count rating for selected games
 	const q = `
 	select all_g.*, coalesce(avg(r.rating), 0) as rating from (
-		with filtered as (select id, name, developer, publisher, release_date, genre, price
+		with filtered as (select id, name, developer, publisher, release_date, genre, price, logo_url
 				from games
 				where lower(name) like $1),
 		on_sale as (
-			select f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price, max(sg.discount_percent) as discount
+			select f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price, max(sg.discount_percent) as discount, f.logo_url
 			from filtered f
 			inner join sales_games sg on sg.game_id = f.id
 			inner join sales s on s.id = sg.sale_id
 			where CURRENT_DATE >= s.begin_date and CURRENT_DATE <= s.end_date
-			group by f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price
+			group by f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price, f.logo_url
 		)
-		select os.id, os.name, os.developer, os.publisher, os.release_date, os.genre, os.price, os.price * ((100 - os.discount) / 100.0) as current_price 
+		select os.id, os.name, os.developer, os.publisher, os.release_date, os.genre, os.price, os.price * ((100 - os.discount) / 100.0) as current_price, os.logo_url
 		from on_sale os
 		union all
-		select f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price, f.price
+		select f.id, f.name, f.developer, f.publisher, f.release_date, f.genre, f.price, f.price as current_price, f.logo_url
 		from filtered f
 		where f.id not in (select id from on_sale)
 	) all_g
 	left join ratings r on r.game_id = all_g.id
-	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price`
+	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price, all_g.logo_url`
 
 	if err := db.SelectContext(ctx, &list, q, strings.ToLower(search)+"%"); err != nil {
 		return nil, err
@@ -135,7 +136,7 @@ func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameInfo, e
 func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
-	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price
+	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, g.logoUrl
 	from games g
 	where g.id = $1`
 
@@ -152,12 +153,12 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 // Create creates a new game
 func Create(ctx context.Context, db *sqlx.DB, cg CreateGameReq) (int64, error) {
 	const q = `insert into games
-	(name, developer, publisher, release_date, price, genre)
-	values ($1, $2, $3, $4, $5, $6)
+	(name, developer, publisher, release_date, price, genre, logo_url)
+	values ($1, $2, $3, $4, $5, $6, $7)
 	returning id`
 
 	var lastInsertID int64
-	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre)).Scan(&lastInsertID)
+	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre), cg.LogoUrl).Scan(&lastInsertID)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %v: %w", cg, err)
 	}
@@ -191,15 +192,22 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGameReq) (*
 	if update.Genre != nil {
 		g.Genre = *update.Genre
 	}
+	if update.LogoUrl != nil {
+		g.LogoUrl = sql.NullString{
+			String: *update.LogoUrl,
+			Valid:  true,
+		}
+	}
 	const q = `update games set 
 	 name = $1,
 	 developer = $2,
 	 publisher = $3,
 	 release_date = $4,
 	 price = $5,
-	 genre = $6
-	 where id = $7`
-	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.Publisher, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), id)
+	 genre = $6,
+	 logo_url = $7
+	 where id = $8`
+	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.Publisher, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), g.LogoUrl, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "updating game")
 	}

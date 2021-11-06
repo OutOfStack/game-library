@@ -1,6 +1,8 @@
 package game
 
 import (
+	"database/sql"
+
 	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/lib/pq"
 )
@@ -14,6 +16,7 @@ type Game struct {
 	ReleaseDate types.Date     `db:"release_date"`
 	Price       float32        `db:"price"`
 	Genre       pq.StringArray `db:"genre"`
+	LogoUrl     sql.NullString `db:"logo_url"`
 }
 
 // GameInfo represents extended info about game
@@ -32,6 +35,7 @@ type GameResp struct {
 	ReleaseDate string   `json:"releaseDate"`
 	Price       float32  `json:"price"`
 	Genre       []string `json:"genre"`
+	LogoUrl     string   `json:"logoUrl,omitempty"`
 }
 
 // GameInfoResp represents extended game info response
@@ -49,6 +53,7 @@ type CreateGameReq struct {
 	ReleaseDate string   `json:"releaseDate" validate:"date"`
 	Price       float32  `json:"price" validate:"gte=0,lt=10000"`
 	Genre       []string `json:"genre"`
+	LogoUrl     string   `json:"logoUrl"`
 }
 
 // UpdateGame represents model for updating information about game.
@@ -60,6 +65,7 @@ type UpdateGameReq struct {
 	ReleaseDate *string   `json:"releaseDate" validate:"omitempty,date"`
 	Price       *float32  `json:"price" validate:"omitempty,gte=0,lt=10000"`
 	Genre       *[]string `json:"genre" validate:"omitempty"`
+	LogoUrl     *string   `json:"logoUrl"`
 }
 
 // Sale represents database sale model

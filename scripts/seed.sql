@@ -35,7 +35,10 @@ insert into games (name, developer, publisher, release_date, genre, price, logo_
 ('Titanfall 2', 'Respawn Entertainment', 'Electronic Arts', '2016-10-28', '{"FPS", "Multiplayer", "Action"}', 25, 'https://ucarecdn.com/b7870241-0aa1-4995-a26b-d08fcb186cbf/'),
 ('DEATH STRANDING', 'KOJIMA PRODUCTIONS', '505 Games', '2020-07-14', '{"Open world", "Sci-fi", "Walking simulator"}', 70, 'https://ucarecdn.com/4d57c075-f25d-4bed-a321-f0fe3e08b1c1/'),
 ('Valheim', 'Iron Gate AB', 'Coffee Stain Publishing', '2021-02-02', '{"Openworld", "Survival", "Craft"}', 10, 'https://ucarecdn.com/e0bc0a3f-b6c9-4e33-8801-329350c39846/'),
-('Resident Evil Village', 'CAPCOM Co., Ltd.', 'CAPCOM Co., Ltd.', '2021-09-07', '{"Horror", "First-Person"}', 60, 'https://ucarecdn.com/c81f1942-46ce-4232-a8c3-9f6531c0caff/')
+('Resident Evil Village', 'CAPCOM Co., Ltd.', 'CAPCOM Co., Ltd.', '2021-09-07', '{"Horror", "First-Person"}', 60, 'https://ucarecdn.com/c81f1942-46ce-4232-a8c3-9f6531c0caff/'),
+('Cyberpunk 2077', 'CD PROJEKT RED.', 'CD PROJEKT RED', '2020-12-10', '{"Open world", "RPG", "Sci-fi"}', 50, 'https://ucarecdn.com/47388634-3388-40fe-a118-2dcb9925a102/'),
+('Half-Life: Alyx', 'Valve', 'Valve', '2020-03-23', '{"VR", "First-Person", "Shooter", "Action"}', 40, 'https://ucarecdn.com/c943fcb0-810a-4f60-b4eb-a8e39aac0017/'),
+('ELDEN RING', 'FromSoftware Inc.', 'FromSoftware Inc.', '2022-02-25', '{"Souls-like", "RPG", "Dark fantasy"}', 60, 'https://ucarecdn.com/88d465dc-ca5d-4bcf-b661-145e6b723283/')
 on conflict do nothing;
 
 insert into sales (name, begin_date, end_date) values

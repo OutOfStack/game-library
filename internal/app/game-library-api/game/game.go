@@ -136,7 +136,7 @@ func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameInfo, e
 func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
-	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, g.logoUrl
+	const q = `select g.id, g.name, g.developer, g.publisher, g.release_date, g.genre, g.price, g.logo_url
 	from games g
 	where g.id = $1`
 

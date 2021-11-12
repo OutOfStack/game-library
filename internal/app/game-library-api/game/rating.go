@@ -9,6 +9,7 @@ import (
 )
 
 // AddRating adds rating to game
+// If such entity does not exist returns error ErrNotFound{}
 func AddRating(ctx context.Context, db *sqlx.DB, r *Rating) (*RatingResp, error) {
 	_, err := Retrieve(ctx, db, r.GameID)
 	if err != nil {

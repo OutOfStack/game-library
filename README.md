@@ -1,5 +1,5 @@
 # game-library
-Is an app for exploring and rating games
+An app for exploring and rating games
 
 ### Usage with `Make`:
     build          builds app
@@ -27,5 +27,5 @@ Creating a new migration:
 `{name}` - migration name
 
 ### Swagger
-Swagger file generation tool is located in `tools/swag`
+Swagger file generation tool is located in `tools/swag`  
 Swagger UI url: http://localhost:8000/swagger/index.html

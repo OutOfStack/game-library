@@ -39,6 +39,7 @@ func GetSales(ctx context.Context, db *sqlx.DB) ([]Sale, error) {
 }
 
 // RetrieveSale returns sale by id
+// If such entity does not exist returns error ErrNotFound{}
 func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*Sale, error) {
 	var sale Sale
 

@@ -64,6 +64,7 @@ func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastId int64) ([]G
 }
 
 // RetrieveInfo returns a single game with extended properties
+// If such entity does not exist returns error ErrNotFound{}
 func RetrieveInfo(ctx context.Context, db *sqlx.DB, id int64) (*GameInfo, error) {
 	var g GameInfo
 
@@ -133,6 +134,7 @@ func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameInfo, e
 }
 
 // Retrieve returns a single game
+// If such entity does not exist returns error ErrNotFound{}
 func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	var g Game
 
@@ -167,6 +169,7 @@ func Create(ctx context.Context, db *sqlx.DB, cg CreateGameReq) (int64, error) {
 }
 
 // Update modifes information about a game
+// If such entity does not exist returns error ErrNotFound{}
 func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGameReq) (*Game, error) {
 	g, err := Retrieve(ctx, db, id)
 	if err != nil {
@@ -215,6 +218,7 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGameReq) (*
 }
 
 // Delete deletes specified game
+// If such entity does not exist returns error ErrNotFound{}
 func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 	const q = `delete from games where id = $1`
 	res, err := db.ExecContext(ctx, q, id)
@@ -232,6 +236,7 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 }
 
 // AddGameOnSale connects game with a sale
+// If such game or sale does not exist returns error ErrNotFound{}
 func AddGameOnSale(ctx context.Context, db *sqlx.DB, gameID int64, cgs CreateGameSaleReq) (*GameSale, error) {
 	g, err := Retrieve(ctx, db, gameID)
 	if err != nil {

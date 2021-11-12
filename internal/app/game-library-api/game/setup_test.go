@@ -25,7 +25,7 @@ var db *sqlx.DB
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		log.Fatalf("Repo tests: Could not connect to docker: %s", err)
 	}
 
 	// pulls an image, creates a container based on it and runs it
@@ -52,9 +52,9 @@ func TestMain(m *testing.M) {
 		}
 	})
 	if err != nil {
-		log.Fatalf("Could not start docker container: %v", err)
+		log.Fatalf("Repo tests: Could not start docker container: %v", err)
 	}
-	log.Println("Docker container started")
+	log.Println("Repo tests: Docker container started")
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	counter := 1
@@ -62,30 +62,30 @@ func TestMain(m *testing.M) {
 		var err error
 		db, err = sqlx.Open("postgres", fmt.Sprintf("postgres://postgres:%s@localhost:%s/games?sslmode=disable", PgPwd, HostPort))
 		if err != nil {
-			log.Printf("Attempt %d connecting to database: %v", counter, err)
+			log.Printf("Repo tests: Attempt %d connecting to database: %v", counter, err)
 			counter++
 			return err
 		}
 		err = db.Ping()
 		if err != nil {
-			log.Printf("Attempt %d pinging database: %v", counter, err)
+			log.Printf("Repo tests: Attempt %d pinging database: %v", counter, err)
 			counter++
 		}
 		return err
 	}); err != nil {
 		pool.Purge(resource)
-		log.Fatalf("Could not connect to database: %s", err)
+		log.Fatalf("Repo tests: Could not connect to database: %v", err)
 	}
-	log.Println("Database connection established")
+	log.Println("Repo tests: Database connection established")
 
 	// runs tests in current package
 	code := m.Run()
 
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
+		log.Fatalf("Repo tests: Could not purge resource: %s", err)
 	}
-	log.Println("Docker container deleted")
+	log.Println("Repo tests: Docker container deleted")
 
 	os.Exit(code)
 }

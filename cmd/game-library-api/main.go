@@ -77,10 +77,14 @@ func run() error {
 		return errors.Wrap(err, "constructing Auth")
 	}
 
+	h, err := handler.Service(log, db, a, cfg.Web)
+	if err != nil {
+		return fmt.Errorf("creating service handler: %w", err)
+	}
 	// start API service
 	api := http.Server{
 		Addr:         cfg.Web.Address,
-		Handler:      handler.Service(log, db, a, cfg.Web),
+		Handler:      h,
 		ReadTimeout:  cfg.Web.ReadTimeout * time.Second,
 		WriteTimeout: cfg.Web.WriteTimeout * time.Second,
 	}

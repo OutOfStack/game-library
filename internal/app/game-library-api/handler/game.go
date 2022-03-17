@@ -10,12 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // Game has handler methods for dealing with games
 type Game struct {
-	DB  *sqlx.DB
-	Log *log.Logger
+	DB     *sqlx.DB
+	Log    *log.Logger
+	Tracer *trace.Tracer
 }
 
 // GetList godoc
@@ -29,6 +31,9 @@ type Game struct {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
 func (g *Game) GetList(c *gin.Context) {
+	_, span := tracer.Start(c, "getList")
+	defer span.End()
+
 	psParam := c.DefaultQuery("pageSize", "20")
 	liParam := c.DefaultQuery("lastId", "0")
 	pageSize, err := strconv.ParseInt(psParam, 10, 32)

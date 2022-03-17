@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
@@ -9,23 +10,44 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Check has methods for health checking
+// Check has methods for readiness checking
 type Check struct {
 	DB *sqlx.DB
 }
 
-// Health determines whether service is healthy
-func (che *Check) Health(c *gin.Context) {
-	var health struct {
-		Status string `json:"status"`
-	}
+type health struct {
+	Status string `json:"status"`
+	Host   string `json:"host"`
+}
 
-	err := database.StatusCheck(che.DB)
+// Readiness determines whether service is ready
+func (ch *Check) Readiness(c *gin.Context) {
+	var h health
+	host, err := os.Hostname()
 	if err != nil {
-		health.Status = "database not ready"
-		web.Respond(c, health, http.StatusInternalServerError)
+		h.Host = "unavailable"
+	}
+	h.Host = host
+	err = database.StatusCheck(ch.DB)
+	if err != nil {
+		h.Status = "database not ready"
+		web.Respond(c, h, http.StatusInternalServerError)
 		return
 	}
-	health.Status = "OK"
-	web.Respond(c, health, http.StatusOK)
+	h.Status = "OK"
+	web.Respond(c, h, http.StatusOK)
+}
+
+// Liveness determines whether service is up
+func (ch *Check) Liveness(c *gin.Context) {
+	host, err := os.Hostname()
+	if err != nil {
+		host = "unavailable"
+	}
+	h := health{
+		Host:   host,
+		Status: "OK",
+	}
+
+	web.Respond(c, h, http.StatusOK)
 }

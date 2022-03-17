@@ -76,6 +76,7 @@ func TestMain(m *testing.M) {
 		pool.Purge(resource)
 		log.Fatalf("Repo tests: Could not connect to database: %v", err)
 	}
+
 	log.Println("Repo tests: Database connection established")
 
 	// runs tests in current package

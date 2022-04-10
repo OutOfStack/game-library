@@ -33,12 +33,12 @@ jobs:
           push: true
           tags: asctod/game-library:latest,asctod/game-library:${{ github.sha }}
 
-      - name: Kubernetes Set Context
-        uses: Azure/k8s-set-context@v2
-        with:
-          method: service-account
-          k8s-url: ${{ secrets.K8S_CLUSTER_URL }}
-          k8s-secret: ${{ secrets.K8S_CLUSTER_SA_SECRET }}
+      #- name: Kubernetes Set Context
+      #  uses: Azure/k8s-set-context@v2
+      #  with:
+      #    method: service-account
+      #    k8s-url: ${{ secrets.K8S_CLUSTER_URL }}
+      #    k8s-secret: ${{ secrets.K8S_CLUSTER_SA_SECRET }}
       - name: Deploy image to Kubernetes cluster
         run: |
           microk8s kubectl apply -f deploy/config.yaml

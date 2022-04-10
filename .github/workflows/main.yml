@@ -16,6 +16,10 @@ jobs:
         uses: docker/setup-buildx-action@v1
       - name: Set up microk8s kubectl tool
         uses: balchua/microk8s-actions@v0.2.2
+      - name: Set up microk8s user
+        run: |
+          sudo usermod -a -G microk8s runner
+          sudo chown -f -R runner ~/.kube
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:

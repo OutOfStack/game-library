@@ -10,11 +10,7 @@ jobs:
   build_push_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Display pwd and ls
-        run: |
-          pwd
-          ls -lah
-          ls -lah ../
+      - uses: actions/checkout@v3.0.1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Set up microk8s kubectl tool

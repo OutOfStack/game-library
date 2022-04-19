@@ -38,11 +38,12 @@ jobs:
       #  with:
       #    method: service-account
       #    k8s-url: ${{ secrets.K8S_CLUSTER_URL }}
-      #    k8s-secret: ${{ secrets.K8S_CLUSTER_SA_SECRET }}
+      #    k8s-secret: ${{ secrets.K8S_CLUSTER_SA_SECRET }} 
       - name: Display pwd and ls
         run: |
           pwd
           ls -lah
+          ls -lah ../
 
       - name: Deploy image to Kubernetes cluster
         run: |

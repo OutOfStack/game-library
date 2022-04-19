@@ -35,7 +35,7 @@ jobs:
       - name: Show kube configs
         run: |
           ls -lah ~/.kube
-          microk8s config
+          sudo microk8s config
           cat ~/.kube/config
 
       # seems to not work with microk8s 
@@ -49,7 +49,7 @@ jobs:
       - name: Show kube configs
         run: |
           ls -lah ~/.kube
-          microk8s config
+          sudo microk8s config
           cat ~/.kube/config
 
       - name: Apply configs to Kubernetes cluster

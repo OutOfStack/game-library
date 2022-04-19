@@ -32,12 +32,25 @@ jobs:
       #    push: true
       #    tags: asctod/game-library:latest,asctod/game-library:${{ github.sha }}
 
+      - name: Show kube configs
+        run: |
+          ls -lah ~/.kube
+          microk8s config
+          cat ~/.kube/config
+
+      # seems to not work with microk8s 
       - name: Kubernetes Set Context
         uses: Azure/k8s-set-context@v2
         with:
           method: service-account
           k8s-url: ${{ secrets.K8S_CLUSTER_URL }}
           k8s-secret: ${{ secrets.K8S_CLUSTER_SA_SECRET }}
+
+      - name: Show kube configs
+        run: |
+          ls -lah ~/.kube
+          microk8s config
+          cat ~/.kube/config
 
       - name: Apply configs to Kubernetes cluster
         run: |

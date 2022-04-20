@@ -50,7 +50,7 @@ jobs:
       - name: Kubernetes set context
         run: |
           touch config
-          echo ${{ secrets.K8S_CLUSTER_CONFIG }} >> config
+          echo "${{ secrets.K8S_CLUSTER_CONFIG }}" >> config
           sudo microk8s config > config
 
       - name: Show kube configs

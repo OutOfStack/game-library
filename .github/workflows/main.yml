@@ -29,9 +29,8 @@ jobs:
       - name: Kubernetes Set Context
         uses: Azure/k8s-set-context@v2
         with:
-          method: service-account
-          k8s-url: ${{ secrets.K8S_CLUSTER_URL }}
-          k8s-secret: ${{ secrets.K8S_CLUSTER_SA_SECRET }}
+          method: kubeconfig
+          kubeconfig: ${{ secrets.K8S_CLUSTER_CONFIG }}
 
       - name: Kubernetes Apply configs
         run: | 

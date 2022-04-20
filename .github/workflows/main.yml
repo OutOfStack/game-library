@@ -50,7 +50,10 @@ jobs:
       - name: Kubernetes set context
         run: |
           cd ~/.kube
-          echo "${{ secrets.K8S_CLUSTER_CONFIG }}" > config
+          echo $K8S_CONFIG > config
+        #shell: bash
+        env:
+          K8S_CONFIG : ${{ secrets.K8S_CLUSTER_CONFIG }}
 
       - name: Show kube configs
         run: |

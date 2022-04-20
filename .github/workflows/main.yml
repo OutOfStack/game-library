@@ -39,12 +39,16 @@ jobs:
           cat ~/.kube/config
 
       # seems to not work with microk8s 
-      - name: Kubernetes Set Context
-        uses: Azure/k8s-set-context@v2
-        with:
-          method: service-account
-          k8s-url: ${{ secrets.K8S_CLUSTER_URL }}
-          k8s-secret: ${{ secrets.K8S_CLUSTER_SA_SECRET }}
+      #- name: Kubernetes Set Context
+      #  uses: Azure/k8s-set-context@v2
+      #  with:
+      #    method: service-account
+      #    bubeconfig: ${{ secrets.K8S_CLUSTER_CONFIG }}
+
+          # TODO: sudo microk8s config > config
+          # secret: K8S_CLUSTER_CONFIG
+      - name: Kubernetes set context
+        run: sudo microk8s config > ${{ secrets.K8S_CLUSTER_CONFIG }}
 
       - name: Show kube configs
         run: |

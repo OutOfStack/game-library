@@ -35,8 +35,8 @@ jobs:
       - name: Show kube configs
         run: |
           ls -lah ~/.kube
-          cat ~/.kube/config
           sudo microk8s config
+        # cat ~/.kube/config
 
       # seems to not work with microk8s 
       #- name: Kubernetes Set Context
@@ -47,17 +47,16 @@ jobs:
 
           # TODO: sudo microk8s config > config
           # secret: K8S_CLUSTER_CONFIG
-      - name: Kubernetes set context
-        run: |
-          cd ~/.kube
-          echo $K8S_CONFIG > config
+      #- name: Kubernetes set context
+      #  run: |
+      #    cd ~/.kube
+      #    echo $K8S_CONFIG > config
         #shell: bash
-        env:
-          K8S_CONFIG : ${{ secrets.K8S_CLUSTER_CONFIG }}
+      #  env:
+      #    K8S_CONFIG : ${{ secrets.K8S_CLUSTER_CONFIG }}
 
       - name: Show kube configs
         run: |
-          ls -lah ~/.kube
           cat ~/.kube/config
           sudo microk8s config
 

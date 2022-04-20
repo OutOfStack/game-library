@@ -37,8 +37,11 @@ jobs:
       - name: Kubernetes Set Context
         uses: Azure/k8s-set-context@v2
         with:
-          method: service-account
-          bubeconfig: ${{ secrets.K8S_CLUSTER_CONFIG }}
+          method: kubeconfig
+          kubeconfig: ${{ secrets.K8S_CLUSTER_CONFIG }}
+          #method: service-account
+          #k8s-url: <URL of the cluster's API server>
+          
 
       #- name: Kubernetes set context
       #  run: |

@@ -27,10 +27,10 @@ jobs:
       #    push: true
       #    tags: asctod/game-library:latest,asctod/game-library:${{ github.sha }}
 
-      - name: Show kube configs
-        run: |
-          ls -lah ~/.kube
-          sudo microk8s config
+      #- name: Show kube configs
+      #  run: |
+      #    ls -lah ~/.kube
+      #    sudo microk8s config
         # cat ~/.kube/config
 
       # seems to not work with microk8s 
@@ -48,10 +48,10 @@ jobs:
       #  env:
       #    K8S_CONFIG : ${{ secrets.K8S_CLUSTER_CONFIG }}
 
-      - name: Show kube configs
-        run: |
-          cat ~/.kube/config
-          sudo microk8s config
+      #- name: Show kube configs
+      #  run: |
+      #    cat ~/.kube/config
+      #    sudo microk8s config
 
       - name: Apply configs to Kubernetes cluster
         run: | 

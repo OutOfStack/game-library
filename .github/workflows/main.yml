@@ -48,7 +48,10 @@ jobs:
           # TODO: sudo microk8s config > config
           # secret: K8S_CLUSTER_CONFIG
       - name: Kubernetes set context
-        run: sudo microk8s config > ${{ secrets.K8S_CLUSTER_CONFIG }}
+        run: |
+          touch config
+          echo ${{ secrets.K8S_CLUSTER_CONFIG }} >> config
+          sudo microk8s config > config
 
       - name: Show kube configs
         run: |

@@ -6,7 +6,7 @@ metadata:
     labels:
         app: game-library
 spec:
-    replicas: 1
+    replicas: 2
     selector:
         matchLabels:
             app: game-library
@@ -18,21 +18,32 @@ spec:
             containers:
               - name: game-library
                 image: asctod/game-library:latest
+                readinessProbe:
+                    httpGet:
+                        path: /api/readiness
+                        port: 8000
+                    initialDelaySeconds: 20
+                    periodSeconds: 61
+                    timeoutSeconds: 5
+                    failureThreshold: 3
                 livenessProbe:
                     httpGet:
-                        path: /api/health
+                        path: /api/liveness
                         port: 8000
-                    initialDelaySeconds: 15
-                    periodSeconds: 45
-                    timeoutSeconds: 1
+                    initialDelaySeconds: 20
+                    periodSeconds: 59
+                    timeoutSeconds: 2
                     failureThreshold: 3
                 ports:
-                  - containerPort: 8000
+                  - name: api
+                    containerPort: 8000
+                  - name: debug
+                    containerPort: 6060
                 envFrom:
                   - secretRef:
-                        name: game-library-dbconfig
+                      name: game-library-dbconfig
                   - configMapRef:
-                        name: game-library-config
+                      name: game-library-config
                 imagePullPolicy: Always
             hostAliases:
               - ip: 194.163.162.21

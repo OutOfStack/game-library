@@ -27,6 +27,7 @@ require (
 	github.com/swaggo/swag v1.8.0
 	go.opentelemetry.io/contrib/instrumentation/gin-gonic/gin v0.7.0
 	go.opentelemetry.io/otel v0.7.0
+	go.opentelemetry.io/otel/exporters/trace/zipkin v0.7.0
 	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
@@ -74,6 +75,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.0.3 // indirect
+	github.com/openzipkin/zipkin-go v0.2.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.7.0 // indirect

@@ -31,7 +31,7 @@ func Authenticate(log *log.Logger, a *auth.Auth) gin.HandlerFunc {
 		}
 
 		// if token is not valid return 401
-		if err := a.Verify(tokenStr); err != nil {
+		if err := a.Verify(c.Request.Context(), tokenStr); err != nil {
 			log.Printf("error verifying token:\n%s\n%v\n", tokenStr, err)
 			if err == auth.ErrVerifyAPIUnavailable {
 				c.Error(web.NewRequestError(err, http.StatusBadGateway))
@@ -73,8 +73,8 @@ func Authorize(log *log.Logger, a *auth.Auth, requiredRole string) gin.HandlerFu
 		}
 		// if user's role is not the same as required return 403 forbidden
 		if claims.UserRole != requiredRole {
-			log.Printf("unauthorized: expected role %s, got %s\n", requiredRole, claims.UserRole)
-			c.Error(web.NewRequestError(errors.New("internal server error"), http.StatusForbidden))
+			log.Printf("access denied: expected role %s, got %s\n", requiredRole, claims.UserRole)
+			c.Error(web.NewRequestError(errors.New("access denied"), http.StatusForbidden))
 			c.Abort()
 			return
 		}

@@ -45,6 +45,11 @@ spec:
                   - configMapRef:
                       name: game-library-config
                 imagePullPolicy: Always
+              - name: zipkin
+                image: openzipkin/zipkin:2.23
+                ports:
+                  - name: zipkin
+                    containerPort: 9411
             hostAliases:
               - ip: 194.163.162.21
                 hostnames:

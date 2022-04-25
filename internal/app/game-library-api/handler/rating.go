@@ -7,6 +7,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // RateGame godoc
@@ -23,6 +24,9 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/rate [post]
 func (g *Game) RateGame(c *gin.Context) {
+	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.rating.rategame")
+	defer span.End()
+
 	gameId, err := web.GetIdParam(c)
 	if err != nil {
 		c.Error(err)
@@ -47,7 +51,7 @@ func (g *Game) RateGame(c *gin.Context) {
 		UserID: userID,
 		Rating: cr.Rating,
 	}
-	rating, err := repo.AddRating(c, g.DB, r)
+	rating, err := repo.AddRating(ctx, g.DB, r)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -71,6 +75,9 @@ func (g *Game) RateGame(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]
 func (g *Game) GetUserRatings(c *gin.Context) {
+	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.rating.getuserratings")
+	defer span.End()
+
 	var ur repo.UserRatingsReq
 	err := web.Decode(c, &ur)
 	if err != nil {
@@ -86,7 +93,7 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 
 	userID := claims.Subject
 
-	ratings, err := repo.GetUserRatings(c, g.DB, userID, ur.GameIDs)
+	ratings, err := repo.GetUserRatings(ctx, g.DB, userID, ur.GameIDs)
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting user ratings"))

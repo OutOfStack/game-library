@@ -17,13 +17,13 @@ import (
 	"github.com/OutOfStack/game-library/internal/auth"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
-	"github.com/pkg/errors"
 )
 
 type config struct {
-	DB   appconf.DB   `mapstructure:",squash"`
-	Web  appconf.Web  `mapstructure:",squash"`
-	Auth appconf.Auth `mapstructure:",squash"`
+	DB     appconf.DB     `mapstructure:",squash"`
+	Web    appconf.Web    `mapstructure:",squash"`
+	Zipkin appconf.Zipkin `mapstructure:",squash"`
+	Auth   appconf.Auth   `mapstructure:",squash"`
 }
 
 // @title Game library API
@@ -64,20 +64,13 @@ func run() error {
 	}
 	defer db.Close()
 
-	// start debug service
-	go func() {
-		log.Printf("Debug service listening on %s", cfg.Web.DebugAddress)
-		err := http.ListenAndServe(cfg.Web.DebugAddress, nil)
-		log.Printf("Debug service stopped %v", err)
-	}()
-
 	// create auth module
 	a, err := auth.New(log, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenApiUrl)
 	if err != nil {
-		return errors.Wrap(err, "constructing Auth")
+		return fmt.Errorf("constructing Auth: %w", err)
 	}
 
-	h, err := handler.Service(log, db, a, cfg.Web)
+	h, err := handler.Service(log, db, a, cfg.Web, cfg.Zipkin)
 	if err != nil {
 		return fmt.Errorf("creating service handler: %w", err)
 	}
@@ -88,6 +81,13 @@ func run() error {
 		ReadTimeout:  cfg.Web.ReadTimeout * time.Second,
 		WriteTimeout: cfg.Web.WriteTimeout * time.Second,
 	}
+
+	// start debug service
+	go func() {
+		log.Printf("Debug service listening on %s", cfg.Web.DebugAddress)
+		err := http.ListenAndServe(cfg.Web.DebugAddress, nil)
+		log.Printf("Debug service stopped %v", err)
+	}()
 
 	serverErrors := make(chan error, 1)
 

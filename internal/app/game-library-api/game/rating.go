@@ -6,11 +6,15 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // AddRating adds rating to game
 // If such entity does not exist returns error ErrNotFound{}
 func AddRating(ctx context.Context, db *sqlx.DB, r *Rating) (*RatingResp, error) {
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.rating.addrating")
+	defer span.End()
+
 	_, err := Retrieve(ctx, db, r.GameID)
 	if err != nil {
 		return nil, err
@@ -37,6 +41,9 @@ func AddRating(ctx context.Context, db *sqlx.DB, r *Rating) (*RatingResp, error)
 
 // GetUserRatings returns ratings of user for specified games
 func GetUserRatings(ctx context.Context, db *sqlx.DB, userId string, gameIDs []int64) ([]UserRating, error) {
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.rating.getuserratings")
+	defer span.End()
+
 	ratings := []UserRating{}
 	const q = `
 	select game_id, rating 

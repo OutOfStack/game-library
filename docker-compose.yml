@@ -11,6 +11,12 @@ services:
     environment:
     - POSTGRES_PASSWORD=temp_pwd
 
+  zipkin:
+    container_name: zipkin
+    image: openzipkin/zipkin-slim:2.23
+    ports:
+      - 9411:9411
+
   web:
     container_name: game-library-web
     image: game-library-web:latest
@@ -24,6 +30,7 @@ services:
       DEBUG_ADDRESS: 0.0.0.0:6060
     depends_on: 
       - db
+      - zipkin
   
   mng:
     container_name: game-library-mng

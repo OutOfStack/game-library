@@ -7,10 +7,14 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // AddSale records information about game being on sale
 func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSaleReq) (int64, error) {
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.sale.addsale")
+	defer span.End()
+
 	const q = `insert into sales 
 	(name, begin_date, end_date)
 	values ($1, $2, $3)
@@ -27,6 +31,9 @@ func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSaleReq) (int64, error) 
 
 // GetSales returns all sales
 func GetSales(ctx context.Context, db *sqlx.DB) ([]Sale, error) {
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.sale.getsales")
+	defer span.End()
+
 	sales := []Sale{}
 
 	const q = `select id, name, begin_date, end_date
@@ -41,6 +48,9 @@ func GetSales(ctx context.Context, db *sqlx.DB) ([]Sale, error) {
 // RetrieveSale returns sale by id
 // If such entity does not exist returns error ErrNotFound{}
 func RetrieveSale(ctx context.Context, db *sqlx.DB, saleID int64) (*Sale, error) {
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.sale.retrievesale")
+	defer span.End()
+
 	var sale Sale
 
 	const q = `select id, name, begin_date, end_date

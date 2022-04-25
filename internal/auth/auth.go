@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 const (
@@ -78,7 +80,10 @@ func ExtractToken(authHeader string) string {
 
 // Verify calls Verify API and returns nil if token is valid and error otherwise
 // If verify API is unavailable ErrVerifyAPIUnavailable is returned
-func (a *Auth) Verify(tokenStr string) error {
+func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "game-auth.auth.verify")
+	defer span.End()
+
 	data := VerifyToken{
 		Token: tokenStr,
 	}
@@ -87,7 +92,7 @@ func (a *Auth) Verify(tokenStr string) error {
 		return fmt.Errorf("marshalling verify token body: %w", err)
 	}
 
-	resp, err := http.Post(a.verifyApiUrl, "application/json", bytes.NewBuffer(body))
+	resp, err := http.NewRequestWithContext(ctx, "POST", a.verifyApiUrl, bytes.NewBuffer(body))
 	if err != nil {
 		log.Printf("error calling verify api at %s: %v\n", a.verifyApiUrl, err)
 		return ErrVerifyAPIUnavailable

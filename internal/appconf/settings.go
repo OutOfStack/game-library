@@ -21,6 +21,10 @@ type Web struct {
 	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
 }
 
+type Zipkin struct {
+	ReporterURL string `mapstructure:"ZIPKIN_REPORTERURL"`
+}
+
 // Auth represents settings related to authentication and authorization
 type Auth struct {
 	VerifyTokenApiUrl string `mapstructure:"AUTH_VERIFYTOKENURL"`

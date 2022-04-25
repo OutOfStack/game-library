@@ -9,6 +9,7 @@ data:
     DEBUG_ADDRESS: 0.0.0.0:6060
     APP_ALLOWEDCORSORIGIN: https://vmi644117.contaboserver.net
     AUTH_VERIFYTOKENURL: https://vmi644117.contaboserver.net/_auth/token/verify
+    ZIPKIN_REPORTERURL: http://vmi644117.contaboserver.net/_zipkin/api/v2/spans
 ---
 kind: Service
 apiVersion: v1
@@ -25,6 +26,10 @@ spec:
         name: debug
         port: 6060
         targetPort: debug
+      - protocol: TCP
+        name: zipkin
+        port: 9411
+        targetPort: zipkin
     selector:
         app: game-library
 ---
@@ -58,4 +63,10 @@ spec:
                         name: game-library-service
                         port:
                             number: 6060
-                            
+              - path: /_zipkin(/|$)(.*)
+                pathType: Prefix
+                backend:
+                    service:
+                        name: game-library-service
+                        port:
+                            number: 9411

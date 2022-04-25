@@ -10,23 +10,27 @@ import (
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	gintrace "go.opentelemetry.io/contrib/instrumentation/gin-gonic/gin"
-	otelglobal "go.opentelemetry.io/otel/api/global"
-	oteltracestdout "go.opentelemetry.io/otel/exporters/trace/stdout"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	global "go.opentelemetry.io/otel/api/global"
+	zipkin "go.opentelemetry.io/otel/exporters/trace/zipkin"
+	trace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-var tracer = otelglobal.Tracer("game-library")
+const (
+	serviceName = "game-library-api"
+)
+
+var tracer = global.Tracer(serviceName)
 
 // Service constructs router with all API routes
-func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web) (http.Handler, error) {
-	err := initTracer()
+func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
+	err := initTracer(zipkinConf.ReporterURL, logger)
 	if err != nil {
 		return nil, fmt.Errorf("initializing exporter: %w", err)
 	}
@@ -46,9 +50,8 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web) (h
 	}
 
 	g := Game{
-		DB:     db,
-		Log:    logger,
-		Tracer: &tracer,
+		DB:  db,
+		Log: logger,
 	}
 
 	// health
@@ -82,21 +85,21 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web) (h
 	return r, nil
 }
 
-func initTracer() error {
-	exporter, err := oteltracestdout.NewExporter(oteltracestdout.Options{PrettyPrint: true})
+func initTracer(reporterURL string, logger *log.Logger) error {
+	exporter, err := zipkin.NewExporter(reporterURL, serviceName, zipkin.WithLogger(logger))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "creating new exporter")
 	}
-	cfg := sdktrace.Config{
-		DefaultSampler: sdktrace.AlwaysSample(),
+	cfg := trace.Config{
+		DefaultSampler: trace.AlwaysSample(),
 	}
-	tp, err := sdktrace.NewProvider(
-		sdktrace.WithConfig(cfg),
-		sdktrace.WithSyncer(exporter),
+	tp, err := trace.NewProvider(
+		trace.WithConfig(cfg),
+		trace.WithBatcher(exporter),
 	)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "creating new trace provider")
 	}
-	otelglobal.SetTraceProvider(tp)
+	global.SetTraceProvider(tp)
 	return nil
 }

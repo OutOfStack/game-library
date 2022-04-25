@@ -30,7 +30,7 @@ var tracer = global.Tracer(serviceName)
 
 // Service constructs router with all API routes
 func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
-	err := initTracer(zipkinConf.ReporterURL, logger)
+	err := initTracer(zipkinConf.ReporterURL)
 	if err != nil {
 		return nil, fmt.Errorf("initializing exporter: %w", err)
 	}
@@ -85,8 +85,8 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web, zi
 	return r, nil
 }
 
-func initTracer(reporterURL string, logger *log.Logger) error {
-	exporter, err := zipkin.NewExporter(reporterURL, serviceName, zipkin.WithLogger(logger))
+func initTracer(reporterURL string) error {
+	exporter, err := zipkin.NewExporter(reporterURL, serviceName)
 	if err != nil {
 		return errors.Wrap(err, "creating new exporter")
 	}

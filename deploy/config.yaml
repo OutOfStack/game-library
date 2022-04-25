@@ -11,6 +11,14 @@ data:
     AUTH_VERIFYTOKENURL: https://vmi644117.contaboserver.net/_auth/token/verify
     ZIPKIN_REPORTERURL: http://vmi644117.contaboserver.net/_zipkin/api/v2/spans
 ---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+    name: zipkin-config
+    namespace: game-library
+data:
+    ZIPKIN_UI_BASEPATH: /_trace/zipkin
+---
 kind: Service
 apiVersion: v1
 metadata:
@@ -63,7 +71,7 @@ spec:
                         name: game-library-service
                         port:
                             number: 6060
-              - path: /_zipkin(/|$)(.*)
+              - path: /_trace(/|$)(.*)
                 pathType: Prefix
                 backend:
                     service:

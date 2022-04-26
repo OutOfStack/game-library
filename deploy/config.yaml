@@ -9,7 +9,7 @@ data:
     DEBUG_ADDRESS: 0.0.0.0:6060
     APP_ALLOWEDCORSORIGIN: https://vmi644117.contaboserver.net
     AUTH_VERIFYTOKENURL: https://vmi644117.contaboserver.net/_auth/token/verify
-    ZIPKIN_REPORTERURL: http://vmi644117.contaboserver.net/_zipkin/api/v2/spans
+    ZIPKIN_REPORTERURL: http://vmi644117.contaboserver.net/_trace/api/v2/spans
 ---
 kind: ConfigMap
 apiVersion: v1

@@ -92,11 +92,18 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 		return fmt.Errorf("marshalling verify token body: %w", err)
 	}
 
-	resp, err := http.NewRequestWithContext(ctx, "POST", a.verifyApiUrl, bytes.NewBuffer(body))
+	request, err := http.NewRequestWithContext(ctx, "POST", a.verifyApiUrl, bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("error creating verify request")
+	}
+	request.Header["Content-Type"] = []string{"application/json"}
+
+	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		log.Printf("error calling verify api at %s: %v\n", a.verifyApiUrl, err)
 		return ErrVerifyAPIUnavailable
 	}
+	defer resp.Body.Close()
 
 	var respBody VerifyTokenResp
 	json.NewDecoder(resp.Body).Decode(&respBody)

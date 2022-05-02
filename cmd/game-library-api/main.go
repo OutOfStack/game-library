@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
 	"github.com/OutOfStack/game-library/internal/appconf"
@@ -78,8 +77,8 @@ func run() error {
 	api := http.Server{
 		Addr:         cfg.Web.Address,
 		Handler:      h,
-		ReadTimeout:  cfg.Web.ReadTimeout * time.Second,
-		WriteTimeout: cfg.Web.WriteTimeout * time.Second,
+		ReadTimeout:  cfg.Web.ReadTimeout,
+		WriteTimeout: cfg.Web.WriteTimeout,
 	}
 
 	// start debug service

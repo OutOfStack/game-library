@@ -1,5 +1,5 @@
-apiVersion: apps/v1
 kind: Deployment
+apiVersion: apps/v1
 metadata:
     name: game-library-deployment
     namespace: game-library
@@ -45,6 +45,29 @@ spec:
                   - configMapRef:
                       name: game-library-config
                 imagePullPolicy: Always
+            hostAliases:
+              - ip: 194.163.162.21
+                hostnames:
+                  - vmi644117.contaboserver.net
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: zipkin-deployment
+    namespace: game-library
+    labels:
+        app: zipkin
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: zipkin
+    template:
+        metadata:
+            labels:
+                app: zipkin
+        spec:
+            containers:
               - name: zipkin
                 image: openzipkin/zipkin:2.23
                 ports:

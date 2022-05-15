@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	_ "github.com/OutOfStack/game-library/docs"
+	_ "github.com/OutOfStack/game-library/docs" // swagger docs
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"

@@ -15,7 +15,7 @@ var newGame game.CreateGameReq = game.CreateGameReq{
 	ReleaseDate: "2021-11-03",
 	Price:       100,
 	Genre:       []string{"rpg"},
-	LogoUrl:     "http://images/123",
+	LogoURL:     "http://images/123",
 }
 
 // TestGetInfos_NotExist_ShouldReturnEmpty tests case when there is no data and we should get empty result
@@ -94,8 +94,8 @@ func TestGetInfos_DataExists_ShouldBeEqual(t *testing.T) {
 	if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to retrieve game with genre %s, got %s", want.Genre[0], got.Genre[0])
 	}
-	if want.LogoUrl != got.LogoUrl.String {
-		t.Errorf("Expected to retrieve game with logo url %s, got %s", want.LogoUrl, got.LogoUrl.String)
+	if want.LogoURL != got.LogoURL.String {
+		t.Errorf("Expected to retrieve game with logo url %s, got %s", want.LogoURL, got.LogoURL.String)
 	}
 }
 
@@ -177,8 +177,8 @@ func TestRetrieveInfo_DataExists_ShouldRetrieveEqual(t *testing.T) {
 	if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to retrieve game with genre %s, got %s", want.Genre[0], got.Genre[0])
 	}
-	if want.LogoUrl != got.LogoUrl.String {
-		t.Errorf("Expected to retrieve game with logo url %s, got %s", want.LogoUrl, got.LogoUrl.String)
+	if want.LogoURL != got.LogoURL.String {
+		t.Errorf("Expected to retrieve game with logo url %s, got %s", want.LogoURL, got.LogoURL.String)
 	}
 }
 
@@ -232,8 +232,8 @@ func TestSearchInfos_DataExists_ShouldReturnEqual(t *testing.T) {
 	if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to find game with genre %s, got %s", want.Genre[0], got.Genre[0])
 	}
-	if want.LogoUrl != got.LogoUrl.String {
-		t.Errorf("Expected to find game with logo url %s, got %s", want.LogoUrl, got.LogoUrl.String)
+	if want.LogoURL != got.LogoURL.String {
+		t.Errorf("Expected to find game with logo url %s, got %s", want.LogoURL, got.LogoURL.String)
 	}
 }
 
@@ -318,7 +318,7 @@ func TestUpdate_Valid_ShouldRetrieveEqual(t *testing.T) {
 		ReleaseDate: &rd,
 		Price:       &pr,
 		Genre:       &ge,
-		LogoUrl:     &lu,
+		LogoURL:     &lu,
 	}
 
 	_, err = game.Update(context.Background(), db, id, up)
@@ -351,8 +351,8 @@ func TestUpdate_Valid_ShouldRetrieveEqual(t *testing.T) {
 	if (*want.Genre)[0] != got.Genre[0] {
 		t.Errorf("Expected to retrieve game with genre %s, got %s", (*want.Genre)[0], got.Genre[0])
 	}
-	if *want.LogoUrl != got.LogoUrl.String {
-		t.Errorf("Expected to retrieve game with logo url %s, got %s", *want.LogoUrl, got.LogoUrl.String)
+	if *want.LogoURL != got.LogoURL.String {
+		t.Errorf("Expected to retrieve game with logo url %s, got %s", *want.LogoURL, got.LogoURL.String)
 	}
 }
 
@@ -385,7 +385,7 @@ func TestUpdate_Valid_ShouldReturnEqual(t *testing.T) {
 		ReleaseDate: &rd,
 		Price:       &pr,
 		Genre:       &ge,
-		LogoUrl:     &lu,
+		LogoURL:     &lu,
 	}
 
 	gg, err := game.Update(context.Background(), db, id, up)
@@ -413,8 +413,8 @@ func TestUpdate_Valid_ShouldReturnEqual(t *testing.T) {
 	if (*want.Genre)[0] != got.Genre[0] {
 		t.Errorf("Expected to return game with genre %s, got %s", (*want.Genre)[0], got.Genre[0])
 	}
-	if *want.LogoUrl != got.LogoUrl.String {
-		t.Errorf("Expected to return game with logo url %s, got %s", *want.LogoUrl, got.LogoUrl.String)
+	if *want.LogoURL != got.LogoURL.String {
+		t.Errorf("Expected to return game with logo url %s, got %s", *want.LogoURL, got.LogoURL.String)
 	}
 }
 

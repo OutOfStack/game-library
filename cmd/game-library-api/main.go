@@ -64,7 +64,7 @@ func run() error {
 	defer db.Close()
 
 	// create auth module
-	a, err := auth.New(log, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenApiUrl)
+	a, err := auth.New(log, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
 		return fmt.Errorf("constructing Auth: %w", err)
 	}

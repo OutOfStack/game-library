@@ -16,7 +16,7 @@ type Game struct {
 	ReleaseDate types.Date     `db:"release_date"`
 	Price       float32        `db:"price"`
 	Genre       pq.StringArray `db:"genre"`
-	LogoUrl     sql.NullString `db:"logo_url"`
+	LogoURL     sql.NullString `db:"logo_url"`
 }
 
 // GameInfo represents extended info about game
@@ -35,7 +35,7 @@ type GameResp struct {
 	ReleaseDate string   `json:"releaseDate"`
 	Price       float32  `json:"price"`
 	Genre       []string `json:"genre"`
-	LogoUrl     string   `json:"logoUrl,omitempty"`
+	LogoURL     string   `json:"logoUrl,omitempty"`
 }
 
 // GameInfoResp represents extended game info response
@@ -45,7 +45,7 @@ type GameInfoResp struct {
 	Rating       float32 `json:"rating"`
 }
 
-// CreateGame represents game data we receive from user
+// CreateGameReq represents game data we receive from user
 type CreateGameReq struct {
 	Name        string   `json:"name" validate:"required"`
 	Developer   string   `json:"developer" validate:"required"`
@@ -53,10 +53,10 @@ type CreateGameReq struct {
 	ReleaseDate string   `json:"releaseDate" validate:"date"`
 	Price       float32  `json:"price" validate:"gte=0,lt=10000"`
 	Genre       []string `json:"genre"`
-	LogoUrl     string   `json:"logoUrl"`
+	LogoURL     string   `json:"logoUrl"`
 }
 
-// UpdateGame represents model for updating information about game.
+// UpdateGameReq represents model for updating information about game.
 // All fields are optional
 type UpdateGameReq struct {
 	Name        *string   `json:"name"`
@@ -65,7 +65,7 @@ type UpdateGameReq struct {
 	ReleaseDate *string   `json:"releaseDate" validate:"omitempty,date"`
 	Price       *float32  `json:"price" validate:"omitempty,gte=0,lt=10000"`
 	Genre       *[]string `json:"genre" validate:"omitempty"`
-	LogoUrl     *string   `json:"logoUrl"`
+	LogoURL     *string   `json:"logoUrl"`
 }
 
 // Sale represents database sale model
@@ -84,7 +84,7 @@ type SaleResp struct {
 	EndDate   string `json:"endDate"`
 }
 
-// CreateSale represents sale data we receive from user
+// CreateSaleReq represents sale data we receive from user
 type CreateSaleReq struct {
 	Name      string `json:"name"`
 	BeginDate string `json:"beginDate" validate:"required,date"`
@@ -93,15 +93,15 @@ type CreateSaleReq struct {
 
 // GameSale represents GameSale model for reading from db
 type GameSale struct {
-	SaleID          int64 `db:"sale_id"`
-	GameID          int64 `db:"game_id"`
-	Sale            string
+	SaleID          int64  `db:"sale_id"`
+	GameID          int64  `db:"game_id"`
+	Sale            string `db:"sale"`
 	BeginDate       string `db:"begin_date"`
 	EndDate         string `db:"end_date"`
 	DiscountPercent uint8  `db:"discount_percent"`
 }
 
-// CreateGameSale represents data about game being on sale
+// CreateGameSaleReq represents data about game being on sale
 type CreateGameSaleReq struct {
 	SaleID          int64 `json:"saleId"`
 	DiscountPercent uint8 `json:"discountPercent" validate:"gt=0,lte=100"`
@@ -124,7 +124,7 @@ type Rating struct {
 	Rating uint8  `db:"rating"`
 }
 
-// CreateRating represents rating data we receive from user
+// CreateRatingReq represents rating data we receive from user
 type CreateRatingReq struct {
 	Rating uint8 `json:"rating" validate:"gte=1,lte=4"`
 }
@@ -141,7 +141,7 @@ type UserRating struct {
 	Rating uint8 `db:"rating"`
 }
 
-// UserRatings represents get user ratings request
+// UserRatingsReq represents get user ratings request
 type UserRatingsReq struct {
 	GameIDs []int64 `json:"gameIds"`
 }

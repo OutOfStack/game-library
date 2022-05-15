@@ -24,7 +24,7 @@ func (e ErrNotFound) Error() string {
 }
 
 // GetInfos returns list of games with extended properties. Limited by pageSize and starting Id
-func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastId int64) ([]GameInfo, error) {
+func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastID int64) ([]GameInfo, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.getinfos")
 	defer span.End()
 
@@ -60,7 +60,7 @@ func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastId int64) ([]G
 	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price, all_g.logo_url
 	order by all_g.id`
 
-	if err := db.SelectContext(ctx, &list, q, lastId, pageSize); err != nil {
+	if err := db.SelectContext(ctx, &list, q, lastID, pageSize); err != nil {
 		return nil, err
 	}
 
@@ -176,7 +176,7 @@ func Create(ctx context.Context, db *sqlx.DB, cg CreateGameReq) (int64, error) {
 	returning id`
 
 	var lastInsertID int64
-	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre), cg.LogoUrl).Scan(&lastInsertID)
+	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre), cg.LogoURL).Scan(&lastInsertID)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %v: %w", cg, err)
 	}
@@ -214,9 +214,9 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGameReq) (*
 	if update.Genre != nil {
 		g.Genre = *update.Genre
 	}
-	if update.LogoUrl != nil {
-		g.LogoUrl = sql.NullString{
-			String: *update.LogoUrl,
+	if update.LogoURL != nil {
+		g.LogoURL = sql.NullString{
+			String: *update.LogoURL,
 			Valid:  true,
 		}
 	}
@@ -229,7 +229,7 @@ func Update(ctx context.Context, db *sqlx.DB, id int64, update UpdateGameReq) (*
 	 genre = $6,
 	 logo_url = $7
 	 where id = $8`
-	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.Publisher, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), g.LogoUrl, id)
+	_, err = db.ExecContext(ctx, q, g.Name, g.Developer, g.Publisher, g.ReleaseDate.String(), g.Price, pq.StringArray(g.Genre), g.LogoURL, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "updating game")
 	}
@@ -246,13 +246,13 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 	res, err := db.ExecContext(ctx, q, id)
 	if err != nil {
 		return errors.Wrap(err, "deleting game")
-	} else {
-		count, err := res.RowsAffected()
-		if err != nil {
-			return errors.Wrap(err, "deleting game. count")
-		} else if count == 0 {
-			return ErrNotFound{"game", id}
-		}
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, "deleting game. count")
+	}
+	if count == 0 {
+		return ErrNotFound{"game", id}
 	}
 	return nil
 }

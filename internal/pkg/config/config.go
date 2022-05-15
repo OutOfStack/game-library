@@ -2,7 +2,7 @@ package config
 
 import "github.com/spf13/viper"
 
-// LoadConfig reads config from provided file to specified config
+// Load reads config from provided file to specified config
 func Load(path, name, ext string, config interface{}) (err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigName(name)

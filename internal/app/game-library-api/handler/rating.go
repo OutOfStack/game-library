@@ -27,7 +27,7 @@ func (g *Game) RateGame(c *gin.Context) {
 	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.rating.rategame")
 	defer span.End()
 
-	gameId, err := web.GetIdParam(c)
+	gameID, err := web.GetIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -47,7 +47,7 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	userID := claims.Subject
 	r := &repo.Rating{
-		GameID: gameId,
+		GameID: gameID,
 		UserID: userID,
 		Rating: cr.Rating,
 	}

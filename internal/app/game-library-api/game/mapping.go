@@ -10,7 +10,7 @@ func (g *Game) MapToGameResp() *GameResp {
 		ReleaseDate: g.ReleaseDate.String(),
 		Price:       g.Price,
 		Genre:       []string(g.Genre),
-		LogoUrl:     g.LogoUrl.String,
+		LogoURL:     g.LogoURL.String,
 	}
 }
 
@@ -25,7 +25,7 @@ func (g *GameInfo) MapToGameInfoResp() *GameInfoResp {
 			ReleaseDate: g.ReleaseDate.String(),
 			Price:       g.Price,
 			Genre:       []string(g.Genre),
-			LogoUrl:     g.LogoUrl.String,
+			LogoURL:     g.LogoURL.String,
 		},
 		CurrentPrice: g.CurrentPrice,
 		Rating:       g.Rating,
@@ -42,7 +42,7 @@ func (ng *CreateGameReq) MapToGameResp(id int64) *GameResp {
 		ReleaseDate: ng.ReleaseDate,
 		Price:       ng.Price,
 		Genre:       ng.Genre,
-		LogoUrl:     ng.LogoUrl,
+		LogoURL:     ng.LogoURL,
 	}
 }
 

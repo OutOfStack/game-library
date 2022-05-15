@@ -40,7 +40,7 @@ func AddRating(ctx context.Context, db *sqlx.DB, r *Rating) (*RatingResp, error)
 }
 
 // GetUserRatings returns ratings of user for specified games
-func GetUserRatings(ctx context.Context, db *sqlx.DB, userId string, gameIDs []int64) ([]UserRating, error) {
+func GetUserRatings(ctx context.Context, db *sqlx.DB, userID string, gameIDs []int64) ([]UserRating, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.rating.getuserratings")
 	defer span.End()
 
@@ -50,7 +50,7 @@ func GetUserRatings(ctx context.Context, db *sqlx.DB, userId string, gameIDs []i
 	from ratings
 	where user_id = $1 and game_id = ANY($2)`
 
-	if err := db.SelectContext(ctx, &ratings, q, userId, pq.Array(gameIDs)); err != nil {
+	if err := db.SelectContext(ctx, &ratings, q, userID, pq.Array(gameIDs)); err != nil {
 		return nil, err
 	}
 

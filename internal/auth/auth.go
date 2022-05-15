@@ -14,17 +14,23 @@ import (
 	"go.opentelemetry.io/otel/api/trace"
 )
 
+// Context keys for authentication and authorization
 const (
 	CtxTokenKey  string = "auth_tkn"
 	CtxClaimsKey string = "auth_clms"
+)
 
+// User roles
+const (
 	RoleModerator      = "moderator"
 	RolePublisher      = "publisher"
 	RoleRegisteredUser = "user"
 )
 
+// ErrVerifyAPIUnavailable - error representing unavailability of verify api
 var ErrVerifyAPIUnavailable = errors.New("verify API is unavailable")
 
+// Claims represents jwt claims
 type Claims struct {
 	jwt.RegisteredClaims
 	UserRole string `json:"user_role,omitempty"`
@@ -46,11 +52,11 @@ type VerifyTokenResp struct {
 type Auth struct {
 	log          *log.Logger
 	parser       *jwt.Parser
-	verifyApiUrl string
+	verifyAPIURL string
 }
 
 // New constructs Auth instance
-func New(log *log.Logger, algorithm string, verifyApiUrl string) (*Auth, error) {
+func New(log *log.Logger, algorithm string, verifyAPIURL string) (*Auth, error) {
 	if jwt.GetSigningMethod(algorithm) == nil {
 		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
 	}
@@ -62,7 +68,7 @@ func New(log *log.Logger, algorithm string, verifyApiUrl string) (*Auth, error) 
 	a := Auth{
 		log:          log,
 		parser:       parser,
-		verifyApiUrl: verifyApiUrl,
+		verifyAPIURL: verifyAPIURL,
 	}
 
 	return &a, nil
@@ -92,7 +98,7 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 		return fmt.Errorf("marshalling verify token body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", a.verifyApiUrl, bytes.NewBuffer(body))
+	request, err := http.NewRequestWithContext(ctx, "POST", a.verifyAPIURL, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("error creating verify request")
 	}
@@ -100,7 +106,7 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Printf("error calling verify api at %s: %v\n", a.verifyApiUrl, err)
+		log.Printf("error calling verify api at %s: %v\n", a.verifyAPIURL, err)
 		return ErrVerifyAPIUnavailable
 	}
 	defer resp.Body.Close()
@@ -110,9 +116,8 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 
 	if respBody.Valid {
 		return nil
-	} else {
-		return fmt.Errorf("invalid token")
 	}
+	return fmt.Errorf("invalid token")
 }
 
 // ParseToken returns token as a set of claims

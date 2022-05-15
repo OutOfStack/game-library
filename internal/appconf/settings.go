@@ -2,7 +2,7 @@ package appconf
 
 import "time"
 
-// Auth represents settings related to database
+// DB represents settings related to database
 type DB struct {
 	Host       string `mapstructure:"DB_HOST"`
 	Name       string `mapstructure:"DB_NAME"`
@@ -11,7 +11,7 @@ type DB struct {
 	RequireSSL bool   `mapstructure:"DB_REQUIRESSL"`
 }
 
-// Auth represents settings related to web server
+// Web represents settings related to web server
 type Web struct {
 	Address           string        `mapstructure:"APP_ADDRESS"`
 	DebugAddress      string        `mapstructure:"DEBUG_ADDRESS"`
@@ -21,12 +21,13 @@ type Web struct {
 	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
 }
 
+// Zipkin represents settings related to zipkin trace storage
 type Zipkin struct {
 	ReporterURL string `mapstructure:"ZIPKIN_REPORTERURL"`
 }
 
 // Auth represents settings related to authentication and authorization
 type Auth struct {
-	VerifyTokenApiUrl string `mapstructure:"AUTH_VERIFYTOKENURL"`
+	VerifyTokenAPIURL string `mapstructure:"AUTH_VERIFYTOKENURL"`
 	SigningAlgorithm  string `mapstructure:"AUTH_SIGNINGALG"`
 }

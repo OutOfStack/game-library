@@ -40,13 +40,13 @@ func (g *Game) GetList(c *gin.Context) {
 		c.Error(web.NewRequestError(errors.New("Incorrect page size. Should be greater than 0"), http.StatusBadRequest))
 		return
 	}
-	lastId, err := strconv.ParseInt(liParam, 10, 64)
-	if err != nil || lastId < 0 {
+	lastID, err := strconv.ParseInt(liParam, 10, 64)
+	if err != nil || lastID < 0 {
 		c.Error(web.NewRequestError(errors.New("Incorrect last Id. Should be greater or equal to 0"), http.StatusBadRequest))
 		return
 	}
 
-	list, err := repo.GetInfos(ctx, g.DB, int(pageSize), lastId)
+	list, err := repo.GetInfos(ctx, g.DB, int(pageSize), lastID)
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
@@ -76,7 +76,7 @@ func (g *Game) Get(c *gin.Context) {
 	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.get")
 	defer span.End()
 
-	id, err := web.GetIdParam(c)
+	id, err := web.GetIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -162,13 +162,13 @@ func (g *Game) Create(c *gin.Context) {
 
 	cg.Publisher = claims.Name
 
-	gameId, err := repo.Create(ctx, g.DB, cg)
+	gameID, err := repo.Create(ctx, g.DB, cg)
 	if err != nil {
 		c.Error(errors.Wrap(err, "adding new game"))
 		return
 	}
 
-	getGame := cg.MapToGameResp(gameId)
+	getGame := cg.MapToGameResp(gameID)
 
 	web.Respond(c, getGame, http.StatusCreated)
 }
@@ -190,7 +190,7 @@ func (g *Game) Update(c *gin.Context) {
 	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.update")
 	defer span.End()
 
-	id, err := web.GetIdParam(c)
+	id, err := web.GetIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -231,7 +231,7 @@ func (g *Game) Delete(c *gin.Context) {
 	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.delete")
 	defer span.End()
 
-	id, err := web.GetIdParam(c)
+	id, err := web.GetIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -267,7 +267,7 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.addgameonsale")
 	defer span.End()
 
-	id, err := web.GetIdParam(c)
+	id, err := web.GetIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -307,13 +307,13 @@ func (g *Game) ListGameSales(c *gin.Context) {
 	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.listgamesales")
 	defer span.End()
 
-	gameId, err := web.GetIdParam(c)
+	gameID, err := web.GetIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	gameSales, err := repo.ListGameSales(ctx, g.DB, gameId)
+	gameSales, err := repo.ListGameSales(ctx, g.DB, gameID)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))

@@ -22,7 +22,6 @@ func Migrate(db *sqlx.DB, up bool) error {
 	}
 	if up {
 		return m.Up()
-	} else {
-		return m.Steps(-1)
 	}
+	return m.Steps(-1)
 }

@@ -32,13 +32,13 @@ func (g *Game) AddSale(c *gin.Context) {
 		return
 	}
 
-	saleId, err := repo.AddSale(ctx, g.DB, cs)
+	saleID, err := repo.AddSale(ctx, g.DB, cs)
 	if err != nil {
 		c.Error(errors.Wrapf(err, "adding new sale"))
 		return
 	}
 
-	getSale := cs.MapToSaleResp(saleId)
+	getSale := cs.MapToSaleResp(saleID)
 
 	web.Respond(c, getSale, http.StatusCreated)
 }

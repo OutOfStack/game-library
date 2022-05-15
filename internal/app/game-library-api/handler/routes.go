@@ -26,8 +26,6 @@ const (
 	serviceName = "game-library-api"
 )
 
-var tracer = global.Tracer(serviceName)
-
 // Service constructs router with all API routes
 func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
 	err := initTracer(zipkinConf.ReporterURL)

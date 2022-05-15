@@ -5,7 +5,7 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: github.ref == 'tests-in-pipeline'
+    if: ${{ github.ref == 'tests-in-pipeline' }}
     steps:
     - uses: actions/checkout@v3.0.1
 

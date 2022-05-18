@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  game.CreateGameReq:
+  handler.CreateGameReq:
     properties:
       developer:
         type: string
@@ -20,19 +20,19 @@ definitions:
     - developer
     - name
     type: object
-  game.CreateGameSaleReq:
+  handler.CreateGameSaleReq:
     properties:
       discountPercent:
         type: integer
       saleId:
         type: integer
     type: object
-  game.CreateRatingReq:
+  handler.CreateRatingReq:
     properties:
       rating:
         type: integer
     type: object
-  game.CreateSaleReq:
+  handler.CreateSaleReq:
     properties:
       beginDate:
         type: string
@@ -44,7 +44,7 @@ definitions:
     - beginDate
     - endDate
     type: object
-  game.GameInfoResp:
+  handler.GameInfoResp:
     properties:
       currentPrice:
         type: number
@@ -69,7 +69,7 @@ definitions:
       releaseDate:
         type: string
     type: object
-  game.GameResp:
+  handler.GameResp:
     properties:
       developer:
         type: string
@@ -90,7 +90,7 @@ definitions:
       releaseDate:
         type: string
     type: object
-  game.GameSaleResp:
+  handler.GameSaleResp:
     properties:
       beginDate:
         type: string
@@ -105,14 +105,14 @@ definitions:
       saleId:
         type: integer
     type: object
-  game.RatingResp:
+  handler.RatingResp:
     properties:
       gameId:
         type: integer
       rating:
         type: integer
     type: object
-  game.SaleResp:
+  handler.SaleResp:
     properties:
       beginDate:
         type: string
@@ -123,7 +123,7 @@ definitions:
       name:
         type: string
     type: object
-  game.UpdateGameReq:
+  handler.UpdateGameReq:
     properties:
       developer:
         type: string
@@ -142,7 +142,7 @@ definitions:
       releaseDate:
         type: string
     type: object
-  game.UserRatingsReq:
+  handler.UserRatingsReq:
     properties:
       gameIds:
         items:
@@ -196,7 +196,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GameInfoResp'
+              $ref: '#/definitions/handler.GameInfoResp'
             type: array
         "500":
           description: Internal Server Error
@@ -214,14 +214,14 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/game.CreateGameReq'
+          $ref: '#/definitions/handler.CreateGameReq'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/game.GameResp'
+            $ref: '#/definitions/handler.GameResp'
         "400":
           description: Bad Request
           schema:
@@ -276,7 +276,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.GameInfoResp'
+            $ref: '#/definitions/handler.GameInfoResp'
         "400":
           description: Bad Request
           schema:
@@ -306,14 +306,14 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/game.UpdateGameReq'
+          $ref: '#/definitions/handler.UpdateGameReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.GameResp'
+            $ref: '#/definitions/handler.GameResp'
         "400":
           description: Bad Request
           schema:
@@ -334,7 +334,7 @@ paths:
       description: rates game
       operationId: rate-game
       parameters:
-      - description: Game ID
+      - description: game ID
         in: path
         name: id
         required: true
@@ -344,14 +344,14 @@ paths:
         name: rating
         required: true
         schema:
-          $ref: '#/definitions/game.CreateRatingReq'
+          $ref: '#/definitions/handler.CreateRatingReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.RatingResp'
+            $ref: '#/definitions/handler.RatingResp'
         "400":
           description: Bad Request
           schema:
@@ -382,7 +382,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GameSaleResp'
+              $ref: '#/definitions/handler.GameSaleResp'
             type: array
         "400":
           description: Bad Request
@@ -413,14 +413,14 @@ paths:
         name: gamesale
         required: true
         schema:
-          $ref: '#/definitions/game.CreateGameSaleReq'
+          $ref: '#/definitions/handler.CreateGameSaleReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/game.GameSaleResp'
+            $ref: '#/definitions/handler.GameSaleResp'
         "400":
           description: Bad Request
           schema:
@@ -450,7 +450,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.GameInfoResp'
+              $ref: '#/definitions/handler.GameInfoResp'
             type: array
         "500":
           description: Internal Server Error
@@ -468,7 +468,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/game.SaleResp'
+              $ref: '#/definitions/handler.SaleResp'
             type: array
         "500":
           description: Internal Server Error
@@ -486,14 +486,14 @@ paths:
         name: sale
         required: true
         schema:
-          $ref: '#/definitions/game.CreateSaleReq'
+          $ref: '#/definitions/handler.CreateSaleReq'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/game.SaleResp'
+            $ref: '#/definitions/handler.SaleResp'
         "400":
           description: Bad Request
           schema:
@@ -513,7 +513,7 @@ paths:
         name: gameIds
         required: true
         schema:
-          $ref: '#/definitions/game.UserRatingsReq'
+          $ref: '#/definitions/handler.UserRatingsReq'
       produces:
       - application/json
       responses:

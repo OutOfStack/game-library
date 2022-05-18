@@ -26,7 +26,7 @@ type config struct {
 }
 
 // @title Game library API
-// @version 0.1
+// @version 0.2
 // @description API for game library service
 // @termsOfService http://swagger.io/terms/
 

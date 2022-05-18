@@ -57,7 +57,7 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/game.GameInfoResp"
+                                "$ref": "#/definitions/handler.GameInfoResp"
                             }
                         }
                     },
@@ -86,7 +86,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateGameReq"
+                            "$ref": "#/definitions/handler.CreateGameReq"
                         }
                     }
                 ],
@@ -94,7 +94,7 @@ var doc = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/game.GameResp"
+                            "$ref": "#/definitions/handler.GameResp"
                         }
                     },
                     "400": {
@@ -134,7 +134,7 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/game.GameInfoResp"
+                                "$ref": "#/definitions/handler.GameInfoResp"
                             }
                         }
                     },
@@ -168,7 +168,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/game.GameInfoResp"
+                            "$ref": "#/definitions/handler.GameInfoResp"
                         }
                     },
                     "400": {
@@ -258,7 +258,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.UpdateGameReq"
+                            "$ref": "#/definitions/handler.UpdateGameReq"
                         }
                     }
                 ],
@@ -266,7 +266,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/game.GameResp"
+                            "$ref": "#/definitions/handler.GameResp"
                         }
                     },
                     "400": {
@@ -304,7 +304,7 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Game ID",
+                        "description": "game ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -315,7 +315,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateRatingReq"
+                            "$ref": "#/definitions/handler.CreateRatingReq"
                         }
                     }
                 ],
@@ -323,7 +323,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/game.RatingResp"
+                            "$ref": "#/definitions/handler.RatingResp"
                         }
                     },
                     "400": {
@@ -370,7 +370,7 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/game.GameSaleResp"
+                                "$ref": "#/definitions/handler.GameSaleResp"
                             }
                         }
                     },
@@ -418,7 +418,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateGameSaleReq"
+                            "$ref": "#/definitions/handler.CreateGameSaleReq"
                         }
                     }
                 ],
@@ -426,7 +426,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/game.GameSaleResp"
+                            "$ref": "#/definitions/handler.GameSaleResp"
                         }
                     },
                     "400": {
@@ -464,7 +464,7 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/game.SaleResp"
+                                "$ref": "#/definitions/handler.SaleResp"
                             }
                         }
                     },
@@ -493,7 +493,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.CreateSaleReq"
+                            "$ref": "#/definitions/handler.CreateSaleReq"
                         }
                     }
                 ],
@@ -501,7 +501,7 @@ var doc = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/game.SaleResp"
+                            "$ref": "#/definitions/handler.SaleResp"
                         }
                     },
                     "400": {
@@ -534,7 +534,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/game.UserRatingsReq"
+                            "$ref": "#/definitions/handler.UserRatingsReq"
                         }
                     }
                 ],
@@ -565,7 +565,7 @@ var doc = `{
         }
     },
     "definitions": {
-        "game.CreateGameReq": {
+        "handler.CreateGameReq": {
             "type": "object",
             "required": [
                 "developer",
@@ -595,7 +595,7 @@ var doc = `{
                 }
             }
         },
-        "game.CreateGameSaleReq": {
+        "handler.CreateGameSaleReq": {
             "type": "object",
             "properties": {
                 "discountPercent": {
@@ -606,7 +606,7 @@ var doc = `{
                 }
             }
         },
-        "game.CreateRatingReq": {
+        "handler.CreateRatingReq": {
             "type": "object",
             "properties": {
                 "rating": {
@@ -614,7 +614,7 @@ var doc = `{
                 }
             }
         },
-        "game.CreateSaleReq": {
+        "handler.CreateSaleReq": {
             "type": "object",
             "required": [
                 "beginDate",
@@ -632,7 +632,7 @@ var doc = `{
                 }
             }
         },
-        "game.GameInfoResp": {
+        "handler.GameInfoResp": {
             "type": "object",
             "properties": {
                 "currentPrice": {
@@ -670,7 +670,7 @@ var doc = `{
                 }
             }
         },
-        "game.GameResp": {
+        "handler.GameResp": {
             "type": "object",
             "properties": {
                 "developer": {
@@ -702,7 +702,7 @@ var doc = `{
                 }
             }
         },
-        "game.GameSaleResp": {
+        "handler.GameSaleResp": {
             "type": "object",
             "properties": {
                 "beginDate": {
@@ -725,7 +725,7 @@ var doc = `{
                 }
             }
         },
-        "game.RatingResp": {
+        "handler.RatingResp": {
             "type": "object",
             "properties": {
                 "gameId": {
@@ -736,7 +736,7 @@ var doc = `{
                 }
             }
         },
-        "game.SaleResp": {
+        "handler.SaleResp": {
             "type": "object",
             "properties": {
                 "beginDate": {
@@ -753,7 +753,7 @@ var doc = `{
                 }
             }
         },
-        "game.UpdateGameReq": {
+        "handler.UpdateGameReq": {
             "type": "object",
             "properties": {
                 "developer": {
@@ -782,7 +782,7 @@ var doc = `{
                 }
             }
         },
-        "game.UserRatingsReq": {
+        "handler.UserRatingsReq": {
             "type": "object",
             "properties": {
                 "gameIds": {

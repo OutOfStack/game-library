@@ -217,19 +217,6 @@ func mapToUpdateGame(g *repo.Game, ugr *UpdateGameReq) repo.UpdateGame {
 	return update
 }
 
-func mapGameToGameResp(g *repo.Game) *GameResp {
-	return &GameResp{
-		ID:          g.ID,
-		Name:        g.Name,
-		Developer:   g.Developer,
-		Publisher:   g.Publisher,
-		ReleaseDate: g.ReleaseDate.String(),
-		Price:       g.Price,
-		Genre:       []string(g.Genre),
-		LogoURL:     g.LogoURL.String,
-	}
-}
-
 func mapToGameInfoResp(g *repo.GameExt) *GameInfoResp {
 	return &GameInfoResp{
 		GameResp: GameResp{

@@ -1,4 +1,4 @@
-package game
+package repo
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 // AddSale records information about game being on sale
-func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSaleReq) (int64, error) {
+func AddSale(ctx context.Context, db *sqlx.DB, cs CreateSale) (int64, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.sale.addsale")
 	defer span.End()
 

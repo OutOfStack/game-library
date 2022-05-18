@@ -36,6 +36,9 @@ func (t Date) String() string {
 
 // ParseDate parses a string in 'YYYY-MM-DD' format and returns the date value it represents.
 func ParseDate(s string) (Date, error) {
+	if s == "" {
+		return Date{}, fmt.Errorf("date is empty")
+	}
 	d, err := civil.ParseDate(s)
 	if err != nil {
 		return Date{}, err

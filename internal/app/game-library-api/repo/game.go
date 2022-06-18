@@ -10,8 +10,13 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel"
 )
+
+// Storage provides required dependencies for repository
+type Storage struct {
+	DB *sqlx.DB
+}
 
 // ErrNotFound is used when a requested entity with id does not exist
 type ErrNotFound struct {
@@ -19,13 +24,15 @@ type ErrNotFound struct {
 	ID     int64
 }
 
+var tracer = otel.Tracer("")
+
 func (e ErrNotFound) Error() string {
 	return fmt.Sprintf("%v with id %v was not found", e.Entity, e.ID)
 }
 
 // GetInfos returns list of games with extended properties. Limited by pageSize and starting Id
-func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastID int64) ([]GameExt, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.getinfos")
+func (s *Storage) GetInfos(ctx context.Context, pageSize int, lastID int64) ([]GameExt, error) {
+	ctx, span := tracer.Start(ctx, "db.game.getinfos")
 	defer span.End()
 
 	list := []GameExt{}
@@ -60,7 +67,7 @@ func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastID int64) ([]G
 	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price, all_g.logo_url
 	order by all_g.id`
 
-	if err := db.SelectContext(ctx, &list, q, lastID, pageSize); err != nil {
+	if err := s.DB.SelectContext(ctx, &list, q, lastID, pageSize); err != nil {
 		return nil, err
 	}
 
@@ -69,8 +76,8 @@ func GetInfos(ctx context.Context, db *sqlx.DB, pageSize int, lastID int64) ([]G
 
 // RetrieveInfo returns a single game with extended properties
 // If such entity does not exist returns error ErrNotFound{}
-func RetrieveInfo(ctx context.Context, db *sqlx.DB, id int64) (*GameExt, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.retrieveinfo")
+func (s *Storage) RetrieveInfo(ctx context.Context, id int64) (*GameExt, error) {
+	ctx, span := tracer.Start(ctx, "db.game.retrieveinfo")
 	defer span.End()
 
 	var g GameExt
@@ -92,7 +99,7 @@ func RetrieveInfo(ctx context.Context, db *sqlx.DB, id int64) (*GameExt, error) 
 	where g.id = $1
 	group by g.id`
 
-	if err := db.GetContext(ctx, &g, q, id); err != nil {
+	if err := s.DB.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound{"game", id}
 		}
@@ -103,8 +110,8 @@ func RetrieveInfo(ctx context.Context, db *sqlx.DB, id int64) (*GameExt, error) 
 }
 
 // SearchInfos returns list of games with extended properties limited by search query
-func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameExt, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.searchinfos")
+func (s *Storage) SearchInfos(ctx context.Context, search string) ([]GameExt, error) {
+	ctx, span := tracer.Start(ctx, "db.game.searchinfos")
 	defer span.End()
 
 	list := []GameExt{}
@@ -136,7 +143,7 @@ func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameExt, er
 	left join ratings r on r.game_id = all_g.id
 	group by all_g.id, all_g.name, all_g.developer, all_g.publisher, all_g.release_date, all_g.genre, all_g.price, all_g.current_price, all_g.logo_url`
 
-	if err := db.SelectContext(ctx, &list, q, strings.ToLower(search)+"%"); err != nil {
+	if err := s.DB.SelectContext(ctx, &list, q, strings.ToLower(search)+"%"); err != nil {
 		return nil, err
 	}
 
@@ -145,8 +152,8 @@ func SearchInfos(ctx context.Context, db *sqlx.DB, search string) ([]GameExt, er
 
 // Retrieve returns a single game
 // If such entity does not exist returns error ErrNotFound{}
-func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.retrieve")
+func (s *Storage) Retrieve(ctx context.Context, id int64) (*Game, error) {
+	ctx, span := tracer.Start(ctx, "db.game.retrieve")
 	defer span.End()
 
 	var g Game
@@ -155,7 +162,7 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 	from games g
 	where g.id = $1`
 
-	if err := db.GetContext(ctx, &g, q, id); err != nil {
+	if err := s.DB.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound{"game", id}
 		}
@@ -166,8 +173,8 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id int64) (*Game, error) {
 }
 
 // Create creates a new game
-func Create(ctx context.Context, db *sqlx.DB, cg CreateGame) (int64, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.create")
+func (s *Storage) Create(ctx context.Context, cg CreateGame) (int64, error) {
+	ctx, span := tracer.Start(ctx, "db.game.create")
 	defer span.End()
 
 	const q = `insert into games
@@ -176,7 +183,7 @@ func Create(ctx context.Context, db *sqlx.DB, cg CreateGame) (int64, error) {
 	returning id`
 
 	var lastInsertID int64
-	err := db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre), cg.LogoURL).Scan(&lastInsertID)
+	err := s.DB.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, cg.Price, pq.StringArray(cg.Genre), cg.LogoURL).Scan(&lastInsertID)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %v: %w", cg, err)
 	}
@@ -186,8 +193,8 @@ func Create(ctx context.Context, db *sqlx.DB, cg CreateGame) (int64, error) {
 
 // Update modifes information about a game
 // If such entity does not exist returns error ErrNotFound{}
-func Update(ctx context.Context, db *sqlx.DB, ug UpdateGame) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.update")
+func (s *Storage) Update(ctx context.Context, ug UpdateGame) error {
+	ctx, span := tracer.Start(ctx, "db.game.update")
 	defer span.End()
 
 	const q = `update games set 
@@ -204,7 +211,7 @@ func Update(ctx context.Context, db *sqlx.DB, ug UpdateGame) error {
 	if err != nil {
 		return errors.Wrapf(err, "invalid date: %s", releaseDate.String())
 	}
-	res, err := db.ExecContext(ctx, q, ug.Name, ug.Developer, ug.Publisher, releaseDate.String(), ug.Price, pq.StringArray(ug.Genre), ug.LogoURL, ug.ID)
+	res, err := s.DB.ExecContext(ctx, q, ug.Name, ug.Developer, ug.Publisher, releaseDate.String(), ug.Price, pq.StringArray(ug.Genre), ug.LogoURL, ug.ID)
 	if err != nil {
 		return errors.Wrap(err, "updating game")
 	}
@@ -222,12 +229,12 @@ func Update(ctx context.Context, db *sqlx.DB, ug UpdateGame) error {
 
 // Delete deletes specified game
 // If such entity does not exist returns error ErrNotFound{}
-func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.delete")
+func (s *Storage) Delete(ctx context.Context, id int64) error {
+	ctx, span := tracer.Start(ctx, "db.game.delete")
 	defer span.End()
 
 	const q = `delete from games where id = $1`
-	res, err := db.ExecContext(ctx, q, id)
+	res, err := s.DB.ExecContext(ctx, q, id)
 	if err != nil {
 		return errors.Wrap(err, "deleting game")
 	}
@@ -243,8 +250,8 @@ func Delete(ctx context.Context, db *sqlx.DB, id int64) error {
 
 // AddGameOnSale connects game with a sale
 // If such game or sale does not exist returns error ErrNotFound{}
-func AddGameOnSale(ctx context.Context, db *sqlx.DB, cgs CreateGameSale) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.addgameonsale")
+func (s *Storage) AddGameOnSale(ctx context.Context, cgs CreateGameSale) error {
+	ctx, span := tracer.Start(ctx, "db.game.addgameonsale")
 	defer span.End()
 
 	const q = `insert into sales_games
@@ -252,7 +259,7 @@ func AddGameOnSale(ctx context.Context, db *sqlx.DB, cgs CreateGameSale) error {
 	values ($1, $2, $3)
 	on conflict (game_id, sale_id) do update set discount_percent = $3`
 
-	_, err := db.ExecContext(ctx, q, cgs.GameID, cgs.SaleID, cgs.DiscountPercent)
+	_, err := s.DB.ExecContext(ctx, q, cgs.GameID, cgs.SaleID, cgs.DiscountPercent)
 	if err != nil {
 		return errors.Wrapf(err, "adding game %v on sale %v", cgs.GameID, cgs.SaleID)
 	}
@@ -261,8 +268,8 @@ func AddGameOnSale(ctx context.Context, db *sqlx.DB, cgs CreateGameSale) error {
 }
 
 // ListGameSales returns all sales for specified game
-func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GameSale, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.game.listgamesales")
+func (s *Storage) ListGameSales(ctx context.Context, gameID int64) ([]GameSale, error) {
+	ctx, span := tracer.Start(ctx, "db.game.listgamesales")
 	defer span.End()
 
 	gameSales := []GameSale{}
@@ -272,7 +279,7 @@ func ListGameSales(ctx context.Context, db *sqlx.DB, gameID int64) ([]GameSale, 
 	left join sales s on s.id = sg.sale_id
 	left join games g on g.id = sg.game_id
 	where sg.game_id = $1`
-	if err := db.SelectContext(ctx, &gameSales, q, gameID); err != nil {
+	if err := s.DB.SelectContext(ctx, &gameSales, q, gameID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound{"game sale", gameID}
 		}

@@ -3,11 +3,10 @@ package handler
 import (
 	"net/http"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // AddSale godoc
@@ -22,7 +21,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [post]
 func (g *Game) AddSale(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.sale.addsale")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.sale.addsale")
 	defer span.End()
 
 	var cs CreateSaleReq
@@ -31,9 +30,10 @@ func (g *Game) AddSale(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding new sale"))
 		return
 	}
+	span.SetAttributes(attribute.String("data.name", cs.Name))
 
 	sale := mapToCreateSale(&cs)
-	saleID, err := repo.AddSale(ctx, g.DB, sale)
+	saleID, err := g.Storage.AddSale(ctx, sale)
 	if err != nil {
 		c.Error(errors.Wrapf(err, "adding new sale"))
 		return
@@ -52,10 +52,10 @@ func (g *Game) AddSale(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /sales [get]
 func (g *Game) ListSales(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.sale.listsales")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.sale.listsales")
 	defer span.End()
 
-	list, err := repo.GetSales(ctx, g.DB)
+	list, err := g.Storage.GetSales(ctx)
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting sales list"))
 		return

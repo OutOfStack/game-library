@@ -20,19 +20,22 @@ var createGame game.CreateGame = game.CreateGame{
 
 // TestGetInfos_NotExist_ShouldReturnEmpty tests case when there is no data and we should get empty result
 func TestGetInfos_NotExist_ShouldReturnEmpty(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
 
 	defer recovery(t)
 
-	games, err := game.GetInfos(context.Background(), db, 20, 0)
+	games, err := s.GetInfos(context.Background(), 20, 0)
 	if err != nil {
 		t.Fatalf("error getting games: %v", err)
 	}
@@ -46,12 +49,15 @@ func TestGetInfos_NotExist_ShouldReturnEmpty(t *testing.T) {
 
 // TestGetInfos_DataExists_ShouldBeEqual tests case when we add one game, then fetch first game and they should be equal
 func TestGetInfos_DataExists_ShouldBeEqual(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
@@ -60,12 +66,12 @@ func TestGetInfos_DataExists_ShouldBeEqual(t *testing.T) {
 
 	cg := createGame
 
-	_, err := game.Create(context.Background(), db, cg)
+	_, err := s.Create(context.Background(), cg)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
 
-	games, err := game.GetInfos(context.Background(), db, 20, 0)
+	games, err := s.GetInfos(context.Background(), 20, 0)
 	if err != nil {
 		t.Fatalf("error getting games: %v", err)
 	}
@@ -81,12 +87,15 @@ func TestGetInfos_DataExists_ShouldBeEqual(t *testing.T) {
 
 // TestRetrieveInfo_NotExist_ShouldReturnNotFoundError tests case when a game with provided id does not exist and we should get a Not Found Error
 func TestRetrieveInfo_NotExist_ShouldReturnNotFoundError(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
@@ -94,7 +103,7 @@ func TestRetrieveInfo_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	defer recovery(t)
 
 	var id int64 = 1234
-	g, err := game.RetrieveInfo(context.Background(), db, id)
+	g, err := s.RetrieveInfo(context.Background(), id)
 	if err != nil {
 		if !errors.As(err, &game.ErrNotFound{}) {
 			t.Fatalf("error getting game: %v", err)
@@ -113,12 +122,15 @@ func TestRetrieveInfo_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 
 // TestRetrieveInfo_DataExists_ShouldRetrieveEqual tests case when we add game, then fetch this game and they should be equal
 func TestRetrieveInfo_DataExists_ShouldRetrieveEqual(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
@@ -127,12 +139,12 @@ func TestRetrieveInfo_DataExists_ShouldRetrieveEqual(t *testing.T) {
 
 	cg := createGame
 
-	id, err := game.Create(context.Background(), db, cg)
+	id, err := s.Create(context.Background(), cg)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
 
-	gg, err := game.RetrieveInfo(context.Background(), db, id)
+	gg, err := s.RetrieveInfo(context.Background(), id)
 	if err != nil {
 		t.Fatalf("error getting game: %v", err)
 	}
@@ -144,12 +156,15 @@ func TestRetrieveInfo_DataExists_ShouldRetrieveEqual(t *testing.T) {
 
 // TestSearchInfos_DataExists_ShouldReturnEqual tests case when we add game, then search this game and they should be equal
 func TestSearchInfos_DataExists_ShouldReturnEqual(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
@@ -158,12 +173,12 @@ func TestSearchInfos_DataExists_ShouldReturnEqual(t *testing.T) {
 
 	cg := createGame
 
-	_, err := game.Create(context.Background(), db, cg)
+	_, err := s.Create(context.Background(), cg)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
 
-	matched, err := game.SearchInfos(context.Background(), db, cg.Name)
+	matched, err := s.SearchInfos(context.Background(), cg.Name)
 	if err != nil {
 		t.Fatalf("error searching games: %v", err)
 	}
@@ -179,12 +194,15 @@ func TestSearchInfos_DataExists_ShouldReturnEqual(t *testing.T) {
 
 // TestSearchInfos_DataExists_ShouldReturnMatched tests case when we add multiple games, then search games and we should get matches
 func TestSearchInfos_DataExists_ShouldReturnMatched(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
@@ -200,24 +218,24 @@ func TestSearchInfos_DataExists_ShouldReturnMatched(t *testing.T) {
 	ng4 := createGame
 	ng4.Name = "a test game name"
 
-	_, err := game.Create(context.Background(), db, ng1)
+	_, err := s.Create(context.Background(), ng1)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
-	_, err = game.Create(context.Background(), db, ng2)
+	_, err = s.Create(context.Background(), ng2)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
-	_, err = game.Create(context.Background(), db, ng3)
+	_, err = s.Create(context.Background(), ng3)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
-	_, err = game.Create(context.Background(), db, ng4)
+	_, err = s.Create(context.Background(), ng4)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
 
-	matched, err := game.SearchInfos(context.Background(), db, "test")
+	matched, err := s.SearchInfos(context.Background(), "test")
 	if err != nil {
 		t.Fatalf("error searching games: %v", err)
 	}
@@ -231,12 +249,15 @@ func TestSearchInfos_DataExists_ShouldReturnMatched(t *testing.T) {
 
 // TestUpdate_Valid_ShouldRetrieveEqual tests case when we update game, then fetch this game and they should be equal
 func TestUpdate_Valid_ShouldRetrieveEqual(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
@@ -245,7 +266,7 @@ func TestUpdate_Valid_ShouldRetrieveEqual(t *testing.T) {
 
 	cr := createGame
 
-	id, err := game.Create(context.Background(), db, cr)
+	id, err := s.Create(context.Background(), cr)
 	if err != nil {
 		t.Fatalf("error creating game: %v", err)
 	}
@@ -261,12 +282,12 @@ func TestUpdate_Valid_ShouldRetrieveEqual(t *testing.T) {
 		LogoURL:     "https://images/999",
 	}
 
-	err = game.Update(context.Background(), db, up)
+	err = s.Update(context.Background(), up)
 	if err != nil {
 		t.Fatalf("error updating game: %v", err)
 	}
 
-	gg, err := game.RetrieveInfo(context.Background(), db, id)
+	gg, err := s.RetrieveInfo(context.Background(), id)
 	if err != nil {
 		t.Fatalf("error getting game: %v", err)
 	}
@@ -278,12 +299,15 @@ func TestUpdate_Valid_ShouldRetrieveEqual(t *testing.T) {
 
 // TestUpdate_NotExist_ShouldReturnNotFoundError tests case when we update a non existing game and we should get a Not Found Error
 func TestUpdate_NotExist_ShouldReturnNotFoundError(t *testing.T) {
-	if err := setup(db); err != nil {
+	s := &game.Storage{
+		DB: db,
+	}
+	if err := setup(s.DB); err != nil {
 		t.Fatalf("error on setup: %v", err)
 	}
 
 	defer func() {
-		if err := teardown(db); err != nil {
+		if err := teardown(s.DB); err != nil {
 			t.Fatalf("error on teardown: %v", err)
 		}
 	}()
@@ -291,7 +315,7 @@ func TestUpdate_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	defer recovery(t)
 
 	up := game.UpdateGame{ID: 1234, ReleaseDate: "2022-05-18"}
-	err := game.Update(context.Background(), db, up)
+	err := s.Update(context.Background(), up)
 	if err != nil {
 		if !errors.As(err, &game.ErrNotFound{}) {
 			t.Fatalf("error getting game: %v", err)

@@ -11,7 +11,8 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 )
 
 // Context keys for authentication and authorization
@@ -26,6 +27,8 @@ const (
 	RolePublisher      = "publisher"
 	RoleRegisteredUser = "user"
 )
+
+var tracer = otel.Tracer("")
 
 // ErrVerifyAPIUnavailable - error representing unavailability of verify api
 var ErrVerifyAPIUnavailable = errors.New("verify API is unavailable")
@@ -87,7 +90,7 @@ func ExtractToken(authHeader string) string {
 // Verify calls Verify API and returns nil if token is valid and error otherwise
 // If verify API is unavailable ErrVerifyAPIUnavailable is returned
 func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "game-auth.auth.verify")
+	ctx, span := tracer.Start(ctx, "auth.verify")
 	defer span.End()
 
 	data := VerifyToken{
@@ -104,7 +107,7 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 	}
 	request.Header["Content-Type"] = []string{"application/json"}
 
-	resp, err := http.DefaultClient.Do(request)
+	resp, err := otelhttp.DefaultClient.Do(request)
 	if err != nil {
 		log.Printf("error calling verify api at %s: %v\n", a.verifyAPIURL, err)
 		return ErrVerifyAPIUnavailable

@@ -8,16 +8,18 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // Game has handler methods for dealing with games
 type Game struct {
-	DB  *sqlx.DB
-	Log *log.Logger
+	Log     *log.Logger
+	Storage *repo.Storage
 }
+
+var tracer = otel.Tracer("")
 
 // GetList godoc
 // @Summary List games info
@@ -30,7 +32,7 @@ type Game struct {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
 func (g *Game) GetList(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.getlist")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.getlist")
 	defer span.End()
 
 	psParam := c.DefaultQuery("pageSize", "20")
@@ -45,8 +47,9 @@ func (g *Game) GetList(c *gin.Context) {
 		c.Error(web.NewRequestError(errors.New("Incorrect last Id. Should be greater or equal to 0"), http.StatusBadRequest))
 		return
 	}
+	span.SetAttributes(attribute.Int64("data.pagesize", pageSize), attribute.Int64("data.lastid", lastID))
 
-	list, err := repo.GetInfos(ctx, g.DB, int(pageSize), lastID)
+	list, err := g.Storage.GetInfos(ctx, int(pageSize), lastID)
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
@@ -73,7 +76,7 @@ func (g *Game) GetList(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
 func (g *Game) Get(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.get")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.get")
 	defer span.End()
 
 	id, err := web.GetIDParam(c)
@@ -81,8 +84,9 @@ func (g *Game) Get(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+	span.SetAttributes(attribute.Int64("data.id", id))
 
-	game, err := repo.RetrieveInfo(ctx, g.DB, id)
+	game, err := g.Storage.RetrieveInfo(ctx, id)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -106,7 +110,7 @@ func (g *Game) Get(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/search [get]
 func (g *Game) Search(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.search")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.search")
 	defer span.End()
 
 	nameParam := c.DefaultQuery("name", "")
@@ -114,8 +118,9 @@ func (g *Game) Search(c *gin.Context) {
 		c.Error(web.NewRequestError(errors.New("Length of name to be searched by should be at least 2 characters"), http.StatusBadRequest))
 		return
 	}
+	span.SetAttributes(attribute.String("data.query", nameParam))
 
-	list, err := repo.SearchInfos(ctx, g.DB, nameParam)
+	list, err := g.Storage.SearchInfos(ctx, nameParam)
 	if err != nil {
 		c.Error(errors.Wrap(err, "searching games list"))
 		return
@@ -141,7 +146,7 @@ func (g *Game) Search(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
 func (g *Game) Create(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.create")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.create")
 	defer span.End()
 
 	var cg CreateGameReq
@@ -150,6 +155,7 @@ func (g *Game) Create(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding new game"))
 		return
 	}
+	span.SetAttributes(attribute.String("data.name", cg.Name))
 
 	claims, err := web.GetClaims(c)
 	if err != nil {
@@ -160,7 +166,7 @@ func (g *Game) Create(c *gin.Context) {
 	cg.Publisher = claims.Name
 
 	create := mapToCreateGame(&cg)
-	gameID, err := repo.Create(ctx, g.DB, create)
+	gameID, err := g.Storage.Create(ctx, create)
 	if err != nil {
 		c.Error(errors.Wrap(err, "adding new game"))
 		return
@@ -184,7 +190,7 @@ func (g *Game) Create(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [patch]
 func (g *Game) Update(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.update")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.update")
 	defer span.End()
 
 	id, err := web.GetIDParam(c)
@@ -197,8 +203,9 @@ func (g *Game) Update(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding game update"))
 		return
 	}
+	span.SetAttributes(attribute.Int64("data.id", id))
 
-	game, err := repo.Retrieve(ctx, g.DB, id)
+	game, err := g.Storage.Retrieve(ctx, id)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -209,7 +216,7 @@ func (g *Game) Update(c *gin.Context) {
 	}
 
 	update := mapToUpdateGame(game, &ugr)
-	err = repo.Update(ctx, g.DB, update)
+	err = g.Storage.Update(ctx, update)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -236,7 +243,7 @@ func (g *Game) Update(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [delete]
 func (g *Game) Delete(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.delete")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.delete")
 	defer span.End()
 
 	id, err := web.GetIDParam(c)
@@ -244,8 +251,9 @@ func (g *Game) Delete(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+	span.SetAttributes(attribute.Int64("data.id", id))
 
-	err = repo.Delete(ctx, g.DB, id)
+	err = g.Storage.Delete(ctx, id)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -272,7 +280,7 @@ func (g *Game) Delete(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/sales [post]
 func (g *Game) AddGameOnSale(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.addgameonsale")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.addgameonsale")
 	defer span.End()
 
 	id, err := web.GetIDParam(c)
@@ -286,8 +294,9 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding game sale"))
 		return
 	}
+	span.SetAttributes(attribute.Int64("data.id", id), attribute.Int64("data.saleid", cgs.SaleID))
 
-	_, err = repo.Retrieve(ctx, g.DB, id)
+	_, err = g.Storage.Retrieve(ctx, id)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -297,7 +306,7 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 		return
 	}
 
-	sale, err := repo.RetrieveSale(ctx, g.DB, cgs.SaleID)
+	sale, err := g.Storage.RetrieveSale(ctx, cgs.SaleID)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -308,7 +317,7 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 	}
 
 	create := mapToCreateGameSale(&cgs, id)
-	err = repo.AddGameOnSale(ctx, g.DB, create)
+	err = g.Storage.AddGameOnSale(ctx, create)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -334,7 +343,7 @@ func (g *Game) AddGameOnSale(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/sales [get]
 func (g *Game) ListGameSales(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.game.listgamesales")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.listgamesales")
 	defer span.End()
 
 	gameID, err := web.GetIDParam(c)
@@ -342,8 +351,9 @@ func (g *Game) ListGameSales(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+	span.SetAttributes(attribute.Int64("data.id", gameID))
 
-	gameSales, err := repo.ListGameSales(ctx, g.DB, gameID)
+	gameSales, err := g.Storage.ListGameSales(ctx, gameID)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))

@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"go.opentelemetry.io/otel/api/trace"
 )
 
 // AddRating adds rating to game
 // If such entity does not exist returns error ErrNotFound{}
-func AddRating(ctx context.Context, db *sqlx.DB, cr CreateRating) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.rating.addrating")
+func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
+	ctx, span := tracer.Start(ctx, "db.rating.addrating")
 	defer span.End()
 
 	const q = `
@@ -21,7 +19,7 @@ func AddRating(ctx context.Context, db *sqlx.DB, cr CreateRating) error {
 	values ($1, $2, $3)
 	on conflict (game_id, user_id) do update set rating = $3`
 
-	_, err := db.ExecContext(ctx, q, cr.GameID, cr.UserID, cr.Rating)
+	_, err := s.DB.ExecContext(ctx, q, cr.GameID, cr.UserID, cr.Rating)
 	if err != nil {
 		return fmt.Errorf("adding ratings to game with id %v from user with id %v: %w", cr.GameID, cr.UserID, err)
 	}
@@ -30,8 +28,8 @@ func AddRating(ctx context.Context, db *sqlx.DB, cr CreateRating) error {
 }
 
 // GetUserRatings returns ratings of user for specified games
-func GetUserRatings(ctx context.Context, db *sqlx.DB, userID string, gameIDs []int64) ([]UserRating, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "sql.rating.getuserratings")
+func (s *Storage) GetUserRatings(ctx context.Context, userID string, gameIDs []int64) ([]UserRating, error) {
+	ctx, span := tracer.Start(ctx, "db.rating.getuserratings")
 	defer span.End()
 
 	ratings := []UserRating{}
@@ -40,7 +38,7 @@ func GetUserRatings(ctx context.Context, db *sqlx.DB, userID string, gameIDs []i
 	from ratings
 	where user_id = $1 and game_id = any($2)`
 
-	if err := db.SelectContext(ctx, &ratings, q, userID, pq.Array(gameIDs)); err != nil {
+	if err := s.DB.SelectContext(ctx, &ratings, q, userID, pq.Array(gameIDs)); err != nil {
 		return nil, err
 	}
 

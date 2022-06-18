@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	_ "github.com/OutOfStack/game-library/docs" // swagger docs
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
@@ -16,14 +17,13 @@ import (
 	"github.com/pkg/errors"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	gintrace "go.opentelemetry.io/contrib/instrumentation/gin-gonic/gin"
-	global "go.opentelemetry.io/otel/api/global"
-	zipkin "go.opentelemetry.io/otel/exporters/trace/zipkin"
-	trace "go.opentelemetry.io/otel/sdk/trace"
-)
-
-const (
-	serviceName = "game-library-api"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/zipkin"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 )
 
 // Service constructs router with all API routes
@@ -33,7 +33,7 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web, zi
 		return nil, fmt.Errorf("initializing exporter: %w", err)
 	}
 	r := gin.Default()
-	r.Use(gintrace.Middleware("game-library-api"))
+	r.Use(otelgin.Middleware(appconf.ServiceName))
 	r.Use(middleware.Errors(logger), middleware.Metrics(), cors.New(cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-type", "Authorization"},
@@ -48,8 +48,10 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web, zi
 	}
 
 	g := Game{
-		DB:  db,
 		Log: logger,
+		Storage: &repo.Storage{
+			DB: db,
+		},
 	}
 
 	// health
@@ -84,20 +86,23 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, conf appconf.Web, zi
 }
 
 func initTracer(reporterURL string) error {
-	exporter, err := zipkin.NewExporter(reporterURL, serviceName)
+	exporter, err := zipkin.New(reporterURL)
 	if err != nil {
 		return errors.Wrap(err, "creating new exporter")
 	}
-	cfg := trace.Config{
-		DefaultSampler: trace.AlwaysSample(),
-	}
-	tp, err := trace.NewProvider(
-		trace.WithConfig(cfg),
+
+	tp := trace.NewTracerProvider(
+		trace.WithSampler(trace.AlwaysSample()),
 		trace.WithBatcher(exporter),
+		trace.WithResource(
+			resource.NewWithAttributes(
+				semconv.SchemaURL,
+				semconv.ServiceNameKey.String(appconf.ServiceName),
+			)),
 	)
-	if err != nil {
-		return errors.Wrap(err, "creating new trace provider")
-	}
-	global.SetTraceProvider(tp)
+
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetTracerProvider(tp)
+
 	return nil
 }

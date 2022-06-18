@@ -7,7 +7,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // RateGame godoc
@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/rate [post]
 func (g *Game) RateGame(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.rating.rategame")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.rating.rategame")
 	defer span.End()
 
 	gameID, err := web.GetIDParam(c)
@@ -32,6 +32,7 @@ func (g *Game) RateGame(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+	span.SetAttributes(attribute.Int64("data.id", gameID))
 
 	var cr CreateRatingReq
 	if err := web.Decode(c, &cr); err != nil {
@@ -47,7 +48,7 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	userID := claims.Subject
 
-	_, err = repo.Retrieve(ctx, g.DB, gameID)
+	_, err = g.Storage.Retrieve(ctx, gameID)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
@@ -58,7 +59,7 @@ func (g *Game) RateGame(c *gin.Context) {
 	}
 
 	rating := mapToCreateRating(&cr, gameID, userID)
-	err = repo.AddRating(ctx, g.DB, rating)
+	err = g.Storage.AddRating(ctx, rating)
 	if err != nil {
 		c.Error(errors.Wrap(err, "rate game"))
 		return
@@ -79,7 +80,7 @@ func (g *Game) RateGame(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]
 func (g *Game) GetUserRatings(c *gin.Context) {
-	ctx, span := trace.SpanFromContext(c.Request.Context()).Tracer().Start(c.Request.Context(), "handlers.rating.getuserratings")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.rating.getuserratings")
 	defer span.End()
 
 	var ur UserRatingsReq
@@ -88,6 +89,7 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding user ratings"))
 		return
 	}
+	span.SetAttributes(attribute.Int64Slice("data.ids", ur.GameIDs))
 
 	claims, err := web.GetClaims(c)
 	if err != nil {
@@ -97,7 +99,7 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 
 	userID := claims.Subject
 
-	ratings, err := repo.GetUserRatings(ctx, g.DB, userID, ur.GameIDs)
+	ratings, err := g.Storage.GetUserRatings(ctx, userID, ur.GameIDs)
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting user ratings"))

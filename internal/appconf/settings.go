@@ -2,6 +2,8 @@ package appconf
 
 import "time"
 
+const ServiceName = "game-library-api"
+
 // DB represents settings related to database
 type DB struct {
 	Host       string `mapstructure:"DB_HOST"`

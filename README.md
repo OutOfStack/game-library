@@ -11,7 +11,7 @@ An app for exploring and rating games
     migrate        applies all migrations to database
     rollback       rollbacks one last migration on database
     seed           seeds test data to database
-    swaggen        generates documentation for swagger UI
+    generate       generates documentation for swagger UI
     dockerbuildweb builds web app docker image
     dockerrunweb   runs web app in docker container
     dockerbuildmng builds manage app docker image
@@ -26,6 +26,5 @@ Creating a new migration:
 `{i}` - consecutive migration ID of length 6 padded with zeroes,  
 `{name}` - migration name
 
-### Swagger
-Swagger file generation tool is located in `tools/swag`  
+### Swagger 
 Swagger UI url: http://localhost:8000/swagger/index.html

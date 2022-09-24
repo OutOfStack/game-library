@@ -12,7 +12,7 @@
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "0.1"
+        "version": "0.2"
     },
     "host": "localhost:8000",
     "basePath": "/api",
@@ -200,7 +200,7 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": ""
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -576,7 +576,8 @@
                     "type": "string"
                 },
                 "price": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                 },
                 "releaseDate": {
                     "type": "string"
@@ -587,7 +588,8 @@
             "type": "object",
             "properties": {
                 "discountPercent": {
-                    "type": "integer"
+                    "type": "integer",
+                    "maximum": 100
                 },
                 "saleId": {
                     "type": "integer"
@@ -598,7 +600,9 @@
             "type": "object",
             "properties": {
                 "rating": {
-                    "type": "integer"
+                    "type": "integer",
+                    "maximum": 4,
+                    "minimum": 1
                 }
             }
         },
@@ -760,7 +764,8 @@
                     "type": "string"
                 },
                 "price": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                 },
                 "publisher": {
                     "type": "string"

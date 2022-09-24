@@ -13,6 +13,7 @@ definitions:
       name:
         type: string
       price:
+        minimum: 0
         type: number
       releaseDate:
         type: string
@@ -23,6 +24,7 @@ definitions:
   handler.CreateGameSaleReq:
     properties:
       discountPercent:
+        maximum: 100
         type: integer
       saleId:
         type: integer
@@ -30,6 +32,8 @@ definitions:
   handler.CreateRatingReq:
     properties:
       rating:
+        maximum: 4
+        minimum: 1
         type: integer
     type: object
   handler.CreateSaleReq:
@@ -136,6 +140,7 @@ definitions:
       name:
         type: string
       price:
+        minimum: 0
         type: number
       publisher:
         type: string
@@ -174,7 +179,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Game library API
-  version: "0.1"
+  version: "0.2"
 paths:
   /games:
     get:
@@ -247,7 +252,7 @@ paths:
       - application/json
       responses:
         "204":
-          description: ""
+          description: No Content
         "400":
           description: Bad Request
           schema:

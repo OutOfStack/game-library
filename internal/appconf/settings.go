@@ -2,6 +2,7 @@ package appconf
 
 import "time"
 
+// ServiceName - service name
 const ServiceName = "game-library-api"
 
 // DB represents settings related to database

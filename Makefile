@@ -26,8 +26,9 @@ rollback:
 seed:
 	go run ./cmd/game-library-manage/. seed
 
-swaggen:
-	./tools/swag init -g cmd/game-library-api/main.go
+generate:
+	go install github.com/swaggo/swag/cmd/swag@v1.8.6
+	swag init -g cmd/game-library-api/main.go
 
 dockerbuildweb:
 	docker build -t game-library-web:latest .

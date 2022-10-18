@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
-		Tag:        "14-alpine",
+		Tag:        "15-alpine",
 		Env: []string{
 			fmt.Sprintf("POSTGRES_PASSWORD=%s", PgPwd),
 			"POSTGRES_DB=games",

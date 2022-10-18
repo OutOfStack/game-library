@@ -17,7 +17,7 @@ An app for exploring and rating games
     dockerbuildmng builds manage app docker image
     dockerrunmng-m applies migrations to database using docker manage image
     dockerrunmng-r rollbacks one last migration using docker manage image
-    dockerrunmng-s applies migrations to database using docker manage image
+    dockerrunmng-s seeds test data to database using docker manage image
 
 ### Migrations
 Creating a new migration:

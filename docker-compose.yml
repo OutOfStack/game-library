@@ -4,12 +4,14 @@ services:
 
   db:
     container_name: games_db
-    image: postgres:14-alpine
+    image: postgres:15-alpine
     ports:
       - 5432:5432
     restart: on-failure:5
     environment:
       POSTGRES_PASSWORD: temp_pwd
+    volumes:
+      - ~/pgdata:/var/lib/postgresql/data
 
   zipkin:
     container_name: zipkin

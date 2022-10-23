@@ -32,7 +32,7 @@ func Authenticate(log *log.Logger, a *auth.Auth) gin.HandlerFunc {
 
 		// if token is not valid return 401
 		if err := a.Verify(c.Request.Context(), tokenStr); err != nil {
-			log.Printf("error verifying token:\n%s\n%v\n", tokenStr, err)
+			log.Printf("error verifying token: %v\n", err)
 			if err == auth.ErrVerifyAPIUnavailable {
 				c.Error(web.NewRequestError(err, http.StatusBadGateway))
 			} else {

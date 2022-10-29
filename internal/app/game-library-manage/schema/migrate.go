@@ -3,9 +3,7 @@ package schema
 import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-
-	// migration file is being read here
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/source/file" // migration file is being read here
 	"github.com/jmoiron/sqlx"
 )
 

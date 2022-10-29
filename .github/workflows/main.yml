@@ -66,6 +66,7 @@ jobs:
 
       - name: Kubernetes Apply configs
         run: | 
+          kubectl apply -f deploy/namespace.yaml
           kubectl apply -f deploy/config.yaml
           kubectl apply -f deploy/deployment.yaml
           kubectl apply -f deploy/service.yaml

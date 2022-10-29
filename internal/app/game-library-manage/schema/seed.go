@@ -8,7 +8,7 @@ import (
 
 const path = "./scripts/seed.sql"
 
-//Seed seeds database
+// Seed seeds database
 func Seed(db *sqlx.DB) error {
 	q, err := os.ReadFile(path)
 	if err != nil {

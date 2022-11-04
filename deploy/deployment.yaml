@@ -17,7 +17,7 @@ spec:
         spec:
             containers:
               - name: game-library
-                image: asctod/game-library:latest
+                image: asctod/game-library:_IMAGE_TAG_
                 readinessProbe:
                     httpGet:
                         path: /api/readiness
@@ -46,9 +46,9 @@ spec:
                       name: game-library-config
                 imagePullPolicy: Always
             hostAliases:
-              - ip: 194.163.162.21
+              - ip: _K8S_IP_
                 hostnames:
-                  - vmi644117.contaboserver.net
+                  - _K8S_URL_
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -77,6 +77,6 @@ spec:
                   - configMapRef:
                       name: zipkin-config
             hostAliases:
-              - ip: 194.163.162.21
+              - ip: _K8S_IP_
                 hostnames:
-                  - vmi644117.contaboserver.net
+                  - _K8S_URL_

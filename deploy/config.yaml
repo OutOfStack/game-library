@@ -7,9 +7,9 @@ data:
     GIN_MODE: release
     APP_ADDRESS: 0.0.0.0:8000
     DEBUG_ADDRESS: 0.0.0.0:6060
-    APP_ALLOWEDCORSORIGIN: https://vmi644117.contaboserver.net
-    AUTH_VERIFYTOKENURL: https://vmi644117.contaboserver.net/_auth/token/verify
-    ZIPKIN_REPORTERURL: http://vmi644117.contaboserver.net/_trace/api/v2/spans
+    APP_ALLOWEDCORSORIGIN: https://_K8S_URL_
+    AUTH_VERIFYTOKENURL: https://_K8S_URL_/_auth/token/verify
+    ZIPKIN_REPORTERURL: zipkin-service:9411/api/v2/spans
 ---
 kind: ConfigMap
 apiVersion: v1

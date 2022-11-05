@@ -1,6 +1,9 @@
 package schema
 
 import (
+	"errors"
+	"log"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file" // migration file is being read here
@@ -19,7 +22,12 @@ func Migrate(db *sqlx.DB, up bool) error {
 		return err
 	}
 	if up {
-		return m.Up()
+		err = m.Up()
+		if errors.Is(err, migrate.ErrNoChange) {
+			log.Print(err)
+			return nil
+		}
+		return err
 	}
 	return m.Steps(-1)
 }

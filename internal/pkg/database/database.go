@@ -36,7 +36,7 @@ func Open(cfg Config) (*sqlx.DB, error) {
 		RawQuery: query.Encode(),
 	}
 
-	return sqlx.Open("postgres", conn.String())
+	return sqlx.Connect("postgres", conn.String())
 }
 
 // StatusCheck returns nil if connection with db is ok

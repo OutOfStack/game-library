@@ -7,6 +7,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/client/igdb"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
@@ -17,6 +18,7 @@ import (
 type Game struct {
 	Log     *log.Logger
 	Storage *repo.Storage
+	IGDB    *igdb.Client
 }
 
 var tracer = otel.Tracer("")

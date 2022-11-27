@@ -5,6 +5,15 @@ import "time"
 // ServiceName - service name
 const ServiceName = "game-library-api"
 
+// Cfg - app configuration
+type Cfg struct {
+	DB     DB     `mapstructure:",squash"`
+	Web    Web    `mapstructure:",squash"`
+	Zipkin Zipkin `mapstructure:",squash"`
+	Auth   Auth   `mapstructure:",squash"`
+	IGDB   IGDB   `mapstructure:",squash"`
+}
+
 // DB represents settings related to database
 type DB struct {
 	Host       string `mapstructure:"DB_HOST"`
@@ -33,4 +42,12 @@ type Zipkin struct {
 type Auth struct {
 	VerifyTokenAPIURL string `mapstructure:"AUTH_VERIFYTOKENURL"`
 	SigningAlgorithm  string `mapstructure:"AUTH_SIGNINGALG"`
+}
+
+// IGDB represents settings related to IGDB integration
+type IGDB struct {
+	ClientID     string `mapstructure:"IGDB_CLIENT_ID"`
+	ClientSecret string `mapstructure:"IGDB_CLIENT_SECRET"`
+	TokenURL     string `mapstructure:"IGDB_TOKEN_URL"`
+	APIURL       string `mapstructure:"IGDB_API_URL"`
 }

@@ -14,24 +14,15 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
+	"github.com/OutOfStack/game-library/internal/client/igdb"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 )
-
-type config struct {
-	DB     appconf.DB     `mapstructure:",squash"`
-	Web    appconf.Web    `mapstructure:",squash"`
-	Zipkin appconf.Zipkin `mapstructure:",squash"`
-	Auth   appconf.Auth   `mapstructure:",squash"`
-}
 
 // @title Game library API
 // @version 0.2
 // @description API for game library service
 // @termsOfService http://swagger.io/terms/
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host localhost:8000
 // @BasePath /api
@@ -46,7 +37,7 @@ func main() {
 func run() error {
 	log := log.New(os.Stdout, "GAMES ", log.LstdFlags)
 
-	cfg := config{}
+	var cfg appconf.Cfg
 	if err := conf.Load(".", "app", "env", &cfg); err != nil {
 		log.Fatalf("error parsing config: %v", err)
 	}
@@ -66,10 +57,16 @@ func run() error {
 	// create auth module
 	a, err := auth.New(log, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
-		return fmt.Errorf("constructing Auth: %w", err)
+		return fmt.Errorf("creating Auth: %w", err)
 	}
 
-	h, err := handler.Service(log, db, a, cfg.Web, cfg.Zipkin)
+	// create IGDB client
+	igdbClient, err := igdb.New(log, cfg.IGDB)
+	if err != nil {
+		return fmt.Errorf("creating IGDB client: %w", err)
+	}
+
+	h, err := handler.Service(log, db, a, igdbClient, cfg.Web, cfg.Zipkin)
 	if err != nil {
 		return fmt.Errorf("creating service handler: %w", err)
 	}

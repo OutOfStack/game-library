@@ -59,6 +59,8 @@ spec:
                 envFrom:
                   - secretRef:
                       name: game-library-dbconfig
+                  - secretRef:
+                      name: game-library-igdb
                   - configMapRef:
                       name: game-library-config
                 imagePullPolicy: Always

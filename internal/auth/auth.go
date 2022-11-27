@@ -87,7 +87,7 @@ func ExtractToken(authHeader string) string {
 	return ""
 }
 
-// Verify calls Verify API and returns nil if token is valid and error otherwise
+// Verify calls Verify API and returns error if token is invalid.
 // If verify API is unavailable ErrVerifyAPIUnavailable is returned
 func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 	ctx, span := tracer.Start(ctx, "auth.verify")
@@ -109,7 +109,7 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 
 	resp, err := otelhttp.DefaultClient.Do(request)
 	if err != nil {
-		log.Printf("error calling verify api at %s: %v\n", a.verifyAPIURL, err)
+		a.log.Printf("error calling verify api at %s: %v\n", a.verifyAPIURL, err)
 		return ErrVerifyAPIUnavailable
 	}
 	defer resp.Body.Close()
@@ -117,10 +117,10 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 	var respBody VerifyTokenResp
 	json.NewDecoder(resp.Body).Decode(&respBody)
 
-	if respBody.Valid {
-		return nil
+	if !respBody.Valid {
+		return fmt.Errorf("invalid token")
 	}
-	return fmt.Errorf("invalid token")
+	return nil
 }
 
 // ParseToken returns token as a set of claims

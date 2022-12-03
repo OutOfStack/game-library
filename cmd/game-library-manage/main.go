@@ -61,6 +61,6 @@ func main() {
 		fmt.Println("Unknown command, available commands:")
 		fmt.Println("migrate: applies all migrations to database")
 		fmt.Println("rollback: roll backs one last migration of database")
-		fmt.Println("seed: applies seed data (games, sales) to database")
+		fmt.Println("seed: applies seed data (games) to database")
 	}
 }

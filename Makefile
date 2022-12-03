@@ -27,7 +27,7 @@ seed:
 	go run ./cmd/game-library-manage/. seed
 
 generate:
-	go install github.com/swaggo/swag/cmd/swag@v1.8.6
+	go install github.com/swaggo/swag/cmd/swag@latest
 	swag init -g cmd/game-library-api/main.go
 
 dockerbuildweb:

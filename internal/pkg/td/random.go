@@ -1,4 +1,4 @@
-// test data
+// Package td contains functions for data testing
 package td
 
 import (
@@ -47,7 +47,7 @@ func Uint8() uint8 {
 	return uint8(rand.Intn(math.MaxUint8) + 1)
 }
 
-// DateString returns random date
+// Date returns random date
 func Date() time.Time {
 	return time.Date(1970+rand.Intn(100), time.Month(1+rand.Intn(12)), 1+rand.Intn(28), rand.Intn(24), rand.Intn(60), rand.Intn(60), 0, time.Local)
 }

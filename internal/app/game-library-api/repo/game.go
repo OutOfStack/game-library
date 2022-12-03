@@ -126,7 +126,7 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug UpdateGame) error
 	return checkRowsAffected(res, "game", id)
 }
 
-// UpdateGame updates game
+// UpdateGameRating updates game rating
 // If game does not exist returns ErrNotFound
 func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 	ctx, span := tracer.Start(ctx, "db.game.updaterating")

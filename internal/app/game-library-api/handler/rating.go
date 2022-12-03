@@ -16,7 +16,7 @@ import (
 // @ID rate-game
 // @Accept  json
 // @Produce json
-// @Param   id 		path int64 				true "game ID"
+// @Param   id 		path int32 				true "game ID"
 // @Param	rating 	body CreateRatingReq 	true "game rating"
 // @Success 200 {object} RatingResp
 // @Failure 400 {object} web.ErrorResponse
@@ -32,7 +32,7 @@ func (g *Game) RateGame(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	span.SetAttributes(attribute.Int64("data.id", gameID))
+	span.SetAttributes(attribute.Int("data.id", int(gameID)))
 
 	var cr CreateRatingReq
 	if err := web.Decode(c, &cr); err != nil {
@@ -48,13 +48,13 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	userID := claims.Subject
 
-	_, err = g.Storage.Retrieve(ctx, gameID)
+	_, err = g.Storage.GetGameByID(ctx, gameID)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
-		c.Error(errors.Wrap(err, "retrieve game"))
+		c.Error(errors.Wrap(err, "get game by id"))
 		return
 	}
 
@@ -65,8 +65,12 @@ func (g *Game) RateGame(c *gin.Context) {
 		return
 	}
 
-	resp := mapToRatingResp(rating)
-	web.Respond(c, resp, http.StatusOK)
+	err = g.Storage.UpdateGameRating(ctx, gameID)
+	if err != nil {
+		g.Log.Printf("error updating game %d rating: %v", gameID, err)
+	}
+
+	web.Respond(c, mapCreateRatingToResp(rating), http.StatusOK)
 }
 
 // GetUserRatings godoc
@@ -89,7 +93,11 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding user ratings"))
 		return
 	}
-	span.SetAttributes(attribute.Int64Slice("data.ids", ur.GameIDs))
+	idsVal := make([]int, 0, len(ur.GameIDs))
+	for _, v := range ur.GameIDs {
+		idsVal = append(idsVal, int(v))
+	}
+	span.SetAttributes(attribute.IntSlice("data.ids", idsVal))
 
 	claims, err := web.GetClaims(c)
 	if err != nil {
@@ -100,13 +108,12 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 	userID := claims.Subject
 
 	ratings, err := g.Storage.GetUserRatings(ctx, userID, ur.GameIDs)
-
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting user ratings"))
 		return
 	}
 
-	userRatings := make(map[int64]uint8)
+	userRatings := make(map[int32]uint8)
 	for _, r := range ratings {
 		userRatings[r.GameID] = r.Rating
 	}

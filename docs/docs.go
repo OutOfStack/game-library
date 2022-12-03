@@ -12,10 +12,6 @@ const docTemplate = `{
         "title": "{{.Title}}",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {},
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -23,12 +19,12 @@ const docTemplate = `{
     "paths": {
         "/games": {
             "get": {
-                "description": "returns paginated games with extended properties",
+                "description": "returns paginated games",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "List games info",
-                "operationId": "get-all-games-info",
+                "summary": "Get games",
+                "operationId": "get-games",
                 "parameters": [
                     {
                         "type": "integer",
@@ -49,7 +45,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.GameInfoResp"
+                                "$ref": "#/definitions/handler.GameResp"
                             }
                         }
                     },
@@ -86,7 +82,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handler.GameResp"
+                            "$ref": "#/definitions/handler.IDResp"
                         }
                     },
                     "400": {
@@ -106,12 +102,12 @@ const docTemplate = `{
         },
         "/games/search": {
             "get": {
-                "description": "returns list of games filtered by provided name",
+                "description": "returns games filtered by provided name",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Searches games by part of name",
-                "operationId": "search-games-info",
+                "summary": "Searches games by name",
+                "operationId": "search-games",
                 "parameters": [
                     {
                         "type": "string",
@@ -126,7 +122,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.GameInfoResp"
+                                "$ref": "#/definitions/handler.GameResp"
                             }
                         }
                     },
@@ -141,12 +137,12 @@ const docTemplate = `{
         },
         "/games/{id}": {
             "get": {
-                "description": "returns game with extended properties by ID",
+                "description": "returns game by ID",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get game info",
-                "operationId": "get-game-info-by-id",
+                "summary": "Get game",
+                "operationId": "get-game-by-id",
                 "parameters": [
                     {
                         "type": "integer",
@@ -160,7 +156,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.GameInfoResp"
+                            "$ref": "#/definitions/handler.GameResp"
                         }
                     },
                     "400": {
@@ -192,7 +188,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "summary": "Delete game",
-                "operationId": "delete-game-by-id",
+                "operationId": "delete-game",
                 "parameters": [
                     {
                         "type": "integer",
@@ -235,7 +231,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "summary": "Update game",
-                "operationId": "update-game-by-id",
+                "operationId": "update-game",
                 "parameters": [
                     {
                         "type": "integer",
@@ -255,11 +251,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GameResp"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -326,178 +319,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/games/{id}/sales": {
-            "get": {
-                "description": "returns sales for specified game",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "List game sales",
-                "operationId": "get-game-sales-by-game-id",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Game ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handler.GameSaleResp"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "adds game on sale",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Add game on sale",
-                "operationId": "add-game-on-sale",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Game ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "game sale",
-                        "name": "gamesale",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateGameSaleReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GameSaleResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/sales": {
-            "get": {
-                "description": "Returns all sales",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "List all sales",
-                "operationId": "get-sales",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handler.SaleResp"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Creates new sale",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Create sale",
-                "operationId": "create-sale",
-                "parameters": [
-                    {
-                        "description": "create sale",
-                        "name": "sale",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateSaleReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/handler.SaleResp"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
@@ -579,24 +400,8 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "number",
-                    "minimum": 0
-                },
                 "releaseDate": {
                     "type": "string"
-                }
-            }
-        },
-        "handler.CreateGameSaleReq": {
-            "type": "object",
-            "properties": {
-                "discountPercent": {
-                    "type": "integer",
-                    "maximum": 100
-                },
-                "saleId": {
-                    "type": "integer"
                 }
             }
         },
@@ -605,64 +410,8 @@ const docTemplate = `{
             "properties": {
                 "rating": {
                     "type": "integer",
-                    "maximum": 4,
+                    "maximum": 5,
                     "minimum": 1
-                }
-            }
-        },
-        "handler.CreateSaleReq": {
-            "type": "object",
-            "required": [
-                "beginDate",
-                "endDate"
-            ],
-            "properties": {
-                "beginDate": {
-                    "type": "string"
-                },
-                "endDate": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.GameInfoResp": {
-            "type": "object",
-            "properties": {
-                "currentPrice": {
-                    "type": "number"
-                },
-                "developer": {
-                    "type": "string"
-                },
-                "genre": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "logoUrl": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "publisher": {
-                    "type": "string"
-                },
-                "rating": {
-                    "type": "number"
-                },
-                "releaseDate": {
-                    "type": "string"
                 }
             }
         },
@@ -687,36 +436,21 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "number"
-                },
                 "publisher": {
                     "type": "string"
+                },
+                "rating": {
+                    "type": "number"
                 },
                 "releaseDate": {
                     "type": "string"
                 }
             }
         },
-        "handler.GameSaleResp": {
+        "handler.IDResp": {
             "type": "object",
             "properties": {
-                "beginDate": {
-                    "type": "string"
-                },
-                "discountPercent": {
-                    "type": "integer"
-                },
-                "endDate": {
-                    "type": "string"
-                },
-                "gameId": {
-                    "type": "integer"
-                },
-                "sale": {
-                    "type": "string"
-                },
-                "saleId": {
+                "id": {
                     "type": "integer"
                 }
             }
@@ -729,23 +463,6 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "integer"
-                }
-            }
-        },
-        "handler.SaleResp": {
-            "type": "object",
-            "properties": {
-                "beginDate": {
-                    "type": "string"
-                },
-                "endDate": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         },
@@ -766,10 +483,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                },
-                "price": {
-                    "type": "number",
-                    "minimum": 0
                 },
                 "publisher": {
                     "type": "string"

@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	game "github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -58,7 +59,7 @@ func TestMain(m *testing.M) {
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	counter := 1
-	if err := pool.Retry(func() error {
+	err = pool.Retry(func() error {
 		var err error
 		db, err = sqlx.Open("postgres", fmt.Sprintf("postgres://postgres:%s@localhost:%s/games?sslmode=disable", PgPwd, HostPort))
 		if err != nil {
@@ -72,7 +73,8 @@ func TestMain(m *testing.M) {
 			counter++
 		}
 		return err
-	}); err != nil {
+	})
+	if err != nil {
 		pool.Purge(resource)
 		log.Fatalf("Repo tests: Could not connect to database: %v", err)
 	}
@@ -91,33 +93,33 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func setup(db *sqlx.DB) error {
+func setup(t *testing.T) *game.Storage {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
-		return err
+		t.Fatalf("error on creating db driver: %v", err)
 	}
 	m, err := migrate.NewWithDatabaseInstance("file://../../../../migrations", "games", driver)
 	if err != nil {
-		return err
+		t.Fatalf("error on connecting to db: %v", err)
 	}
-	return m.Up()
+
+	if err = m.Up(); err != nil {
+		t.Fatalf("error on applying migrations: %v", err)
+	}
+	return &game.Storage{db}
 }
 
-func teardown(db *sqlx.DB) error {
+func teardown(t *testing.T) {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
-		return err
+		t.Fatalf("error on creating db driver: %v", err)
 	}
 	m, err := migrate.NewWithDatabaseInstance("file://../../../../migrations", "games", driver)
 	if err != nil {
-		return err
+		t.Fatalf("error on connecting to db: %v", err)
 	}
-	return m.Down()
-}
 
-func recovery(t *testing.T) {
-	if msg := recover(); msg != nil {
-		log.Println(msg)
-		t.Fatalf("panicked with: %v", msg)
+	if err = m.Down(); err != nil {
+		t.Fatalf("error on migration rollback: %v", err)
 	}
 }

@@ -61,25 +61,26 @@ func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, igdb *igdb.Client, c
 	r.GET("/api/liveness", c.Liveness)
 
 	// games
-	r.GET("/api/games", g.GetList)
-	r.GET("/api/games/:id", g.Get)
-	r.GET("/api/games/search", g.Search)
-	// authorization required
-	r.POST("/api/games", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Create)
-	r.DELETE("/api/games/:id", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Delete)
-	r.PATCH("/api/games/:id", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.Update)
-	r.POST("/api/games/:id/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.AddGameOnSale)
-	r.GET("/api/games/:id/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher), g.ListGameSales)
-	r.POST("/api/games/:id/rate", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser), g.RateGame)
-
-	// sales
-	r.GET("/api/sales", g.ListSales)
-	// authorization required
-	r.POST("/api/sales", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleModerator), g.AddSale)
+	r.GET("/api/games", g.GetGames)
+	r.GET("/api/games/:id", g.GetGame)
+	r.GET("/api/games/search", g.SearchGames)
+	r.POST("/api/games",
+		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher),
+		g.CreateGame)
+	r.DELETE("/api/games/:id",
+		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher),
+		g.DeleteGame)
+	r.PATCH("/api/games/:id",
+		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher),
+		g.UpdateGame)
+	r.POST("/api/games/:id/rate",
+		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser),
+		g.RateGame)
 
 	// user
-	// authorization required
-	r.POST("/api/user/ratings", middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser), g.GetUserRatings)
+	r.POST("/api/user/ratings",
+		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser),
+		g.GetUserRatings)
 
 	// swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

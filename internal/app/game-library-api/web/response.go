@@ -15,6 +15,9 @@ func Respond(c *gin.Context, val interface{}, statusCode int) {
 		return
 	}
 
+	if val == nil {
+		val = struct{}{}
+	}
 	data, err := json.Marshal(val)
 	if err != nil {
 		c.Error(errors.Wrap(err, "marshalling value to json"))

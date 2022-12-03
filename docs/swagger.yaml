@@ -12,66 +12,18 @@ definitions:
         type: string
       name:
         type: string
-      price:
-        minimum: 0
-        type: number
       releaseDate:
         type: string
     required:
     - developer
     - name
     type: object
-  handler.CreateGameSaleReq:
-    properties:
-      discountPercent:
-        maximum: 100
-        type: integer
-      saleId:
-        type: integer
-    type: object
   handler.CreateRatingReq:
     properties:
       rating:
-        maximum: 4
+        maximum: 5
         minimum: 1
         type: integer
-    type: object
-  handler.CreateSaleReq:
-    properties:
-      beginDate:
-        type: string
-      endDate:
-        type: string
-      name:
-        type: string
-    required:
-    - beginDate
-    - endDate
-    type: object
-  handler.GameInfoResp:
-    properties:
-      currentPrice:
-        type: number
-      developer:
-        type: string
-      genre:
-        items:
-          type: string
-        type: array
-      id:
-        type: integer
-      logoUrl:
-        type: string
-      name:
-        type: string
-      price:
-        type: number
-      publisher:
-        type: string
-      rating:
-        type: number
-      releaseDate:
-        type: string
     type: object
   handler.GameResp:
     properties:
@@ -87,26 +39,16 @@ definitions:
         type: string
       name:
         type: string
-      price:
-        type: number
       publisher:
         type: string
+      rating:
+        type: number
       releaseDate:
         type: string
     type: object
-  handler.GameSaleResp:
+  handler.IDResp:
     properties:
-      beginDate:
-        type: string
-      discountPercent:
-        type: integer
-      endDate:
-        type: string
-      gameId:
-        type: integer
-      sale:
-        type: string
-      saleId:
+      id:
         type: integer
     type: object
   handler.RatingResp:
@@ -115,17 +57,6 @@ definitions:
         type: integer
       rating:
         type: integer
-    type: object
-  handler.SaleResp:
-    properties:
-      beginDate:
-        type: string
-      endDate:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
     type: object
   handler.UpdateGameReq:
     properties:
@@ -139,9 +70,6 @@ definitions:
         type: string
       name:
         type: string
-      price:
-        minimum: 0
-        type: number
       publisher:
         type: string
       releaseDate:
@@ -174,17 +102,14 @@ host: localhost:8000
 info:
   contact: {}
   description: API for game library service
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Game library API
   version: "0.2"
 paths:
   /games:
     get:
-      description: returns paginated games with extended properties
-      operationId: get-all-games-info
+      description: returns paginated games
+      operationId: get-games
       parameters:
       - description: page size
         in: query
@@ -201,13 +126,13 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.GameInfoResp'
+              $ref: '#/definitions/handler.GameResp'
             type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: List games info
+      summary: Get games
     post:
       consumes:
       - application/json
@@ -226,7 +151,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handler.GameResp'
+            $ref: '#/definitions/handler.IDResp'
         "400":
           description: Bad Request
           schema:
@@ -241,7 +166,7 @@ paths:
       consumes:
       - application/json
       description: deletes game by ID
-      operationId: delete-game-by-id
+      operationId: delete-game
       parameters:
       - description: Game ID
         in: path
@@ -267,8 +192,8 @@ paths:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Delete game
     get:
-      description: returns game with extended properties by ID
-      operationId: get-game-info-by-id
+      description: returns game by ID
+      operationId: get-game-by-id
       parameters:
       - description: Game ID
         in: path
@@ -281,7 +206,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.GameInfoResp'
+            $ref: '#/definitions/handler.GameResp'
         "400":
           description: Bad Request
           schema:
@@ -294,12 +219,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Get game info
+      summary: Get game
     patch:
       consumes:
       - application/json
       description: updates game by ID
-      operationId: update-game-by-id
+      operationId: update-game
       parameters:
       - description: Game ID
         in: path
@@ -315,10 +240,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.GameResp'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
@@ -370,79 +293,10 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Rate game
-  /games/{id}/sales:
-    get:
-      description: returns sales for specified game
-      operationId: get-game-sales-by-game-id
-      parameters:
-      - description: Game ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/handler.GameSaleResp'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: List game sales
-    post:
-      consumes:
-      - application/json
-      description: adds game on sale
-      operationId: add-game-on-sale
-      parameters:
-      - description: Game ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: game sale
-        in: body
-        name: gamesale
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateGameSaleReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.GameSaleResp'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: Add game on sale
   /games/search:
     get:
-      description: returns list of games filtered by provided name
-      operationId: search-games-info
+      description: returns games filtered by provided name
+      operationId: search-games
       parameters:
       - description: name to search by
         in: query
@@ -455,59 +309,13 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.GameInfoResp'
+              $ref: '#/definitions/handler.GameResp'
             type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
-      summary: Searches games by part of name
-  /sales:
-    get:
-      description: Returns all sales
-      operationId: get-sales
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/handler.SaleResp'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: List all sales
-    post:
-      consumes:
-      - application/json
-      description: Creates new sale
-      operationId: create-sale
-      parameters:
-      - description: create sale
-        in: body
-        name: sale
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateSaleReq'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/handler.SaleResp'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: Create sale
+      summary: Searches games by name
   /user/ratings:
     post:
       description: returns user ratings for specified games

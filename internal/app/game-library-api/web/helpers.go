@@ -23,11 +23,11 @@ func GetClaims(c *gin.Context) (*auth.Claims, error) {
 }
 
 // GetIDParam returns url id param
-func GetIDParam(c *gin.Context) (int64, error) {
+func GetIDParam(c *gin.Context) (int32, error) {
 	idParam := c.Param("id")
 	id, err := strconv.ParseInt(idParam, 10, 32)
 	if err != nil || id <= 0 {
 		return 0, NewRequestError(errors.New("invalid id"), http.StatusBadRequest)
 	}
-	return id, err
+	return int32(id), err
 }

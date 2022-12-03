@@ -6,4 +6,4 @@ ALTER TABLE games
 DROP COLUMN price;
 
 ALTER TABLE games 
-ADD COLUMN rating numeric(4, 2) NULL;
+ADD COLUMN rating numeric(5, 2) NULL;

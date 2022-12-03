@@ -297,20 +297,15 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 		t.Fatalf("error getting game: %v", err)
 	}
 
-	t.Log("r1: ", r1, "r2: ", r2, "r3: ", r3)
 	sum := int(r1) + int(r2) + int(r3)
 	want := float64(sum) / 3
-	t.Log("want: ", want)
 	got := game.Rating.Float64
-	t.Log("got: ", got)
-
 	if int(want) != int(got) {
 		t.Errorf("Expected to get game rating with value %f, got %f", want, got)
 	}
 
 	wantDelta := 0.01
 	gotDelta := math.Abs(want - got)
-	t.Log("gotDelta: ", gotDelta)
 	if gotDelta > wantDelta {
 		t.Errorf("Expected delta to be nor more than %f, got %f", wantDelta, gotDelta)
 	}

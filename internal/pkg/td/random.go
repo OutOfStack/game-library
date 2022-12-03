@@ -32,6 +32,11 @@ func Int32() int32 {
 	return rand.Int31() * int32(sign)
 }
 
+// Intn returns random value in tange [0, n)
+func Intn(n int) int {
+	return rand.Intn(n)
+}
+
 // Uint64 returns random uint64 value
 func Uint64() uint64 {
 	return rand.Uint64()

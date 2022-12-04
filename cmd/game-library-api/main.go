@@ -17,6 +17,8 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/igdb"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // @title Game library API
@@ -35,7 +37,14 @@ func main() {
 }
 
 func run() error {
-	log := log.New(os.Stdout, "GAMES ", log.LstdFlags)
+	loggerCfg := zap.NewProductionConfig()
+	loggerCfg.DisableCaller = true
+	loggerCfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	logger, err := loggerCfg.Build()
+	if err != nil {
+		log.Fatalf("can't initialize zap logger: %v", err)
+	}
+	defer logger.Sync()
 
 	var cfg appconf.Cfg
 	if err := conf.Load(".", "app", "env", &cfg); err != nil {
@@ -55,18 +64,18 @@ func run() error {
 	defer db.Close()
 
 	// create auth module
-	a, err := auth.New(log, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
+	a, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
 		return fmt.Errorf("creating Auth: %w", err)
 	}
 
 	// create IGDB client
-	igdbClient, err := igdb.New(log, cfg.IGDB)
+	igdbClient, err := igdb.New(logger, cfg.IGDB)
 	if err != nil {
 		return fmt.Errorf("creating IGDB client: %w", err)
 	}
 
-	h, err := handler.Service(log, db, a, igdbClient, cfg.Web, cfg.Zipkin)
+	h, err := handler.Service(logger, db, a, igdbClient, cfg.Web, cfg.Zipkin)
 	if err != nil {
 		return fmt.Errorf("creating service handler: %w", err)
 	}
@@ -80,15 +89,15 @@ func run() error {
 
 	// start debug service
 	go func() {
-		log.Printf("Debug service listening on %s", cfg.Web.DebugAddress)
+		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
 		err := http.ListenAndServe(cfg.Web.DebugAddress, nil)
-		log.Printf("Debug service stopped %v", err)
+		logger.Error("Debug service stopped", zap.Error(err))
 	}()
 
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		log.Printf("API service listening on %s", api.Addr)
+		logger.Info("API service started", zap.String("address", api.Addr))
 		serverErrors <- api.ListenAndServe()
 	}()
 
@@ -99,14 +108,14 @@ func run() error {
 	case err := <-serverErrors:
 		return fmt.Errorf("listening and serving: %w", err)
 	case <-shutdown:
-		log.Println("Start shutdown")
+		logger.Info("Start shutdown")
 		timeout := cfg.Web.ShutdownTimeout
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
 		err := api.Shutdown(ctx)
 		if err != nil {
-			log.Printf("Shutdown did not complete in %s : %v", timeout, err)
+			logger.Error("Shutdown did not complete", zap.Duration("timeout", timeout), zap.Error(err))
 			err = api.Close()
 		}
 

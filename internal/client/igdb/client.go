@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.uber.org/zap"
 )
 
 const (
@@ -21,13 +21,13 @@ const (
 
 // Client represents dependencies for igdb client
 type Client struct {
-	log   *log.Logger
+	log   *zap.Logger
 	conf  appconf.IGDB
 	token *token
 }
 
 // New constructs IGDB instance
-func New(log *log.Logger, conf appconf.IGDB) (*Client, error) {
+func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 	return &Client{
 		log:   log,
 		token: &token{},
@@ -60,7 +60,7 @@ func (c *Client) GetTopRatedGames(ctx context.Context, limit uint64) ([]TopRated
 
 	resp, err := otelhttp.DefaultClient.Do(req)
 	if err != nil {
-		c.log.Printf("error calling igdb api at %s: %v\n", reqURL, err)
+		c.log.Error("calling igdb api", zap.String("url", reqURL), zap.Error(err))
 		return nil, fmt.Errorf("igdb api unavailable: %v", err)
 	}
 	defer resp.Body.Close()
@@ -102,7 +102,7 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 
 	resp, err := otelhttp.DefaultClient.Do(req)
 	if err != nil {
-		c.log.Printf("error calling token api at %s: %v\n", reqURL, err)
+		c.log.Error("calling token api", zap.String("url", reqURL), zap.Error(err))
 		return "", fmt.Errorf("token api unavailable: %v", err)
 	}
 	defer resp.Body.Close()

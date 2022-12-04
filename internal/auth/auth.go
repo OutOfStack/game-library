@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 )
 
 // Context keys for authentication and authorization
@@ -53,13 +53,13 @@ type VerifyTokenResp struct {
 
 // Auth represents dependencies for auth methods
 type Auth struct {
-	log          *log.Logger
+	log          *zap.Logger
 	parser       *jwt.Parser
 	verifyAPIURL string
 }
 
 // New constructs Auth instance
-func New(log *log.Logger, algorithm string, verifyAPIURL string) (*Auth, error) {
+func New(log *zap.Logger, algorithm string, verifyAPIURL string) (*Auth, error) {
 	if jwt.GetSigningMethod(algorithm) == nil {
 		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
 	}
@@ -109,7 +109,7 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 
 	resp, err := otelhttp.DefaultClient.Do(request)
 	if err != nil {
-		a.log.Printf("error calling verify api at %s: %v\n", a.verifyAPIURL, err)
+		a.log.Error("calling verify api", zap.String("url", a.verifyAPIURL), zap.Error(err))
 		return ErrVerifyAPIUnavailable
 	}
 	defer resp.Body.Close()

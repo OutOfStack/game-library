@@ -2,16 +2,16 @@ package middleware
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // Authenticate checks validity of token
-func Authenticate(log *log.Logger, a *auth.Auth) gin.HandlerFunc {
+func Authenticate(log *zap.Logger, a *auth.Auth) gin.HandlerFunc {
 
 	h := func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -32,7 +32,7 @@ func Authenticate(log *log.Logger, a *auth.Auth) gin.HandlerFunc {
 
 		// if token is not valid return 401
 		if err := a.Verify(c.Request.Context(), tokenStr); err != nil {
-			log.Printf("error verifying token: %v\n", err)
+			log.Error("verifying token", zap.Error(err))
 			if err == auth.ErrVerifyAPIUnavailable {
 				c.Error(web.NewRequestError(err, http.StatusBadGateway))
 			} else {
@@ -51,13 +51,13 @@ func Authenticate(log *log.Logger, a *auth.Auth) gin.HandlerFunc {
 }
 
 // Authorize checks rights to perform certain request
-func Authorize(log *log.Logger, a *auth.Auth, requiredRole string) gin.HandlerFunc {
+func Authorize(log *zap.Logger, a *auth.Auth, requiredRole string) gin.HandlerFunc {
 
 	h := func(c *gin.Context) {
 		token, ok := c.Get(auth.CtxTokenKey)
 		// if no value in context return 500 as it is unexpected
 		if !ok {
-			log.Println("no Token in request context")
+			log.Error("no token in request context")
 			c.Error(web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
 			c.Abort()
 			return
@@ -66,14 +66,14 @@ func Authorize(log *log.Logger, a *auth.Auth, requiredRole string) gin.HandlerFu
 		claims, err := a.ParseToken(tokenStr)
 		// if we can't parse after verification return 500 as it is unexpected
 		if err != nil {
-			log.Printf("error parsing token: %v\n", err)
+			log.Error("parsing token", zap.Error(err))
 			c.Error(web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
 			c.Abort()
 			return
 		}
 		// if user's role is not the same as required return 403 forbidden
 		if claims.UserRole != requiredRole {
-			log.Printf("access denied: expected role %s, got %s\n", requiredRole, claims.UserRole)
+			log.Error("access denied", zap.String("expected role", requiredRole), zap.String("got role", claims.UserRole))
 			c.Error(web.NewRequestError(errors.New("access denied"), http.StatusForbidden))
 			c.Abort()
 			return

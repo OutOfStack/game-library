@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap"
 )
 
 // RateGame godoc
@@ -67,7 +68,7 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	err = g.Storage.UpdateGameRating(ctx, gameID)
 	if err != nil {
-		g.Log.Printf("error updating game %d rating: %v", gameID, err)
+		g.Log.Error("updating game rating", zap.Int32("gameID", gameID), zap.Error(err))
 	}
 
 	web.Respond(c, mapCreateRatingToResp(rating), http.StatusOK)
@@ -79,7 +80,7 @@ func (g *Game) RateGame(c *gin.Context) {
 // @ID get-user-ratings
 // @Produce json
 // @Param   gameIds body UserRatingsReq 	true "games ids"
-// @Success 200 {object} map[int64]uint8
+// @Success 200 {object} map[int32]uint8
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -25,10 +24,11 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	"go.uber.org/zap"
 )
 
 // Service constructs router with all API routes
-func Service(logger *log.Logger, db *sqlx.DB, a *auth.Auth, igdb *igdb.Client, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
+func Service(logger *zap.Logger, db *sqlx.DB, a *auth.Auth, igdb *igdb.Client, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
 	err := initTracer(zipkinConf.ReporterURL)
 	if err != nil {
 		return nil, fmt.Errorf("initializing exporter: %w", err)

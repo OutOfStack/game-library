@@ -1,21 +1,20 @@
 package middleware
 
 import (
-	"log"
-
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // Errors handles errors in middleware chain
-func Errors(log *log.Logger) gin.HandlerFunc {
+func Errors(log *zap.Logger) gin.HandlerFunc {
 
 	h := func(c *gin.Context) {
 		c.Next()
 
 		if len(c.Errors) > 0 {
 			for _, e := range c.Errors.Errors() {
-				log.Printf("ERROR: %s\n", e)
+				log.Error(e)
 			}
 
 			err := c.Errors.Last().Err

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -12,11 +11,12 @@ import (
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap"
 )
 
 // Game has handler methods for dealing with games
 type Game struct {
-	Log     *log.Logger
+	Log     *zap.Logger
 	Storage *repo.Storage
 	IGDB    *igdb.Client
 }

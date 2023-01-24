@@ -31,7 +31,7 @@ func (s *Storage) GetUserRatings(ctx context.Context, userID string, gameIDs []i
 	ctx, span := tracer.Start(ctx, "db.rating.getuserratings")
 	defer span.End()
 
-	ratings := make([]UserRating, 0, 0)
+	ratings := make([]UserRating, 0)
 	const q = `
 	SELECT game_id, rating 
 	FROM ratings

@@ -41,7 +41,7 @@ func New(log *zap.Logger, storage Storage, igdbProvider IGDBProvider) *TaskProvi
 
 func (tp *TaskProvider) DoTask(name string, taskFn func() error) error {
 	ctx := context.Background()
-	
+
 	tx, err := tp.storage.BeginTx(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %v", err)

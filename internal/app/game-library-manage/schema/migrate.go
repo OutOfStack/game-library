@@ -17,7 +17,7 @@ func Migrate(db *sqlx.DB, up bool) error {
 	if err != nil {
 		return err
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://./migrations", "games", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://./scripts/migrations", "games", driver)
 	if err != nil {
 		return err
 	}

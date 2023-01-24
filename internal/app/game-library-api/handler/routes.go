@@ -8,7 +8,7 @@ import (
 	_ "github.com/OutOfStack/game-library/docs" // swagger docs
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/appconf"
-	"github.com/OutOfStack/game-library/internal/auth"
+	auth_ "github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/gin-contrib/cors"
@@ -28,7 +28,7 @@ import (
 )
 
 // Service constructs router with all API routes
-func Service(logger *zap.Logger, db *sqlx.DB, a *auth.Auth, igdb *igdb.Client, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
+func Service(logger *zap.Logger, db *sqlx.DB, auth *auth_.Auth, storage *repo.Storage, igdb *igdb.Client, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
 	err := initTracer(zipkinConf.ReporterURL)
 	if err != nil {
 		return nil, fmt.Errorf("initializing exporter: %w", err)
@@ -44,17 +44,9 @@ func Service(logger *zap.Logger, db *sqlx.DB, a *auth.Auth, igdb *igdb.Client, c
 		},
 	}))
 
-	c := Check{
-		DB: db,
-	}
+	c := NewCheck(db)
 
-	g := Game{
-		Log: logger,
-		Storage: &repo.Storage{
-			DB: db,
-		},
-		IGDB: igdb,
-	}
+	g := NewGame(logger, storage, igdb)
 
 	// health
 	r.GET("/api/readiness", c.Readiness)
@@ -65,21 +57,21 @@ func Service(logger *zap.Logger, db *sqlx.DB, a *auth.Auth, igdb *igdb.Client, c
 	r.GET("/api/games/:id", g.GetGame)
 	r.GET("/api/games/search", g.SearchGames)
 	r.POST("/api/games",
-		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher),
+		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
 		g.CreateGame)
 	r.DELETE("/api/games/:id",
-		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher),
+		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
 		g.DeleteGame)
 	r.PATCH("/api/games/:id",
-		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RolePublisher),
+		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
 		g.UpdateGame)
 	r.POST("/api/games/:id/rate",
-		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser),
+		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RoleRegisteredUser),
 		g.RateGame)
 
 	// user
 	r.POST("/api/user/ratings",
-		middleware.Authenticate(logger, a), middleware.Authorize(logger, a, auth.RoleRegisteredUser),
+		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RoleRegisteredUser),
 		g.GetUserRatings)
 
 	// swagger

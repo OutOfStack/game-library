@@ -5,7 +5,7 @@ import (
 	en "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	en_translations "github.com/go-playground/validator/v10/translations/en"
+	entranslations "github.com/go-playground/validator/v10/translations/en"
 )
 
 var (
@@ -22,7 +22,7 @@ func init() {
 	enLocale := en.New()
 	translator = ut.New(enLocale, enLocale)
 	lang, _ = translator.GetTranslator("en")
-	en_translations.RegisterDefaultTranslations(validate, lang)
+	entranslations.RegisterDefaultTranslations(validate, lang)
 
 	validate.RegisterValidation("date", validateDate)
 

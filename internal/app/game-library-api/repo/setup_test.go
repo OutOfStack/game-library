@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	game "github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -93,12 +93,12 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func setup(t *testing.T) *game.Storage {
+func setup(t *testing.T) *repo.Storage {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://../../../../migrations", "games", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://../../../../scripts/migrations", "games", driver)
 	if err != nil {
 		t.Fatalf("error on connecting to db: %v", err)
 	}
@@ -106,7 +106,7 @@ func setup(t *testing.T) *game.Storage {
 	if err = m.Up(); err != nil {
 		t.Fatalf("error on applying migrations: %v", err)
 	}
-	return &game.Storage{db}
+	return repo.New(db)
 }
 
 func teardown(t *testing.T) {
@@ -114,7 +114,7 @@ func teardown(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://../../../../migrations", "games", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://../../../../scripts/migrations", "games", driver)
 	if err != nil {
 		t.Fatalf("error on connecting to db: %v", err)
 	}

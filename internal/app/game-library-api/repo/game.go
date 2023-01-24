@@ -3,32 +3,29 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 )
 
 // Storage provides required dependencies for repository
 type Storage struct {
-	DB *sqlx.DB
+	db *sqlx.DB
 }
 
-// ErrNotFound is used when a requested entity with id does not exist
-type ErrNotFound struct {
-	Entity string
-	ID     int32
+// New creates new Storage
+func New(db *sqlx.DB) *Storage {
+	return &Storage{
+		db: db,
+	}
 }
 
 var tracer = otel.Tracer("")
-
-func (e ErrNotFound) Error() string {
-	return fmt.Sprintf("%v with id %v was not found", e.Entity, e.ID)
-}
 
 // GetGames returns list of games limited by pageSize and starting Id
 func (s *Storage) GetGames(ctx context.Context, pageSize int, lastID int32) (list []Game, err error) {
@@ -42,7 +39,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize int, lastID int32) (lis
 	ORDER BY id
 	FETCH FIRST $2 ROWS ONLY`
 
-	if err := s.DB.SelectContext(ctx, &list, q, lastID, pageSize); err != nil {
+	if err = s.db.SelectContext(ctx, &list, q, lastID, pageSize); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +56,7 @@ func (s *Storage) SearchGames(ctx context.Context, search string) (list []Game, 
 	FROM games
 	WHERE LOWER(name) LIKE $1`
 
-	if err := s.DB.SelectContext(ctx, &list, q, strings.ToLower(search)+"%"); err != nil {
+	if err = s.db.SelectContext(ctx, &list, q, strings.ToLower(search)+"%"); err != nil {
 		return nil, err
 	}
 
@@ -76,9 +73,9 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (g Game, err error)
 	FROM games
 	WHERE id = $1`
 
-	if err := s.DB.GetContext(ctx, &g, q, id); err != nil {
+	if err = s.db.GetContext(ctx, &g, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Game{}, ErrNotFound{"game", id}
+			return Game{}, ErrNotFound[int32]{Entity: "game", ID: id}
 		}
 		return Game{}, err
 	}
@@ -96,8 +93,7 @@ func (s *Storage) CreateGame(ctx context.Context, cg CreateGame) (id int32, err 
 	VALUES ($1, $2, $3, $4, $5, $6)
 	RETURNING id`
 
-	err = s.DB.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, pq.StringArray(cg.Genre), cg.LogoURL).Scan(&id)
-	if err != nil {
+	if err = s.db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, pq.StringArray(cg.Genre), cg.LogoURL).Scan(&id); err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)
 	}
 
@@ -116,11 +112,11 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug UpdateGame) error
 
 	releaseDate, err := types.ParseDate(ug.ReleaseDate)
 	if err != nil {
-		return errors.Wrapf(err, "invalid date: %s", releaseDate.String())
+		return fmt.Errorf("invalid date %s: %v", releaseDate.String(), err)
 	}
-	res, err := s.DB.ExecContext(ctx, q, id, ug.Name, ug.Developer, ug.Publisher, releaseDate.String(), pq.StringArray(ug.Genre), ug.LogoURL)
+	res, err := s.db.ExecContext(ctx, q, id, ug.Name, ug.Developer, ug.Publisher, releaseDate.String(), pq.StringArray(ug.Genre), ug.LogoURL)
 	if err != nil {
-		return errors.Wrapf(err, "updating game %d", id)
+		return fmt.Errorf("updating game %d: %v", id, err)
 	}
 
 	return checkRowsAffected(res, "game", id)
@@ -139,9 +135,9 @@ func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 		WHERE game_id = $1)
 	WHERE id = $1`
 
-	res, err := s.DB.ExecContext(ctx, q, id)
+	res, err := s.db.ExecContext(ctx, q, id)
 	if err != nil {
-		return errors.Wrapf(err, "updating game %d rating", id)
+		return fmt.Errorf("updating game %d rating: %v", id, err)
 	}
 
 	return checkRowsAffected(res, "game", id)
@@ -155,20 +151,9 @@ func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
 
 	const q = `DELETE FROM games 
 	WHERE id = $1`
-	res, err := s.DB.ExecContext(ctx, q, id)
+	res, err := s.db.ExecContext(ctx, q, id)
 	if err != nil {
-		return errors.Wrap(err, "deleting game")
+		return fmt.Errorf("deleting game %d: %v", id, err)
 	}
 	return checkRowsAffected(res, "game", id)
-}
-
-func checkRowsAffected(res sql.Result, entity string, id int32) error {
-	count, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if count == 0 {
-		return ErrNotFound{entity, id}
-	}
-	return nil
 }

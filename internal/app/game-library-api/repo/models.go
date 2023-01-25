@@ -58,3 +58,21 @@ type UserRating struct {
 	GameID int32 `db:"game_id"`
 	Rating uint8 `db:"rating"`
 }
+
+// TaskStatus represents task status type
+type TaskStatus string
+
+// Task status values
+const (
+	IdleTaskStatus    TaskStatus = "idle"
+	RunningTaskStatus TaskStatus = "running"
+	ErrorTaskStatus   TaskStatus = "error"
+)
+
+// Task represents task entity
+type Task struct {
+	Name     string       `db:"name"`
+	Status   TaskStatus   `db:"status"`
+	RunCount int64        `db:"run_count"`
+	LastRun  sql.NullTime `db:"last_run"`
+}

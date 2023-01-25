@@ -10,13 +10,18 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/appconf"
-	"github.com/OutOfStack/game-library/internal/auth"
+	auth_ "github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
+	"github.com/OutOfStack/game-library/internal/taskprocessor"
+	"github.com/go-co-op/gocron"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -44,10 +49,15 @@ func run() error {
 	if err != nil {
 		log.Fatalf("can't initialize zap logger: %v", err)
 	}
-	defer logger.Sync()
+	defer func(logger *zap.Logger) {
+		err = logger.Sync()
+		if err != nil {
+			log.Printf("syncing logger: %v", err)
+		}
+	}(logger)
 
 	var cfg appconf.Cfg
-	if err := conf.Load(".", "app", "env", &cfg); err != nil {
+	if err = conf.Load(".", "app", "env", &cfg); err != nil {
 		log.Fatalf("error parsing config: %v", err)
 	}
 
@@ -61,10 +71,14 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("opening db: %w", err)
 	}
-	defer db.Close()
+	defer func(db *sqlx.DB) {
+		if err := db.Close(); err != nil {
+			logger.Error("calling database close", zap.Error(err))
+		}
+	}(db)
 
 	// create auth module
-	a, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
+	auth, err := auth_.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
 		return fmt.Errorf("creating Auth: %w", err)
 	}
@@ -75,10 +89,30 @@ func run() error {
 		return fmt.Errorf("creating IGDB client: %w", err)
 	}
 
-	h, err := handler.Service(logger, db, a, igdbClient, cfg.Web, cfg.Zipkin)
+	// create storage
+	storage := repo.New(db)
+
+	// run background tasks
+	taskProvider := taskprocessor.New(logger, storage, igdbClient)
+	scheduler := gocron.NewScheduler(time.UTC)
+	_, err = scheduler.Cron(cfg.Scheduler.FetchIGDBGames).Do(taskProvider.StartFetchIGDBGames)
+	if err != nil {
+		logger.Error("run task", zap.String("task", taskprocessor.FetchIGDBGamesTaskName), zap.Error(err))
+	}
+	scheduler.StartAsync()
+
+	// start debug service
+	go func() {
+		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
+		err = http.ListenAndServe(cfg.Web.DebugAddress, nil)
+		logger.Error("Debug service stopped", zap.Error(err))
+	}()
+
+	h, err := handler.Service(logger, db, auth, storage, igdbClient, cfg.Web, cfg.Zipkin)
 	if err != nil {
 		return fmt.Errorf("creating service handler: %w", err)
 	}
+
 	// start API service
 	api := http.Server{
 		Addr:         cfg.Web.Address,
@@ -87,15 +121,7 @@ func run() error {
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}
 
-	// start debug service
-	go func() {
-		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
-		err := http.ListenAndServe(cfg.Web.DebugAddress, nil)
-		logger.Error("Debug service stopped", zap.Error(err))
-	}()
-
 	serverErrors := make(chan error, 1)
-
 	go func() {
 		logger.Info("API service started", zap.String("address", api.Addr))
 		serverErrors <- api.ListenAndServe()
@@ -105,7 +131,7 @@ func run() error {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	select {
-	case err := <-serverErrors:
+	case err = <-serverErrors:
 		return fmt.Errorf("listening and serving: %w", err)
 	case <-shutdown:
 		logger.Info("Start shutdown")
@@ -113,7 +139,7 @@ func run() error {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		err := api.Shutdown(ctx)
+		err = api.Shutdown(ctx)
 		if err != nil {
 			logger.Error("Shutdown did not complete", zap.Duration("timeout", timeout), zap.Error(err))
 			err = api.Close()

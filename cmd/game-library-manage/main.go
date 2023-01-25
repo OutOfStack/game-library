@@ -43,17 +43,17 @@ func main() {
 	flag.Parse()
 	switch flag.Arg(0) {
 	case "migrate":
-		if err := schema.Migrate(db, true); err != nil {
+		if err = schema.Migrate(db, true); err != nil {
 			log.Fatalf("applying migrations %v", err)
 		}
 		log.Print("migration complete")
 	case "rollback":
-		if err := schema.Migrate(db, false); err != nil {
+		if err = schema.Migrate(db, false); err != nil {
 			log.Fatalf("rollback last migration %v", err)
 		}
 		log.Print("migration rollback complete")
 	case "seed":
-		if err := schema.Seed(db); err != nil {
+		if err = schema.Seed(db); err != nil {
 			log.Fatalf("applying seeds %v", err)
 		}
 		log.Print("Seed data inserted")

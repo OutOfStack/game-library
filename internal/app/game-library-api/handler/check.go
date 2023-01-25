@@ -5,14 +5,18 @@ import (
 	"os"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
-	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
 
 // Check has methods for readiness and liveness probes
 type Check struct {
-	DB *sqlx.DB
+	db *sqlx.DB
+}
+
+// NewCheck creates new Check
+func NewCheck(db *sqlx.DB) *Check {
+	return &Check{db: db}
 }
 
 type health struct {
@@ -32,8 +36,7 @@ func (ch *Check) Readiness(c *gin.Context) {
 		host = "unavailable"
 	}
 	h.Host = host
-	err = database.StatusCheck(ch.DB)
-	if err != nil {
+	if err = ch.db.Ping(); err != nil {
 		h.Status = "database not ready"
 		web.Respond(c, h, http.StatusInternalServerError)
 		return

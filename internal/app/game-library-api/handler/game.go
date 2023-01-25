@@ -16,9 +16,18 @@ import (
 
 // Game has handler methods for dealing with games
 type Game struct {
-	Log     *zap.Logger
-	Storage *repo.Storage
-	IGDB    *igdb.Client
+	log     *zap.Logger
+	storage *repo.Storage
+	igdb    *igdb.Client
+}
+
+// NewGame creates new Game
+func NewGame(log *zap.Logger, storage *repo.Storage, igdb *igdb.Client) *Game {
+	return &Game{
+		log:     log,
+		storage: storage,
+		igdb:    igdb,
+	}
 }
 
 var tracer = otel.Tracer("")
@@ -51,7 +60,7 @@ func (g *Game) GetGames(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.Int64("data.pagesize", pageSize), attribute.Int64("data.lastid", lastID))
 
-	list, err := g.Storage.GetGames(ctx, int(pageSize), int32(lastID))
+	list, err := g.storage.GetGames(ctx, int(pageSize), int32(lastID))
 
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
@@ -88,9 +97,9 @@ func (g *Game) GetGame(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.Int("data.id", int(id)))
 
-	game, err := g.Storage.GetGameByID(ctx, id)
+	game, err := g.storage.GetGameByID(ctx, id)
 	if err != nil {
-		if errors.As(err, &repo.ErrNotFound{}) {
+		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
@@ -122,7 +131,7 @@ func (g *Game) SearchGames(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.String("data.query", nameParam))
 
-	list, err := g.Storage.SearchGames(ctx, nameParam)
+	list, err := g.storage.SearchGames(ctx, nameParam)
 	if err != nil {
 		c.Error(errors.Wrap(err, "searching games list"))
 		return
@@ -167,7 +176,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 
 	create := mapToCreateGame(&cg)
 	create.Publisher = claims.Name
-	id, err := g.Storage.CreateGame(ctx, create)
+	id, err := g.storage.CreateGame(ctx, create)
 	if err != nil {
 		c.Error(errors.Wrap(err, "adding new game"))
 		return
@@ -205,9 +214,9 @@ func (g *Game) UpdateGame(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.Int("data.id", int(id)))
 
-	game, err := g.Storage.GetGameByID(ctx, id)
+	game, err := g.storage.GetGameByID(ctx, id)
 	if err != nil {
-		if errors.As(err, &repo.ErrNotFound{}) {
+		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
@@ -216,9 +225,9 @@ func (g *Game) UpdateGame(c *gin.Context) {
 	}
 
 	update := mapToUpdateGame(game, ugr)
-	err = g.Storage.UpdateGame(ctx, id, update)
+	err = g.storage.UpdateGame(ctx, id, update)
 	if err != nil {
-		if errors.As(err, &repo.ErrNotFound{}) {
+		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
@@ -252,9 +261,9 @@ func (g *Game) DeleteGame(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.Int("data.id", int(id)))
 
-	err = g.Storage.DeleteGame(ctx, id)
+	err = g.storage.DeleteGame(ctx, id)
 	if err != nil {
-		if errors.As(err, &repo.ErrNotFound{}) {
+		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
 			return
 		}

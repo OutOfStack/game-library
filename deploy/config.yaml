@@ -10,6 +10,7 @@ data:
     APP_ALLOWEDCORSORIGIN: https://_K8S_URL_
     AUTH_VERIFYTOKENURL: https://_K8S_URL_/_auth/token/verify
     ZIPKIN_REPORTERURL: http://zipkin-service:9411/api/v2/spans
+    SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
 ---
 kind: ConfigMap
 apiVersion: v1

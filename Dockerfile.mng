@@ -9,7 +9,7 @@ RUN go mod download
 
 # copy config, scripts and code into container
 COPY ./app.env ./out/
-COPY ./migrations ./out/migrations
+COPY ./scripts/migrations ./out/scripts/migrations
 COPY ./scripts ./out/scripts
 COPY . .
 

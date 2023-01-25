@@ -6,7 +6,7 @@ services:
     container_name: games_db
     image: postgres:15-alpine
     ports:
-      - 5432:5432
+      - "5432:5432"
     restart: on-failure:5
     environment:
       POSTGRES_PASSWORD: temp_pwd
@@ -17,7 +17,7 @@ services:
     container_name: zipkin
     image: openzipkin/zipkin:2.23
     ports:
-      - 9411:9411
+      - "9411:9411"
     environment:
       ZIPKIN_UI_BASEPATH: /zipkin
 
@@ -25,8 +25,8 @@ services:
     container_name: game-library-web
     image: game-library-web:latest
     ports:
-      - 8000:8000
-      - 6060:6060
+      - "8000:8000"
+      - "6060:6060"
     environment:
       DB_HOST: db
       DB_PASSWORD: temp_pwd

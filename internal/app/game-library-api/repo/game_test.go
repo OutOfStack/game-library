@@ -61,12 +61,12 @@ func TestGetGameByID_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	id := int32(td.Uint32())
 	g, err := s.GetGameByID(context.Background(), id)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound{}) {
+		if !errors.As(err, &game.ErrNotFound[int32]{}) {
 			t.Fatalf("error getting game: %v", err)
 		}
 	}
 
-	var wantErr = game.ErrNotFound{
+	var wantErr = game.ErrNotFound[int32]{
 		Entity: "game",
 		ID:     id,
 	}
@@ -212,12 +212,12 @@ func TestUpdateGame_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	up := game.UpdateGame{ReleaseDate: "2022-05-18"}
 	err := s.UpdateGame(context.Background(), id, up)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound{}) {
+		if !errors.As(err, &game.ErrNotFound[int32]{}) {
 			t.Fatalf("error updating game: %v", err)
 		}
 	}
 
-	var wantErr = game.ErrNotFound{
+	var wantErr = game.ErrNotFound[int32]{
 		Entity: "game",
 		ID:     id,
 	}
@@ -245,12 +245,12 @@ func TestDeleteGame_Valid_ShouldDelete(t *testing.T) {
 
 	g, err := s.GetGameByID(context.Background(), id)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound{}) {
+		if !errors.As(err, &game.ErrNotFound[int32]{}) {
 			t.Fatalf("error getting game: %v", err)
 		}
 	}
 
-	var wantErr = game.ErrNotFound{
+	var wantErr = game.ErrNotFound[int32]{
 		Entity: "game",
 		ID:     id,
 	}
@@ -287,7 +287,7 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 
 	err = s.UpdateGameRating(context.Background(), id)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound{}) {
+		if !errors.As(err, &game.ErrNotFound[int32]{}) {
 			t.Fatalf("error updating game: %v", err)
 		}
 	}

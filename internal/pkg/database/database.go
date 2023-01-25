@@ -4,8 +4,7 @@ import (
 	"net/url"
 
 	"github.com/jmoiron/sqlx"
-	// register postgres driver
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // register postgres driver
 )
 
 // Config stores connection settings
@@ -37,9 +36,4 @@ func Open(cfg Config) (*sqlx.DB, error) {
 	}
 
 	return sqlx.Connect("postgres", conn.String())
-}
-
-// StatusCheck returns nil if connection with db is ok
-func StatusCheck(db *sqlx.DB) error {
-	return db.Ping()
 }

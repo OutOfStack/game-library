@@ -49,9 +49,9 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	userID := claims.Subject
 
-	_, err = g.Storage.GetGameByID(ctx, gameID)
+	_, err = g.storage.GetGameByID(ctx, gameID)
 	if err != nil {
-		if errors.As(err, &repo.ErrNotFound{}) {
+		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			c.Error(web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
@@ -60,15 +60,15 @@ func (g *Game) RateGame(c *gin.Context) {
 	}
 
 	rating := mapToCreateRating(&cr, gameID, userID)
-	err = g.Storage.AddRating(ctx, rating)
+	err = g.storage.AddRating(ctx, rating)
 	if err != nil {
 		c.Error(errors.Wrap(err, "rate game"))
 		return
 	}
 
-	err = g.Storage.UpdateGameRating(ctx, gameID)
+	err = g.storage.UpdateGameRating(ctx, gameID)
 	if err != nil {
-		g.Log.Error("updating game rating", zap.Int32("gameID", gameID), zap.Error(err))
+		g.log.Error("updating game rating", zap.Int32("gameID", gameID), zap.Error(err))
 	}
 
 	web.Respond(c, mapCreateRatingToResp(rating), http.StatusOK)
@@ -108,7 +108,7 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 
 	userID := claims.Subject
 
-	ratings, err := g.Storage.GetUserRatings(ctx, userID, ur.GameIDs)
+	ratings, err := g.storage.GetUserRatings(ctx, userID, ur.GameIDs)
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting user ratings"))
 		return

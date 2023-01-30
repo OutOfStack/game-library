@@ -33,7 +33,8 @@ func (s *Storage) GetGames(ctx context.Context, pageSize int, lastID int32) (lis
 	defer span.End()
 
 	const q = `
-	SELECT id, name, developer, publisher, release_date, genre, logo_url, rating
+	SELECT id, name, developer, publisher, release_date, genre, logo_url, rating, summary, genres, platforms, screenshots, developers, 
+	       publishers, websites, slug, igdb_rating, igdb_id
 	FROM games
 	WHERE id > $1
 	ORDER BY id
@@ -52,7 +53,8 @@ func (s *Storage) SearchGames(ctx context.Context, search string) (list []Game, 
 	defer span.End()
 
 	const q = `
-	SELECT id, name, developer, publisher, release_date, genre, logo_url, rating
+	SELECT id, name, developer, publisher, release_date, genre, logo_url, rating, summary, genres, platforms, screenshots, developers, 
+	       publishers, websites, slug, igdb_rating
 	FROM games
 	WHERE LOWER(name) LIKE $1`
 
@@ -69,7 +71,8 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (g Game, err error)
 	ctx, span := tracer.Start(ctx, "db.game.getbyid")
 	defer span.End()
 
-	const q = `SELECT id, name, developer, publisher, release_date, genre, logo_url, rating
+	const q = `SELECT id, name, developer, publisher, release_date, genre, logo_url, rating, summary, genres, platforms, screenshots, developers, 
+	       publishers, websites, slug, igdb_rating
 	FROM games
 	WHERE id = $1`
 

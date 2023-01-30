@@ -299,7 +299,7 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 
 	sum := int(r1) + int(r2) + int(r3)
 	want := float64(sum) / 3
-	got := game.Rating.Float64
+	got := game.Rating
 	if int(want) != int(got) {
 		t.Errorf("Expected to get game rating with value %f, got %f", want, got)
 	}
@@ -341,8 +341,8 @@ func compareCreateGameAndGame(t *testing.T, want game.CreateGame, got game.Game)
 	if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to get game with genre %s, got %s", want.Genre[0], got.Genre[0])
 	}
-	if want.LogoURL != got.LogoURL.String {
-		t.Errorf("Expected to get game with logo url %s, got %s", want.LogoURL, got.LogoURL.String)
+	if want.LogoURL != got.LogoURL {
+		t.Errorf("Expected to get game with logo url %s, got %s", want.LogoURL, got.LogoURL)
 	}
 }
 
@@ -365,7 +365,7 @@ func compareUpdateGameAndGame(t *testing.T, want game.UpdateGame, got game.Game)
 	if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to get game with genre %s, got %s", want.Genre[0], got.Genre[0])
 	}
-	if want.LogoURL != got.LogoURL.String {
-		t.Errorf("Expected to get game with logo url %s, got %s", want.LogoURL, got.LogoURL.String)
+	if want.LogoURL != got.LogoURL {
+		t.Errorf("Expected to get game with logo url %s, got %s", want.LogoURL, got.LogoURL)
 	}
 }

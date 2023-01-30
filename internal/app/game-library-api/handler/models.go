@@ -13,7 +13,7 @@ type GameResp struct {
 	ReleaseDate string   `json:"releaseDate"`
 	Genre       []string `json:"genre"`
 	LogoURL     string   `json:"logoUrl,omitempty"`
-	Rating      float32  `json:"rating"`
+	Rating      float64  `json:"rating"`
 }
 
 // CreateGameReq represents game data we receive from user
@@ -43,8 +43,9 @@ type CreateRatingReq struct {
 
 // RatingResp represents response to rating request
 type RatingResp struct {
-	GameID int32 `json:"gameId"`
-	Rating uint8 `json:"rating"`
+	GameID int32  `json:"gameId"`
+	UserID string `json:"userId"`
+	Rating uint8  `json:"rating"`
 }
 
 // UserRatingsReq represents get user ratings request
@@ -68,6 +69,7 @@ func mapToCreateRating(crr *CreateRatingReq, gameID int32, userID string) repo.C
 func mapCreateRatingToResp(cr repo.CreateRating) *RatingResp {
 	return &RatingResp{
 		GameID: cr.GameID,
+		UserID: cr.UserID,
 		Rating: cr.Rating,
 	}
 }
@@ -83,17 +85,12 @@ func mapToCreateGame(cgr *CreateGameReq) repo.CreateGame {
 }
 
 func mapToUpdateGame(g repo.Game, ugr UpdateGameReq) repo.UpdateGame {
-	var logoURL string
-	if g.LogoURL.Valid {
-		logoURL = g.LogoURL.String
-	}
-
 	update := repo.UpdateGame{
 		Name:        g.Name,
 		Developer:   g.Developer,
 		Publisher:   g.Publisher,
 		ReleaseDate: g.ReleaseDate.String(),
-		LogoURL:     logoURL,
+		LogoURL:     g.LogoURL,
 		Genre:       g.Genre,
 	}
 
@@ -126,8 +123,8 @@ func mapGameToResp(g repo.Game) GameResp {
 		Developer:   g.Developer,
 		Publisher:   g.Publisher,
 		ReleaseDate: g.ReleaseDate.String(),
-		Genre:       []string(g.Genre),
-		LogoURL:     g.LogoURL.String,
-		Rating:      float32(g.Rating.Float64),
+		Genre:       g.Genre,
+		LogoURL:     g.LogoURL,
+		Rating:      g.Rating,
 	}
 }

@@ -33,7 +33,7 @@ func (s *Storage) GetUserRatings(ctx context.Context, userID string, gameIDs []i
 
 	ratings := make([]UserRating, 0)
 	const q = `
-	SELECT game_id, rating 
+	SELECT game_id, rating, user_id
 	FROM ratings
 	WHERE user_id = $1 AND game_id = ANY($2)`
 

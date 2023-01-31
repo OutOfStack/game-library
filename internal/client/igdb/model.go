@@ -7,7 +7,7 @@ type TokenResp struct {
 	TokenType   string `json:"token_type"`
 }
 
-// TopRatedGamesResp - top rated games response
+// TopRatedGamesResp - top-rated games response
 type TopRatedGamesResp struct {
 	ID          uint32  `json:"id"`
 	Name        string  `json:"name"`

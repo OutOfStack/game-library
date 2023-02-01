@@ -17,6 +17,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/appconf"
 	auth_ "github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/uploadcare"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
@@ -89,6 +90,12 @@ func run() error {
 		return fmt.Errorf("creating IGDB client: %w", err)
 	}
 
+	// create uploadcare client
+	uploadcareClient, err := uploadcare.New(logger, cfg.Uploadcare)
+	if err != nil {
+		return fmt.Errorf("creating uploadcare client: %w", err)
+	}
+
 	// create storage
 	storage := repo.New(db)
 
@@ -108,7 +115,7 @@ func run() error {
 		logger.Error("Debug service stopped", zap.Error(err))
 	}()
 
-	h, err := handler.Service(logger, db, auth, storage, igdbClient, cfg.Web, cfg.Zipkin)
+	h, err := handler.Service(logger, db, auth, storage, igdbClient, uploadcareClient, cfg.Web, cfg.Zipkin)
 	if err != nil {
 		return fmt.Errorf("creating service handler: %w", err)
 	}

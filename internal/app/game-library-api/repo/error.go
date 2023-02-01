@@ -13,6 +13,7 @@ const (
 )
 
 var (
+	// ErrTransactionLocked - error representing transaction lock
 	ErrTransactionLocked = errors.New("transaction locked")
 )
 

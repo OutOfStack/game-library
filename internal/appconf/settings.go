@@ -7,12 +7,13 @@ const ServiceName = "game-library-api"
 
 // Cfg - app configuration
 type Cfg struct {
-	DB        DB        `mapstructure:",squash"`
-	Web       Web       `mapstructure:",squash"`
-	Zipkin    Zipkin    `mapstructure:",squash"`
-	Auth      Auth      `mapstructure:",squash"`
-	IGDB      IGDB      `mapstructure:",squash"`
-	Scheduler Scheduler `mapstructure:",squash"`
+	DB         DB         `mapstructure:",squash"`
+	Web        Web        `mapstructure:",squash"`
+	Zipkin     Zipkin     `mapstructure:",squash"`
+	Auth       Auth       `mapstructure:",squash"`
+	IGDB       IGDB       `mapstructure:",squash"`
+	Scheduler  Scheduler  `mapstructure:",squash"`
+	Uploadcare Uploadcare `mapstructure:",squash"`
 }
 
 // DB represents settings related to database
@@ -56,4 +57,10 @@ type IGDB struct {
 // Scheduler represents settings related to scheduler tasks
 type Scheduler struct {
 	FetchIGDBGames string `mapstructure:"SCHED_FETCH_IGDB_GAMES"`
+}
+
+// Uploadcare represents settings related to Uploadcare integration
+type Uploadcare struct {
+	PublicKey string `mapstructure:"UPLOADCARE_PUBLIC_KEY"`
+	SecretKey string `mapstructure:"UPLOADCARE_SECRET_KEY"`
 }

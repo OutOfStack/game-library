@@ -23,19 +23,19 @@ const (
 type Client struct {
 	log   *zap.Logger
 	conf  appconf.IGDB
-	token *token
+	token *tokenInfo
 }
 
-// New constructs IGDB instance
+// New constructs Client instance
 func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 	return &Client{
 		log:   log,
-		token: &token{},
+		token: &tokenInfo{},
 		conf:  conf,
 	}, nil
 }
 
-// GetTopRatedGames returns top rated games
+// GetTopRatedGames returns top-rated games
 func (c *Client) GetTopRatedGames(ctx context.Context, limit uint64) ([]TopRatedGamesResp, error) {
 	if limit > maxLimit {
 		limit = maxLimit

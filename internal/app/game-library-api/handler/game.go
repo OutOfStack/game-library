@@ -7,6 +7,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/uploadcare"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
@@ -16,17 +17,19 @@ import (
 
 // Game has handler methods for dealing with games
 type Game struct {
-	log     *zap.Logger
-	storage *repo.Storage
-	igdb    *igdb.Client
+	log        *zap.Logger
+	storage    *repo.Storage
+	igdb       *igdb.Client
+	uploadcare *uploadcare.Client
 }
 
 // NewGame creates new Game
-func NewGame(log *zap.Logger, storage *repo.Storage, igdb *igdb.Client) *Game {
+func NewGame(log *zap.Logger, storage *repo.Storage, igdb *igdb.Client, uploadcare *uploadcare.Client) *Game {
 	return &Game{
-		log:     log,
-		storage: storage,
-		igdb:    igdb,
+		log:        log,
+		storage:    storage,
+		igdb:       igdb,
+		uploadcare: uploadcare,
 	}
 }
 
@@ -61,18 +64,17 @@ func (g *Game) GetGames(c *gin.Context) {
 	span.SetAttributes(attribute.Int64("data.pagesize", pageSize), attribute.Int64("data.lastid", lastID))
 
 	list, err := g.storage.GetGames(ctx, int(pageSize), int32(lastID))
-
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
 		return
 	}
 
-	resps := []GameResp{}
+	resp := make([]GameResp, 0, len(list))
 	for _, g := range list {
-		resps = append(resps, mapGameToResp(g))
+		resp = append(resp, mapGameToResp(g))
 	}
 
-	web.Respond(c, resps, http.StatusOK)
+	web.Respond(c, resp, http.StatusOK)
 }
 
 // GetGame godoc

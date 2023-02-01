@@ -10,6 +10,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/appconf"
 	auth_ "github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/uploadcare"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -28,7 +29,8 @@ import (
 )
 
 // Service constructs router with all API routes
-func Service(logger *zap.Logger, db *sqlx.DB, auth *auth_.Auth, storage *repo.Storage, igdb *igdb.Client, conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
+func Service(logger *zap.Logger, db *sqlx.DB, auth *auth_.Auth, storage *repo.Storage, igdb *igdb.Client, uploadcare *uploadcare.Client,
+	conf appconf.Web, zipkinConf appconf.Zipkin) (http.Handler, error) {
 	err := initTracer(zipkinConf.ReporterURL)
 	if err != nil {
 		return nil, fmt.Errorf("initializing exporter: %w", err)
@@ -46,7 +48,7 @@ func Service(logger *zap.Logger, db *sqlx.DB, auth *auth_.Auth, storage *repo.St
 
 	c := NewCheck(db)
 
-	g := NewGame(logger, storage, igdb)
+	g := NewGame(logger, storage, igdb, uploadcare)
 
 	// health
 	r.GET("/api/readiness", c.Readiness)

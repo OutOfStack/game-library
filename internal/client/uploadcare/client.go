@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	_ "image/jpeg"
 	"io"
 	"net/http"
 	"path"

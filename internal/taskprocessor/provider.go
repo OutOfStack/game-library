@@ -39,6 +39,7 @@ func New(log *zap.Logger, storage Storage, igdbProvider IGDBProvider) *TaskProvi
 	}
 }
 
+// DoTask - runs task
 func (tp *TaskProvider) DoTask(name string, taskFn func() error) error {
 	ctx := context.Background()
 

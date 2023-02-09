@@ -30,6 +30,9 @@ generate:
 	go install github.com/swaggo/swag/cmd/swag@latest
 	swag init -g cmd/game-library-api/main.go
 
+lint:
+	golangci-lint run
+
 dockerbuildweb:
 	docker build -t game-library-web:latest .
 

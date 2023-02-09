@@ -337,8 +337,7 @@ func compareCreateGameAndGame(t *testing.T, want game.CreateGame, got game.Game)
 	}
 	if len(want.Genre) != len(got.Genre) {
 		t.Errorf("Expected to get game with %d genres, got %d", len(want.Genre), len(got.Genre))
-	}
-	if want.Genre[0] != got.Genre[0] {
+	} else if want.Genre[0] != got.Genre[0] {
 		t.Errorf("Expected to get game with genre %s, got %s", want.Genre[0], got.Genre[0])
 	}
 	if want.LogoURL != got.LogoURL {

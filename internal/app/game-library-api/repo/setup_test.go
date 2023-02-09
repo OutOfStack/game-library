@@ -85,7 +85,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// You can't defer this because os.Exit doesn't care for defer
-	if err := pool.Purge(resource); err != nil {
+	if err = pool.Purge(resource); err != nil {
 		log.Fatalf("Repo tests: Could not purge resource: %s", err)
 	}
 	log.Println("Repo tests: Docker container deleted")

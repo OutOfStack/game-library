@@ -10,51 +10,54 @@ import (
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz"
 
+var random *rand.Rand
+
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 // Int64 returns random int64 value
 func Int64() int64 {
-	sign := rand.Intn(2)
+	sign := random.Intn(2)
 	if sign == 0 {
 		sign = -1
 	}
-	return rand.Int63() * int64(sign)
+	return random.Int63() * int64(sign)
 }
 
 // Int32 returns random int32 value
 func Int32() int32 {
-	sign := rand.Intn(2)
+	sign := random.Intn(2)
 	if sign == 0 {
 		sign = -1
 	}
-	return rand.Int31() * int32(sign)
+	return random.Int31() * int32(sign)
 }
 
 // Intn returns random value in tange [0, n)
 func Intn(n int) int {
-	return rand.Intn(n)
+	return random.Intn(n)
 }
 
 // Uint64 returns random uint64 value
 func Uint64() uint64 {
-	return rand.Uint64()
+	return random.Uint64()
 }
 
 // Uint32 returns random uint32 value
 func Uint32() uint32 {
-	return rand.Uint32()
+	return random.Uint32()
 }
 
 // Uint8 returns random uint8 value
 func Uint8() uint8 {
-	return uint8(rand.Intn(math.MaxUint8) + 1)
+	return uint8(random.Intn(math.MaxUint8) + 1)
 }
 
 // Date returns random date
 func Date() time.Time {
-	return time.Date(1970+rand.Intn(100), time.Month(1+rand.Intn(12)), 1+rand.Intn(28), rand.Intn(24), rand.Intn(60), rand.Intn(60), 0, time.Local)
+	return time.Date(1970+random.Intn(100), time.Month(1+random.Intn(12)), 1+random.Intn(28), random.Intn(24),
+		random.Intn(60), random.Intn(60), 0, time.UTC)
 }
 
 // String returns random string value
@@ -68,7 +71,7 @@ func Stringn(n int) string {
 	k := len(alphabet)
 
 	for i := 0; i < n; i++ {
-		c := alphabet[rand.Intn(k)]
+		c := alphabet[random.Intn(k)]
 		sb.WriteByte(c)
 	}
 

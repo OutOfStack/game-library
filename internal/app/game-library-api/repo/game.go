@@ -27,7 +27,7 @@ func New(db *sqlx.DB) *Storage {
 
 var tracer = otel.Tracer("")
 
-// GetGames returns list of games limited by pageSize and starting Id
+// GetGames returns list of games limited by pageSize and starting id
 func (s *Storage) GetGames(ctx context.Context, pageSize int, lastID int32) (list []Game, err error) {
 	ctx, span := tracer.Start(ctx, "db.game.get")
 	defer span.End()
@@ -86,17 +86,41 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (g Game, err error)
 	return g, nil
 }
 
+// GetGameIDByIGDBID returns game id by igdb id.
+// If game does not exist returns ErrNotFound
+func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error) {
+	ctx, span := tracer.Start(ctx, "db.game.getidbyigdbid")
+	defer span.End()
+
+	const q = `SELECT id
+	FROM games
+	WHERE igdb_id = $1`
+
+	if err = s.db.GetContext(ctx, &id, q, igdbID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrNotFound[int32]{Entity: "game", ID: int32(igdbID)}
+		}
+		return 0, err
+	}
+
+	return id, nil
+}
+
 // CreateGame creates new game
 func (s *Storage) CreateGame(ctx context.Context, cg CreateGame) (id int32, err error) {
 	ctx, span := tracer.Start(ctx, "db.game.create")
 	defer span.End()
 
 	const q = `INSERT INTO games
-	(name, developer, publisher, release_date, genre, logo_url)
-	VALUES ($1, $2, $3, $4, $5, $6)
+    (name, developer, publisher, developers, publishers, release_date, genres, logo_url, summary, platforms, screenshots, 
+     	websites, slug, igdb_rating, igdb_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::varchar(50), $14, $15)
 	RETURNING id`
 
-	if err = s.db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, cg.ReleaseDate, pq.StringArray(cg.Genre), cg.LogoURL).Scan(&id); err != nil {
+	err = s.db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, pq.Int32Array(cg.Developers), pq.Int32Array(cg.Publishers),
+		cg.ReleaseDate, pq.Int32Array(cg.Genres), cg.LogoURL, cg.Summary, pq.Int32Array(cg.Platforms), pq.StringArray(cg.Screenshots),
+		pq.StringArray(cg.Websites), cg.Slug, cg.IGDBRating, cg.IGDBID).Scan(&id)
+	if err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)
 	}
 

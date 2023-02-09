@@ -459,6 +459,9 @@
                 },
                 "rating": {
                     "type": "integer"
+                },
+                "userId": {
+                    "type": "string"
                 }
             }
         },

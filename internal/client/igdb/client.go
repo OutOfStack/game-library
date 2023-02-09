@@ -5,8 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -36,39 +40,73 @@ func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 }
 
 // GetTopRatedGames returns top-rated games
-func (c *Client) GetTopRatedGames(ctx context.Context, limit uint64) ([]TopRatedGamesResp, error) {
+func (c *Client) GetTopRatedGames(ctx context.Context, minRatingsCount, minRating int64, releasedAfter time.Time,
+	limit int64, platformsIDs []int64) ([]TopRatedGamesResp, error) {
 	if limit > maxLimit {
 		limit = maxLimit
 	}
 
+	var platformsStr []string
+	for _, p := range platformsIDs {
+		platformsStr = append(platformsStr, strconv.Itoa(int(p)))
+	}
+	platforms := strings.Join(platformsStr, ",")
+
 	reqURL, _ := url.JoinPath(c.conf.APIURL, gamesEndpoint)
 	data := fmt.Sprintf(
-		`fields name, rating, rating_count;
-		sort rating desc;
-		where rating != null & (rating_count > 100 | aggregated_rating_count > 50) & version_parent = null & parent_game = null;
+		`fields id, cover.url, first_release_date, genres.name, name, platforms, total_rating, total_rating_count, 
+		slug, summary, screenshots.url, websites.category, websites.url, 
+		involved_companies.company.name, involved_companies.developer, involved_companies.publisher;
+		sort first_release_date;
+		where total_rating != null & total_rating_count > %d & total_rating > %d & first_release_date > %d &
+		version_parent = null & parent_game = null & release_dates.platform = (%s);
 		limit %d;`,
-		limit)
+		minRatingsCount, minRating, releasedAfter.Unix(), platforms, limit)
 	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, bytes.NewBufferString(data))
 	if err != nil {
-		return nil, fmt.Errorf("creating get top rated games request: %v", err)
+		return nil, fmt.Errorf("create get top rated games request: %v", err)
 	}
 
 	err = c.setAuthHeaders(ctx, &req.Header)
 	if err != nil {
-		return nil, fmt.Errorf("setting auth headers: %v", err)
+		return nil, fmt.Errorf("set auth headers: %v", err)
 	}
 
 	resp, err := otelhttp.DefaultClient.Do(req)
 	if err != nil {
-		c.log.Error("calling igdb api", zap.String("url", reqURL), zap.Error(err))
+		c.log.Error("request igdb api", zap.String("url", reqURL), zap.Error(err))
 		return nil, fmt.Errorf("igdb api unavailable: %v", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		body, rErr := io.ReadAll(resp.Body)
+		if rErr != nil {
+			return nil, fmt.Errorf("read response body: %v", rErr)
+		}
+		return nil, fmt.Errorf("%s", body)
+	}
+
 	var respBody []TopRatedGamesResp
-	json.NewDecoder(resp.Body).Decode(&respBody)
+	err = json.NewDecoder(resp.Body).Decode(&respBody)
+	if err != nil {
+		return nil, fmt.Errorf("decode response body: %v", err)
+	}
 
 	return respBody, nil
+}
+
+// GetImageURL returns fixed image url
+func GetImageURL(igdbImageURL string, imageType string) string {
+	if imageType != "" {
+		igdbImageURL = strings.Replace(igdbImageURL, ImageThumbAlias, imageType, 1)
+	}
+	u, err := url.Parse(igdbImageURL)
+	if err != nil {
+		return ""
+	}
+	u.Scheme = "https"
+	return u.String()
 }
 
 func (c *Client) setAuthHeaders(ctx context.Context, header *http.Header) error {

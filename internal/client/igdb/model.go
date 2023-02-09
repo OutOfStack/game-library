@@ -41,6 +41,7 @@ type TopRatedGamesResp struct {
 	} `json:"websites"`
 }
 
+// WebsiteCategory - website category
 type WebsiteCategory int8
 
 // Website categories

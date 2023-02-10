@@ -16,9 +16,8 @@ const (
 	FetchIGDBGamesTaskName = "fetch_igdb_games"
 
 	fetchGamesMinRating        = 60
-	fetchGamesScreenshotsLimit = 8
-	fetchGamesLimit            = 10
-	fetchGamesRequestCount     = 10
+	fetchGamesScreenshotsLimit = 7
+	fetchGamesRequestsCount    = 5
 )
 
 type fetchGamesSettings struct {
@@ -31,22 +30,31 @@ func (f fetchGamesSettings) convertToTaskSettings() repo.TaskSettings {
 }
 
 var (
-	startDate = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
+	startReleasedAtDate = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
 
-	getMinRatingCount = func(date time.Time) int64 {
+	getMinRatingsCountAndLimit = func(date time.Time) (count, limit int64) {
+		// [start date, 2001.1.1)
 		if date.Year() < 2001 {
-			return 200
+			return 200, 10
 		}
+		// [2001.1.1, 2011.1.1)
 		if date.Year() < 2011 {
-			return 100
+			return 120, 15
 		}
+		// [2011.1.1, 2021.1.1)
 		if date.Year() < 2021 {
-			return 70
+			return 90, 15
 		}
-		if date.Year() < time.Now().Year() {
-			return 35
+		// [2021.1.1, now-6 months)
+		if date.Before(time.Now().AddDate(0, -6, 0)) {
+			return 60, 10
 		}
-		return 25
+		// [now-6 months, now-1 month)
+		if date.Before(time.Now().AddDate(0, -1, 0)) {
+			return 45, 5
+		}
+		// [now-1 month, now]
+		return 25, 2
 	}
 )
 
@@ -61,7 +69,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			}
 		}
 		if s.LastReleasedAt.IsZero() {
-			s.LastReleasedAt = startDate
+			s.LastReleasedAt = time.Now()
 		}
 
 		// get stored platform
@@ -96,10 +104,10 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			igdbGenres[g.IGDBID] = g
 		}
 
-		resetLastReleasedAt := false
-		for i := 0; i < fetchGamesRequestCount; i++ {
-			igdbGames, gErr := tp.igdbProvider.GetTopRatedGames(ctx, getMinRatingCount(s.LastReleasedAt), fetchGamesMinRating,
-				s.LastReleasedAt, fetchGamesLimit, allPlatformsIDs)
+		for i := 0; i < fetchGamesRequestsCount; i++ {
+			ratingsCount, limit := getMinRatingsCountAndLimit(s.LastReleasedAt)
+			igdbGames, gErr := tp.igdbProvider.GetTopRatedGames(ctx, ratingsCount, fetchGamesMinRating,
+				s.LastReleasedAt, limit, allPlatformsIDs)
 			if gErr != nil {
 				return settings, fmt.Errorf("get games from igdb: %v", gErr)
 			}
@@ -230,13 +238,8 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				settings = s.convertToTaskSettings()
 			}
 
-			if len(igdbGames) < fetchGamesLimit {
-				if resetLastReleasedAt {
-					s.LastReleasedAt = startDate
-					break
-				}
-				s.LastReleasedAt = time.Date(s.LastReleasedAt.Year()+1, time.January, 1, 0, 0, 0, 0, time.UTC)
-				resetLastReleasedAt = true
+			if s.LastReleasedAt.Before(startReleasedAtDate) {
+				s.LastReleasedAt = time.Now()
 			}
 		}
 

@@ -1,8 +1,10 @@
 package web
 
 import (
+	"log"
+
 	"cloud.google.com/go/civil"
-	en "github.com/go-playground/locales/en"
+	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	entranslations "github.com/go-playground/validator/v10/translations/en"
@@ -22,9 +24,13 @@ func init() {
 	enLocale := en.New()
 	translator = ut.New(enLocale, enLocale)
 	lang, _ = translator.GetTranslator("en")
-	entranslations.RegisterDefaultTranslations(validate, lang)
+	if err := entranslations.RegisterDefaultTranslations(validate, lang); err != nil {
+		log.Fatalf("register default transaltion for validator: %v", err)
+	}
 
-	validate.RegisterValidation("date", validateDate)
+	if err := validate.RegisterValidation("date", validateDate); err != nil {
+		log.Fatalf("register 'date' validation: %v", err)
+	}
 
 	errDate := "{0} must be in format 'YYYY-MM-DD'"
 	addTranslation("date", errDate)
@@ -50,7 +56,7 @@ func addTranslation(tag string, errMessage string) {
 
 	transFn := func(ut ut.Translator, fe validator.FieldError) string {
 		param := fe.Param()
-		tag := fe.Tag()
+		tag = fe.Tag()
 
 		t, err := ut.T(tag, fe.Field(), param)
 		if err != nil {

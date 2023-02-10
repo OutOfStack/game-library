@@ -40,7 +40,7 @@ func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 }
 
 // GetTopRatedGames returns top-rated games
-func (c *Client) GetTopRatedGames(ctx context.Context, minRatingsCount, minRating int64, releasedAfter time.Time,
+func (c *Client) GetTopRatedGames(ctx context.Context, minRatingsCount, minRating int64, releasedBefore time.Time,
 	limit int64, platformsIDs []int64) ([]TopRatedGamesResp, error) {
 	if limit > maxLimit {
 		limit = maxLimit
@@ -57,11 +57,11 @@ func (c *Client) GetTopRatedGames(ctx context.Context, minRatingsCount, minRatin
 		`fields id, cover.url, first_release_date, genres.name, name, platforms, total_rating, total_rating_count, 
 		slug, summary, screenshots.url, websites.category, websites.url, 
 		involved_companies.company.name, involved_companies.developer, involved_companies.publisher;
-		sort first_release_date;
-		where total_rating != null & total_rating_count > %d & total_rating > %d & first_release_date > %d &
+		sort first_release_date desc;
+		where total_rating != null & total_rating_count > %d & total_rating > %d & first_release_date < %d &
 		version_parent = null & parent_game = null & release_dates.platform = (%s);
 		limit %d;`,
-		minRatingsCount, minRating, releasedAfter.Unix(), platforms, limit)
+		minRatingsCount, minRating, releasedBefore.Unix(), platforms, limit)
 	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, bytes.NewBufferString(data))
 	if err != nil {
 		return nil, fmt.Errorf("create get top rated games request: %v", err)

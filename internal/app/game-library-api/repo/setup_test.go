@@ -75,7 +75,9 @@ func TestMain(m *testing.M) {
 		return err
 	})
 	if err != nil {
-		pool.Purge(resource)
+		if pErr := pool.Purge(resource); pErr != nil {
+			log.Fatalf("Repo tests: Could not purge resource: %s", pErr)
+		}
 		log.Fatalf("Repo tests: Could not connect to database: %v", err)
 	}
 

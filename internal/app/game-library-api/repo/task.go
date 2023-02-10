@@ -17,7 +17,7 @@ func (s *Storage) GetTask(ctx context.Context, tx *sqlx.Tx, name string) (task T
 	ctx, span := tracer.Start(ctx, "db.task.get")
 	defer span.End()
 
-	q := `SELECT name, status, run_count, last_run
+	q := `SELECT name, status, run_count, last_run, settings
 	FROM background_tasks
 	WHERE name=$1
 	FOR NO KEY UPDATE NOWAIT`
@@ -48,18 +48,16 @@ func (s *Storage) UpdateTask(ctx context.Context, tx *sqlx.Tx, task Task) error 
 	ctx, span := tracer.Start(ctx, "db.task.update")
 	defer span.End()
 
-	s.db.Beginx()
-
 	q := `UPDATE background_tasks
-    SET status = $2, last_run = $3, run_count = $4, updated_at = now()
+    SET status = $2, last_run = $3, run_count = $4, settings = coalesce($5, settings), updated_at = now()
 	WHERE name=$1`
 
 	var res sql.Result
 	var err error
 	if tx != nil {
-		res, err = tx.ExecContext(ctx, q, task.Name, string(task.Status), task.LastRun, task.RunCount)
+		res, err = tx.ExecContext(ctx, q, task.Name, string(task.Status), task.LastRun, task.RunCount, task.Settings)
 	} else {
-		res, err = s.db.ExecContext(ctx, q, task.Name, string(task.Status), task.LastRun, task.RunCount)
+		res, err = s.db.ExecContext(ctx, q, task.Name, string(task.Status), task.LastRun, task.RunCount, task.Settings)
 	}
 	if err != nil {
 		return fmt.Errorf("updating task %s: %v", task.Name, err)

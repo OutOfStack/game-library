@@ -100,7 +100,7 @@ func run() error {
 	storage := repo.New(db)
 
 	// run background tasks
-	taskProvider := taskprocessor.New(logger, storage, igdbClient)
+	taskProvider := taskprocessor.New(logger, storage, igdbClient, uploadcareClient)
 	scheduler := gocron.NewScheduler(time.UTC)
 	_, err = scheduler.Cron(cfg.Scheduler.FetchIGDBGames).Do(taskProvider.StartFetchIGDBGames)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 // AddRating adds rating to game
 // If such entity does not exist returns error ErrNotFound{}
 func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
-	ctx, span := tracer.Start(ctx, "db.rating.addrating")
+	ctx, span := tracer.Start(ctx, "db.rating.add")
 	defer span.End()
 
 	const q = `

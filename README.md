@@ -12,6 +12,7 @@ An app for exploring and rating games
     rollback       rollbacks one last migration on database
     seed           seeds test data to database
     generate       generates documentation for swagger UI
+    lint           runs golangci-lint
     dockerbuildweb builds web app docker image
     dockerrunweb   runs web app in docker container
     dockerbuildmng builds manage app docker image

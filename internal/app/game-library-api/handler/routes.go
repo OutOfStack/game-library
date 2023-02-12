@@ -15,7 +15,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
@@ -76,6 +75,12 @@ func Service(logger *zap.Logger, db *sqlx.DB, auth *auth_.Auth, storage *repo.St
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RoleRegisteredUser),
 		g.GetUserRatings)
 
+	// genres
+	r.GET("/api/genres", g.GetGenres)
+
+	// platforms
+	r.GET("/api/platforms", g.GetPlatforms)
+
 	// swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -85,7 +90,7 @@ func Service(logger *zap.Logger, db *sqlx.DB, auth *auth_.Auth, storage *repo.St
 func initTracer(reporterURL string) error {
 	exporter, err := zipkin.New(reporterURL)
 	if err != nil {
-		return errors.Wrap(err, "creating new exporter")
+		return fmt.Errorf("creating new exporter: %w", err)
 	}
 
 	tp := trace.NewTracerProvider(

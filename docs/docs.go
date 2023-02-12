@@ -33,7 +33,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "last fetched Id",
+                        "description": "last fetched id",
                         "name": "lastId",
                         "in": "query"
                     }
@@ -44,7 +44,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.GameResp"
+                                "$ref": "#/definitions/handler.GameResponse"
                             }
                         }
                     },
@@ -73,7 +73,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateGameReq"
+                            "$ref": "#/definitions/handler.CreateGameRequest"
                         }
                     }
                 ],
@@ -81,7 +81,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handler.IDResp"
+                            "$ref": "#/definitions/handler.IDResponse"
                         }
                     },
                     "400": {
@@ -121,7 +121,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.GameResp"
+                                "$ref": "#/definitions/handler.GameResponse"
                             }
                         }
                     },
@@ -155,7 +155,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.GameResp"
+                            "$ref": "#/definitions/handler.GameResponse"
                         }
                     },
                     "400": {
@@ -245,7 +245,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateGameReq"
+                            "$ref": "#/definitions/handler.UpdateGameRequest"
                         }
                     }
                 ],
@@ -299,7 +299,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateRatingReq"
+                            "$ref": "#/definitions/handler.CreateRatingRequest"
                         }
                     }
                 ],
@@ -307,7 +307,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.RatingResp"
+                            "$ref": "#/definitions/handler.RatingResponse"
                         }
                     },
                     "400": {
@@ -320,6 +320,60 @@ const docTemplate = `{
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/genres": {
+            "get": {
+                "description": "returns all genres",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get genres",
+                "operationId": "get-genres",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.Genre"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platforms": {
+            "get": {
+                "description": "returns all platforms",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get platforms",
+                "operationId": "get-platforms",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.Platform"
+                            }
                         }
                     },
                     "500": {
@@ -346,7 +400,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UserRatingsReq"
+                            "$ref": "#/definitions/handler.GetUserRatingsRequest"
                         }
                     }
                 ],
@@ -377,7 +431,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.CreateGameReq": {
+        "handler.Company": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateGameRequest": {
             "type": "object",
             "required": [
                 "developer",
@@ -388,9 +453,16 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "genre": {
+                    "description": "Deprecated: use Genres instead",
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "genresIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
                     }
                 },
                 "logoUrl": {
@@ -399,12 +471,36 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "platformsIDs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "releaseDate": {
                     "type": "string"
+                },
+                "screenshots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "websites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
-        "handler.CreateRatingReq": {
+        "handler.CreateRatingRequest": {
             "type": "object",
             "properties": {
                 "rating": {
@@ -414,16 +510,30 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GameResp": {
+        "handler.GameResponse": {
             "type": "object",
             "properties": {
                 "developer": {
+                    "description": "Deprecated: use Developers instead",
                     "type": "string"
                 },
+                "developers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.Company"
+                    }
+                },
                 "genre": {
+                    "description": "Deprecated: use Genres instead",
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "genres": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.Genre"
                     }
                 },
                 "id": {
@@ -435,18 +545,71 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "platforms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.Platform"
+                    }
+                },
                 "publisher": {
+                    "description": "Deprecated: use Publishers instead",
                     "type": "string"
+                },
+                "publishers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.Company"
+                    }
                 },
                 "rating": {
                     "type": "number"
                 },
                 "releaseDate": {
                     "type": "string"
+                },
+                "screenshots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "websites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
-        "handler.IDResp": {
+        "handler.Genre": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.GetUserRatingsRequest": {
+            "type": "object",
+            "properties": {
+                "gameIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "handler.IDResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -454,7 +617,21 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RatingResp": {
+        "handler.Platform": {
+            "type": "object",
+            "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.RatingResponse": {
             "type": "object",
             "properties": {
                 "gameId": {
@@ -468,16 +645,16 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateGameReq": {
+        "handler.UpdateGameRequest": {
             "type": "object",
             "properties": {
                 "developer": {
                     "type": "string"
                 },
-                "genre": {
+                "genresIds": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 },
                 "logoUrl": {
@@ -486,21 +663,31 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "publisher": {
-                    "type": "string"
-                },
-                "releaseDate": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.UserRatingsReq": {
-            "type": "object",
-            "properties": {
-                "gameIds": {
+                "platforms": {
                     "type": "array",
                     "items": {
                         "type": "integer"
+                    }
+                },
+                "releaseDate": {
+                    "type": "string"
+                },
+                "screenshots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "websites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 }
             }

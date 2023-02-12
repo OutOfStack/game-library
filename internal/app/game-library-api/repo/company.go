@@ -2,7 +2,10 @@ package repo
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
 )
 
 // CreateCompany creates new company
@@ -18,7 +21,7 @@ func (s *Storage) CreateCompany(ctx context.Context, c Company) (int32, error) {
 	RETURNING id`
 
 	if err := s.db.QueryRowContext(ctx, q, c.Name, c.IGDBID).Scan(&id); err != nil {
-		return 0, fmt.Errorf("create company with name %s and igdb id %d: %v", c.Name, c.IGDBID, err)
+		return 0, fmt.Errorf("create company with name %s and igdb id %d: %v", c.Name, c.IGDBID.Int64, err)
 	}
 
 	return id, nil
@@ -39,4 +42,25 @@ func (s *Storage) GetCompanies(ctx context.Context) ([]Company, error) {
 	}
 
 	return companies, nil
+}
+
+// GetCompanyIDByName returns company id by name
+// If company does not exist returns ErrNotFound
+func (s *Storage) GetCompanyIDByName(ctx context.Context, name string) (int32, error) {
+	ctx, span := tracer.Start(ctx, "db.game.getcompanyidbyname")
+	defer span.End()
+
+	var id int32
+	const q = `SELECT id
+	FROM companies
+	WHERE lower(name) = $1`
+
+	if err := s.db.GetContext(ctx, &id, q, strings.ToLower(name)); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrNotFound[string]{Entity: "company", ID: name}
+		}
+		return 0, err
+	}
+
+	return id, nil
 }

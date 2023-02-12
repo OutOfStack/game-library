@@ -77,3 +77,8 @@ func Stringn(n int) string {
 
 	return sb.String()
 }
+
+// Float64 returns random float64 value
+func Float64() float64 {
+	return random.Float64()
+}

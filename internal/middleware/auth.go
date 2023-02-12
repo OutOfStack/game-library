@@ -73,7 +73,7 @@ func Authorize(log *zap.Logger, a *auth.Auth, requiredRole string) gin.HandlerFu
 		}
 		// if user's role is not the same as required return 403 forbidden
 		if claims.UserRole != requiredRole {
-			log.Error("access denied", zap.String("expected role", requiredRole), zap.String("got role", claims.UserRole))
+			log.Warn("access denied", zap.String("expected_role", requiredRole), zap.String("got_role", claims.UserRole))
 			c.Error(web.NewRequestError(errors.New("access denied"), http.StatusForbidden))
 			c.Abort()
 			return

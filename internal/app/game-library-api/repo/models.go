@@ -33,13 +33,16 @@ type Game struct {
 
 // CreateGame represents data for creating game
 type CreateGame struct {
-	Name        string
-	Developer   string // Deprecated: use Developers instead
-	Developers  []int32
-	Publisher   string // Deprecated: use Publishers instead
+	Name string
+	// Deprecated: use Developers instead
+	Developer  string
+	Developers []int32
+	// Deprecated: use Publishers instead
+	Publisher   string
 	Publishers  []int32
 	ReleaseDate string
-	Genre       []string // Deprecated: use Genres instead
+	// Deprecated: use Genres instead
+	Genre       []string
 	Genres      []int32
 	LogoURL     string
 	Summary     string
@@ -53,13 +56,16 @@ type CreateGame struct {
 
 // UpdateGame represents data for updating game
 type UpdateGame struct {
-	Name        string
-	Developer   string // Deprecated: use Developers instead
-	Developers  []int32
-	Publisher   string // Deprecated: use Publishers instead
+	Name string
+	// Deprecated: use Developers instead
+	Developer  string
+	Developers []int32
+	// Deprecated: use Publishers instead
+	Publisher   string
 	Publishers  []int32
 	ReleaseDate string
-	Genre       []string // Deprecated: use Genres instead
+	// Deprecated: use Genres instead
+	Genre       []string
 	Genres      []int32
 	LogoURL     string
 	Summary     string
@@ -146,7 +152,7 @@ type Genre struct {
 
 // Company represents company entity
 type Company struct {
-	ID     int32  `db:"id"`
-	Name   string `db:"name"`
-	IGDBID int64  `db:"igdb_id"`
+	ID     int32         `db:"id"`
+	Name   string        `db:"name"`
+	IGDBID sql.NullInt64 `db:"igdb_id"`
 }

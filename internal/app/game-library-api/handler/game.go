@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
 	"github.com/OutOfStack/game-library/internal/client/uploadcare"
+	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
@@ -35,14 +38,20 @@ func NewGame(log *zap.Logger, storage *repo.Storage, igdb *igdb.Client, uploadca
 
 var tracer = otel.Tracer("")
 
+var (
+	companiesMap = cache.NewKVMap[int32, Company](1 * time.Hour)
+	genresMap    = cache.NewKVMap[int32, Genre](1 * time.Hour)
+	platformsMap = cache.NewKVMap[int32, Platform](0)
+)
+
 // GetGames godoc
 // @Summary Get games
 // @Description returns paginated games
 // @ID get-games
 // @Produce json
 // @Param pageSize query int32 false "page size"
-// @Param lastId   query int32 false "last fetched Id"
-// @Success 200 {array}  GameResp
+// @Param lastId   query int32 false "last fetched id"
+// @Success 200 {array}  GameResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
 func (g *Game) GetGames(c *gin.Context) {
@@ -69,12 +78,17 @@ func (g *Game) GetGames(c *gin.Context) {
 		return
 	}
 
-	resp := make([]GameResp, 0, len(list))
-	for _, g := range list {
-		resp = append(resp, mapGameToResp(g))
+	response := make([]GameResponse, 0, len(list))
+	for _, game := range list {
+		r, err := g.mapToGameResponse(c, game)
+		if err != nil {
+			c.Error(web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
+			return
+		}
+		response = append(response, r)
 	}
 
-	web.Respond(c, resp, http.StatusOK)
+	web.Respond(c, response, http.StatusOK)
 }
 
 // GetGame godoc
@@ -83,7 +97,7 @@ func (g *Game) GetGames(c *gin.Context) {
 // @ID get-game-by-id
 // @Produce json
 // @Param 	id  path int32 true "Game ID"
-// @Success 200 {object} GameResp
+// @Success 200 {object} GameResponse
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -109,7 +123,11 @@ func (g *Game) GetGame(c *gin.Context) {
 		return
 	}
 
-	resp := mapGameToResp(game)
+	resp, err := g.mapToGameResponse(c, game)
+	if err != nil {
+		c.Error(web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
+		return
+	}
 	web.Respond(c, resp, http.StatusOK)
 }
 
@@ -119,7 +137,7 @@ func (g *Game) GetGame(c *gin.Context) {
 // @ID search-games
 // @Produce json
 // @Param name query string false "name to search by"
-// @Success 200 {array}  GameResp
+// @Success 200 {array}  GameResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/search [get]
 func (g *Game) SearchGames(c *gin.Context) {
@@ -139,12 +157,17 @@ func (g *Game) SearchGames(c *gin.Context) {
 		return
 	}
 
-	resps := []GameResp{}
-	for _, g := range list {
-		resps = append(resps, mapGameToResp(g))
+	response := make([]GameResponse, 0, len(list))
+	for _, game := range list {
+		r, err := g.mapToGameResponse(c, game)
+		if err != nil {
+			c.Error(web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
+			return
+		}
+		response = append(response, r)
 	}
 
-	web.Respond(c, resps, http.StatusOK)
+	web.Respond(c, response, http.StatusOK)
 }
 
 // CreateGame godoc
@@ -153,8 +176,8 @@ func (g *Game) SearchGames(c *gin.Context) {
 // @ID create-game
 // @Accept  json
 // @Produce json
-// @Param   game body CreateGameReq true "create game"
-// @Success 201 {object} IDResp
+// @Param   game body CreateGameRequest true "create game"
+// @Success 201 {object} IDResponse
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
@@ -162,7 +185,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.creategame")
 	defer span.End()
 
-	var cg CreateGameReq
+	var cg CreateGameRequest
 	err := web.Decode(c, &cg)
 	if err != nil {
 		c.Error(errors.Wrap(err, "decoding new game"))
@@ -176,15 +199,51 @@ func (g *Game) CreateGame(c *gin.Context) {
 		return
 	}
 
+	developer, publisher := cg.Developer, claims.Name
+	// get id or create developer
+	developerID, err := g.storage.GetCompanyIDByName(ctx, developer)
+	if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
+		c.Error(errors.Wrapf(err, "get company id with name %s", developer))
+		return
+	}
+	if developerID == 0 {
+		developerID, err = g.storage.CreateCompany(ctx, repo.Company{
+			Name: developer,
+		})
+		if err != nil {
+			c.Error(errors.Wrapf(err, "create company %s", developer))
+			return
+		}
+	}
+
+	// get id or create publisher
+	publisherID, err := g.storage.GetCompanyIDByName(ctx, publisher)
+	if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
+		c.Error(errors.Wrapf(err, "get company id with name %s", publisher))
+		return
+	}
+	if publisherID == 0 {
+		publisherID, err = g.storage.CreateCompany(ctx, repo.Company{
+			Name: publisher,
+		})
+		if err != nil {
+			c.Error(errors.Wrapf(err, "create company %s", publisher))
+			return
+		}
+	}
+
 	create := mapToCreateGame(&cg)
-	create.Publisher = claims.Name
+	create.Developers = []int32{developerID}
+	create.Publishers = []int32{publisherID}
+	create.Publisher = publisher
+
 	id, err := g.storage.CreateGame(ctx, create)
 	if err != nil {
 		c.Error(errors.Wrap(err, "adding new game"))
 		return
 	}
 
-	web.Respond(c, IDResp{ID: id}, http.StatusCreated)
+	web.Respond(c, IDResponse{ID: id}, http.StatusCreated)
 }
 
 // UpdateGame godoc
@@ -193,8 +252,8 @@ func (g *Game) CreateGame(c *gin.Context) {
 // @ID update-game
 // @Accept  json
 // @Produce json
-// @Param  	id   path int32 		true "Game ID"
-// @Param  	game body UpdateGameReq true "update game"
+// @Param  	id   path int32 			true "Game ID"
+// @Param  	game body UpdateGameRequest true "update game"
 // @Success 204
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
@@ -209,8 +268,8 @@ func (g *Game) UpdateGame(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	var ugr UpdateGameReq
-	if err := web.Decode(c, &ugr); err != nil {
+	var ugr UpdateGameRequest
+	if err = web.Decode(c, &ugr); err != nil {
 		c.Error(errors.Wrap(err, "decoding game update"))
 		return
 	}
@@ -226,7 +285,34 @@ func (g *Game) UpdateGame(c *gin.Context) {
 		return
 	}
 
+	developer := ugr.Developer
+	developers := game.Developers
+	if developer != nil {
+		if *developer != "" {
+			// get id or create developer
+			developerID, err := g.storage.GetCompanyIDByName(ctx, *developer)
+			if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
+				c.Error(errors.Wrapf(err, "get developer id with name %s", *developer))
+				return
+			}
+			if developerID == 0 {
+				developerID, err = g.storage.CreateCompany(ctx, repo.Company{
+					Name: *developer,
+				})
+				if err != nil {
+					c.Error(errors.Wrapf(err, "create developer %s", *developer))
+					return
+				}
+			}
+			developers = []int32{developerID}
+		} else {
+			developers = []int32{}
+		}
+	}
+
 	update := mapToUpdateGame(game, ugr)
+	update.Developers = developers
+
 	err = g.storage.UpdateGame(ctx, id, update)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound[int32]{}) {

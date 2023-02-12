@@ -1,130 +1,96 @@
 package handler
 
-import (
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
-)
-
-// GameResp represents game response
-type GameResp struct {
-	ID          int32    `json:"id"`
-	Name        string   `json:"name"`
-	Developer   string   `json:"developer"`
-	Publisher   string   `json:"publisher"`
-	ReleaseDate string   `json:"releaseDate"`
-	Genre       []string `json:"genre"`
-	LogoURL     string   `json:"logoUrl,omitempty"`
-	Rating      float64  `json:"rating"`
+// GameResponse represents game response
+type GameResponse struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+	// Deprecated: use Developers instead
+	Developer  string    `json:"developer"`
+	Developers []Company `json:"developers"`
+	// Deprecated: use Publishers instead
+	Publisher   string    `json:"publisher"`
+	Publishers  []Company `json:"publishers"`
+	ReleaseDate string    `json:"releaseDate"`
+	// Deprecated: use Genres instead
+	Genre       []string   `json:"genre"`
+	Genres      []Genre    `json:"genres"`
+	LogoURL     string     `json:"logoUrl,omitempty"`
+	Rating      float64    `json:"rating"`
+	Summary     string     `json:"summary,omitempty"`
+	Slug        string     `json:"slug,omitempty"`
+	Platforms   []Platform `json:"platforms"`
+	Screenshots []string   `json:"screenshots"`
+	Websites    []string   `json:"websites"`
 }
 
-// CreateGameReq represents game data we receive from user
-type CreateGameReq struct {
-	Name        string   `json:"name" validate:"required"`
-	Developer   string   `json:"developer" validate:"required"`
-	ReleaseDate string   `json:"releaseDate" validate:"date"`
-	Genre       []string `json:"genre"`
-	LogoURL     string   `json:"logoUrl"`
+// CreateGameRequest represents create game request
+type CreateGameRequest struct {
+	Name        string `json:"name" validate:"required"`
+	Developer   string `json:"developer" validate:"required"`
+	ReleaseDate string `json:"releaseDate" validate:"date"`
+	// Deprecated: use Genres instead
+	Genre        []string `json:"genre"`
+	GenresIDs    []int32  `json:"genresIds"`
+	LogoURL      string   `json:"logoUrl"`
+	Summary      string   `json:"summary"`
+	Slug         string   `json:"slug"`
+	PlatformsIDs []int32  `json:"platformsIDs"`
+	Screenshots  []string `json:"screenshots"`
+	Websites     []string `json:"websites"`
 }
 
-// UpdateGameReq represents model for updating information about game.\
+// UpdateGameRequest represents update game request
 // All fields are optional
-type UpdateGameReq struct {
+type UpdateGameRequest struct {
 	Name        *string   `json:"name"`
 	Developer   *string   `json:"developer" validate:"omitempty"`
-	Publisher   *string   `json:"publisher" validate:"omitempty"`
 	ReleaseDate *string   `json:"releaseDate" validate:"omitempty,date"`
-	Genre       *[]string `json:"genre" validate:"omitempty"`
+	GenresIDs   *[]int32  `json:"genresIds" validate:"omitempty"`
 	LogoURL     *string   `json:"logoUrl"`
+	Summary     *string   `json:"summary"`
+	Slug        *string   `json:"slug"`
+	Platforms   *[]int32  `json:"platforms"`
+	Screenshots *[]string `json:"screenshots"`
+	Websites    *[]string `json:"websites"`
 }
 
-// CreateRatingReq represents rating data we receive from user
-type CreateRatingReq struct {
+// CreateRatingRequest represents create rating request
+type CreateRatingRequest struct {
 	Rating uint8 `json:"rating" validate:"gte=1,lte=5"`
 }
 
-// RatingResp represents response to rating request
-type RatingResp struct {
+// RatingResponse represents rating response
+type RatingResponse struct {
 	GameID int32  `json:"gameId"`
 	UserID string `json:"userId"`
 	Rating uint8  `json:"rating"`
 }
 
-// UserRatingsReq represents get user ratings request
-type UserRatingsReq struct {
+// GetUserRatingsRequest represents get user ratings request
+type GetUserRatingsRequest struct {
 	GameIDs []int32 `json:"gameIds"`
 }
 
-// IDResp represents response with id
-type IDResp struct {
+// IDResponse represents response with id
+type IDResponse struct {
 	ID int32 `json:"id"`
 }
 
-func mapToCreateRating(crr *CreateRatingReq, gameID int32, userID string) repo.CreateRating {
-	return repo.CreateRating{
-		Rating: crr.Rating,
-		UserID: userID,
-		GameID: gameID,
-	}
+// Genre represents genre response
+type Genre struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
-func mapCreateRatingToResp(cr repo.CreateRating) *RatingResp {
-	return &RatingResp{
-		GameID: cr.GameID,
-		UserID: cr.UserID,
-		Rating: cr.Rating,
-	}
+// Company represents company response
+type Company struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
-func mapToCreateGame(cgr *CreateGameReq) repo.CreateGame {
-	return repo.CreateGame{
-		Name:        cgr.Name,
-		Developer:   cgr.Developer,
-		ReleaseDate: cgr.ReleaseDate,
-		Genre:       cgr.Genre,
-		LogoURL:     cgr.LogoURL,
-	}
-}
-
-func mapToUpdateGame(g repo.Game, ugr UpdateGameReq) repo.UpdateGame {
-	update := repo.UpdateGame{
-		Name:        g.Name,
-		Developer:   g.Developer,
-		Publisher:   g.Publisher,
-		ReleaseDate: g.ReleaseDate.String(),
-		LogoURL:     g.LogoURL,
-		Genre:       g.Genre,
-	}
-
-	if ugr.Name != nil {
-		update.Name = *ugr.Name
-	}
-	if ugr.Developer != nil {
-		update.Developer = *ugr.Developer
-	}
-	if ugr.Publisher != nil {
-		update.Publisher = *ugr.Publisher
-	}
-	if ugr.ReleaseDate != nil {
-		update.ReleaseDate = *ugr.ReleaseDate
-	}
-	if ugr.Genre != nil {
-		update.Genre = *ugr.Genre
-	}
-	if ugr.LogoURL != nil && *ugr.LogoURL != "" {
-		update.LogoURL = *ugr.LogoURL
-	}
-
-	return update
-}
-
-func mapGameToResp(g repo.Game) GameResp {
-	return GameResp{
-		ID:          g.ID,
-		Name:        g.Name,
-		Developer:   g.Developer,
-		Publisher:   g.Publisher,
-		ReleaseDate: g.ReleaseDate.String(),
-		Genre:       g.Genre,
-		LogoURL:     g.LogoURL,
-		Rating:      g.Rating,
-	}
+// Platform represents platform response
+type Platform struct {
+	ID           int32  `json:"id"`
+	Name         string `json:"name"`
+	Abbreviation string `json:"abbreviation"`
 }

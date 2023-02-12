@@ -6,8 +6,10 @@ import (
 	"math"
 	"testing"
 
-	game "github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
+	"github.com/OutOfStack/game-library/pkg/types"
+	"github.com/stretchr/testify/require"
 )
 
 // TestGetGames_NotExist_ShouldReturnEmpty tests case when there is no data and we should get empty result
@@ -61,12 +63,12 @@ func TestGetGameByID_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	id := int32(td.Uint32())
 	g, err := s.GetGameByID(context.Background(), id)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound[int32]{}) {
+		if !errors.As(err, &repo.ErrNotFound[int32]{}) {
 			t.Fatalf("error getting game: %v", err)
 		}
 	}
 
-	var wantErr = game.ErrNotFound[int32]{
+	var wantErr = repo.ErrNotFound[int32]{
 		Entity: "game",
 		ID:     id,
 	}
@@ -168,7 +170,7 @@ func TestSearchInfos_DataExists_ShouldReturnMatched(t *testing.T) {
 }
 
 // TestUpdateGame_Valid_ShouldRetrieveEqual tests case when we update game, then fetch this game and they should be equal
-func TestUpdateGmae_Valid_ShouldRetrieveEqual(t *testing.T) {
+func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
@@ -179,13 +181,20 @@ func TestUpdateGmae_Valid_ShouldRetrieveEqual(t *testing.T) {
 		t.Fatalf("error creating game: %v", err)
 	}
 
-	up := game.UpdateGame{
-		Name:        "New game",
-		Developer:   "New developer",
-		Publisher:   "New publisher",
-		ReleaseDate: "2021-11-12",
-		Genre:       []string{"adventure"},
-		LogoURL:     "https://images/999",
+	up := repo.UpdateGame{
+		Name:        td.String(),
+		Developers:  []int32{td.Int32(), td.Int32()},
+		Publishers:  []int32{td.Int32(), td.Int32()},
+		ReleaseDate: types.DateOf(td.Date()).String(),
+		Genres:      []int32{td.Int32(), td.Int32()},
+		LogoURL:     td.String(),
+		Summary:     td.String(),
+		Slug:        td.String(),
+		Platforms:   []int32{td.Int32(), td.Int32()},
+		Screenshots: []string{td.String(), td.String()},
+		Websites:    []string{td.String(), td.String()},
+		IGDBRating:  td.Float64(),
+		IGDBID:      int64(td.Uint32()),
 	}
 
 	err = s.UpdateGame(context.Background(), id, up)
@@ -193,13 +202,13 @@ func TestUpdateGmae_Valid_ShouldRetrieveEqual(t *testing.T) {
 		t.Fatalf("error updating game: %v", err)
 	}
 
-	gg, err := s.GetGameByID(context.Background(), id)
+	g, err := s.GetGameByID(context.Background(), id)
 	if err != nil {
 		t.Fatalf("error getting game: %v", err)
 	}
 
 	want := up
-	got := gg
+	got := g
 	compareUpdateGameAndGame(t, want, got)
 }
 
@@ -209,15 +218,15 @@ func TestUpdateGame_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	defer teardown(t)
 
 	id := int32(td.Uint32())
-	up := game.UpdateGame{ReleaseDate: "2022-05-18"}
+	up := repo.UpdateGame{ReleaseDate: "2022-05-18"}
 	err := s.UpdateGame(context.Background(), id, up)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound[int32]{}) {
+		if !errors.As(err, &repo.ErrNotFound[int32]{}) {
 			t.Fatalf("error updating game: %v", err)
 		}
 	}
 
-	var wantErr = game.ErrNotFound[int32]{
+	var wantErr = repo.ErrNotFound[int32]{
 		Entity: "game",
 		ID:     id,
 	}
@@ -245,12 +254,12 @@ func TestDeleteGame_Valid_ShouldDelete(t *testing.T) {
 
 	g, err := s.GetGameByID(context.Background(), id)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound[int32]{}) {
+		if !errors.As(err, &repo.ErrNotFound[int32]{}) {
 			t.Fatalf("error getting game: %v", err)
 		}
 	}
 
-	var wantErr = game.ErrNotFound[int32]{
+	var wantErr = repo.ErrNotFound[int32]{
 		Entity: "game",
 		ID:     id,
 	}
@@ -272,22 +281,22 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 	}
 
 	var r1, r2, r3 uint8 = td.Uint8(), td.Uint8(), td.Uint8()
-	err = s.AddRating(context.Background(), game.CreateRating{Rating: r1, UserID: td.String(), GameID: id})
+	err = s.AddRating(context.Background(), repo.CreateRating{Rating: r1, UserID: td.String(), GameID: id})
 	if err != nil {
 		t.Fatalf("error adding rating: %v", err)
 	}
-	err = s.AddRating(context.Background(), game.CreateRating{Rating: r2, UserID: td.String(), GameID: id})
+	err = s.AddRating(context.Background(), repo.CreateRating{Rating: r2, UserID: td.String(), GameID: id})
 	if err != nil {
 		t.Fatalf("error adding rating: %v", err)
 	}
-	err = s.AddRating(context.Background(), game.CreateRating{Rating: r3, UserID: td.String(), GameID: id})
+	err = s.AddRating(context.Background(), repo.CreateRating{Rating: r3, UserID: td.String(), GameID: id})
 	if err != nil {
 		t.Fatalf("error adding rating: %v", err)
 	}
 
 	err = s.UpdateGameRating(context.Background(), id)
 	if err != nil {
-		if !errors.As(err, &game.ErrNotFound[int32]{}) {
+		if !errors.As(err, &repo.ErrNotFound[int32]{}) {
 			t.Fatalf("error updating game: %v", err)
 		}
 	}
@@ -311,60 +320,58 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 	}
 }
 
-func getCreateGameData() game.CreateGame {
-	return game.CreateGame{
+func getCreateGameData() repo.CreateGame {
+	return repo.CreateGame{
 		Name:        td.String(),
 		Developer:   td.String(),
+		Developers:  []int32{td.Int32(), td.Int32()},
 		Publisher:   td.String(),
+		Publishers:  []int32{td.Int32(), td.Int32()},
 		ReleaseDate: td.Date().Format("2006-01-02"),
 		Genre:       []string{td.String(), td.String()},
+		Genres:      []int32{td.Int32(), td.Int32()},
 		LogoURL:     td.String(),
+		Summary:     td.String(),
+		Slug:        td.String(),
+		Platforms:   []int32{td.Int32(), td.Int32()},
+		Screenshots: []string{td.String(), td.String()},
+		Websites:    []string{td.String(), td.String()},
+		IGDBRating:  td.Float64(),
+		IGDBID:      int64(td.Uint32()),
 	}
 }
 
-func compareCreateGameAndGame(t *testing.T, want game.CreateGame, got game.Game) {
-	if want.Name != got.Name {
-		t.Errorf("Expected to get game with name %s, got %s", want.Name, got.Name)
-	}
-	if want.Developer != got.Developer {
-		t.Errorf("Expected to get game with developer %s, got %s", want.Developer, got.Developer)
-	}
-	if want.Publisher != got.Publisher {
-		t.Errorf("Expected to get game with publisher %s, got %s", want.Publisher, got.Publisher)
-	}
-	if want.ReleaseDate != got.ReleaseDate.String() {
-		t.Errorf("Expected to get game with release date %s, got %s", want.ReleaseDate, got.ReleaseDate)
-	}
-	if len(want.Genre) != len(got.Genre) {
-		t.Errorf("Expected to get game with %d genres, got %d", len(want.Genre), len(got.Genre))
-	} else if want.Genre[0] != got.Genre[0] {
-		t.Errorf("Expected to get game with genre %s, got %s", want.Genre[0], got.Genre[0])
-	}
-	if want.LogoURL != got.LogoURL {
-		t.Errorf("Expected to get game with logo url %s, got %s", want.LogoURL, got.LogoURL)
-	}
+func compareCreateGameAndGame(t *testing.T, want repo.CreateGame, got repo.Game) {
+	require.Equal(t, want.Name, got.Name, "name should be equal")
+	require.Equal(t, want.Developer, got.Developer, "developer should be equal")
+	require.Equal(t, want.Developers, []int32(got.Developers), "developers should be equal")
+	require.Equal(t, want.Publisher, got.Publisher, "publisher should be equal")
+	require.Equal(t, want.Publishers, []int32(got.Publishers), "publisher should be equal")
+	require.Equal(t, want.ReleaseDate, got.ReleaseDate.String(), "release date should be equal")
+	require.Equal(t, want.Genre, []string(got.Genre), "genre should be equal")
+	require.Equal(t, want.Genres, []int32(got.Genres), "genres should be equal")
+	require.Equal(t, want.LogoURL, got.LogoURL, "logo url should be equal")
+	require.Equal(t, want.Summary, got.Summary, "summary should be equal")
+	require.Equal(t, want.Slug, got.Slug, "slug should be equal")
+	require.Equal(t, want.Platforms, []int32(got.Platforms), "platforms should be equal")
+	require.Equal(t, want.Screenshots, []string(got.Screenshots), "screenshots should be equal")
+	require.Equal(t, want.Websites, []string(got.Websites), "websites should be equal")
+	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.1, "igdb rating should be equal")
+	require.Equal(t, want.IGDBID, got.IGDBID, "igdb id should be equal")
 }
 
-func compareUpdateGameAndGame(t *testing.T, want game.UpdateGame, got game.Game) {
-	if want.Name != got.Name {
-		t.Errorf("Expected to get game with name %s, got %s", want.Name, got.Name)
-	}
-	if want.Developer != got.Developer {
-		t.Errorf("Expected to get game with developer %s, got %s", want.Developer, got.Developer)
-	}
-	if want.Publisher != got.Publisher {
-		t.Errorf("Expected to get game with publisher %s, got %s", want.Publisher, got.Publisher)
-	}
-	if want.ReleaseDate != got.ReleaseDate.String() {
-		t.Errorf("Expected to get game with release date %s, got %s", want.ReleaseDate, got.ReleaseDate)
-	}
-	if len(want.Genre) != len(got.Genre) {
-		t.Errorf("Expected to get game with %d genres, got %d", len(want.Genre), len(got.Genre))
-	}
-	if want.Genre[0] != got.Genre[0] {
-		t.Errorf("Expected to get game with genre %s, got %s", want.Genre[0], got.Genre[0])
-	}
-	if want.LogoURL != got.LogoURL {
-		t.Errorf("Expected to get game with logo url %s, got %s", want.LogoURL, got.LogoURL)
-	}
+func compareUpdateGameAndGame(t *testing.T, want repo.UpdateGame, got repo.Game) {
+	require.Equal(t, want.Name, got.Name, "name should be equal")
+	require.Equal(t, want.Developers, []int32(got.Developers), "developers should be equal")
+	require.Equal(t, want.Publishers, []int32(got.Publishers), "publisher should be equal")
+	require.Equal(t, want.ReleaseDate, got.ReleaseDate.String(), "release date should be equal")
+	require.Equal(t, want.Genres, []int32(got.Genres), "genres should be equal")
+	require.Equal(t, want.LogoURL, got.LogoURL, "logo url should be equal")
+	require.Equal(t, want.Summary, got.Summary, "summary should be equal")
+	require.Equal(t, want.Slug, got.Slug, "slug should be equal")
+	require.Equal(t, want.Platforms, []int32(got.Platforms), "platforms should be equal")
+	require.Equal(t, want.Screenshots, []string(got.Screenshots), "screenshots should be equal")
+	require.Equal(t, want.Websites, []string(got.Websites), "websites should be equal")
+	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.1, "igdb rating should be equal")
+	require.Equal(t, want.IGDBID, got.IGDBID, "igdb id should be equal")
 }

@@ -17,9 +17,9 @@ import (
 // @ID rate-game
 // @Accept  json
 // @Produce json
-// @Param   id 		path int32 				true "game ID"
-// @Param	rating 	body CreateRatingReq 	true "game rating"
-// @Success 200 {object} RatingResp
+// @Param   id 		path int32 					true "game ID"
+// @Param	rating 	body CreateRatingRequest 	true "game rating"
+// @Success 200 {object} RatingResponse
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -35,8 +35,8 @@ func (g *Game) RateGame(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.Int("data.id", int(gameID)))
 
-	var cr CreateRatingReq
-	if err := web.Decode(c, &cr); err != nil {
+	var cr CreateRatingRequest
+	if err = web.Decode(c, &cr); err != nil {
 		c.Error(errors.Wrap(err, "decoding rating"))
 		return
 	}
@@ -71,7 +71,7 @@ func (g *Game) RateGame(c *gin.Context) {
 		g.log.Error("updating game rating", zap.Int32("gameID", gameID), zap.Error(err))
 	}
 
-	web.Respond(c, mapCreateRatingToResp(rating), http.StatusOK)
+	web.Respond(c, mapToRatingResponse(rating), http.StatusOK)
 }
 
 // GetUserRatings godoc
@@ -79,7 +79,7 @@ func (g *Game) RateGame(c *gin.Context) {
 // @Description returns user ratings for specified games
 // @ID get-user-ratings
 // @Produce json
-// @Param   gameIds body UserRatingsReq 	true "games ids"
+// @Param   gameIds body GetUserRatingsRequest 	true "games ids"
 // @Success 200 {object} map[int32]uint8
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -88,7 +88,7 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.rating.getuserratings")
 	defer span.End()
 
-	var ur UserRatingsReq
+	var ur GetUserRatingsRequest
 	err := web.Decode(c, &ur)
 	if err != nil {
 		c.Error(errors.Wrap(err, "decoding user ratings"))

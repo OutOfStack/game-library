@@ -19,7 +19,7 @@ var (
 
 // EntityID generics type for entity id
 type EntityID interface {
-	int32 | string
+	int32 | int64 | string
 }
 
 // ErrNotFound is used when a requested entity with id does not exist

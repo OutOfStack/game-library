@@ -59,7 +59,7 @@ const (
 // Image aliases
 const (
 	ImageThumbAlias         = "thumb"
-	ImageCoverBig2xAlias    = "cover_big_2x"
+	ImageLogoMed2xAlias     = "logo_med_2x"
 	ImageScreenshotBigAlias = "screenshot_big"
 )
 

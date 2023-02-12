@@ -115,7 +115,7 @@ func mapToUpdateGame(g repo.Game, ugr UpdateGameRequest) repo.UpdateGame {
 		update.Name = *ugr.Name
 	}
 	if ugr.Developer != nil {
-		update.Developer = *ugr.Developer
+		update.Developer = *ugr.Developer //nolint:staticcheck
 	}
 	if ugr.ReleaseDate != nil {
 		update.ReleaseDate = *ugr.ReleaseDate

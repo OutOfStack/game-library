@@ -6,7 +6,7 @@ run:
 	go run ./cmd/game-library-api/.
 
 test:
-	go test -v ./...
+	go test -v -race ./... 
 
 dockerrunpg:
 	docker-compose up -d --no-recreate db

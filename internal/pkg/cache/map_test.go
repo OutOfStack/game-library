@@ -10,8 +10,6 @@ import (
 )
 
 func TestKVMap_NotExpired_ShouldReturnValues(t *testing.T) {
-	t.Parallel()
-
 	m := cache.NewKVMap[int64, int64](1 * time.Minute)
 	key, value := td.Int64(), td.Int64()
 	m.Set(key, value)
@@ -25,8 +23,6 @@ func TestKVMap_NotExpired_ShouldReturnValues(t *testing.T) {
 }
 
 func TestKVMap_Expired_ShouldNotReturnValues(t *testing.T) {
-	t.Parallel()
-
 	m := cache.NewKVMap[int64, int64](1 * time.Millisecond)
 	key, value := td.Int64(), td.Int64()
 	m.Set(key, value)

@@ -45,3 +45,8 @@ func ParseDate(s string) (Date, error) {
 	}
 	return Date(d), nil
 }
+
+// DateOf returns Date of time.Time instance
+func DateOf(t time.Time) Date {
+	return Date(civil.DateOf(t))
+}

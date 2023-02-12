@@ -2,6 +2,7 @@ package taskprocessor
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"go.uber.org/zap"
 )
 
 const (
@@ -91,7 +93,9 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 		}
 		igdbCompanies := make(map[int64]repo.Company)
 		for _, c := range companies {
-			igdbCompanies[c.IGDBID] = c
+			if c.IGDBID.Valid {
+				igdbCompanies[c.IGDBID.Int64] = c
+			}
 		}
 
 		// get stored genres
@@ -103,6 +107,8 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 		for _, g := range genres {
 			igdbGenres[g.IGDBID] = g
 		}
+
+		var gamesAdded int
 
 		for i := 0; i < fetchGamesRequestsCount; i++ {
 			ratingsCount, limit := getMinRatingsCountAndLimit(s.LastReleasedAt)
@@ -118,8 +124,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					s.LastReleasedAt = time.Unix(g.FirstReleaseDate, 0)
 					settings = s.convertToTaskSettings()
 					continue
-				}
-				if !errors.As(err, &repo.ErrNotFound[int32]{}) {
+				} else if !errors.As(err, &repo.ErrNotFound[int64]{}) {
 					return settings, fmt.Errorf("get game id by igdb id: %v", err)
 				}
 
@@ -131,14 +136,14 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 							developersIDs = append(developersIDs, c.ID)
 						} else {
 							c.Name = ic.Company.Name
-							c.IGDBID = ic.Company.ID
+							c.IGDBID = sql.NullInt64{Int64: ic.Company.ID, Valid: true}
 							id, cErr := tp.storage.CreateCompany(ctx, c)
 							if cErr != nil {
 								return settings, fmt.Errorf("create company %v: %v", c, cErr)
 							}
 							c.ID = id
 							developersIDs = append(developersIDs, id)
-							igdbCompanies[c.IGDBID] = c
+							igdbCompanies[c.IGDBID.Int64] = c
 						}
 					}
 					if ic.Publisher {
@@ -146,14 +151,14 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 							publishersIDs = append(publishersIDs, c.ID)
 						} else {
 							c.Name = ic.Company.Name
-							c.IGDBID = ic.Company.ID
+							c.IGDBID = sql.NullInt64{Int64: ic.Company.ID, Valid: true}
 							id, cErr := tp.storage.CreateCompany(ctx, c)
 							if cErr != nil {
 								return settings, fmt.Errorf("create company %v: %v", c, cErr)
 							}
 							c.ID = id
 							publishersIDs = append(publishersIDs, id)
-							igdbCompanies[c.IGDBID] = c
+							igdbCompanies[c.IGDBID.Int64] = c
 						}
 					}
 				}
@@ -193,7 +198,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				}
 
 				// get logo url
-				igdbLogoURL := igdb.GetImageURL(g.Cover.URL, igdb.ImageCoverBig2xAlias)
+				igdbLogoURL := igdb.GetImageURL(g.Cover.URL, igdb.ImageLogoMed2xAlias)
 				logoURL, uErr := tp.uploadcareProvider.UploadImageFromURL(ctx, igdbLogoURL)
 				if uErr != nil {
 					return settings, fmt.Errorf("upload logo %s: %v", igdbLogoURL, uErr)
@@ -234,6 +239,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					return settings, fmt.Errorf("create game %s with igdb id %d: %v", cg.Name, cg.IGDBID, cErr)
 				}
 
+				gamesAdded++
 				s.LastReleasedAt = time.Unix(g.FirstReleaseDate, 0)
 				settings = s.convertToTaskSettings()
 			}
@@ -242,6 +248,8 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				s.LastReleasedAt = time.Now()
 			}
 		}
+
+		tp.log.Info("task info", zap.String("name", FetchIGDBGamesTaskName), zap.Int("games_added", gamesAdded), zap.Time("last_released_at", s.LastReleasedAt))
 
 		return s.convertToTaskSettings(), nil
 	}

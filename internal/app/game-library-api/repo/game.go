@@ -53,8 +53,8 @@ func (s *Storage) SearchGames(ctx context.Context, search string) (list []Game, 
 	defer span.End()
 
 	const q = `
-	SELECT id, name, developer, publisher, release_date, genre, logo_url, rating, summary, genres, platforms, screenshots, developers, 
-	       publishers, websites, slug, igdb_rating
+	SELECT id, name, developer, developers, publisher, publishers, release_date, genre, genres, logo_url, rating, summary, 
+	       platforms, screenshots, websites, slug, igdb_rating, igdb_id
 	FROM games
 	WHERE LOWER(name) LIKE $1`
 
@@ -71,8 +71,8 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (g Game, err error)
 	ctx, span := tracer.Start(ctx, "db.game.getbyid")
 	defer span.End()
 
-	const q = `SELECT id, name, developer, publisher, release_date, genre, logo_url, rating, summary, genres, platforms, screenshots, developers, 
-	       publishers, websites, slug, igdb_rating
+	const q = `SELECT id, name, developer, developers, publisher, publishers, release_date, genre, genres, logo_url, rating, 
+       summary, platforms, screenshots, websites, slug, igdb_rating, igdb_id
 	FROM games
 	WHERE id = $1`
 
@@ -98,7 +98,7 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 
 	if err = s.db.GetContext(ctx, &id, q, igdbID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, ErrNotFound[int32]{Entity: "game", ID: int32(igdbID)}
+			return 0, ErrNotFound[int64]{Entity: "game", ID: igdbID}
 		}
 		return 0, err
 	}
@@ -134,14 +134,17 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug UpdateGame) error
 	defer span.End()
 
 	const q = `UPDATE games 
-	SET name = $2, developer = $3, publisher = $4, release_date = $5, genre = $6, logo_url = $7
+	SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8, platforms = $9,
+	    screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, igdb_id = $14
 	WHERE id = $1`
 
 	releaseDate, err := types.ParseDate(ug.ReleaseDate)
 	if err != nil {
 		return fmt.Errorf("invalid date %s: %v", releaseDate.String(), err)
 	}
-	res, err := s.db.ExecContext(ctx, q, id, ug.Name, ug.Developer, ug.Publisher, releaseDate.String(), pq.StringArray(ug.Genre), ug.LogoURL)
+	res, err := s.db.ExecContext(ctx, q, id, ug.Name, pq.Int32Array(ug.Developers), pq.Int32Array(ug.Publishers), releaseDate.String(),
+		pq.Int32Array(ug.Genres), ug.LogoURL, ug.Summary, pq.Int32Array(ug.Platforms), pq.StringArray(ug.Screenshots),
+		pq.StringArray(ug.Websites), ug.Slug, ug.IGDBRating, ug.IGDBID)
 	if err != nil {
 		return fmt.Errorf("updating game %d: %v", id, err)
 	}

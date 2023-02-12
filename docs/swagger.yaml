@@ -1,37 +1,75 @@
 basePath: /api
 definitions:
-  handler.CreateGameReq:
+  handler.Company:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.CreateGameRequest:
     properties:
       developer:
         type: string
       genre:
+        description: 'Deprecated: use Genres instead'
         items:
           type: string
+        type: array
+      genresIds:
+        items:
+          type: integer
         type: array
       logoUrl:
         type: string
       name:
         type: string
+      platformsIDs:
+        items:
+          type: integer
+        type: array
       releaseDate:
         type: string
+      screenshots:
+        items:
+          type: string
+        type: array
+      slug:
+        type: string
+      summary:
+        type: string
+      websites:
+        items:
+          type: string
+        type: array
     required:
     - developer
     - name
     type: object
-  handler.CreateRatingReq:
+  handler.CreateRatingRequest:
     properties:
       rating:
         maximum: 5
         minimum: 1
         type: integer
     type: object
-  handler.GameResp:
+  handler.GameResponse:
     properties:
       developer:
+        description: 'Deprecated: use Developers instead'
         type: string
+      developers:
+        items:
+          $ref: '#/definitions/handler.Company'
+        type: array
       genre:
+        description: 'Deprecated: use Genres instead'
         items:
           type: string
+        type: array
+      genres:
+        items:
+          $ref: '#/definitions/handler.Genre'
         type: array
       id:
         type: integer
@@ -39,19 +77,63 @@ definitions:
         type: string
       name:
         type: string
+      platforms:
+        items:
+          $ref: '#/definitions/handler.Platform'
+        type: array
       publisher:
+        description: 'Deprecated: use Publishers instead'
         type: string
+      publishers:
+        items:
+          $ref: '#/definitions/handler.Company'
+        type: array
       rating:
         type: number
       releaseDate:
         type: string
+      screenshots:
+        items:
+          type: string
+        type: array
+      slug:
+        type: string
+      summary:
+        type: string
+      websites:
+        items:
+          type: string
+        type: array
     type: object
-  handler.IDResp:
+  handler.Genre:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.GetUserRatingsRequest:
+    properties:
+      gameIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  handler.IDResponse:
     properties:
       id:
         type: integer
     type: object
-  handler.RatingResp:
+  handler.Platform:
+    properties:
+      abbreviation:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.RatingResponse:
     properties:
       gameId:
         type: integer
@@ -60,28 +142,35 @@ definitions:
       userId:
         type: string
     type: object
-  handler.UpdateGameReq:
+  handler.UpdateGameRequest:
     properties:
       developer:
         type: string
-      genre:
+      genresIds:
         items:
-          type: string
+          type: integer
         type: array
       logoUrl:
         type: string
       name:
         type: string
-      publisher:
-        type: string
-      releaseDate:
-        type: string
-    type: object
-  handler.UserRatingsReq:
-    properties:
-      gameIds:
+      platforms:
         items:
           type: integer
+        type: array
+      releaseDate:
+        type: string
+      screenshots:
+        items:
+          type: string
+        type: array
+      slug:
+        type: string
+      summary:
+        type: string
+      websites:
+        items:
+          type: string
         type: array
     type: object
   web.ErrorResponse:
@@ -117,7 +206,7 @@ paths:
         in: query
         name: pageSize
         type: integer
-      - description: last fetched Id
+      - description: last fetched id
         in: query
         name: lastId
         type: integer
@@ -128,7 +217,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.GameResp'
+              $ref: '#/definitions/handler.GameResponse'
             type: array
         "500":
           description: Internal Server Error
@@ -146,14 +235,14 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/handler.CreateGameReq'
+          $ref: '#/definitions/handler.CreateGameRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handler.IDResp'
+            $ref: '#/definitions/handler.IDResponse'
         "400":
           description: Bad Request
           schema:
@@ -208,7 +297,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.GameResp'
+            $ref: '#/definitions/handler.GameResponse'
         "400":
           description: Bad Request
           schema:
@@ -238,7 +327,7 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateGameReq'
+          $ref: '#/definitions/handler.UpdateGameRequest'
       produces:
       - application/json
       responses:
@@ -274,14 +363,14 @@ paths:
         name: rating
         required: true
         schema:
-          $ref: '#/definitions/handler.CreateRatingReq'
+          $ref: '#/definitions/handler.CreateRatingRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.RatingResp'
+            $ref: '#/definitions/handler.RatingResponse'
         "400":
           description: Bad Request
           schema:
@@ -311,13 +400,49 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.GameResp'
+              $ref: '#/definitions/handler.GameResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Searches games by name
+  /genres:
+    get:
+      description: returns all genres
+      operationId: get-genres
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.Genre'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get genres
+  /platforms:
+    get:
+      description: returns all platforms
+      operationId: get-platforms
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.Platform'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get platforms
   /user/ratings:
     post:
       description: returns user ratings for specified games
@@ -328,7 +453,7 @@ paths:
         name: gameIds
         required: true
         schema:
-          $ref: '#/definitions/handler.UserRatingsReq'
+          $ref: '#/definitions/handler.GetUserRatingsRequest'
       produces:
       - application/json
       responses:

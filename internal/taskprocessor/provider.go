@@ -100,6 +100,7 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 		return err
 	}
 
+	tp.log.Info("task started", zap.String("name", name))
 	task.Settings, err = taskFn(ctx, settings)
 	if err != nil {
 		tp.log.Error("running task", zap.Error(err))
@@ -107,6 +108,7 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 	} else {
 		task.Status = repo.IdleTaskStatus
 	}
+	tp.log.Info("task finished", zap.String("name", name), zap.Error(err))
 
 	return tp.storage.UpdateTask(ctx, nil, task)
 }

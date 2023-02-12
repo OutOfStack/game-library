@@ -105,7 +105,7 @@ func GetImageURL(igdbImageURL string, imageType string) string {
 	if err != nil {
 		return ""
 	}
-	u.Scheme = "https"
+	u.Scheme = "http"
 	return u.String()
 }
 

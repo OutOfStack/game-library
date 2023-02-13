@@ -38,8 +38,15 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 		PublicKey: conf.PublicKey,
 	}
 
+	cl := otelhttp.DefaultClient
+	// skip due to handshake error running in k8s pod
+	/*cl.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}*/
+
 	client, err := ucare.NewClient(creds, &ucare.Config{
 		SignBasedAuthentication: true,
+		HTTPClient:              cl,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating uploadcare client: %v", err)
@@ -48,7 +55,7 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 	return &Client{
 		log: log,
 		uc:  &client,
-		hc:  otelhttp.DefaultClient,
+		hc:  cl,
 	}, nil
 }
 

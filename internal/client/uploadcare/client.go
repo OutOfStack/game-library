@@ -3,6 +3,7 @@ package uploadcare
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,9 +41,10 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 
 	cl := otelhttp.DefaultClient
 	// skip due to handshake error running in k8s pod
-	/*cl.Transport = &http.Transport{
+	// TODO: find a right solution
+	cl.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}*/
+	}
 
 	client, err := ucare.NewClient(creds, &ucare.Config{
 		SignBasedAuthentication: true,

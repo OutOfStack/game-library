@@ -14,7 +14,7 @@ COPY . .
 RUN go build -o ./out/game-library-api cmd/game-library-api/main.go
 
 # run
-FROM ubuntu:22.04
+FROM alpine:3.17
 
 WORKDIR /app
 

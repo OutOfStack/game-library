@@ -140,7 +140,7 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 
 	resp, err := otelhttp.DefaultClient.Do(req)
 	if err != nil {
-		c.log.Error("calling token api", zap.String("url", reqURL), zap.Error(err))
+		c.log.Error("calling token api", zap.String("url", c.conf.TokenURL), zap.Error(err))
 		return "", fmt.Errorf("token api unavailable: %v", err)
 	}
 	defer resp.Body.Close()

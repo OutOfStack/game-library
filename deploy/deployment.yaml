@@ -95,8 +95,6 @@ spec:
                 envFrom:
                   - configMapRef:
                       name: zipkin-config
-            # had problems with `ClusterFirst` in microk8s
-            dnsPolicy: Default
             hostAliases:
               - ip: _K8S_IP_
                 hostnames:

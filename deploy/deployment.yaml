@@ -88,13 +88,16 @@ spec:
         spec:
             containers:
               - name: zipkin
-                image: openzipkin/zipkin:2.23
+                image: openzipkin/zipkin:2.24
                 ports:
                   - name: zipkin
                     containerPort: 9411
                 envFrom:
                   - configMapRef:
                       name: zipkin-config
+            # had problems with `ClusterFirst` in microk8s
+            dnsPolicy: Default
+            hostNetwork: true
             hostAliases:
               - ip: _K8S_IP_
                 hostnames:

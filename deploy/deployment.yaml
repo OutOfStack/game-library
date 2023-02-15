@@ -61,9 +61,25 @@ spec:
                       name: game-library-dbconfig
                   - secretRef:
                       name: game-library-igdb
+                  - secretRef:
+                      name: game-library-uploadcare
                   - configMapRef:
                       name: game-library-config
                 imagePullPolicy: Always
+            # had problems with https calls in pod (tls handshake failure). 
+            # 10.152.183.10 is kube-dns 
+            dnsPolicy: "None"
+            dnsConfig:
+                nameservers:
+                  - 10.152.183.10
+                  - 8.8.8.8
+                searches:
+                  - game-library.svc.cluster.local
+                  - svc.cluster.local
+                  - cluster.local
+                options:
+                  - name: ndots
+                    value: "1"
             hostAliases:
               - ip: _K8S_IP_
                 hostnames:

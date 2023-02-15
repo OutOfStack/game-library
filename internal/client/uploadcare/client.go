@@ -38,8 +38,11 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 		PublicKey: conf.PublicKey,
 	}
 
-	client, err := ucare.NewClient(creds, &ucare.Config{
+	otelClient := otelhttp.DefaultClient
+
+	uClient, err := ucare.NewClient(creds, &ucare.Config{
 		SignBasedAuthentication: true,
+		HTTPClient:              otelClient,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating uploadcare client: %v", err)
@@ -47,8 +50,8 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 
 	return &Client{
 		log: log,
-		uc:  &client,
-		hc:  otelhttp.DefaultClient,
+		uc:  &uClient,
+		hc:  otelClient,
 	}, nil
 }
 

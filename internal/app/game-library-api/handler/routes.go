@@ -57,6 +57,7 @@ func Service(logger *zap.Logger, db *sqlx.DB, auth *auth_.Auth, storage *repo.St
 	r.GET("/api/games", g.GetGames)
 	r.GET("/api/games/:id", g.GetGame)
 	r.GET("/api/games/search", g.SearchGames)
+	r.GET("/api/games/count", g.GetGamesCount)
 	r.POST("/api/games",
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
 		g.CreateGame)

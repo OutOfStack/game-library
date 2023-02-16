@@ -7,6 +7,11 @@ definitions:
       name:
         type: string
     type: object
+  handler.CountResponse:
+    properties:
+      count:
+        type: integer
+    type: object
   handler.CreateGameRequest:
     properties:
       developer:
@@ -392,6 +397,24 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Rate game
+  /games/count:
+    get:
+      description: returns games count
+      operationId: get-games-count
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.CountResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get games count
   /games/search:
     get:
       description: returns games filtered by provided name

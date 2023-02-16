@@ -110,6 +110,33 @@ const docTemplate = `{
                 }
             }
         },
+        "/games/count": {
+            "get": {
+                "description": "returns games count",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get games count",
+                "operationId": "get-games-count",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.CountResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/games/search": {
             "get": {
                 "description": "returns games filtered by provided name",
@@ -450,6 +477,14 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.CountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
                 }
             }
         },

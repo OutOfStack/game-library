@@ -59,7 +59,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy Orde
 	}
 
 	query := sq.Select("id", "name", "developer", "publisher", "release_date", "genre", "logo_url", "rating", "summary", "genres", "platforms",
-		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id", "(extract(year from release_date)/2 + igdb_rating) weight").
+		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id", "(extract(year from release_date)/2 + igdb_rating + rating) weight").
 		From("games").
 		Limit(uint64(pageSize)).
 		Offset(uint64((page - 1) * pageSize)).
@@ -75,6 +75,22 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy Orde
 	}
 
 	return list, nil
+}
+
+// GetGamesCount returns games count
+func (s *Storage) GetGamesCount(ctx context.Context) (count uint64, err error) {
+	ctx, span := tracer.Start(ctx, "db.game.count")
+	defer span.End()
+
+	const q = `
+	SELECT count(id)
+	FROM games`
+
+	if err = s.db.GetContext(ctx, &count, q); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // SearchGames returns list of games by search query

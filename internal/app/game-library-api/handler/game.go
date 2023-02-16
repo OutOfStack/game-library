@@ -105,6 +105,27 @@ func (g *Game) GetGames(c *gin.Context) {
 	web.Respond(c, response, http.StatusOK)
 }
 
+// GetGamesCount godoc
+// @Summary Get games count
+// @Description returns games count
+// @ID get-games-count
+// @Produce json
+// @Success 200 {array}  CountResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/count [get]
+func (g *Game) GetGamesCount(c *gin.Context) {
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.getgamescount")
+	defer span.End()
+
+	count, err := g.storage.GetGamesCount(ctx)
+	if err != nil {
+		c.Error(errors.Wrap(err, "getting games count"))
+		return
+	}
+
+	web.Respond(c, CountResponse{Count: count}, http.StatusOK)
+}
+
 // GetGame godoc
 // @Summary Get game
 // @Description returns game by ID

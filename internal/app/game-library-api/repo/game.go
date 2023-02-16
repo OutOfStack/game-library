@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -27,20 +28,49 @@ func New(db *sqlx.DB) *Storage {
 
 var tracer = otel.Tracer("")
 
-// GetGames returns list of games limited by pageSize and starting id
-func (s *Storage) GetGames(ctx context.Context, pageSize int, lastID int32) (list []Game, err error) {
+type OrderGamesBy string
+
+// OrderGamesBy options
+const (
+	OrderGamesByDefault     OrderGamesBy = "weight"
+	OrderGamesByReleaseDate OrderGamesBy = "release_date"
+	OrderGamesByName        OrderGamesBy = "name"
+)
+
+// GetGames returns list of games with specified pageSize at specified page
+func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy OrderGamesBy) (list []Game, err error) {
 	ctx, span := tracer.Start(ctx, "db.game.get")
 	defer span.End()
 
-	const q = `
-	SELECT id, name, developer, publisher, release_date, genre, logo_url, rating, summary, genres, platforms, screenshots, developers, 
-	       publishers, websites, slug, igdb_rating, igdb_id
-	FROM games
-	WHERE id > $1
-	ORDER BY id
-	FETCH FIRST $2 ROWS ONLY`
+	if page < 1 {
+		page = 1
+	}
 
-	if err = s.db.SelectContext(ctx, &list, q, lastID, pageSize); err != nil {
+	var order string
+	switch orderBy {
+	case OrderGamesByDefault:
+		order = "DESC"
+	case OrderGamesByName:
+		order = "ASC"
+	case OrderGamesByReleaseDate:
+		order = "DESC"
+	default:
+		return nil, fmt.Errorf("unsupported OrderGamesBy option")
+	}
+
+	query := sq.Select("id", "name", "developer", "publisher", "release_date", "genre", "logo_url", "rating", "summary", "genres", "platforms",
+		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id", "(extract(year from release_date)/2 + igdb_rating) weight").
+		From("games").
+		Limit(uint64(pageSize)).
+		Offset(uint64((page - 1) * pageSize)).
+		OrderBy(fmt.Sprintf("%s %s", orderBy, order))
+
+	q, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.db.SelectContext(ctx, &list, q, args...); err != nil {
 		return nil, err
 	}
 

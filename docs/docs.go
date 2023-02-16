@@ -33,8 +33,19 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "last fetched id",
-                        "name": "lastId",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "default",
+                            "name",
+                            "releaseDate"
+                        ],
+                        "type": "string",
+                        "description": "order by",
+                        "name": "orderBy",
                         "in": "query"
                     }
                 ],

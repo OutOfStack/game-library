@@ -206,10 +206,18 @@ paths:
         in: query
         name: pageSize
         type: integer
-      - description: last fetched id
+      - description: page
         in: query
-        name: lastId
+        name: page
         type: integer
+      - description: order by
+        enum:
+        - default
+        - name
+        - releaseDate
+        in: query
+        name: orderBy
+        type: string
       produces:
       - application/json
       responses:

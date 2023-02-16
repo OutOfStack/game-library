@@ -29,6 +29,8 @@ type Game struct {
 	Websites    pq.StringArray `db:"websites"`
 	IGDBRating  float64        `db:"igdb_rating"`
 	IGDBID      int64          `db:"igdb_id"`
+	// Readonly field
+	Weight float64 `db:"weight"`
 }
 
 // CreateGame represents data for creating game

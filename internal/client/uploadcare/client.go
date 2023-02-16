@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
@@ -94,9 +95,13 @@ func (c *Client) UploadImageFromURL(ctx context.Context, imageURL string) (newUR
 	}
 	fSpan.End()
 
-	return getFileURL(fileID), nil
+	return getFileURL(fileID)
 }
 
-func getFileURL(fileID string) string {
-	return path.Join(uploadcareCDNURL, fileID) + "/"
+func getFileURL(fileID string) (string, error) {
+	s, err := url.JoinPath(uploadcareCDNURL, fileID, "/")
+	if err != nil {
+		return "", fmt.Errorf("get uploadcare file url for fileID %s: %v", fileID, err)
+	}
+	return s, nil
 }

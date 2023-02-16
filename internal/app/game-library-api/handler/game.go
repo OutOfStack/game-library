@@ -49,8 +49,9 @@ var (
 // @Description returns paginated games
 // @ID get-games
 // @Produce json
-// @Param pageSize query int32 false "page size"
-// @Param lastId   query int32 false "last fetched id"
+// @Param pageSize query int32  false "page size"
+// @Param page     query int32  false "page"
+// @Param orderBy  query string false "order by"	Enums(default, name, releaseDate)
 // @Success 200 {array}  GameResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
@@ -58,21 +59,34 @@ func (g *Game) GetGames(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getgames")
 	defer span.End()
 
-	psParam := c.DefaultQuery("pageSize", "20")
-	liParam := c.DefaultQuery("lastId", "0")
-	pageSize, err := strconv.ParseInt(psParam, 10, 32)
+	pageSizeParam := c.DefaultQuery("pageSize", "20")
+	pageParam := c.DefaultQuery("page", "1")
+	orderByParam := c.DefaultQuery("orderBy", "default")
+	pageSize, err := strconv.ParseInt(pageSizeParam, 10, 32)
 	if err != nil || pageSize <= 0 {
 		c.Error(web.NewRequestError(errors.New("Incorrect page size. Should be greater than 0"), http.StatusBadRequest))
 		return
 	}
-	lastID, err := strconv.ParseInt(liParam, 10, 32)
-	if err != nil || lastID < 0 {
-		c.Error(web.NewRequestError(errors.New("Incorrect last Id. Should be greater or equal to 0"), http.StatusBadRequest))
+	page, err := strconv.ParseInt(pageParam, 10, 32)
+	if err != nil || page < 0 {
+		c.Error(web.NewRequestError(errors.New("Incorrect page. Should be greater or equal to 1"), http.StatusBadRequest))
 		return
 	}
-	span.SetAttributes(attribute.Int64("data.pagesize", pageSize), attribute.Int64("data.lastid", lastID))
+	var orderGamesBy repo.OrderGamesBy
+	switch orderByParam {
+	case "default":
+		orderGamesBy = repo.OrderGamesByDefault
+	case "name":
+		orderGamesBy = repo.OrderGamesByName
+	case "releaseDate":
+		orderGamesBy = repo.OrderGamesByReleaseDate
+	default:
+		c.Error(web.NewRequestError(errors.New("Incorrect orderBy. Should be one of: default, releaseDate, name"), http.StatusBadRequest))
+		return
+	}
+	span.SetAttributes(attribute.Int64("data.pagesize", pageSize), attribute.Int64("data.page", page), attribute.String("data.orderby", orderByParam))
 
-	list, err := g.storage.GetGames(ctx, int(pageSize), int32(lastID))
+	list, err := g.storage.GetGames(ctx, int(pageSize), int(page), orderGamesBy)
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
 		return
@@ -89,6 +103,27 @@ func (g *Game) GetGames(c *gin.Context) {
 	}
 
 	web.Respond(c, response, http.StatusOK)
+}
+
+// GetGamesCount godoc
+// @Summary Get games count
+// @Description returns games count
+// @ID get-games-count
+// @Produce json
+// @Success 200 {array}  CountResponse
+// @Failure 500 {object} web.ErrorResponse
+// @Router /games/count [get]
+func (g *Game) GetGamesCount(c *gin.Context) {
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.getgamescount")
+	defer span.End()
+
+	count, err := g.storage.GetGamesCount(ctx)
+	if err != nil {
+		c.Error(errors.Wrap(err, "getting games count"))
+		return
+	}
+
+	web.Respond(c, CountResponse{Count: count}, http.StatusOK)
 }
 
 // GetGame godoc

@@ -15,7 +15,7 @@ func TestGetGames_NotExist_ShouldReturnEmpty(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	games, err := s.GetGames(context.Background(), 20, 0)
+	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByDefault)
 	require.NoError(t, err, "err should be nil")
 
 	require.Zero(t, len(games), "len of games should be 0")
@@ -31,12 +31,93 @@ func TestGetGames_DataExists_ShouldBeEqual(t *testing.T) {
 	_, err := s.CreateGame(context.Background(), cg)
 	require.NoError(t, err, "err should be nil")
 
-	games, err := s.GetGames(context.Background(), 20, 0)
+	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByDefault)
 	require.NoError(t, err, "err should be nil")
 
 	require.Equal(t, 1, len(games), "len of games should be 1")
 
 	want := cg
+	got := games[0]
+	compareCreateGameAndGame(t, want, got)
+}
+
+// TestGetGames_OrderByDefault_ShouldReturnOrdered tests case when we add two game, then order by default and sort should work correctly
+func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	cg1 := getCreateGameData()
+	cg1.ReleaseDate = "1990-01-01"
+	cg1.IGDBRating = 100
+	cg2 := getCreateGameData()
+	cg2.ReleaseDate = "2023-01-01"
+	cg2.IGDBRating = 95
+
+	_, err := s.CreateGame(context.Background(), cg1)
+	require.NoError(t, err, "err should be nil")
+
+	_, err = s.CreateGame(context.Background(), cg2)
+	require.NoError(t, err, "err should be nil")
+
+	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByDefault)
+	require.NoError(t, err, "err should be nil")
+
+	require.Equal(t, 2, len(games), "len of games should be 2")
+
+	// weight of game 2 is higher
+	want := cg2
+	got := games[0]
+	compareCreateGameAndGame(t, want, got)
+}
+
+// TestGetGames_OrderByName_ShouldReturnOrdered tests case when we add two game, then order by name and sort should work correctly
+func TestGetGames_OrderByName_ShouldReturnOrdered(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	cg1 := getCreateGameData()
+	cg1.Name = "Yakuza"
+	cg2 := getCreateGameData()
+	cg2.Name = "Adventure Time"
+
+	_, err := s.CreateGame(context.Background(), cg1)
+	require.NoError(t, err, "err should be nil")
+
+	_, err = s.CreateGame(context.Background(), cg2)
+	require.NoError(t, err, "err should be nil")
+
+	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByName)
+	require.NoError(t, err, "err should be nil")
+
+	require.Equal(t, 2, len(games), "len of games should be 2")
+
+	want := cg2
+	got := games[0]
+	compareCreateGameAndGame(t, want, got)
+}
+
+// TestGetGames_OrderByReleaseDate_ShouldReturnOrdered tests case when we add two game, then order by release date and sort should work correctly
+func TestGetGames_OrderByReleaseDate_ShouldReturnOrdered(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	cg1 := getCreateGameData()
+	cg1.ReleaseDate = "1990-01-01"
+	cg2 := getCreateGameData()
+	cg2.ReleaseDate = "2023-01-01"
+
+	_, err := s.CreateGame(context.Background(), cg1)
+	require.NoError(t, err, "err should be nil")
+
+	_, err = s.CreateGame(context.Background(), cg2)
+	require.NoError(t, err, "err should be nil")
+
+	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByReleaseDate)
+	require.NoError(t, err, "err should be nil")
+
+	require.Equal(t, 2, len(games), "len of games should be 2")
+
+	want := cg2
 	got := games[0]
 	compareCreateGameAndGame(t, want, got)
 }

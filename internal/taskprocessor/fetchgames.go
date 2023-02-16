@@ -198,7 +198,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				}
 
 				// get logo url
-				igdbLogoURL := igdb.GetImageURL(g.Cover.URL, igdb.ImageLogoMed2xAlias)
+				igdbLogoURL := igdb.GetImageURL(g.Cover.URL, igdb.ImageCoverBig2xAlias)
 				logoURL, uErr := tp.uploadcareProvider.UploadImageFromURL(ctx, igdbLogoURL)
 				if uErr != nil {
 					return settings, fmt.Errorf("upload logo %s: %v", igdbLogoURL, uErr)

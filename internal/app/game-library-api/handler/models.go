@@ -94,3 +94,8 @@ type Platform struct {
 	Name         string `json:"name"`
 	Abbreviation string `json:"abbreviation"`
 }
+
+// CountResponse represent count response
+type CountResponse struct {
+	Count uint64 `json:"count"`
+}

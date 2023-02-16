@@ -33,8 +33,19 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "last fetched id",
-                        "name": "lastId",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "default",
+                            "name",
+                            "releaseDate"
+                        ],
+                        "type": "string",
+                        "description": "order by",
+                        "name": "orderBy",
                         "in": "query"
                     }
                 ],
@@ -88,6 +99,33 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/games/count": {
+            "get": {
+                "description": "returns games count",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get games count",
+                "operationId": "get-games-count",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.CountResponse"
+                            }
                         }
                     },
                     "500": {
@@ -439,6 +477,14 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.CountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
                 }
             }
         },

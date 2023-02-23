@@ -223,6 +223,10 @@ paths:
         in: query
         name: orderBy
         type: string
+      - description: name filter
+        in: query
+        name: name
+        type: string
       produces:
       - application/json
       responses:
@@ -401,6 +405,11 @@ paths:
     get:
       description: returns games count
       operationId: get-games-count
+      parameters:
+      - description: name filter
+        in: query
+        name: name
+        type: string
       produces:
       - application/json
       responses:
@@ -415,29 +424,6 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Get games count
-  /games/search:
-    get:
-      description: returns games filtered by provided name
-      operationId: search-games
-      parameters:
-      - description: name to search by
-        in: query
-        name: name
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/handler.GameResponse'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: Searches games by name
   /genres:
     get:
       description: returns all genres

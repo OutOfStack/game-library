@@ -14,8 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
+	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
+)
+
+const (
+	minLengthForSearch = 2
 )
 
 // Game has handler methods for dealing with games
@@ -52,6 +56,7 @@ var (
 // @Param pageSize query int32  false "page size"
 // @Param page     query int32  false "page"
 // @Param orderBy  query string false "order by"	Enums(default, name, releaseDate)
+// @Param name 	   query string false "name filter"
 // @Success 200 {array}  GameResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
@@ -62,14 +67,16 @@ func (g *Game) GetGames(c *gin.Context) {
 	pageSizeParam := c.DefaultQuery("pageSize", "20")
 	pageParam := c.DefaultQuery("page", "1")
 	orderByParam := c.DefaultQuery("orderBy", "default")
+	nameParam := c.DefaultQuery("name", "")
+
 	pageSize, err := strconv.ParseInt(pageSizeParam, 10, 32)
 	if err != nil || pageSize <= 0 {
 		c.Error(web.NewRequestError(errors.New("Incorrect page size. Should be greater than 0"), http.StatusBadRequest))
 		return
 	}
 	page, err := strconv.ParseInt(pageParam, 10, 32)
-	if err != nil || page < 0 {
-		c.Error(web.NewRequestError(errors.New("Incorrect page. Should be greater or equal to 1"), http.StatusBadRequest))
+	if err != nil || page <= 0 {
+		c.Error(web.NewRequestError(errors.New("Incorrect page. Should be greater than 0"), http.StatusBadRequest))
 		return
 	}
 	var orderGamesBy repo.OrderGamesBy
@@ -84,9 +91,15 @@ func (g *Game) GetGames(c *gin.Context) {
 		c.Error(web.NewRequestError(errors.New("Incorrect orderBy. Should be one of: default, releaseDate, name"), http.StatusBadRequest))
 		return
 	}
-	span.SetAttributes(attribute.Int64("data.pagesize", pageSize), attribute.Int64("data.page", page), attribute.String("data.orderby", orderByParam))
+	name := nameParam
+	if len(name) < minLengthForSearch {
+		name = ""
+	}
 
-	list, err := g.storage.GetGames(ctx, int(pageSize), int(page), orderGamesBy)
+	span.SetAttributes(att.Int64("data.pageSize", pageSize), att.Int64("data.page", page), att.String("data.orderBy", orderByParam),
+		att.String("data.name", nameParam))
+
+	list, err := g.storage.GetGames(ctx, int(pageSize), int(page), orderGamesBy, name)
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games list"))
 		return
@@ -110,6 +123,7 @@ func (g *Game) GetGames(c *gin.Context) {
 // @Description returns games count
 // @ID get-games-count
 // @Produce json
+// @Param name query string false "name filter"
 // @Success 200 {array}  CountResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/count [get]
@@ -117,7 +131,14 @@ func (g *Game) GetGamesCount(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getgamescount")
 	defer span.End()
 
-	count, err := g.storage.GetGamesCount(ctx)
+	nameParam := c.DefaultQuery("name", "")
+	name := nameParam
+	if len(name) < minLengthForSearch {
+		name = ""
+	}
+	span.SetAttributes(att.String("data.query", nameParam))
+
+	count, err := g.storage.GetGamesCount(ctx, name)
 	if err != nil {
 		c.Error(errors.Wrap(err, "getting games count"))
 		return
@@ -146,7 +167,7 @@ func (g *Game) GetGame(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	span.SetAttributes(attribute.Int("data.id", int(id)))
+	span.SetAttributes(att.Int("data.id", int(id)))
 
 	game, err := g.storage.GetGameByID(ctx, id)
 	if err != nil {
@@ -164,45 +185,6 @@ func (g *Game) GetGame(c *gin.Context) {
 		return
 	}
 	web.Respond(c, resp, http.StatusOK)
-}
-
-// SearchGames godoc
-// @Summary Searches games by name
-// @Description returns games filtered by provided name
-// @ID search-games
-// @Produce json
-// @Param name query string false "name to search by"
-// @Success 200 {array}  GameResponse
-// @Failure 500 {object} web.ErrorResponse
-// @Router /games/search [get]
-func (g *Game) SearchGames(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.searchgames")
-	defer span.End()
-
-	nameParam := c.DefaultQuery("name", "")
-	if len(nameParam) < 2 {
-		c.Error(web.NewRequestError(errors.New("Length of name to be searched by should be at least 2 characters"), http.StatusBadRequest))
-		return
-	}
-	span.SetAttributes(attribute.String("data.query", nameParam))
-
-	list, err := g.storage.SearchGames(ctx, nameParam)
-	if err != nil {
-		c.Error(errors.Wrap(err, "searching games list"))
-		return
-	}
-
-	response := make([]GameResponse, 0, len(list))
-	for _, game := range list {
-		r, err := g.mapToGameResponse(c, game)
-		if err != nil {
-			c.Error(web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
-			return
-		}
-		response = append(response, r)
-	}
-
-	web.Respond(c, response, http.StatusOK)
 }
 
 // CreateGame godoc
@@ -226,7 +208,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding new game"))
 		return
 	}
-	span.SetAttributes(attribute.String("data.name", cg.Name))
+	span.SetAttributes(att.String("data.name", cg.Name))
 
 	claims, err := web.GetClaims(c)
 	if err != nil {
@@ -308,7 +290,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 		c.Error(errors.Wrap(err, "decoding game update"))
 		return
 	}
-	span.SetAttributes(attribute.Int("data.id", int(id)))
+	span.SetAttributes(att.Int("data.id", int(id)))
 
 	game, err := g.storage.GetGameByID(ctx, id)
 	if err != nil {
@@ -382,7 +364,7 @@ func (g *Game) DeleteGame(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	span.SetAttributes(attribute.Int("data.id", int(id)))
+	span.SetAttributes(att.Int("data.id", int(id)))
 
 	err = g.storage.DeleteGame(ctx, id)
 	if err != nil {

@@ -15,7 +15,7 @@ func TestGetGames_NotExist_ShouldReturnEmpty(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByDefault)
+	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "")
 	require.NoError(t, err, "err should be nil")
 
 	require.Zero(t, len(games), "len of games should be 0")
@@ -31,7 +31,7 @@ func TestGetGames_DataExists_ShouldBeEqual(t *testing.T) {
 	_, err := s.CreateGame(context.Background(), cg)
 	require.NoError(t, err, "err should be nil")
 
-	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByDefault)
+	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "")
 	require.NoError(t, err, "err should be nil")
 
 	require.Equal(t, 1, len(games), "len of games should be 1")
@@ -59,7 +59,7 @@ func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
 	_, err = s.CreateGame(context.Background(), cg2)
 	require.NoError(t, err, "err should be nil")
 
-	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByDefault)
+	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "")
 	require.NoError(t, err, "err should be nil")
 
 	require.Equal(t, 2, len(games), "len of games should be 2")
@@ -86,7 +86,7 @@ func TestGetGames_OrderByName_ShouldReturnOrdered(t *testing.T) {
 	_, err = s.CreateGame(context.Background(), cg2)
 	require.NoError(t, err, "err should be nil")
 
-	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByName)
+	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByName, "")
 	require.NoError(t, err, "err should be nil")
 
 	require.Equal(t, 2, len(games), "len of games should be 2")
@@ -112,7 +112,7 @@ func TestGetGames_OrderByReleaseDate_ShouldReturnOrdered(t *testing.T) {
 	_, err = s.CreateGame(context.Background(), cg2)
 	require.NoError(t, err, "err should be nil")
 
-	games, err := s.GetGames(context.Background(), 20, 0, repo.OrderGamesByReleaseDate)
+	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByReleaseDate, "")
 	require.NoError(t, err, "err should be nil")
 
 	require.Equal(t, 2, len(games), "len of games should be 2")
@@ -120,6 +120,116 @@ func TestGetGames_OrderByReleaseDate_ShouldReturnOrdered(t *testing.T) {
 	want := cg2
 	got := games[0]
 	compareCreateGameAndGame(t, want, got)
+}
+
+// TestGetGames_FilterByName_ShouldReturnEqual tests case when we add game, then filter this game by name, and they should be equal
+func TestGetGames_FilterByName_ShouldReturnEqual(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	cg := getCreateGameData()
+
+	_, err := s.CreateGame(context.Background(), cg)
+	require.NoError(t, err, "err should be nil")
+
+	matched, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, cg.Name)
+	require.NoError(t, err, "err should be nil")
+
+	require.Equal(t, 1, len(matched), "len of matched should be 1")
+
+	want := cg
+	got := matched[0]
+	compareCreateGameAndGame(t, want, got)
+}
+
+// TestGetGames_FilterByName_ShouldReturnMatched tests case when we add multiple games, then filter games by name, and we should get matches
+func TestGetGames_FilterByName_ShouldReturnMatched(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ng1 := getCreateGameData()
+	ng1.Name = "test game name"
+	ng2 := getCreateGameData()
+	ng2.Name = "tEsTGameName"
+	ng3 := getCreateGameData()
+	ng3.Name = "tEssTGameName"
+	ng4 := getCreateGameData()
+	ng4.Name = "a TEST game name"
+
+	_, err := s.CreateGame(context.Background(), ng1)
+	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(context.Background(), ng2)
+	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(context.Background(), ng3)
+	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(context.Background(), ng4)
+	require.NoError(t, err, "err should be nil")
+
+	matched, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "test")
+	require.NoError(t, err, "err should be nil")
+
+	// ng1, ng2, ng4
+	require.Equal(t, 3, len(matched), "count should be 3")
+}
+
+// TestGetGamesCount_DataExists_ShouldReturnCount tests case when we add multiple games, get their count, and it should match
+func TestGetGamesCount_DataExists_ShouldReturnCount(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ng1 := getCreateGameData()
+	ng2 := getCreateGameData()
+
+	_, err := s.CreateGame(context.Background(), ng1)
+	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(context.Background(), ng2)
+	require.NoError(t, err, "err should be nil")
+
+	count, err := s.GetGamesCount(context.Background(), "")
+	require.NoError(t, err, "err should be nil")
+
+	require.Equal(t, 2, int(count), "count should be 2")
+}
+
+// TestGetGamesCount_FilterByName_ShouldReturnMatchedCount tests case when we add multiple games, get count by name, amd we should get count of matches
+func TestGetGamesCount_FilterByName_ShouldReturnMatchedCount(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ng1 := getCreateGameData()
+	ng1.Name = "the best Game"
+	ng2 := getCreateGameData()
+	ng2.Name = "game, The best"
+	ng3 := getCreateGameData()
+	ng3.Name = "GAME"
+	ng4 := getCreateGameData()
+	ng4.Name = "the Gane"
+
+	_, err := s.CreateGame(context.Background(), ng1)
+	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(context.Background(), ng2)
+	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(context.Background(), ng3)
+	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(context.Background(), ng4)
+	require.NoError(t, err, "err should be nil")
+
+	count, err := s.GetGamesCount(context.Background(), "game")
+	require.NoError(t, err, "err should be nil")
+
+	// ng1, ng2, ng3
+	require.Equal(t, 3, int(count), "count should be 3")
+}
+
+// TestGetGamesCount_DataNotExist_ShouldReturnZero tests case when there ara no games, get their count, and it should be 0
+func TestGetGamesCount_DataNotExist_ShouldReturnZero(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	count, err := s.GetGamesCount(context.Background(), "")
+	require.NoError(t, err, "err should be nil")
+
+	require.Equal(t, 0, int(count), "len of matched should be 0")
 }
 
 // TestGetGameByID_NotExist_ShouldReturnNotFoundError tests case when a game with provided id does not exist, and we should get a Not Found Error
@@ -149,55 +259,6 @@ func TestGetGameByID_DataExists_ShouldRetrieveEqual(t *testing.T) {
 	want := cg
 	got := gg
 	compareCreateGameAndGame(t, want, got)
-}
-
-// TestSearchGames_DataExists_ShouldReturnEqual tests case when we add game, then search this game, and they should be equal
-func TestSearchGames_DataExists_ShouldReturnEqual(t *testing.T) {
-	s := setup(t)
-	defer teardown(t)
-
-	cg := getCreateGameData()
-
-	_, err := s.CreateGame(context.Background(), cg)
-	require.NoError(t, err, "err should be nil")
-
-	matched, err := s.SearchGames(context.Background(), cg.Name)
-	require.NoError(t, err, "err should be nil")
-
-	require.Equal(t, 1, len(matched), "len of matched should be 1")
-
-	want := cg
-	got := matched[0]
-	compareCreateGameAndGame(t, want, got)
-}
-
-// TestSearchGames_DataExists_ShouldReturnMatched tests case when we add multiple games, then search games, and we should get matches
-func TestSearchInfos_DataExists_ShouldReturnMatched(t *testing.T) {
-	s := setup(t)
-	defer teardown(t)
-
-	ng1 := getCreateGameData()
-	ng1.Name = "test game name"
-	ng2 := getCreateGameData()
-	ng2.Name = "tEsTGameName"
-	ng3 := getCreateGameData()
-	ng3.Name = "tEssTGameName"
-	ng4 := getCreateGameData()
-	ng4.Name = "a test game name"
-
-	_, err := s.CreateGame(context.Background(), ng1)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng2)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng3)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng4)
-	require.NoError(t, err, "err should be nil")
-
-	matched, err := s.SearchGames(context.Background(), "test")
-	require.NoError(t, err, "err should be nil")
-
-	require.Equal(t, 2, len(matched), "len of matched should be 2")
 }
 
 // TestUpdateGame_Valid_ShouldRetrieveEqual tests case when we update game, then fetch this game, and they should be equal

@@ -47,6 +47,12 @@ const docTemplate = `{
                         "description": "order by",
                         "name": "orderBy",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "name filter",
+                        "name": "name",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -118,37 +124,10 @@ const docTemplate = `{
                 ],
                 "summary": "Get games count",
                 "operationId": "get-games-count",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handler.CountResponse"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/games/search": {
-            "get": {
-                "description": "returns games filtered by provided name",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Searches games by name",
-                "operationId": "search-games",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "name to search by",
+                        "description": "name filter",
                         "name": "name",
                         "in": "query"
                     }
@@ -159,7 +138,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.GameResponse"
+                                "$ref": "#/definitions/handler.CountResponse"
                             }
                         }
                     },

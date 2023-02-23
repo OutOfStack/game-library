@@ -26,7 +26,11 @@ func New(db *sqlx.DB) *Storage {
 	}
 }
 
-var tracer = otel.Tracer("")
+var (
+	tracer = otel.Tracer("")
+
+	psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+)
 
 type OrderGamesBy string
 
@@ -38,7 +42,7 @@ const (
 )
 
 // GetGames returns list of games with specified pageSize at specified page
-func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy OrderGamesBy) (list []Game, err error) {
+func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy OrderGamesBy, name string) (list []Game, err error) {
 	ctx, span := tracer.Start(ctx, "db.game.get")
 	defer span.End()
 
@@ -58,12 +62,16 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy Orde
 		return nil, fmt.Errorf("unsupported OrderGamesBy option")
 	}
 
-	query := sq.Select("id", "name", "developer", "publisher", "release_date", "genre", "logo_url", "rating", "summary", "genres", "platforms",
+	query := psql.Select("id", "name", "developer", "publisher", "release_date", "genre", "logo_url", "rating", "summary", "genres", "platforms",
 		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id", "(extract(year from release_date)/2 + igdb_rating + rating) weight").
 		From("games").
 		Limit(uint64(pageSize)).
 		Offset(uint64((page - 1) * pageSize)).
 		OrderBy(fmt.Sprintf("%s %s", orderBy, order))
+
+	if name != "" {
+		query = query.Where(sq.Like{"lower(name)": "%" + strings.ToLower(name) + "%"})
+	}
 
 	q, args, err := query.ToSql()
 	if err != nil {
@@ -78,37 +86,26 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy Orde
 }
 
 // GetGamesCount returns games count
-func (s *Storage) GetGamesCount(ctx context.Context) (count uint64, err error) {
+func (s *Storage) GetGamesCount(ctx context.Context, name string) (count uint64, err error) {
 	ctx, span := tracer.Start(ctx, "db.game.count")
 	defer span.End()
 
-	const q = `
-	SELECT count(id)
-	FROM games`
+	query := psql.Select("count(id)").
+		From("games")
+	if name != "" {
+		query = query.Where(sq.Like{"lower(name)": "%" + strings.ToLower(name) + "%"})
+	}
 
-	if err = s.db.GetContext(ctx, &count, q); err != nil {
+	q, args, err := query.ToSql()
+	if err != nil {
+		return 0, err
+	}
+
+	if err = s.db.GetContext(ctx, &count, q, args...); err != nil {
 		return 0, err
 	}
 
 	return count, nil
-}
-
-// SearchGames returns list of games by search query
-func (s *Storage) SearchGames(ctx context.Context, search string) (list []Game, err error) {
-	ctx, span := tracer.Start(ctx, "db.game.search")
-	defer span.End()
-
-	const q = `
-	SELECT id, name, developer, developers, publisher, publishers, release_date, genre, genres, logo_url, rating, summary, 
-	       platforms, screenshots, websites, slug, igdb_rating, igdb_id
-	FROM games
-	WHERE LOWER(name) LIKE $1`
-
-	if err = s.db.SelectContext(ctx, &list, q, strings.ToLower(search)+"%"); err != nil {
-		return nil, err
-	}
-
-	return list, nil
 }
 
 // GetGameByID returns game by id.

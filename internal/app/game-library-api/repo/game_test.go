@@ -358,12 +358,9 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 func getCreateGameData() repo.CreateGame {
 	return repo.CreateGame{
 		Name:        td.String(),
-		Developer:   td.String(),
 		Developers:  []int32{td.Int32(), td.Int32()},
-		Publisher:   td.String(),
 		Publishers:  []int32{td.Int32(), td.Int32()},
 		ReleaseDate: td.Date().Format("2006-01-02"),
-		Genre:       []string{td.String(), td.String()},
 		Genres:      []int32{td.Int32(), td.Int32()},
 		LogoURL:     td.String(),
 		Summary:     td.String(),
@@ -378,12 +375,9 @@ func getCreateGameData() repo.CreateGame {
 
 func compareCreateGameAndGame(t *testing.T, want repo.CreateGame, got repo.Game) {
 	require.Equal(t, want.Name, got.Name, "name should be equal")
-	require.Equal(t, want.Developer, got.Developer, "developer should be equal")
 	require.Equal(t, want.Developers, []int32(got.Developers), "developers should be equal")
-	require.Equal(t, want.Publisher, got.Publisher, "publisher should be equal")
 	require.Equal(t, want.Publishers, []int32(got.Publishers), "publisher should be equal")
 	require.Equal(t, want.ReleaseDate, got.ReleaseDate.String(), "release date should be equal")
-	require.Equal(t, want.Genre, []string(got.Genre), "genre should be equal")
 	require.Equal(t, want.Genres, []int32(got.Genres), "genres should be equal")
 	require.Equal(t, want.LogoURL, got.LogoURL, "logo url should be equal")
 	require.Equal(t, want.Summary, got.Summary, "summary should be equal")

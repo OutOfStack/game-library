@@ -2,17 +2,11 @@ package handler
 
 // GameResponse represents game response
 type GameResponse struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-	// Deprecated: use Developers instead
-	Developer  string    `json:"developer"`
-	Developers []Company `json:"developers"`
-	// Deprecated: use Publishers instead
-	Publisher   string    `json:"publisher"`
-	Publishers  []Company `json:"publishers"`
-	ReleaseDate string    `json:"releaseDate"`
-	// Deprecated: use Genres instead
-	Genre       []string   `json:"genre"`
+	ID          int32      `json:"id"`
+	Name        string     `json:"name"`
+	Developers  []Company  `json:"developers"`
+	Publishers  []Company  `json:"publishers"`
+	ReleaseDate string     `json:"releaseDate"`
 	Genres      []Genre    `json:"genres"`
 	LogoURL     string     `json:"logoUrl,omitempty"`
 	Rating      float64    `json:"rating"`
@@ -25,11 +19,9 @@ type GameResponse struct {
 
 // CreateGameRequest represents create game request
 type CreateGameRequest struct {
-	Name        string `json:"name" validate:"required"`
-	Developer   string `json:"developer" validate:"required"`
-	ReleaseDate string `json:"releaseDate" validate:"date"`
-	// Deprecated: use Genres instead
-	Genre        []string `json:"genre"`
+	Name         string   `json:"name" validate:"required"`
+	Developer    string   `json:"developer" validate:"required"`
+	ReleaseDate  string   `json:"releaseDate" validate:"date"`
 	GenresIDs    []int32  `json:"genresIds"`
 	LogoURL      string   `json:"logoUrl"`
 	Summary      string   `json:"summary"`

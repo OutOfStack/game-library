@@ -11,6 +11,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestCreateCompany_IGDBIDNull_ShouldBeNoError tests case when we add company without igdb id, and there should be no error
+func TestCreateCompany_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	company := repo.Company{
+		Name: td.String(),
+	}
+
+	_, err := s.CreateCompany(context.Background(), company)
+	require.NoError(t, err, "err should be nil")
+}
+
 // TestGetCompanies_DataExists_ShouldBeEqual tests case when we add one company, then fetch first company, and they should be equal
 func TestGetCompanies_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)

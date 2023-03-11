@@ -75,12 +75,12 @@ func mapToRatingResponse(cr repo.CreateRating) *RatingResponse {
 	}
 }
 
-func mapToCreateGame(cgr *CreateGameRequest) repo.CreateGame {
+func mapToCreateGame(cgr *CreateGameRequest, developerID, publisherID int32) repo.CreateGame {
 	return repo.CreateGame{
 		Name:        cgr.Name,
 		ReleaseDate: cgr.ReleaseDate,
-		Developer:   cgr.Developer,
-		Genre:       cgr.Genre,
+		Developers:  []int32{developerID},
+		Publishers:  []int32{publisherID},
 		Genres:      cgr.GenresIDs,
 		LogoURL:     cgr.LogoURL,
 		Summary:     cgr.Summary,
@@ -94,12 +94,9 @@ func mapToCreateGame(cgr *CreateGameRequest) repo.CreateGame {
 func mapToUpdateGame(g repo.Game, ugr UpdateGameRequest) repo.UpdateGame {
 	update := repo.UpdateGame{
 		Name:        g.Name,
-		Developer:   g.Developer,
 		Developers:  g.Developers,
-		Publisher:   g.Publisher,
 		Publishers:  g.Publishers,
 		ReleaseDate: g.ReleaseDate.String(),
-		Genre:       g.Genre,
 		Genres:      g.Genres,
 		LogoURL:     g.LogoURL,
 		Summary:     g.Summary,
@@ -113,9 +110,6 @@ func mapToUpdateGame(g repo.Game, ugr UpdateGameRequest) repo.UpdateGame {
 
 	if ugr.Name != nil {
 		update.Name = *ugr.Name
-	}
-	if ugr.Developer != nil {
-		update.Developer = *ugr.Developer //nolint:staticcheck
 	}
 	if ugr.ReleaseDate != nil {
 		update.ReleaseDate = *ugr.ReleaseDate
@@ -149,10 +143,7 @@ func (g *Game) mapToGameResponse(ctx context.Context, game repo.Game) (GameRespo
 	resp := GameResponse{
 		ID:          game.ID,
 		Name:        game.Name,
-		Developer:   game.Developer,
-		Publisher:   game.Publisher,
 		ReleaseDate: game.ReleaseDate.String(),
-		Genre:       game.Genre,
 		LogoURL:     game.LogoURL,
 		Rating:      game.Rating,
 		Summary:     game.Summary,
@@ -187,19 +178,6 @@ func (g *Game) mapToGameResponse(ctx context.Context, game repo.Game) (GameRespo
 		} else if ok {
 			resp.Publishers = append(resp.Publishers, c)
 		}
-	}
-
-	// fill deprecated fields
-	if len(resp.Genres) == 0 {
-		for _, g := range resp.Genres {
-			resp.Genre = append(resp.Genre, g.Name)
-		}
-	}
-	if resp.Developer == "" && len(resp.Developers) > 0 {
-		resp.Developer = resp.Developers[0].Name
-	}
-	if resp.Publisher == "" && len(resp.Publishers) > 0 {
-		resp.Publisher = resp.Publishers[0].Name
 	}
 
 	return resp, nil

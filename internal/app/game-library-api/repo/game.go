@@ -62,8 +62,9 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy Orde
 		return nil, fmt.Errorf("unsupported OrderGamesBy option")
 	}
 
-	query := psql.Select("id", "name", "developer", "publisher", "release_date", "genre", "logo_url", "rating", "summary", "genres", "platforms",
-		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id", "(extract(year from release_date)/2 + igdb_rating + rating) weight").
+	query := psql.Select("id", "name", "release_date", "logo_url", "rating", "summary", "genres", "platforms",
+		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id",
+		"(extract(year from release_date)/2 + igdb_rating + rating) weight").
 		From("games").
 		Limit(uint64(pageSize)).
 		Offset(uint64((page - 1) * pageSize)).
@@ -114,8 +115,8 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (g Game, err error)
 	ctx, span := tracer.Start(ctx, "db.game.getbyid")
 	defer span.End()
 
-	const q = `SELECT id, name, developer, developers, publisher, publishers, release_date, genre, genres, logo_url, rating, 
-       summary, platforms, screenshots, websites, slug, igdb_rating, igdb_id
+	const q = `SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms, 
+       screenshots, websites, slug, igdb_rating, igdb_id
 	FROM games
 	WHERE id = $1`
 
@@ -155,13 +156,13 @@ func (s *Storage) CreateGame(ctx context.Context, cg CreateGame) (id int32, err 
 	defer span.End()
 
 	const q = `INSERT INTO games
-    (name, developer, publisher, developers, publishers, release_date, genre, genres, logo_url, summary, platforms, screenshots, 
+    (name, developers, publishers, release_date, genres, logo_url, summary, platforms, screenshots, 
      	websites, slug, igdb_rating, igdb_id)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::varchar(50), $15, $16)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::varchar(50), $12, $13)
 	RETURNING id`
 
-	err = s.db.QueryRowContext(ctx, q, cg.Name, cg.Developer, cg.Publisher, pq.Int32Array(cg.Developers), pq.Int32Array(cg.Publishers),
-		cg.ReleaseDate, pq.StringArray(cg.Genre), pq.Int32Array(cg.Genres), cg.LogoURL, cg.Summary, pq.Int32Array(cg.Platforms),
+	err = s.db.QueryRowContext(ctx, q, cg.Name, pq.Int32Array(cg.Developers), pq.Int32Array(cg.Publishers),
+		cg.ReleaseDate, pq.Int32Array(cg.Genres), cg.LogoURL, cg.Summary, pq.Int32Array(cg.Platforms),
 		pq.StringArray(cg.Screenshots), pq.StringArray(cg.Websites), cg.Slug, cg.IGDBRating, cg.IGDBID).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)

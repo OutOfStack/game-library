@@ -477,13 +477,6 @@ const docTemplate = `{
                 "developer": {
                     "type": "string"
                 },
-                "genre": {
-                    "description": "Deprecated: use Genres instead",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
                 "genresIds": {
                     "type": "array",
                     "items": {
@@ -538,21 +531,10 @@ const docTemplate = `{
         "handler.GameResponse": {
             "type": "object",
             "properties": {
-                "developer": {
-                    "description": "Deprecated: use Developers instead",
-                    "type": "string"
-                },
                 "developers": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handler.Company"
-                    }
-                },
-                "genre": {
-                    "description": "Deprecated: use Genres instead",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
                     }
                 },
                 "genres": {
@@ -575,10 +557,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.Platform"
                     }
-                },
-                "publisher": {
-                    "description": "Deprecated: use Publishers instead",
-                    "type": "string"
                 },
                 "publishers": {
                     "type": "array",

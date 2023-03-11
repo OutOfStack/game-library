@@ -1,19 +1,13 @@
 package schema
 
 import (
-	"os"
-
+	"github.com/OutOfStack/game-library/scripts"
 	"github.com/jmoiron/sqlx"
 )
 
-const path = "./scripts/seed.sql"
-
 // Seed seeds database
 func Seed(db *sqlx.DB) error {
-	q, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
+	q := scripts.SeedSql
 
 	tx, err := db.Begin()
 	if err != nil {

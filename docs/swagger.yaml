@@ -16,11 +16,6 @@ definitions:
     properties:
       developer:
         type: string
-      genre:
-        description: 'Deprecated: use Genres instead'
-        items:
-          type: string
-        type: array
       genresIds:
         items:
           type: integer
@@ -60,17 +55,9 @@ definitions:
     type: object
   handler.GameResponse:
     properties:
-      developer:
-        description: 'Deprecated: use Developers instead'
-        type: string
       developers:
         items:
           $ref: '#/definitions/handler.Company'
-        type: array
-      genre:
-        description: 'Deprecated: use Genres instead'
-        items:
-          type: string
         type: array
       genres:
         items:
@@ -86,9 +73,6 @@ definitions:
         items:
           $ref: '#/definitions/handler.Platform'
         type: array
-      publisher:
-        description: 'Deprecated: use Publishers instead'
-        type: string
       publishers:
         items:
           $ref: '#/definitions/handler.Company'

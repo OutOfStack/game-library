@@ -23,17 +23,17 @@ spec:
                         path: /api/readiness
                         port: 8000
                     initialDelaySeconds: 20
-                    periodSeconds: 61
+                    periodSeconds: 181
                     timeoutSeconds: 5
-                    failureThreshold: 3
+                    failureThreshold: 2
                 livenessProbe:
                     httpGet:
                         path: /api/liveness
                         port: 8000
                     initialDelaySeconds: 20
-                    periodSeconds: 59
+                    periodSeconds: 179
                     timeoutSeconds: 2
-                    failureThreshold: 3
+                    failureThreshold: 2
                 ports:
                   - name: api
                     containerPort: 8000

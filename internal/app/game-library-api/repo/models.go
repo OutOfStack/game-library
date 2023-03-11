@@ -13,12 +13,9 @@ import (
 type Game struct {
 	ID          int32          `db:"id"`
 	Name        string         `db:"name"`
-	Developer   string         `db:"developer"` // Deprecated: use Developers instead
 	Developers  pq.Int32Array  `db:"developers"`
-	Publisher   string         `db:"publisher"` // Deprecated: use Publishers instead
 	Publishers  pq.Int32Array  `db:"publishers"`
 	ReleaseDate types.Date     `db:"release_date"`
-	Genre       pq.StringArray `db:"genre"` // Deprecated: use Genres instead
 	Genres      pq.Int32Array  `db:"genres"`
 	LogoURL     string         `db:"logo_url"`
 	Rating      float64        `db:"rating"`
@@ -29,22 +26,15 @@ type Game struct {
 	Websites    pq.StringArray `db:"websites"`
 	IGDBRating  float64        `db:"igdb_rating"`
 	IGDBID      int64          `db:"igdb_id"`
-	// Readonly field
-	Weight float64 `db:"weight"`
+	Weight      float64        `db:"weight"` // Readonly field
 }
 
 // CreateGame represents data for creating game
 type CreateGame struct {
-	Name string
-	// Deprecated: use Developers instead
-	Developer  string
-	Developers []int32
-	// Deprecated: use Publishers instead
-	Publisher   string
+	Name        string
+	Developers  []int32
 	Publishers  []int32
 	ReleaseDate string
-	// Deprecated: use Genres instead
-	Genre       []string
 	Genres      []int32
 	LogoURL     string
 	Summary     string
@@ -58,16 +48,10 @@ type CreateGame struct {
 
 // UpdateGame represents data for updating game
 type UpdateGame struct {
-	Name string
-	// Deprecated: use Developers instead
-	Developer  string
-	Developers []int32
-	// Deprecated: use Publishers instead
-	Publisher   string
+	Name        string
+	Developers  []int32
 	Publishers  []int32
 	ReleaseDate string
-	// Deprecated: use Genres instead
-	Genre       []string
 	Genres      []int32
 	LogoURL     string
 	Summary     string

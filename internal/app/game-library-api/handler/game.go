@@ -249,10 +249,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 		}
 	}
 
-	create := mapToCreateGame(&cg)
-	create.Developers = []int32{developerID}
-	create.Publishers = []int32{publisherID}
-	create.Publisher = publisher //nolint:staticcheck
+	create := mapToCreateGame(&cg, developerID, publisherID)
 
 	id, err := g.storage.CreateGame(ctx, create)
 	if err != nil {

@@ -16,8 +16,8 @@ func Decode(c *gin.Context, val interface{}) error {
 		return NewRequestError(err, http.StatusBadRequest)
 	}
 
-	if err := validate.Struct(val); err != nil {
-		verrors, ok := err.(validator.ValidationErrors)
+	if err = validate.Struct(val); err != nil {
+		vErrs, ok := err.(validator.ValidationErrors)
 		if !ok {
 			return err
 		}
@@ -25,10 +25,10 @@ func Decode(c *gin.Context, val interface{}) error {
 		lang, _ := translator.GetTranslator("en")
 
 		var fields []FieldError
-		for _, verror := range verrors {
+		for _, vErr := range vErrs {
 			field := FieldError{
-				Field: verror.Field(),
-				Error: verror.Translate(lang),
+				Field: vErr.Field(),
+				Error: vErr.Translate(lang),
 			}
 			fields = append(fields, field)
 		}

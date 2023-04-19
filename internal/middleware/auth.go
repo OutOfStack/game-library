@@ -17,7 +17,7 @@ func Authenticate(log *zap.Logger, a *auth.Auth) gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		// if no Authorization header provided return 401
 		if authHeader == "" {
-			c.Error(web.NewRequestError(errors.New("no Authorization header found"), http.StatusUnauthorized))
+			web.Err(c, web.NewRequestError(errors.New("no Authorization header found"), http.StatusUnauthorized))
 			c.Abort()
 			return
 		}
@@ -25,7 +25,7 @@ func Authenticate(log *zap.Logger, a *auth.Auth) gin.HandlerFunc {
 		tokenStr := auth.ExtractToken(authHeader)
 		// if no Bearer token provided return 401
 		if tokenStr == "" {
-			c.Error(web.NewRequestError(errors.New("no Bearer token found"), http.StatusUnauthorized))
+			web.Err(c, web.NewRequestError(errors.New("no Bearer token found"), http.StatusUnauthorized))
 			c.Abort()
 			return
 		}
@@ -34,9 +34,9 @@ func Authenticate(log *zap.Logger, a *auth.Auth) gin.HandlerFunc {
 		if err := a.Verify(c.Request.Context(), tokenStr); err != nil {
 			log.Error("verifying token", zap.Error(err))
 			if err == auth.ErrVerifyAPIUnavailable {
-				c.Error(web.NewRequestError(err, http.StatusBadGateway))
+				web.Err(c, web.NewRequestError(err, http.StatusBadGateway))
 			} else {
-				c.Error(web.NewRequestError(err, http.StatusUnauthorized))
+				web.Err(c, web.NewRequestError(err, http.StatusUnauthorized))
 			}
 			c.Abort()
 			return
@@ -58,7 +58,7 @@ func Authorize(log *zap.Logger, a *auth.Auth, requiredRole string) gin.HandlerFu
 		// if no value in context return 500 as it is unexpected
 		if !ok {
 			log.Error("no token in request context")
-			c.Error(web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
+			web.Err(c, web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
 			c.Abort()
 			return
 		}
@@ -67,14 +67,14 @@ func Authorize(log *zap.Logger, a *auth.Auth, requiredRole string) gin.HandlerFu
 		// if we can't parse after verification return 500 as it is unexpected
 		if err != nil {
 			log.Error("parsing token", zap.Error(err))
-			c.Error(web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
+			web.Err(c, web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
 			c.Abort()
 			return
 		}
 		// if user's role is not the same as required return 403 forbidden
 		if claims.UserRole != requiredRole {
 			log.Warn("access denied", zap.String("expected_role", requiredRole), zap.String("got_role", claims.UserRole))
-			c.Error(web.NewRequestError(errors.New("access denied"), http.StatusForbidden))
+			web.Err(c, web.NewRequestError(errors.New("access denied"), http.StatusForbidden))
 			c.Abort()
 			return
 		}

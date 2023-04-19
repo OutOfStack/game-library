@@ -21,6 +21,13 @@ services:
     environment:
       ZIPKIN_UI_BASEPATH: /zipkin
 
+  redis:
+    container_name: redis
+    image: redis:7.0.10-alpine
+    command: redis-server #--requirepass
+    ports:
+      - "6379:6379"
+
   web:
     container_name: game-library-web
     image: game-library-web:latest
@@ -32,10 +39,11 @@ services:
       DB_PASSWORD: temp_pwd
       APP_ADDRESS: 0.0.0.0:8000
       DEBUG_ADDRESS: 0.0.0.0:6060
-    depends_on: 
+    depends_on:
       - db
       - zipkin
-  
+      - redis
+
   mng:
     container_name: game-library-mng
     image: game-library-mng:latest

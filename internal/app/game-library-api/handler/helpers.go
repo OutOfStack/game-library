@@ -3,9 +3,36 @@ package handler
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 )
+
+// Cache keys
+const (
+	gamesKey       = "games"
+	gameKey        = "game"
+	gamesCountKey  = "games-count"
+	userRatingsKey = "user-ratings"
+)
+
+func getGamesKey(pageSize, page int64, orderBy, name string) string {
+	return gamesKey + "|" + strconv.FormatInt(pageSize, 10) + "|" + strconv.FormatInt(page, 10) + "|" + orderBy + "|" + name
+}
+
+func getGameKey(id int32) string {
+	return gameKey + "|" + strconv.FormatInt(int64(id), 10)
+}
+
+func getGamesCountKey() string {
+	return gamesCountKey
+}
+
+func getUserRatingsKey(userID string) string {
+	return userRatingsKey + "|" + userID
+}
+
+// Cached entities functions
 
 func (g *Game) getCompanyByID(ctx context.Context, id int32) (Company, bool, error) {
 	if companiesMap.Size() == 0 {
@@ -58,6 +85,8 @@ func (g *Game) getPlatformByID(ctx context.Context, id int32) (Platform, bool, e
 	platform, ok := platformsMap.Get(id)
 	return platform, ok, nil
 }
+
+// Mappings
 
 func mapToCreateRating(crr *CreateRatingRequest, gameID int32, userID string) repo.CreateRating {
 	return repo.CreateRating{

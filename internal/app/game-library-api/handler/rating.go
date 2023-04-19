@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,20 +33,20 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	gameID, err := web.GetIDParam(c)
 	if err != nil {
-		c.Error(err)
+		web.Err(c, err)
 		return
 	}
 	span.SetAttributes(attribute.Int("data.id", int(gameID)))
 
 	var cr CreateRatingRequest
 	if err = web.Decode(c, &cr); err != nil {
-		c.Error(errors.Wrap(err, "decoding rating"))
+		web.Err(c, errors.Wrap(err, "decoding rating"))
 		return
 	}
 
 	claims, err := web.GetClaims(c)
 	if err != nil {
-		c.Error(errors.Wrap(err, "getting claims from context"))
+		web.Err(c, errors.Wrap(err, "getting claims from context"))
 		return
 	}
 
@@ -52,17 +55,17 @@ func (g *Game) RateGame(c *gin.Context) {
 	_, err = g.storage.GetGameByID(ctx, gameID)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound[int32]{}) {
-			c.Error(web.NewRequestError(err, http.StatusNotFound))
+			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
-		c.Error(errors.Wrap(err, "get game by id"))
+		web.Err(c, errors.Wrap(err, "get game by id"))
 		return
 	}
 
 	rating := mapToCreateRating(&cr, gameID, userID)
 	err = g.storage.AddRating(ctx, rating)
 	if err != nil {
-		c.Error(errors.Wrap(err, "rate game"))
+		web.Err(c, errors.Wrap(err, "rate game"))
 		return
 	}
 
@@ -70,6 +73,26 @@ func (g *Game) RateGame(c *gin.Context) {
 	if err != nil {
 		g.log.Error("updating game rating", zap.Int32("gameID", gameID), zap.Error(err))
 	}
+
+	// invalidate cache
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		// invalidate user ratings
+		key := getUserRatingsKey(userID)
+		err = cache.Delete(ctx, g.cache, key)
+		if err != nil {
+			g.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
+		}
+		// recache user ratings
+		err = cache.Get(ctx, g.cache, key, &map[int32]uint8{}, func() (map[int32]uint8, error) {
+			return g.storage.GetUserRatings(ctx, userID)
+		}, 0)
+		if err != nil {
+			g.log.Error("recache user ratings", zap.String("user_id", userID), zap.Error(err))
+		}
+	}()
 
 	web.Respond(c, mapToRatingResponse(rating), http.StatusOK)
 }
@@ -91,7 +114,7 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 	var ur GetUserRatingsRequest
 	err := web.Decode(c, &ur)
 	if err != nil {
-		c.Error(errors.Wrap(err, "decoding user ratings"))
+		web.Err(c, errors.Wrap(err, "decoding user ratings"))
 		return
 	}
 	idsVal := make([]int, 0, len(ur.GameIDs))
@@ -102,21 +125,26 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 
 	claims, err := web.GetClaims(c)
 	if err != nil {
-		c.Error(errors.Wrap(err, "getting claims from context"))
+		web.Err(c, errors.Wrap(err, "getting claims from context"))
 		return
 	}
 
 	userID := claims.Subject
 
-	ratings, err := g.storage.GetUserRatings(ctx, userID, ur.GameIDs)
+	var ratings map[int32]uint8
+	err = cache.Get(ctx, g.cache, getUserRatingsKey(userID), &ratings, func() (map[int32]uint8, error) {
+		return g.storage.GetUserRatings(ctx, userID)
+	}, 0)
 	if err != nil {
-		c.Error(errors.Wrap(err, "getting user ratings"))
+		web.Err(c, errors.Wrap(err, "getting user ratings"))
 		return
 	}
 
 	userRatings := make(map[int32]uint8)
-	for _, r := range ratings {
-		userRatings[r.GameID] = r.Rating
+	for _, id := range ur.GameIDs {
+		if r, ok := ratings[id]; ok {
+			userRatings[id] = r
+		}
 	}
 
 	web.Respond(c, userRatings, http.StatusOK)

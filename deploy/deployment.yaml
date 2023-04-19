@@ -66,8 +66,8 @@ spec:
                   - configMapRef:
                       name: game-library-config
                 imagePullPolicy: Always
-            # had problems with https calls in pod (tls handshake failure). 
-            # 10.152.183.10 is kube-dns 
+            # had problems with https calls in pod (tls handshake failure).
+            # 10.152.183.10 is kube-dns
             dnsPolicy: "None"
             dnsConfig:
                 nameservers:
@@ -115,3 +115,31 @@ spec:
               - ip: _K8S_IP_
                 hostnames:
                   - _K8S_URL_
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: redis-deployment
+  namespace: game-library
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.0.10-alpine
+          ports:
+            - name: redis
+              containerPort: 6379
+      hostAliases:
+        - ip: _K8S_IP_
+          hostnames:
+            - _K8S_URL_

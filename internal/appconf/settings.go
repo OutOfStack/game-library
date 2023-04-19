@@ -14,6 +14,7 @@ type Cfg struct {
 	IGDB       IGDB       `mapstructure:",squash"`
 	Scheduler  Scheduler  `mapstructure:",squash"`
 	Uploadcare Uploadcare `mapstructure:",squash"`
+	Redis      Redis      `mapstructure:",squash"`
 }
 
 // DB represents settings related to database
@@ -63,4 +64,11 @@ type Scheduler struct {
 type Uploadcare struct {
 	PublicKey string `mapstructure:"UPLOADCARE_PUBLIC_KEY"`
 	SecretKey string `mapstructure:"UPLOADCARE_SECRET_KEY"`
+}
+
+// Redis represents settings related to Redis
+type Redis struct {
+	Address  string `mapstructure:"REDIS_ADDR"`
+	Password string `mapstructure:"REDIS_PASSWORD"`
+	TTL      string `mapstructure:"REDIS_TTL"`
 }

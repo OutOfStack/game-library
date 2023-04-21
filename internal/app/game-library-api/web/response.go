@@ -20,14 +20,14 @@ func Respond(c *gin.Context, val interface{}, statusCode int) {
 	}
 	data, err := json.Marshal(val)
 	if err != nil {
-		c.Error(errors.Wrap(err, "marshalling value to json"))
+		Err(c, errors.Wrap(err, "marshalling value to json"))
 		return
 	}
 	c.Header("content-type", "application/json;charset=utf-8")
 	c.Status(statusCode)
 	_, err = c.Writer.Write(data)
 	if err != nil {
-		c.Error(errors.Wrap(err, "writing to client"))
+		Err(c, errors.Wrap(err, "writing to client"))
 		return
 	}
 }

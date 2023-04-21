@@ -6,7 +6,7 @@ run:
 	go run ./cmd/game-library-api/.
 
 test:
-	go test -v -race ./... 
+	go test -v -race ./...
 
 dockerrunpg:
 	docker-compose up -d --no-recreate db
@@ -42,6 +42,12 @@ dockerbuildweb:
 
 dockerrunweb:
 	docker-compose up -d web
+
+dockerrunzipkin:
+	docker-compose up -d zipkin
+
+dockerrunredis:
+	docker-compose up -d redis
 
 dockerbuildmng:
 	docker build -f Dockerfile.mng -t game-library-mng:latest .

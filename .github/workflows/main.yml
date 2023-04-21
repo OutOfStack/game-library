@@ -62,7 +62,7 @@ jobs:
         sed -i'' -e 's/_K8S_URL_/${{ secrets.K8S_URL }}/g' -e 's/_K8S_IP_/${{ secrets.K8S_IP }}/g' -e 's/_IMAGE_TAG_/${{ github.sha }}/g' deploy/*.yaml
 
     - name: Kubernetes Apply configs
-      run: | 
+      run: |
         kubectl apply -f deploy/namespace.yaml
         kubectl apply -f deploy/config.yaml
         kubectl apply -f deploy/deployment.yaml

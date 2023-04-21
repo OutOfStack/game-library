@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	defaultMapTTL = 24 * time.Hour
+)
+
 // KVMap represents map with arbitrary key and value types
 type KVMap[K comparable, V any] struct {
 	m         map[K]V
@@ -16,7 +20,7 @@ type KVMap[K comparable, V any] struct {
 // NewKVMap creates new map with arbitrary key and value types
 func NewKVMap[K comparable, V any](ttl time.Duration) *KVMap[K, V] {
 	if ttl == 0 {
-		ttl = 7 * 24 * time.Hour
+		ttl = defaultMapTTL
 	}
 	return &KVMap[K, V]{
 		m:         make(map[K]V),

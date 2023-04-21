@@ -22,7 +22,7 @@ func (g *Game) GetGenres(c *gin.Context) {
 
 	list, err := g.storage.GetGenres(ctx)
 	if err != nil {
-		c.Error(errors.Wrap(err, "get genres"))
+		web.Err(c, errors.Wrap(err, "get genres"))
 		return
 	}
 

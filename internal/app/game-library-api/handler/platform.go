@@ -22,7 +22,7 @@ func (g *Game) GetPlatforms(c *gin.Context) {
 
 	list, err := g.storage.GetPlatforms(ctx)
 	if err != nil {
-		c.Error(errors.Wrap(err, "get platforms"))
+		web.Err(c, errors.Wrap(err, "get platforms"))
 		return
 	}
 

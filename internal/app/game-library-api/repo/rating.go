@@ -26,9 +26,9 @@ func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
 	return nil
 }
 
-// GetUserRatings returns ratings of user for specified games
-func (s *Storage) GetUserRatings(ctx context.Context, userID string, gameIDs []int32) ([]UserRating, error) {
-	ctx, span := tracer.Start(ctx, "db.rating.getuserratings")
+// GetUserRatingsByGamesIDs returns user ratings for specified games
+func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, gameIDs []int32) ([]UserRating, error) {
+	ctx, span := tracer.Start(ctx, "db.rating.getuserratingsbyids")
 	defer span.End()
 
 	ratings := make([]UserRating, 0)
@@ -42,4 +42,27 @@ func (s *Storage) GetUserRatings(ctx context.Context, userID string, gameIDs []i
 	}
 
 	return ratings, nil
+}
+
+// GetUserRatings returns all user ratings
+func (s *Storage) GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error) {
+	ctx, span := tracer.Start(ctx, "db.rating.getuserratings")
+	defer span.End()
+
+	ratings := make([]UserRating, 0)
+	const q = `
+	SELECT game_id, rating, user_id
+	FROM ratings
+	WHERE user_id = $1`
+
+	if err := s.db.SelectContext(ctx, &ratings, q, userID); err != nil {
+		return nil, err
+	}
+
+	userRatings := make(map[int32]uint8, len(ratings))
+	for _, r := range ratings {
+		userRatings[r.GameID] = r.Rating
+	}
+
+	return userRatings, nil
 }

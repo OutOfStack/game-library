@@ -1,6 +1,10 @@
 package web
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
+)
 
 // FieldError represents error in a struct field
 type FieldError struct {
@@ -35,4 +39,8 @@ func (e *Error) Error() string {
 		fieldsMsg = fmt.Sprintf(" - fields: %v", e.Fields)
 	}
 	return fmt.Sprintf("%s%s", e.Err.Error(), fieldsMsg)
+}
+
+func Err(c *gin.Context, err error) {
+	_ = c.Error(err)
 }

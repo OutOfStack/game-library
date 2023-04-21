@@ -17,7 +17,9 @@ import (
 	"github.com/OutOfStack/game-library/internal/appconf"
 	auth_ "github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/uploadcare"
+	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
@@ -96,6 +98,15 @@ func run() error {
 		return fmt.Errorf("creating uploadcare client: %w", err)
 	}
 
+	// create redis client
+	redisClient, err := redis.New(cfg.Redis)
+	if err != nil {
+		return fmt.Errorf("creating redis client: %w", err)
+	}
+
+	// create redis cache service
+	rCache := cache.New(redisClient, logger)
+
 	// create storage
 	storage := repo.New(db)
 
@@ -115,7 +126,7 @@ func run() error {
 		logger.Error("Debug service stopped", zap.Error(err))
 	}()
 
-	h, err := handler.Service(logger, db, auth, storage, igdbClient, uploadcareClient, cfg.Web, cfg.Zipkin)
+	h, err := handler.Service(logger, db, auth, storage, rCache, igdbClient, uploadcareClient, cfg.Web, cfg.Zipkin)
 	if err != nil {
 		return fmt.Errorf("creating service handler: %w", err)
 	}

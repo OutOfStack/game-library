@@ -45,18 +45,18 @@ var (
 		}
 		// [2011.1.1, 2021.1.1)
 		if date.Year() < 2021 {
-			return 90, 15
+			return 80, 15
 		}
 		// [2021.1.1, now-6 months)
 		if date.Before(time.Now().AddDate(0, -6, 0)) {
-			return 60, 10
+			return 50, 10
 		}
 		// [now-6 months, now-1 month)
 		if date.Before(time.Now().AddDate(0, -1, 0)) {
-			return 45, 5
+			return 30, 5
 		}
 		// [now-1 month, now]
-		return 25, 2
+		return 15, 3
 	}
 )
 

@@ -64,7 +64,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy Orde
 
 	query := psql.Select("id", "name", "release_date", "logo_url", "rating", "summary", "genres", "platforms",
 		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id",
-		"(extract(year from release_date)/2.5 + igdb_rating + rating) weight").
+		"(extract(year from release_date)/2.5 + igdb_rating + rating/2) weight").
 		From("games").
 		Limit(uint64(pageSize)).
 		Offset(uint64((page - 1) * pageSize)).

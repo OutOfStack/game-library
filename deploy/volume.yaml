@@ -17,12 +17,25 @@ spec:
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: graylog-pvc
+  name: graylog-journal-pvc
   namespace: game-library
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 3Gi
+      storage: 1Gi
+  storageClassName: game-library-storage-class
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: graylog-config-pvc
+  namespace: game-library
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
   storageClassName: game-library-storage-class

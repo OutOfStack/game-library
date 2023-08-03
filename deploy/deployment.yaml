@@ -162,15 +162,20 @@ spec:
         app: graylog
     spec:
       volumes:
-        - name: graylog-data
+        - name: graylog-journal
           persistentVolumeClaim:
-            claimName: graylog-pvc
+            claimName: graylog-journal-pvc
+        - name: graylog-config
+          persistentVolumeClaim:
+            claimName: graylog-config-pvc
       containers:
         - name: graylog
           image: graylog/graylog:5.1.4
           volumeMounts:
-            - name: graylog-data
-              mountPath: /usr/share/graylog/data
+            - name: graylog-journal
+              mountPath: /usr/share/graylog/data/journal
+            - name: graylog-config
+              mountPath: /usr/share/graylog/data/config
           envFrom:
             - configMapRef:
                 name: graylog-config

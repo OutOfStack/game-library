@@ -174,13 +174,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: graylog-config
-          #command:
-          #  - "/usr/bin/tini"
-          #  - "--"
-          #  - "wait-for-it"
-          #  - "_K8S_IP_:9200"
-          #  - "--"
-          #  - "/docker-entrypoint.sh"
+          command:
+            - "/usr/bin/tini"
+            - "--"
+            - "wait-for-it"
+            - "_K8S_IP_:9200"
+            - "--"
+            - "/docker-entrypoint.sh"
           ports:
             - name: http
               containerPort: 9000

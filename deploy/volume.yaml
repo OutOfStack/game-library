@@ -11,6 +11,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: game-library-storage-class
   hostPath:
+    # make folder writable
     path: /data/game-library-pv
 ---
 kind: PersistentVolumeClaim

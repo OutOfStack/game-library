@@ -44,12 +44,12 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build and push
-      id: docker_build
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        tags: asctod/game-library:latest,asctod/game-library:${{ github.sha }}
+    #- name: Build and push
+    #  id: docker_build
+    #  uses: docker/build-push-action@v3
+    #  with:
+    #    push: true
+    #    tags: asctod/game-library:latest,asctod/game-library:${{ github.sha }}
 
     - name: Kubernetes Set Context
       uses: Azure/k8s-set-context@v3
@@ -65,6 +65,7 @@ jobs:
       run: |
         kubectl apply -f deploy/namespace.yaml
         kubectl apply -f deploy/config.yaml
+        kubectl apply -f deploy/volume.yaml
         kubectl apply -f deploy/deployment.yaml
         kubectl apply -f deploy/service.yaml
         kubectl apply -f deploy/ingress.yaml

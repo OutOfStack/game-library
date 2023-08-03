@@ -162,30 +162,27 @@ spec:
         app: graylog
     spec:
       volumes:
-        - name: graylog-journal
+        - name: graylog-data
           persistentVolumeClaim:
-            claimName: graylog-journal-pvc
-        - name: graylog-config
-          persistentVolumeClaim:
-            claimName: graylog-config-pvc
+            claimName: graylog-data-pvc
       containers:
         - name: graylog
           image: graylog/graylog:5.1.4
           volumeMounts:
-            - name: graylog-journal
-              mountPath: /usr/share/graylog/data/journal
-            - name: graylog-config
-              mountPath: /usr/share/graylog/data/config
+            - name: graylog-data
+              mountPath: /usr/share/graylog/data
           envFrom:
             - configMapRef:
                 name: graylog-config
-          command:
-            - "/usr/bin/tini"
-            - "--"
-            - "wait-for-it"
-            - "_K8S_IP_:9200"
-            - "--"
-            - "/docker-entrypoint.sh"
+            - secretRef:
+                name: game-library-graylog
+          #command:
+          #  - "/usr/bin/tini"
+          #  - "--"
+          #  - "wait-for-it"
+          #  - "_K8S_IP_:9200"
+          #  - "--"
+          #  - "/docker-entrypoint.sh"
           ports:
             - name: http
               containerPort: 9000

@@ -1,5 +1,20 @@
+kind: PersistentVolume
 apiVersion: v1
+metadata:
+  name: game-library-pv
+  namespace: game-library
+spec:
+  capacity:
+    storage: 15Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: game-library-storage-class
+  hostPath:
+    path: /data/game-library-pv
+---
 kind: PersistentVolumeClaim
+apiVersion: v1
 metadata:
   name: graylog-pvc
   namespace: game-library
@@ -8,4 +23,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
+      storage: 3Gi
+  storageClassName: game-library-storage-class

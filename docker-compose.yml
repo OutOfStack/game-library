@@ -52,3 +52,87 @@ services:
       DB_PASSWORD: temp_pwd
     depends_on:
       - db
+
+  # connect from docker network:
+  #   docker run -it --rm --network game-library_graylog mongo mongosh --host mongo -u admin -p password --authenticationDatabase admin test
+  # connect outside of docker network:
+  #   docker run -it --rm mongo mongosh --host 192.168.x.x -u admin -p password --authenticationDatabase admin test
+  mongo:
+    container_name: mongo
+    image: mongo:6.0.8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: graylog
+    # not required with docker network
+    # ports:
+    #  - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - graylog
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+    environment:
+      - cluster.name=graylog
+      - node.name=graylog-elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Dlog4j2.formatMsgNoLookups=true -Xms512m -Xmx512m"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    # not required with docker network
+    # ports:
+    #  - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - graylog
+
+  graylog:
+    image: graylog/graylog:5.1.3
+    volumes:
+      - graylog_data:/usr/share/graylog/data
+    environment:
+      - GRAYLOG_PASSWORD_SECRET=secret
+      # admin:admin
+      # echo -n "Enter Password: " && head -1 < /dev/stdin | tr -d '\n' | sha256sum | cut -d " " -f1
+      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      # https://go2docs.graylog.org/5-0/setting_up_graylog/server.conf.html
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+      # "if the public IP address of the server is 203.0.113.10 and the Graylog web interface is listening on port 9000,
+      # the value should be set to http://203.0.113.10:9000/ "
+      - GRAYLOG_HTTP_PUBLISH_URI=http://127.0.0.1:9000/
+      - GRAYLOG_MONGODB_URI=mongodb://admin:password@mongo:27017/graylog?authSource=admin
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    entrypoint: /usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh
+    restart: always
+    depends_on:
+      - mongo
+      - elasticsearch
+    ports:
+      # Graylog web interface and REST API
+      - "9000:9000"
+      # GELF TCP
+      - "12201:12201"
+    networks:
+      - graylog
+
+volumes:
+  mongo_data:
+    driver: local
+  es_data:
+    driver: local
+  graylog_data:
+    driver: local
+
+networks:
+  graylog:
+    driver: bridge

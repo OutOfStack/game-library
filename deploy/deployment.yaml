@@ -6,7 +6,7 @@ metadata:
     labels:
         app: game-library
 spec:
-    replicas: 3
+    replicas: 1
     selector:
         matchLabels:
             app: game-library
@@ -162,20 +162,15 @@ spec:
         app: graylog
     spec:
       volumes:
-        - name: graylog-journal
+        - name: graylog-data
           persistentVolumeClaim:
-            claimName: graylog-journal-pvc
-        - name: graylog-config
-          persistentVolumeClaim:
-            claimName: graylog-config-pvc
+            claimName: graylog-data-pvc
       containers:
         - name: graylog
           image: graylog/graylog:5.1.4
           volumeMounts:
-            - name: graylog-journal
-              mountPath: /usr/share/graylog/data/journal
-            - name: graylog-config
-              mountPath: /usr/share/graylog/data/config
+            - name: graylog-data
+              mountPath: /usr/share/graylog/data
           envFrom:
             - configMapRef:
                 name: graylog-config

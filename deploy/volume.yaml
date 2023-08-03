@@ -1,36 +1,23 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: game-library-pv
+  name: graylog-pv
   namespace: game-library
 spec:
   capacity:
-    storage: 10Gi
+    storage: 2Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: game-library-storage-class
+  storageClassName: graylog-storage-class
   hostPath:
     # make folder writable
-    path: /data/game-library-pv
+    path: /data/graylog
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: graylog-config-pvc
-  namespace: game-library
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
-  storageClassName: game-library-storage-class
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: graylog-journal-pvc
+  name: graylog-data-pvc
   namespace: game-library
 spec:
   accessModes:
@@ -38,4 +25,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: game-library-storage-class
+  storageClassName: graylog-storage-class

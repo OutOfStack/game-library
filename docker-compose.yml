@@ -84,6 +84,9 @@ services:
       - transport.host=localhost
       - network.host=0.0.0.0
       - "ES_JAVA_OPTS=-Dlog4j2.formatMsgNoLookups=true -Xms512m -Xmx512m"
+      - xpack.security.enabled=true
+      - xpack.security.transport.ssl.enabled=true
+      - ELASTIC_PASSWORD=password
     deploy:
       resources:
         limits:
@@ -101,7 +104,7 @@ services:
     volumes:
       - graylog_data:/usr/share/graylog/data
     environment:
-      - GRAYLOG_PASSWORD_SECRET=secret
+      - GRAYLOG_PASSWORD_SECRET=1234567890abcdef
       # admin:admin
       # echo -n "Enter Password: " && head -1 < /dev/stdin | tr -d '\n' | sha256sum | cut -d " " -f1
       - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
@@ -111,7 +114,7 @@ services:
       # the value should be set to http://203.0.113.10:9000/ "
       - GRAYLOG_HTTP_PUBLISH_URI=http://127.0.0.1:9000/
       - GRAYLOG_MONGODB_URI=mongodb://admin:password@mongo:27017/graylog?authSource=admin
-      - GRAYLOG_ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://elastic:password@elasticsearch:9200
     entrypoint: /usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh
     restart: always
     depends_on:

@@ -28,6 +28,6 @@ metadata:
   name: graylog-config
   namespace: game-library
 data:
-  GRAYLOG_HTTP_EXTERNAL_URI: "http://graylog-service.game-library.svc.cluster.local:9000"
-  GRAYLOG_HTTP_PUBLISH_URI: "https://_K8S_URL_/_log"
+  GRAYLOG_HTTP_EXTERNAL_URI: "https://_K8S_URL_/_log/"
+  GRAYLOG_HTTP_PUBLISH_URI: "http://graylog-service.game-library.svc.cluster.local:9000"
   GRAYLOG_ELASTICSEARCH_HOSTS: "_K8S_IP_:9200"

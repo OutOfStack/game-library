@@ -7,6 +7,9 @@ metadata:
         app: game-library
 spec:
     replicas: 1
+    strategy:
+      # use this because of error "1 node(s) didn't have free ports for the requested pod ports"
+      type: Recreate
     selector:
         matchLabels:
             app: game-library

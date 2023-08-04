@@ -11,7 +11,9 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: graylog-storage-class
   hostPath:
-    # make folder writable
+    # make folder writable: chmod -R o+w graylog
+    # add graylog.conf manually to graylog/data/config folder
+    # https://go2docs.graylog.org/5-1/downloading_and_installing_graylog/docker_installation.htm#Configuration
     path: /data/graylog
 ---
 kind: PersistentVolumeClaim

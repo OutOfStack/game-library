@@ -52,7 +52,7 @@ dockerrunzipkin:
 dockerrunredis:
 	docker compose up -d redis
 
-dockerrungraylog:
+dockerrunglog:
 	docker compose up -d graylog
 
 dockerbuildmng:

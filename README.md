@@ -18,6 +18,7 @@ An app for exploring and rating games
     dockerbuildweb  builds web app docker image
     dockerrunweb    runs web app in docker container
     dockerrunzipkin runs zipkin in docker container
+    dockerrunglog   runs graylog in docker container
     dockerrunweb    runs redis in docker container
     dockerbuildmng  builds manage app docker image
     dockerrunmng-m  applies migrations to database using docker manage image

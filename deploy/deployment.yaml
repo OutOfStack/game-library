@@ -7,6 +7,9 @@ metadata:
         app: game-library
 spec:
     replicas: 1
+    strategy:
+      # use this because of error "1 node(s) didn't have free ports for the requested pod ports"
+      type: Recreate
     selector:
         matchLabels:
             app: game-library
@@ -139,6 +142,48 @@ spec:
           ports:
             - name: redis
               containerPort: 6379
+      hostAliases:
+        - ip: _K8S_IP_
+          hostnames:
+            - _K8S_URL_
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: graylog-deployment
+  namespace: game-library
+  labels:
+    app: graylog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graylog
+  template:
+    metadata:
+      labels:
+        app: graylog
+    spec:
+      volumes:
+        - name: graylog-data
+          persistentVolumeClaim:
+            claimName: graylog-data-pvc
+      containers:
+        - name: graylog
+          image: graylog/graylog:5.1.4
+          volumeMounts:
+            - name: graylog-data
+              mountPath: /usr/share/graylog/data
+          envFrom:
+            - configMapRef:
+                name: graylog-config
+            - secretRef:
+                name: game-library-graylog
+          ports:
+            - name: http
+              containerPort: 9000
+            - name: gelf
+              containerPort: 12201
       hostAliases:
         - ip: _K8S_IP_
           hostnames:

@@ -27,7 +27,10 @@ seed:
 	go run ./cmd/game-library-manage/. seed
 
 generate:
-	go install github.com/swaggo/swag/cmd/swag@latest
+	@if ! command -v swag &> /dev/null; then\
+	  	go install github.com/swaggo/swag/cmd/swag@latest\
+  		exit;\
+	fi
 	swag init -g cmd/game-library-api/main.go
 
 lint:
@@ -41,13 +44,16 @@ dockerbuildweb:
 	docker build -t game-library-web:latest .
 
 dockerrunweb:
-	docker-compose up -d web
+	docker compose up -d web
 
 dockerrunzipkin:
-	docker-compose up -d zipkin
+	docker compose up -d zipkin
 
 dockerrunredis:
-	docker-compose up -d redis
+	docker compose up -d redis
+
+dockerrunglog:
+	docker compose up -d graylog
 
 dockerbuildmng:
 	docker build -f Dockerfile.mng -t game-library-mng:latest .

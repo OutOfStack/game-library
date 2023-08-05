@@ -1,0 +1,30 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: graylog-pv
+  namespace: game-library
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: graylog-storage-class
+  hostPath:
+    # make folder writable: chmod -R o+w graylog
+    # add graylog.conf manually to graylog/data/config folder
+    # https://go2docs.graylog.org/5-1/downloading_and_installing_graylog/docker_installation.htm#Configuration
+    path: /data/graylog
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: graylog-data-pvc
+  namespace: game-library
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: graylog-storage-class

@@ -43,3 +43,21 @@ spec:
       targetPort: redis
   selector:
     app: redis
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: graylog-service
+  namespace: game-library
+spec:
+  ports:
+    - protocol: TCP
+      name: http
+      port: 9000
+      targetPort: http
+    - protocol: TCP
+      name: gelf
+      port: 12201
+      targetPort: gelf
+  selector:
+    app: graylog

@@ -51,3 +51,10 @@ spec:
                         name: zipkin-service
                         port:
                             number: 9411
+              - path: /_log(/|$)(.*)
+                pathType: Prefix
+                backend:
+                    service:
+                        name: graylog-service
+                        port:
+                            number: 9000

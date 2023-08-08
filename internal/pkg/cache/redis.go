@@ -25,7 +25,7 @@ func New(redis *redis.Client, log *zap.Logger) *Cache {
 	}
 }
 
-// Get gets value by key from cache. If key not present runs fn and stores result in cache and returns result.
+// Get gets value by key from cache. If key not present, runs fn and stores result in cache and returns result.
 // If ttl == 0, default ttl is used.
 func Get[T any](ctx context.Context, c *Cache, key string, val *T, fn func() (T, error), ttl time.Duration) error {
 	err := c.redis.GetStruct(ctx, key, val)

@@ -24,8 +24,8 @@ func getGameKey(id int32) string {
 	return gameKey + "|" + strconv.FormatInt(int64(id), 10)
 }
 
-func getGamesCountKey() string {
-	return gamesCountKey
+func getGamesCountKey(name string) string {
+	return gamesCountKey + "|" + name
 }
 
 func getUserRatingsKey(userID string) string {

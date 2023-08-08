@@ -145,7 +145,7 @@ func (g *Game) GetGamesCount(c *gin.Context) {
 	span.SetAttributes(att.String("data.query", nameParam))
 
 	var count uint64
-	err := cache.Get(ctx, g.cache, getGamesCountKey(), &count, func() (uint64, error) {
+	err := cache.Get(ctx, g.cache, getGamesCountKey(name), &count, func() (uint64, error) {
 		return g.storage.GetGamesCount(ctx, name)
 	}, 0)
 	if err != nil {
@@ -281,10 +281,10 @@ func (g *Game) CreateGame(c *gin.Context) {
 			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
-		key = getGamesCountKey()
-		err = cache.Delete(ctx, g.cache, key)
+		key = gamesCountKey
+		err = cache.DeleteByStartsWith(ctx, g.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
+			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 	}()
 
@@ -440,13 +440,13 @@ func (g *Game) DeleteGame(c *gin.Context) {
 		key := gamesKey
 		err = cache.DeleteByStartsWith(ctx, g.cache, key)
 		if err != nil {
-			g.log.Error("remove games cache by matching key", zap.String("key", key), zap.Error(err))
+			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
-		key = getGamesCountKey()
-		err = cache.Delete(ctx, g.cache, key)
+		key = gamesCountKey
+		err = cache.DeleteByStartsWith(ctx, g.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
+			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate game cache
 		key = getGameKey(id)

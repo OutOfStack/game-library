@@ -49,8 +49,9 @@ definitions:
   handler.CreateRatingRequest:
     properties:
       rating:
+        description: 0 - remove rating
         maximum: 5
-        minimum: 1
+        minimum: 0
         type: integer
     type: object
   handler.GameResponse:
@@ -128,8 +129,6 @@ definitions:
         type: integer
       rating:
         type: integer
-      userId:
-        type: string
     type: object
   handler.UpdateGameRequest:
     properties:

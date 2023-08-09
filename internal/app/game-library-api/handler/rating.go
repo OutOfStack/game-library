@@ -62,8 +62,18 @@ func (g *Game) RateGame(c *gin.Context) {
 		return
 	}
 
-	rating := mapToCreateRating(&cr, gameID, userID)
-	err = g.storage.AddRating(ctx, rating)
+	if cr.Rating == 0 {
+		err = g.storage.RemoveRating(ctx, repo.RemoveRating{
+			UserID: userID,
+			GameID: gameID,
+		})
+	} else {
+		err = g.storage.AddRating(ctx, repo.CreateRating{
+			Rating: cr.Rating,
+			UserID: userID,
+			GameID: gameID,
+		})
+	}
 	if err != nil {
 		web.Err(c, errors.Wrap(err, "rate game"))
 		return
@@ -94,7 +104,10 @@ func (g *Game) RateGame(c *gin.Context) {
 		}
 	}()
 
-	web.Respond(c, mapToRatingResponse(rating), http.StatusOK)
+	web.Respond(c, &RatingResponse{
+		GameID: gameID,
+		Rating: cr.Rating,
+	}, http.StatusOK)
 }
 
 // GetUserRatings godoc

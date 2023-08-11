@@ -115,7 +115,7 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (g Game, err error)
 	ctx, span := tracer.Start(ctx, "db.game.getbyid")
 	defer span.End()
 
-	const q = `SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms, 
+	const q = `SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
        screenshots, websites, slug, igdb_rating, igdb_id
 	FROM games
 	WHERE id = $1`
@@ -156,7 +156,7 @@ func (s *Storage) CreateGame(ctx context.Context, cg CreateGame) (id int32, err 
 	defer span.End()
 
 	const q = `INSERT INTO games
-    (name, developers, publishers, release_date, genres, logo_url, summary, platforms, screenshots, 
+    (name, developers, publishers, release_date, genres, logo_url, summary, platforms, screenshots,
      	websites, slug, igdb_rating, igdb_id)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::varchar(50), $12, $13)
 	RETURNING id`
@@ -177,7 +177,7 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug UpdateGame) error
 	ctx, span := tracer.Start(ctx, "db.game.update")
 	defer span.End()
 
-	const q = `UPDATE games 
+	const q = `UPDATE games
 	SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8, platforms = $9,
 	    screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, igdb_id = $14
 	WHERE id = $1`
@@ -202,10 +202,10 @@ func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 	ctx, span := tracer.Start(ctx, "db.game.updaterating")
 	defer span.End()
 
-	const q = `UPDATE games 
+	const q = `UPDATE games
 	SET rating = (
-		SELECT SUM(rating)::numeric / COUNT(rating) 
-		FROM ratings 
+		SELECT COALESCE(SUM(rating)::numeric / COUNT(rating), 0)
+		FROM ratings
 		WHERE game_id = $1)
 	WHERE id = $1`
 
@@ -223,7 +223,7 @@ func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
 	ctx, span := tracer.Start(ctx, "db.game.delete")
 	defer span.End()
 
-	const q = `DELETE FROM games 
+	const q = `DELETE FROM games
 	WHERE id = $1`
 	res, err := s.db.ExecContext(ctx, q, id)
 	if err != nil {

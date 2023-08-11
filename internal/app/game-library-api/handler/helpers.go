@@ -88,22 +88,6 @@ func (g *Game) getPlatformByID(ctx context.Context, id int32) (Platform, bool, e
 
 // Mappings
 
-func mapToCreateRating(crr *CreateRatingRequest, gameID int32, userID string) repo.CreateRating {
-	return repo.CreateRating{
-		Rating: crr.Rating,
-		UserID: userID,
-		GameID: gameID,
-	}
-}
-
-func mapToRatingResponse(cr repo.CreateRating) *RatingResponse {
-	return &RatingResponse{
-		GameID: cr.GameID,
-		UserID: cr.UserID,
-		Rating: cr.Rating,
-	}
-}
-
 func mapToCreateGame(cgr *CreateGameRequest, developerID, publisherID int32) repo.CreateGame {
 	return repo.CreateGame{
 		Name:        cgr.Name,

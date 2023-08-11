@@ -522,9 +522,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "rating": {
+                    "description": "0 - remove rating",
                     "type": "integer",
                     "maximum": 5,
-                    "minimum": 1
+                    "minimum": 0
                 }
             }
         },
@@ -642,9 +643,6 @@ const docTemplate = `{
                 },
                 "rating": {
                     "type": "integer"
-                },
-                "userId": {
-                    "type": "string"
                 }
             }
         },

@@ -8,7 +8,6 @@ import (
 )
 
 // AddRating adds rating to game
-// If such entity does not exist returns error ErrNotFound{}
 func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
 	ctx, span := tracer.Start(ctx, "db.rating.add")
 	defer span.End()
@@ -21,6 +20,22 @@ func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
 
 	if _, err := s.db.ExecContext(ctx, q, cr.GameID, cr.UserID, cr.Rating); err != nil {
 		return fmt.Errorf("adding ratings to game with id %v from user with id %v: %w", cr.GameID, cr.UserID, err)
+	}
+
+	return nil
+}
+
+// RemoveRating removes rating of game
+func (s *Storage) RemoveRating(ctx context.Context, rr RemoveRating) error {
+	ctx, span := tracer.Start(ctx, "db.rating.remove")
+	defer span.End()
+
+	const q = `
+	DELETE FROM ratings
+	WHERE game_id = $1 AND user_id = $2`
+
+	if _, err := s.db.ExecContext(ctx, q, rr.GameID, rr.UserID); err != nil {
+		return fmt.Errorf("remove rating of game with id %v from user with id %v: %w", rr.GameID, rr.UserID, err)
 	}
 
 	return nil

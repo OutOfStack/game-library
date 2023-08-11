@@ -28,7 +28,7 @@ seed:
 
 generate:
 	@if ! command -v swag &> /dev/null; then\
-	  	go install github.com/swaggo/swag/cmd/swag@latest\
+	  	go install github.com/swaggo/swag/cmd/swag@v1.8.12\
   		exit;\
 	fi
 	swag init -g cmd/game-library-api/main.go

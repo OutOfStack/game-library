@@ -48,14 +48,13 @@ type UpdateGameRequest struct {
 
 // CreateRatingRequest represents create rating request
 type CreateRatingRequest struct {
-	Rating uint8 `json:"rating" validate:"gte=1,lte=5"`
+	Rating uint8 `json:"rating" validate:"gte=0,lte=5"` // 0 - remove rating
 }
 
 // RatingResponse represents rating response
 type RatingResponse struct {
-	GameID int32  `json:"gameId"`
-	UserID string `json:"userId"`
-	Rating uint8  `json:"rating"`
+	GameID int32 `json:"gameId"`
+	Rating uint8 `json:"rating"`
 }
 
 // GetUserRatingsRequest represents get user ratings request

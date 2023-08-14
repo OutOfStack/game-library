@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 // GetPlatforms godoc
@@ -22,7 +22,7 @@ func (g *Game) GetPlatforms(c *gin.Context) {
 
 	list, err := g.storage.GetPlatforms(ctx)
 	if err != nil {
-		web.Err(c, errors.Wrap(err, "get platforms"))
+		web.Err(c, fmt.Errorf("get platforms: %w", err))
 		return
 	}
 

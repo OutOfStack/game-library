@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 // GetGenres godoc
@@ -22,7 +22,7 @@ func (g *Game) GetGenres(c *gin.Context) {
 
 	list, err := g.storage.GetGenres(ctx)
 	if err != nil {
-		web.Err(c, errors.Wrap(err, "get genres"))
+		web.Err(c, fmt.Errorf("get genres: %w", err))
 		return
 	}
 

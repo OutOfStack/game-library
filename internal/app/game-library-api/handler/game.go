@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,7 +14,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/uploadcare"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -107,7 +107,7 @@ func (g *Game) GetGames(c *gin.Context) {
 		return g.storage.GetGames(ctx, int(pageSize), int(page), orderBy, name)
 	}, 0)
 	if err != nil {
-		web.Err(c, errors.Wrap(err, "getting games list"))
+		web.Err(c, fmt.Errorf("getting games list: %w", err))
 		return
 	}
 
@@ -149,7 +149,7 @@ func (g *Game) GetGamesCount(c *gin.Context) {
 		return g.storage.GetGamesCount(ctx, name)
 	}, 0)
 	if err != nil {
-		web.Err(c, errors.Wrap(err, "getting games count"))
+		web.Err(c, fmt.Errorf("getting games count: %w", err))
 		return
 	}
 
@@ -187,7 +187,7 @@ func (g *Game) GetGame(c *gin.Context) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
-		web.Err(c, errors.Wrapf(err, "retrieving game with id %v", id))
+		web.Err(c, fmt.Errorf("retrieving game with id %d: %w", id, err))
 		return
 	}
 
@@ -217,14 +217,14 @@ func (g *Game) CreateGame(c *gin.Context) {
 	var cg CreateGameRequest
 	err := web.Decode(c, &cg)
 	if err != nil {
-		web.Err(c, errors.Wrap(err, "decoding new game"))
+		web.Err(c, fmt.Errorf("decoding new game: %w", err))
 		return
 	}
 	span.SetAttributes(att.String("data.name", cg.Name))
 
 	claims, err := web.GetClaims(c)
 	if err != nil {
-		web.Err(c, errors.Wrap(err, "getting claims from context"))
+		web.Err(c, fmt.Errorf("getting claims from context: %w", err))
 		return
 	}
 
@@ -232,7 +232,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 	// get id or create developer
 	developerID, err := g.storage.GetCompanyIDByName(ctx, developer)
 	if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
-		web.Err(c, errors.Wrapf(err, "get company id with name %s", developer))
+		web.Err(c, fmt.Errorf("get company id with name %s: %w", developer, err))
 		return
 	}
 	if developerID == 0 {
@@ -240,7 +240,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 			Name: developer,
 		})
 		if err != nil {
-			web.Err(c, errors.Wrapf(err, "create company %s", developer))
+			web.Err(c, fmt.Errorf("create company %s: %w", developer, err))
 			return
 		}
 	}
@@ -248,7 +248,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 	// get id or create publisher
 	publisherID, err := g.storage.GetCompanyIDByName(ctx, publisher)
 	if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
-		web.Err(c, errors.Wrapf(err, "get company id with name %s", publisher))
+		web.Err(c, fmt.Errorf("get company id with name %s: %w", publisher, err))
 		return
 	}
 	if publisherID == 0 {
@@ -256,7 +256,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 			Name: publisher,
 		})
 		if err != nil {
-			web.Err(c, errors.Wrapf(err, "create company %s", publisher))
+			web.Err(c, fmt.Errorf("create company %s: %w", publisher, err))
 			return
 		}
 	}
@@ -265,24 +265,24 @@ func (g *Game) CreateGame(c *gin.Context) {
 
 	id, err := g.storage.CreateGame(ctx, create)
 	if err != nil {
-		web.Err(c, errors.Wrap(err, "adding new game"))
+		web.Err(c, fmt.Errorf("adding new game: %w", err))
 		return
 	}
 
 	// invalidate cache
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
 		defer cancel()
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(ctx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
 		if err != nil {
 			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		err = cache.DeleteByStartsWith(ctx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
 		if err != nil {
 			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
@@ -315,7 +315,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 	}
 	var ugr UpdateGameRequest
 	if err = web.Decode(c, &ugr); err != nil {
-		web.Err(c, errors.Wrap(err, "decoding game update"))
+		web.Err(c, fmt.Errorf("decoding game update: %w", err))
 		return
 	}
 	span.SetAttributes(att.Int("data.id", int(id)))
@@ -326,7 +326,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
-		web.Err(c, errors.Wrapf(err, "retrieve game with id %d", id))
+		web.Err(c, fmt.Errorf("retrieve game with id %d: %w", id, err))
 		return
 	}
 
@@ -335,9 +335,9 @@ func (g *Game) UpdateGame(c *gin.Context) {
 	if developer != nil {
 		if *developer != "" {
 			// get id or create developer
-			developerID, err := g.storage.GetCompanyIDByName(ctx, *developer)
-			if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
-				web.Err(c, errors.Wrapf(err, "get developer id with name %s", *developer))
+			developerID, cErr := g.storage.GetCompanyIDByName(ctx, *developer)
+			if cErr != nil && !errors.As(cErr, &repo.ErrNotFound[string]{}) {
+				web.Err(c, fmt.Errorf("get developer id with name %s: %w", *developer, cErr))
 				return
 			}
 			if developerID == 0 {
@@ -345,7 +345,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 					Name: *developer,
 				})
 				if err != nil {
-					web.Err(c, errors.Wrapf(err, "create developer %s", *developer))
+					web.Err(c, fmt.Errorf("create developer %s: %w", *developer, err))
 					return
 				}
 			}
@@ -364,31 +364,31 @@ func (g *Game) UpdateGame(c *gin.Context) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
-		web.Err(c, errors.Wrapf(err, "updating game with id %v", id))
+		web.Err(c, fmt.Errorf("updating game with id %v: %w", id, err))
 		return
 	}
 
 	// invalidate cache
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
 		defer cancel()
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(ctx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
 		if err != nil {
 			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 
 		// invalidate game cache
 		key = getGameKey(id)
-		err = cache.Delete(ctx, g.cache, key)
+		err = cache.Delete(bCtx, g.cache, key)
 		if err != nil {
 			g.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
 		}
 		// recache game
-		err = cache.Get(ctx, g.cache, key, new(repo.Game), func() (repo.Game, error) {
-			return g.storage.GetGameByID(ctx, id)
+		err = cache.Get(bCtx, g.cache, key, new(repo.Game), func() (repo.Game, error) {
+			return g.storage.GetGameByID(bCtx, id)
 		}, 0)
 		if err != nil {
 			g.log.Error("recache game with id", zap.Int32("id", id), zap.Error(err))
@@ -427,30 +427,30 @@ func (g *Game) DeleteGame(c *gin.Context) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
-		web.Err(c, errors.Wrapf(err, "deleting game with id %v", id))
+		web.Err(c, fmt.Errorf("deleting game with id %v: %w", id, err))
 		return
 	}
 
 	// invalidate cache
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
 		defer cancel()
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(ctx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
 		if err != nil {
 			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		err = cache.DeleteByStartsWith(ctx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
 		if err != nil {
 			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate game cache
 		key = getGameKey(id)
-		err = cache.Delete(ctx, g.cache, key)
+		err = cache.Delete(bCtx, g.cache, key)
 		if err != nil {
 			g.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}

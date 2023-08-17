@@ -2,10 +2,11 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 // Respond marshals a value to JSON and sends it to client
@@ -20,21 +21,22 @@ func Respond(c *gin.Context, val interface{}, statusCode int) {
 	}
 	data, err := json.Marshal(val)
 	if err != nil {
-		Err(c, errors.Wrap(err, "marshalling value to json"))
+		Err(c, fmt.Errorf("marshalling value to json: %w", err))
 		return
 	}
 	c.Header("content-type", "application/json;charset=utf-8")
 	c.Status(statusCode)
 	_, err = c.Writer.Write(data)
 	if err != nil {
-		Err(c, errors.Wrap(err, "writing to client"))
+		Err(c, fmt.Errorf("writing to client: %w", err))
 		return
 	}
 }
 
 // RespondError handles outgoing errors
 func RespondError(c *gin.Context, err error) {
-	webErr, ok := errors.Cause(err).(*Error)
+	var webErr *Error
+	ok := errors.As(errors.Unwrap(err), &webErr)
 	if ok {
 		response := ErrorResponse{
 			Error:  webErr.Err.Error(),

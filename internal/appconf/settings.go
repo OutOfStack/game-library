@@ -15,6 +15,7 @@ type Cfg struct {
 	Scheduler  Scheduler  `mapstructure:",squash"`
 	Uploadcare Uploadcare `mapstructure:",squash"`
 	Redis      Redis      `mapstructure:",squash"`
+	Graylog    Graylog    `mapstructure:",squash"`
 }
 
 // DB represents settings related to database
@@ -71,4 +72,9 @@ type Redis struct {
 	Address  string `mapstructure:"REDIS_ADDR"`
 	Password string `mapstructure:"REDIS_PASSWORD"`
 	TTL      string `mapstructure:"REDIS_TTL"`
+}
+
+// Graylog represents settings related to Graylog integration
+type Graylog struct {
+	Address string `mapstructure:"GRAYLOG_ADDR"`
 }

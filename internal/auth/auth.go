@@ -17,8 +17,8 @@ import (
 
 // Context keys for authentication and authorization
 const (
-	CtxTokenKey  string = "auth_tkn"
-	CtxClaimsKey string = "auth_clms"
+	CtxTokenKey  string = "auth_token"
+	CtxClaimsKey string = "auth_claims"
 )
 
 // User roles
@@ -64,9 +64,7 @@ func New(log *zap.Logger, algorithm string, verifyAPIURL string) (*Auth, error) 
 		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
 	}
 
-	parser := &jwt.Parser{
-		ValidMethods: []string{algorithm},
-	}
+	parser := jwt.NewParser(jwt.WithValidMethods([]string{algorithm}))
 
 	a := Auth{
 		log:          log,
@@ -77,7 +75,7 @@ func New(log *zap.Logger, algorithm string, verifyAPIURL string) (*Auth, error) 
 	return &a, nil
 }
 
-// ExtractToken extracts Bearer token from Authorization hrader
+// ExtractToken extracts Bearer token from Authorization header
 func ExtractToken(authHeader string) string {
 	parts := strings.Split(authHeader, " ")
 	if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
@@ -115,7 +113,10 @@ func (a *Auth) Verify(ctx context.Context, tokenStr string) error {
 	defer resp.Body.Close()
 
 	var respBody VerifyTokenResp
-	json.NewDecoder(resp.Body).Decode(&respBody)
+	err = json.NewDecoder(resp.Body).Decode(&respBody)
+	if err != nil {
+		return fmt.Errorf("invalid response: %v", err)
+	}
 
 	if !respBody.Valid {
 		return fmt.Errorf("invalid token")

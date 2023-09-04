@@ -6,19 +6,14 @@ import (
 	"log"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-manage/schema"
+	"github.com/OutOfStack/game-library/internal/appconf"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 )
 
 func main() {
 	type config struct {
-		DB struct {
-			Host       string `mapstructure:"DB_HOST"`
-			Name       string `mapstructure:"DB_NAME"`
-			User       string `mapstructure:"DB_USER"`
-			Password   string `mapstructure:"DB_PASSWORD"`
-			RequireSSL bool   `mapstructure:"DB_REQUIRESSL"`
-		} `mapstructure:",squash"`
+		DB appconf.DB `mapstructure:",squash"`
 	}
 
 	cfg := config{}

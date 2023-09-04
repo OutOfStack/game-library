@@ -33,7 +33,7 @@ jobs:
   build_push_deploy:
     runs-on: ubuntu-latest
     needs: test
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' || github.ref_name == 'feature/log-to-graylog' }}
     steps:
     - uses: actions/checkout@v3
     - name: Set up Docker Buildx
@@ -59,13 +59,13 @@ jobs:
 
     - name: Replace deployment variables
       run: |
-        sed -i'' -e 's/_K8S_URL_/${{ secrets.K8S_URL }}/g' -e 's/_K8S_IP_/${{ secrets.K8S_IP }}/g' -e 's/_IMAGE_TAG_/${{ github.sha }}/g' deploy/*.yaml
+        sed -i'' -e 's/_K8S_URL_/${{ secrets.K8S_URL }}/g' -e 's/_K8S_IP_/${{ secrets.K8S_IP }}/g' -e 's/_IMAGE_TAG_/${{ github.sha }}/g' .k8s/*.yaml
 
     - name: Kubernetes Apply configs
       run: |
-        kubectl apply -f deploy/namespace.yaml
-        kubectl apply -f deploy/config.yaml
-        kubectl apply -f deploy/volume.yaml
-        kubectl apply -f deploy/deployment.yaml
-        kubectl apply -f deploy/service.yaml
-        kubectl apply -f deploy/ingress.yaml
+        kubectl apply -f .k8s/namespace.yaml
+        kubectl apply -f .k8s/config.yaml
+        kubectl apply -f .k8s/volume.yaml
+        kubectl apply -f .k8s/deployment.yaml
+        kubectl apply -f .k8s/service.yaml
+        kubectl apply -f .k8s/ingress.yaml

@@ -9,10 +9,11 @@ data:
     DEBUG_ADDRESS: "0.0.0.0:6060"
     APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_"
     AUTH_VERIFYTOKENURL: "https://_K8S_URL_/_auth/token/verify"
-    ZIPKIN_REPORTERURL: "http://zipkin-service:9411/api/v2/spans"
+    ZIPKIN_REPORTERURL: "http://zipkin-service.game-library.svc.cluster.local:9411/api/v2/spans"
     SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
     REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
     REDIS_TTL: "2h"
+    GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:9000"
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -29,4 +30,3 @@ metadata:
   namespace: game-library
 data:
   GRAYLOG_HTTP_EXTERNAL_URI: "https://_K8S_URL_/_log/"
-  GRAYLOG_HTTP_PUBLISH_URI: "http://graylog-service.game-library.svc.cluster.local:9000"

@@ -15,7 +15,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/appconf"
-	auth_ "github.com/OutOfStack/game-library/internal/auth"
+	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
 	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/uploadcare"
@@ -27,6 +27,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 )
 
 // @title Game library API
@@ -39,31 +40,51 @@ import (
 // @query.collection.format multi
 // @schemes http
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
+	var cfg appconf.Cfg
+	if err := conf.Load(".", "app", "env", &cfg); err != nil {
+		log.Fatalf("can't parse config: %v", err)
 	}
-}
-
-func run() error {
-	loggerCfg := zap.NewProductionConfig()
-	loggerCfg.DisableCaller = true
-	loggerCfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
-	logger, err := loggerCfg.Build()
+	logger, err := initLogger(cfg)
 	if err != nil {
-		log.Fatalf("can't initialize zap logger: %v", err)
+		log.Fatalf("can't init logger: %v", err)
 	}
 	defer func(logger *zap.Logger) {
-		err = logger.Sync()
-		if err != nil {
-			log.Printf("syncing logger: %v", err)
+		if err = logger.Sync(); err != nil {
+			log.Printf("can't sync logger: %v", err)
 		}
 	}(logger)
 
-	var cfg appconf.Cfg
-	if err = conf.Load(".", "app", "env", &cfg); err != nil {
-		log.Fatalf("error parsing config: %v", err)
+	if err = run(logger, cfg); err != nil {
+		logger.Fatal("can't run app", zap.Error(err))
 	}
+}
 
+func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.EncodeTime = zapcore.RFC3339TimeEncoder
+
+	gelfWriter, err := gelf.NewTCPWriter(cfg.Graylog.Address)
+	if err != nil {
+		return nil, fmt.Errorf("can't create gelf writer: %v", err)
+	}
+	consoleWriter := zapcore.Lock(os.Stderr)
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderCfg),
+			zapcore.AddSync(gelfWriter),
+			zap.InfoLevel),
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderCfg),
+			consoleWriter,
+			zap.InfoLevel))
+
+	logger := zap.New(core, zap.WithCaller(false))
+
+	return logger, nil
+}
+
+func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	db, err := database.Open(database.Config{
 		Host:       cfg.DB.Host,
 		Name:       cfg.DB.Name,
@@ -75,13 +96,13 @@ func run() error {
 		return fmt.Errorf("opening db: %w", err)
 	}
 	defer func(db *sqlx.DB) {
-		if err := db.Close(); err != nil {
+		if err = db.Close(); err != nil {
 			logger.Error("calling database close", zap.Error(err))
 		}
 	}(db)
 
 	// create auth module
-	auth, err := auth_.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
+	authClient, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
 		return fmt.Errorf("creating Auth: %w", err)
 	}
@@ -123,12 +144,14 @@ func run() error {
 	go func() {
 		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
 		err = http.ListenAndServe(cfg.Web.DebugAddress, nil)
-		logger.Error("Debug service stopped", zap.Error(err))
+		if err != nil {
+			logger.Error("Debug service stopped", zap.Error(err))
+		}
 	}()
 
-	h, err := handler.Service(logger, db, auth, storage, rCache, igdbClient, uploadcareClient, cfg.Web, cfg.Zipkin)
+	h, err := handler.Service(logger, db, authClient, storage, rCache, igdbClient, uploadcareClient, cfg.Web, cfg.Zipkin)
 	if err != nil {
-		return fmt.Errorf("creating service handler: %w", err)
+		return fmt.Errorf("can't create service handler: %w", err)
 	}
 
 	// start API service
@@ -157,14 +180,12 @@ func run() error {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		err = api.Shutdown(ctx)
-		if err != nil {
+		if err = api.Shutdown(ctx); err != nil {
 			logger.Error("Shutdown did not complete", zap.Duration("timeout", timeout), zap.Error(err))
 			err = api.Close()
-		}
-
-		if err != nil {
-			return fmt.Errorf("shutdown: %w", err)
+			if err != nil {
+				return fmt.Errorf("shutdown: %w", err)
+			}
 		}
 	}
 

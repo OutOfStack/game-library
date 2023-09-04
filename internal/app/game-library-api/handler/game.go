@@ -333,7 +333,9 @@ func (g *Game) UpdateGame(c *gin.Context) {
 	developer := ugr.Developer
 	developers := game.Developers
 	if developer != nil {
-		if *developer != "" {
+		if *developer == "" {
+			developers = []int32{}
+		} else {
 			// get id or create developer
 			developerID, cErr := g.storage.GetCompanyIDByName(ctx, *developer)
 			if cErr != nil && !errors.As(cErr, &repo.ErrNotFound[string]{}) {
@@ -350,8 +352,6 @@ func (g *Game) UpdateGame(c *gin.Context) {
 				}
 			}
 			developers = []int32{developerID}
-		} else {
-			developers = []int32{}
 		}
 	}
 

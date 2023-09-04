@@ -13,7 +13,7 @@ data:
     SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
     REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
     REDIS_TTL: "2h"
-    GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:9000"
+    GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
 ---
 kind: ConfigMap
 apiVersion: v1

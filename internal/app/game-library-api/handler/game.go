@@ -93,7 +93,7 @@ func (g *Game) GetGames(c *gin.Context) {
 	case "releaseDate":
 		orderBy = repo.OrderGamesByReleaseDate
 	default:
-		web.Err(c, web.NewRequestError(errors.New("Incorrect orderBy. Should be one of: default, releaseDate, name"), http.StatusBadRequest))
+		web.Err(c, web.NewRequestError(errors.New("incorrect orderBy. Should be one of: default, releaseDate, name"), http.StatusBadRequest))
 		return
 	}
 

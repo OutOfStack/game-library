@@ -3,22 +3,23 @@ package repo
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/lib/pq"
 )
 
 // AddRating adds rating to game
 func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
-	ctx, span := tracer.Start(ctx, "db.rating.add")
+	ctx, span := tracer.Start(ctx, "db.addRating")
 	defer span.End()
 
 	const q = `
 	INSERT INTO ratings
-	(game_id, user_id, rating)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (game_id, user_id) DO UPDATE SET rating = $3`
+	(game_id, user_id, rating, created_at)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (game_id, user_id) DO UPDATE SET rating = $3, updated_at = $4`
 
-	if _, err := s.db.ExecContext(ctx, q, cr.GameID, cr.UserID, cr.Rating); err != nil {
+	if _, err := s.db.ExecContext(ctx, q, cr.GameID, cr.UserID, cr.Rating, time.Now()); err != nil {
 		return fmt.Errorf("adding ratings to game with id %v from user with id %v: %w", cr.GameID, cr.UserID, err)
 	}
 
@@ -27,7 +28,7 @@ func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
 
 // RemoveRating removes rating of game
 func (s *Storage) RemoveRating(ctx context.Context, rr RemoveRating) error {
-	ctx, span := tracer.Start(ctx, "db.rating.remove")
+	ctx, span := tracer.Start(ctx, "db.removeRating")
 	defer span.End()
 
 	const q = `
@@ -42,17 +43,16 @@ func (s *Storage) RemoveRating(ctx context.Context, rr RemoveRating) error {
 }
 
 // GetUserRatingsByGamesIDs returns user ratings for specified games
-func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, gameIDs []int32) ([]UserRating, error) {
-	ctx, span := tracer.Start(ctx, "db.rating.getuserratingsbyids")
+func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, gameIDs []int32) (ratings []UserRating, err error) {
+	ctx, span := tracer.Start(ctx, "db.getUserRatingsByGamesIDs")
 	defer span.End()
 
-	ratings := make([]UserRating, 0)
 	const q = `
 	SELECT game_id, rating, user_id
 	FROM ratings
 	WHERE user_id = $1 AND game_id = ANY($2)`
 
-	if err := s.db.SelectContext(ctx, &ratings, q, userID, pq.Array(gameIDs)); err != nil {
+	if err = s.db.SelectContext(ctx, &ratings, q, userID, pq.Array(gameIDs)); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +61,7 @@ func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, g
 
 // GetUserRatings returns all user ratings
 func (s *Storage) GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error) {
-	ctx, span := tracer.Start(ctx, "db.rating.getuserratings")
+	ctx, span := tracer.Start(ctx, "db.getUserRatings")
 	defer span.End()
 
 	ratings := make([]UserRating, 0)

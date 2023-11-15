@@ -34,7 +34,7 @@ func Int32() int32 {
 	return random.Int31() * int32(sign)
 }
 
-// Intn returns random value in tange [0, n)
+// Intn returns random value in range [0, n)
 func Intn(n int) int {
 	return random.Intn(n)
 }

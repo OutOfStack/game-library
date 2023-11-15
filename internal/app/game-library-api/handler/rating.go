@@ -29,7 +29,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/rate [post]
 func (g *Game) RateGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.rating.rategame")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.rateGame")
 	defer span.End()
 
 	gameID, err := web.GetIDParam(c)
@@ -122,7 +122,7 @@ func (g *Game) RateGame(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]
 func (g *Game) GetUserRatings(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.rating.getuserratings")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.getUserRatings")
 	defer span.End()
 
 	var ur GetUserRatingsRequest

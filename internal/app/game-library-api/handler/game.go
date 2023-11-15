@@ -64,7 +64,7 @@ var (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [get]
 func (g *Game) GetGames(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.getgames")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGames")
 	defer span.End()
 
 	pageSizeParam := c.DefaultQuery("pageSize", "20")
@@ -74,14 +74,16 @@ func (g *Game) GetGames(c *gin.Context) {
 
 	pageSize, err := strconv.ParseInt(pageSizeParam, 10, 32)
 	if err != nil || pageSize <= 0 {
-		web.Err(c, web.NewRequestError(errors.New("Incorrect page size. Should be greater than 0"), http.StatusBadRequest))
+		web.Err(c, web.NewRequestError(errors.New("incorrect page size. Should be greater than 0"), http.StatusBadRequest))
 		return
 	}
+
 	page, err := strconv.ParseInt(pageParam, 10, 32)
 	if err != nil || page <= 0 {
-		web.Err(c, web.NewRequestError(errors.New("Incorrect page. Should be greater than 0"), http.StatusBadRequest))
+		web.Err(c, web.NewRequestError(errors.New("incorrect page. Should be greater than 0"), http.StatusBadRequest))
 		return
 	}
+
 	var orderBy repo.OrderGamesBy
 	switch orderByParam {
 	case "default":
@@ -94,6 +96,7 @@ func (g *Game) GetGames(c *gin.Context) {
 		web.Err(c, web.NewRequestError(errors.New("Incorrect orderBy. Should be one of: default, releaseDate, name"), http.StatusBadRequest))
 		return
 	}
+
 	name := nameParam
 	if len(name) < minLengthForSearch {
 		name = ""
@@ -113,8 +116,8 @@ func (g *Game) GetGames(c *gin.Context) {
 
 	response := make([]GameResponse, 0, len(list))
 	for _, game := range list {
-		r, err := g.mapToGameResponse(c, game)
-		if err != nil {
+		r, mErr := g.mapToGameResponse(c, game)
+		if mErr != nil {
 			web.Err(c, web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
 			return
 		}
@@ -134,7 +137,7 @@ func (g *Game) GetGames(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/count [get]
 func (g *Game) GetGamesCount(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.getgamescount")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGamesCount")
 	defer span.End()
 
 	nameParam := c.DefaultQuery("name", "")
@@ -168,7 +171,7 @@ func (g *Game) GetGamesCount(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
 func (g *Game) GetGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.getgame")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGame")
 	defer span.End()
 
 	id, err := web.GetIDParam(c)
@@ -211,7 +214,7 @@ func (g *Game) GetGame(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
 func (g *Game) CreateGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.creategame")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.createGame")
 	defer span.End()
 
 	var cg CreateGameRequest
@@ -305,7 +308,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [patch]
 func (g *Game) UpdateGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.updategame")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.updateGame")
 	defer span.End()
 
 	id, err := web.GetIDParam(c)
@@ -411,7 +414,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [delete]
 func (g *Game) DeleteGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.game.delete")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.deleteGame")
 	defer span.End()
 
 	id, err := web.GetIDParam(c)

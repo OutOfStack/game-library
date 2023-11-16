@@ -60,7 +60,6 @@ func TestMain(m *testing.M) {
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	counter := 1
 	err = pool.Retry(func() error {
-		var err error
 		db, err = sqlx.Open("postgres", fmt.Sprintf("postgres://postgres:%s@localhost:%s/games?sslmode=disable", PgPwd, HostPort))
 		if err != nil {
 			log.Printf("Repo tests: Attempt %d connecting to database: %v", counter, err)

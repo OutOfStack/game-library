@@ -28,8 +28,10 @@ An app for exploring and rating games
 ### Migrations
 Creating a new migration:
 
-`touch {i}_{name}.up.sql {i}_{name}.down.sql` , where
-`{i}` - consecutive migration ID of length 6 padded with zeroes,
+in `./scripts/migrations` folder
+
+`touch {i}_{name}.up.sql {i}_{name}.down.sql`, where
+`{i}` - increasing id consisting of 6 digits,
 `{name}` - migration name
 
 ### Swagger

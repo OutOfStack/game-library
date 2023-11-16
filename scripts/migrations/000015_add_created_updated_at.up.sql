@@ -1,0 +1,13 @@
+ALTER TABLE companies
+    ADD COLUMN created_at TIMESTAMPTZ;
+
+ALTER TABLE genres
+  ADD COLUMN created_at TIMESTAMPTZ;
+
+ALTER TABLE games
+  ADD COLUMN created_at TIMESTAMPTZ,
+  ADD COLUMN updated_at TIMESTAMPTZ;
+
+ALTER TABLE ratings
+  ADD COLUMN created_at TIMESTAMPTZ,
+  ADD COLUMN updated_at TIMESTAMPTZ;

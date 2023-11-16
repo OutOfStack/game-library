@@ -17,7 +17,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /platforms [get]
 func (g *Game) GetPlatforms(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.getplatforms")
+	ctx, span := tracer.Start(c.Request.Context(), "handlers.getPlatforms")
 	defer span.End()
 
 	list, err := g.storage.GetPlatforms(ctx)

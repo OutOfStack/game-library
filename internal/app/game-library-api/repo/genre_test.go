@@ -9,6 +9,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestCreateGenre_IGDBIDIsNull_ShouldBeNoError tests case when we add genre without igdb id, and there should be no error
+func TestCreateGenre_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	genre := repo.Genre{
+		Name: td.String(),
+	}
+
+	_, err := s.CreateGenre(context.Background(), genre)
+	require.NoError(t, err, "err should be nil")
+}
+
 // TestGetGenres_DataExists_ShouldBeEqual tests case when we add one genre, then fetch first genre, and they should be equal
 func TestGetGenres_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)

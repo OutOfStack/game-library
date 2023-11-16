@@ -11,6 +11,7 @@ RUN go mod download
 COPY ./app.env ./out/
 COPY . .
 
+# build app
 RUN go build -o ./out/game-library-api cmd/game-library-api/main.go
 
 # run
@@ -18,6 +19,7 @@ FROM alpine:3.18
 
 WORKDIR /app
 
+# copy built app into runnable container
 COPY --from=builder /tmp/game-library-api/out ./
 
 EXPOSE 8000

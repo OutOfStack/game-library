@@ -36,8 +36,7 @@ func Respond(c *gin.Context, val interface{}, statusCode int) {
 // RespondError handles outgoing errors
 func RespondError(c *gin.Context, err error) {
 	var webErr *Error
-	ok := errors.As(errors.Unwrap(err), &webErr)
-	if ok {
+	if ok := errors.As(errors.Unwrap(err), &webErr); ok {
 		response := ErrorResponse{
 			Error:  webErr.Err.Error(),
 			Fields: webErr.Fields,

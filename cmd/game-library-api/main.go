@@ -62,6 +62,7 @@ func main() {
 func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.EncodeTime = zapcore.RFC3339TimeEncoder
+	encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
 
 	gelfWriter, err := gelf.NewTCPWriter(cfg.Graylog.Address)
 	if err != nil {
@@ -79,7 +80,7 @@ func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
 			consoleWriter,
 			zap.InfoLevel))
 
-	logger := zap.New(core, zap.WithCaller(false))
+	logger := zap.New(core, zap.WithCaller(false)).With(zap.String("service", appconf.ServiceName))
 
 	return logger, nil
 }

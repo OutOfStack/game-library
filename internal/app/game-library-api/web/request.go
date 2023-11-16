@@ -17,12 +17,10 @@ func Decode(c *gin.Context, val interface{}) error {
 	}
 
 	if err = validate.Struct(val); err != nil {
-		vErrs, ok := err.(validator.ValidationErrors)
-		if !ok {
+		var vErrs validator.ValidationErrors
+		if ok := errors.As(err, &vErrs); !ok {
 			return err
 		}
-
-		lang, _ := translator.GetTranslator("en")
 
 		var fields []FieldError
 		for _, vErr := range vErrs {

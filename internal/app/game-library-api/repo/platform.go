@@ -5,16 +5,15 @@ import (
 )
 
 // GetPlatforms returns platforms
-func (s *Storage) GetPlatforms(ctx context.Context) ([]Platform, error) {
-	ctx, span := tracer.Start(ctx, "db.platform.get")
+func (s *Storage) GetPlatforms(ctx context.Context) (platforms []Platform, err error) {
+	ctx, span := tracer.Start(ctx, "db.getPlatforms")
 	defer span.End()
 
-	platforms := make([]Platform, 0)
 	const q = `
 	SELECT id, name, abbreviation, igdb_id
 	FROM platforms`
 
-	if err := s.db.SelectContext(ctx, &platforms, q); err != nil {
+	if err = s.db.SelectContext(ctx, &platforms, q); err != nil {
 		return nil, err
 	}
 

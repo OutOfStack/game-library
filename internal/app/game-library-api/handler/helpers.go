@@ -57,10 +57,10 @@ func (g *Game) getGenreByID(ctx context.Context, id int32) (Genre, bool, error) 
 		if err != nil {
 			return Genre{}, false, err
 		}
-		for _, g := range genres {
-			genresMap.Set(g.ID, Genre{
-				ID:   g.ID,
-				Name: g.Name,
+		for _, genre := range genres {
+			genresMap.Set(genre.ID, Genre{
+				ID:   genre.ID,
+				Name: genre.Name,
 			})
 		}
 	}
@@ -165,10 +165,10 @@ func (g *Game) mapToGameResponse(ctx context.Context, game repo.Game) (GameRespo
 		Websites:    game.Websites,
 	}
 	for _, gID := range game.Genres {
-		if g, ok, err := g.getGenreByID(ctx, gID); err != nil {
+		if genre, ok, err := g.getGenreByID(ctx, gID); err != nil {
 			return GameResponse{}, fmt.Errorf("get genre %d by id: %v", gID, err)
 		} else if ok {
-			resp.Genres = append(resp.Genres, g)
+			resp.Genres = append(resp.Genres, genre)
 		}
 	}
 	for _, pID := range game.Platforms {

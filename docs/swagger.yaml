@@ -34,8 +34,6 @@ definitions:
         items:
           type: string
         type: array
-      slug:
-        type: string
       summary:
         type: string
       websites:
@@ -152,8 +150,6 @@ definitions:
         items:
           type: string
         type: array
-      slug:
-        type: string
       summary:
         type: string
       websites:

@@ -26,19 +26,35 @@ rollback:
 seed:
 	go run ./cmd/game-library-manage/. seed
 
+SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.2
+SWAG_BIN := $(shell go env GOPATH)/bin/swag
 generate:
-	@if ! command -v swag &> /dev/null; then\
-	  	go install github.com/swaggo/swag/cmd/swag@v1.8.12\
-  		exit;\
-	fi
-	swag init -g cmd/game-library-api/main.go
+	@if \[ ! -f ${SWAG_BIN} \]; then \
+		echo "Installing swag..."; \
+    go install ${SWAG_PKG}; \
+  fi
+	@if \[ -f ${SWAG_BIN} \]; then \
+  	echo "Found swag at '$(SWAG_BIN)', generating documentation..."; \
+    ${SWAG_BIN} init -g cmd/game-library-api/main.go; \
+	else \
+    echo "swag not found or the file does not exist"; \
+    exit 1; \
+  fi
 
+LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
-	@if ! command -v golangci-lint &> /dev/null; then\
-	  	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest;\
-  		exit;\
-	fi
-	golangci-lint run
+	@if \[ ! -f ${LINT_BIN} \]; then \
+		echo "Installing golangci-lint..."; \
+    go install ${LINT_PKG}; \
+  fi
+	@if \[ -f ${LINT_BIN} \]; then \
+  	echo "Found golangci-lint at '$(LINT_BIN)', running..."; \
+    ${LINT_BIN} run; \
+	else \
+    echo "golangci-lint not found or the file does not exist"; \
+    exit 1; \
+  fi
 
 dockerbuildweb:
 	docker build -t game-library-web:latest .

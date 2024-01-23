@@ -34,7 +34,7 @@ func (m *KVMap[K, V]) Get(key K) (V, bool) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	if time.Since(m.expiresAt) > 0 {
-		go m.purge()
+		go m.Purge()
 		return *new(V), false
 	}
 	val, ok := m.m[key]
@@ -54,13 +54,14 @@ func (m *KVMap[K, V]) Size() int {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	if time.Since(m.expiresAt) > 0 {
-		go m.purge()
+		go m.Purge()
 		return 0
 	}
 	return len(m.m)
 }
 
-func (m *KVMap[K, V]) purge() {
+// Purge - empties map data
+func (m *KVMap[K, V]) Purge() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.m = make(map[K]V)

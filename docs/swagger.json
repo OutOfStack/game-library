@@ -501,9 +501,6 @@
                         "type": "string"
                     }
                 },
-                "slug": {
-                    "type": "string"
-                },
                 "summary": {
                     "type": "string"
                 },
@@ -675,9 +672,6 @@
                     "items": {
                         "type": "string"
                     }
-                },
-                "slug": {
-                    "type": "string"
                 },
                 "summary": {
                     "type": "string"

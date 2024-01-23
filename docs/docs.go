@@ -504,9 +504,6 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "slug": {
-                    "type": "string"
-                },
                 "summary": {
                     "type": "string"
                 },
@@ -678,9 +675,6 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
-                },
-                "slug": {
-                    "type": "string"
                 },
                 "summary": {
                     "type": "string"

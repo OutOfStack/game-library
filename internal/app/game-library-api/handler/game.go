@@ -232,7 +232,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 	}
 
 	developer, publisher := cg.Developer, claims.Name
-	// get id or create developer
+	// get developer id or create developer
 	developerID, err := g.storage.GetCompanyIDByName(ctx, developer)
 	if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
 		web.Err(c, fmt.Errorf("get company id with name %s: %w", developer, err))
@@ -289,6 +289,9 @@ func (g *Game) CreateGame(c *gin.Context) {
 		if err != nil {
 			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
+
+		// invalidate companies cache
+		companiesMap.Purge()
 	}()
 
 	web.Respond(c, IDResponse{ID: id}, http.StatusCreated)
@@ -396,6 +399,9 @@ func (g *Game) UpdateGame(c *gin.Context) {
 		if err != nil {
 			g.log.Error("recache game with id", zap.Int32("id", id), zap.Error(err))
 		}
+
+		// invalidate companies cache
+		companiesMap.Purge()
 	}()
 
 	web.Respond(c, nil, http.StatusNoContent)

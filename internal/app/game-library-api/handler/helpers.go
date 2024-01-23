@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 )
@@ -97,7 +98,7 @@ func mapToCreateGame(cgr *CreateGameRequest, developerID, publisherID int32) rep
 		Genres:      cgr.GenresIDs,
 		LogoURL:     cgr.LogoURL,
 		Summary:     cgr.Summary,
-		Slug:        cgr.Slug,
+		Slug:        getGameSlug(cgr.Name),
 		Platforms:   cgr.PlatformsIDs,
 		Screenshots: cgr.Screenshots,
 		Websites:    cgr.Websites,
@@ -123,6 +124,7 @@ func mapToUpdateGame(g repo.Game, ugr UpdateGameRequest) repo.UpdateGame {
 
 	if ugr.Name != nil {
 		update.Name = *ugr.Name
+		update.Slug = getGameSlug(*ugr.Name)
 	}
 	if ugr.ReleaseDate != nil {
 		update.ReleaseDate = *ugr.ReleaseDate
@@ -135,9 +137,6 @@ func mapToUpdateGame(g repo.Game, ugr UpdateGameRequest) repo.UpdateGame {
 	}
 	if ugr.Summary != nil {
 		update.Summary = *ugr.Summary
-	}
-	if ugr.Slug != nil {
-		update.Slug = *ugr.Slug
 	}
 	if ugr.Platforms != nil {
 		update.Platforms = *ugr.Platforms
@@ -194,4 +193,8 @@ func (g *Game) mapToGameResponse(ctx context.Context, game repo.Game) (GameRespo
 	}
 
 	return resp, nil
+}
+
+func getGameSlug(name string) string {
+	return strings.ReplaceAll(strings.ToLower(strings.ToValidUTF8(name, "")), " ", "-")
 }

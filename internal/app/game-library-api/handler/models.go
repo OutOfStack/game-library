@@ -25,7 +25,6 @@ type CreateGameRequest struct {
 	GenresIDs    []int32  `json:"genresIds"`
 	LogoURL      string   `json:"logoUrl"`
 	Summary      string   `json:"summary"`
-	Slug         string   `json:"slug"`
 	PlatformsIDs []int32  `json:"platformsIDs"`
 	Screenshots  []string `json:"screenshots"`
 	Websites     []string `json:"websites"`
@@ -40,7 +39,6 @@ type UpdateGameRequest struct {
 	GenresIDs   *[]int32  `json:"genresIds" validate:"omitempty"`
 	LogoURL     *string   `json:"logoUrl"`
 	Summary     *string   `json:"summary"`
-	Slug        *string   `json:"slug"`
 	Platforms   *[]int32  `json:"platforms"`
 	Screenshots *[]string `json:"screenshots"`
 	Websites    *[]string `json:"websites"`

@@ -18,7 +18,7 @@ type ErrorResponse struct {
 	Fields []FieldError `json:"fields,omitempty"`
 }
 
-// Error adds information to request error
+// Error adds information to error in response
 type Error struct {
 	Err    error
 	Status int
@@ -33,6 +33,7 @@ func NewRequestError(err error, status int) error {
 	}
 }
 
+// Error - returns error as string
 func (e *Error) Error() string {
 	var fieldsMsg string
 	if len(e.Fields) > 0 {
@@ -41,6 +42,7 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s%s", e.Err.Error(), fieldsMsg)
 }
 
+// Err - adds error err to gin.Context
 func Err(c *gin.Context, err error) {
 	_ = c.Error(err)
 }

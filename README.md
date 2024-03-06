@@ -41,7 +41,7 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 3. Install and run dependencies:
     ```bash
     make dockerrunglog # runs graylog in docker container
-    make dockerrunredis # [Optional*] runs redis in docker cntainer
+    make dockerrunredis # [Optional*] runs redis in docker container
     make dockerrunzipkin # [Optional*] runs zipkin
     ```
 
@@ -57,7 +57,7 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
     make run
     ```
 
-All _Optional*_ steps are required for full functionality but not required for minimal install.
+_Optional*_ steps are required for full functionality but not required for minimal install.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
 

@@ -9,7 +9,7 @@ test:
 	go test -v -race ./...
 
 dockerrunpg:
-	docker-compose up -d --no-recreate db
+	docker compose up -d --no-recreate db
 
 createdb:
 	docker exec -it games_db createdb --username=postgres --owner=postgres games
@@ -56,11 +56,11 @@ lint:
     exit 1; \
   fi
 
-dockerbuildweb:
-	docker build -t game-library-web:latest .
+dockerbuildapi:
+	docker build -t game-library:latest .
 
-dockerrunweb:
-	docker compose up -d web
+dockerrunapi:
+	docker compose up -d api
 
 dockerrunzipkin:
 	docker compose up -d zipkin

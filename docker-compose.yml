@@ -28,9 +28,9 @@ services:
     ports:
       - "6379:6379"
 
-  web:
-    container_name: game-library-web
-    image: game-library-web:latest
+  api:
+    container_name: game-library
+    image: game-library:latest
     ports:
       - "8000:8000"
       - "6060:6060"

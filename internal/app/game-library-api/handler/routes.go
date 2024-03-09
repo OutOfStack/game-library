@@ -9,8 +9,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	auth_ "github.com/OutOfStack/game-library/internal/auth"
-	"github.com/OutOfStack/game-library/internal/client/igdb"
-	"github.com/OutOfStack/game-library/internal/client/uploadcare"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/gin-contrib/cors"
@@ -34,13 +32,11 @@ func Service(
 	db *sqlx.DB,
 	auth *auth_.Auth,
 	storage *repo.Storage,
-	cache *cache.Cache,
-	igdb *igdb.Client,
-	uploadcare *uploadcare.Client,
+	cache *cache.RedisStore,
 	conf appconf.Web,
 	zipkinConf appconf.Zipkin,
 ) (http.Handler, error) {
-	err := initTracer(zipkinConf.ReporterURL)
+	err := initTracer(logger, zipkinConf.ReporterURL)
 	if err != nil {
 		return nil, fmt.Errorf("initializing exporter: %w", err)
 	}
@@ -57,39 +53,39 @@ func Service(
 
 	c := NewCheck(db)
 
-	g := NewGame(logger, storage, igdb, uploadcare, cache)
+	pr := NewProvider(logger, storage, cache)
 
 	// health
 	r.GET("/api/readiness", c.Readiness)
 	r.GET("/api/liveness", c.Liveness)
 
 	// games
-	r.GET("/api/games", g.GetGames)
-	r.GET("/api/games/:id", g.GetGame)
-	r.GET("/api/games/count", g.GetGamesCount)
+	r.GET("/api/games", pr.GetGames)
+	r.GET("/api/games/:id", pr.GetGame)
+	r.GET("/api/games/count", pr.GetGamesCount)
 	r.POST("/api/games",
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
-		g.CreateGame)
+		pr.CreateGame)
 	r.DELETE("/api/games/:id",
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
-		g.DeleteGame)
+		pr.DeleteGame)
 	r.PATCH("/api/games/:id",
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
-		g.UpdateGame)
+		pr.UpdateGame)
 	r.POST("/api/games/:id/rate",
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RoleRegisteredUser),
-		g.RateGame)
+		pr.RateGame)
 
 	// user
 	r.POST("/api/user/ratings",
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RoleRegisteredUser),
-		g.GetUserRatings)
+		pr.GetUserRatings)
 
 	// genres
-	r.GET("/api/genres", g.GetGenres)
+	r.GET("/api/genres", pr.GetGenres)
 
 	// platforms
-	r.GET("/api/platforms", g.GetPlatforms)
+	r.GET("/api/platforms", pr.GetPlatforms)
 
 	// swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -97,10 +93,10 @@ func Service(
 	return r, nil
 }
 
-func initTracer(reporterURL string) error {
+func initTracer(logger *zap.Logger, reporterURL string) error {
 	exporter, err := zipkin.New(reporterURL)
 	if err != nil {
-		return fmt.Errorf("creating new exporter: %w", err)
+		return fmt.Errorf("creating new exporter: %v", err)
 	}
 
 	tp := trace.NewTracerProvider(
@@ -114,6 +110,9 @@ func initTracer(reporterURL string) error {
 	)
 
 	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
+		logger.Error("zipkin error", zap.Error(err))
+	}))
 	otel.SetTracerProvider(tp)
 
 	return nil

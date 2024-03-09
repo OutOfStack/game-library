@@ -1,6 +1,17 @@
 package handler
 
-// GameResponse represents game response
+// GetGamesQueryParams represents get games method query params
+type GetGamesQueryParams struct {
+	PageSize  int    `form:"pageSize" binding:"required,gt=0"`
+	Page      int    `form:"page" binding:"required,gt=0"`
+	OrderBy   string `form:"orderBy" binfing:"oneof=default name releaseDate"`
+	Name      string `form:"name"`
+	Genre     int32  `form:"genre"`
+	Developer int32  `form:"developer"`
+	Publisher int32  `form:"publisher"`
+}
+
+// Game represents game
 type GameResponse struct {
 	ID          int32      `json:"id"`
 	Name        string     `json:"name"`
@@ -15,6 +26,12 @@ type GameResponse struct {
 	Platforms   []Platform `json:"platforms"`
 	Screenshots []string   `json:"screenshots"`
 	Websites    []string   `json:"websites"`
+}
+
+// GamesResponse represents games response
+type GamesResponse struct {
+	Games []GameResponse `json:"games"`
+	Count uint64         `json:"count"`
 }
 
 // CreateGameRequest represents create game request

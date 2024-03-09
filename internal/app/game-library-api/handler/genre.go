@@ -16,7 +16,7 @@ import (
 // @Success 200 {array}  Genre
 // @Failure 500 {object} web.ErrorResponse
 // @Router /genres [get]
-func (g *Game) GetGenres(c *gin.Context) {
+func (g *Provider) GetGenres(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGenres")
 	defer span.End()
 

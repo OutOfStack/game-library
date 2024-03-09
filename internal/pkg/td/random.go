@@ -13,7 +13,7 @@ const alphabet = "abcdefghijklmnopqrstuvwxyz"
 var random *rand.Rand
 
 func init() {
-	random = rand.New(rand.NewSource(time.Now().UnixNano()))
+	random = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint: gosec
 }
 
 // Int64 returns random int64 value

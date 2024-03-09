@@ -5,16 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
-	"github.com/OutOfStack/game-library/internal/client/igdb"
-	"github.com/OutOfStack/game-library/internal/client/uploadcare"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/gin-gonic/gin"
-	"go.opentelemetry.io/otel"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -23,112 +19,105 @@ const (
 	minLengthForSearch = 2
 )
 
-// Game has handler methods for dealing with games
-type Game struct {
-	log        *zap.Logger
-	storage    *repo.Storage
-	igdb       *igdb.Client
-	uploadcare *uploadcare.Client
-	cache      *cache.Cache
-}
-
-// NewGame creates new Game
-func NewGame(log *zap.Logger, storage *repo.Storage, igdb *igdb.Client, uploadcare *uploadcare.Client, cache *cache.Cache) *Game {
-	return &Game{
-		log:        log,
-		storage:    storage,
-		igdb:       igdb,
-		uploadcare: uploadcare,
-		cache:      cache,
-	}
-}
-
-var tracer = otel.Tracer("")
-
-var (
-	companiesMap = cache.NewKVMap[int32, Company](1 * time.Hour)
-	genresMap    = cache.NewKVMap[int32, Genre](1 * time.Hour)
-	platformsMap = cache.NewKVMap[int32, Platform](0)
-)
-
 // GetGames godoc
 // @Summary Get games
 // @Description returns paginated games
 // @ID get-games
 // @Produce json
-// @Param pageSize query int32  false "page size"
-// @Param page     query int32  false "page"
-// @Param orderBy  query string false "order by"	Enums(default, name, releaseDate)
-// @Param name 	   query string false "name filter"
-// @Success 200 {array}  GameResponse
-// @Failure 500 {object} web.ErrorResponse
+// @Param pageSize  query int32  false "page size"
+// @Param page      query int32  false "page"
+// @Param orderBy   query string false "order by"	Enums(default, name, releaseDate)
+// @Param name 	    query string false "name filter"
+// @Param genre     query int32  false "genre filter"
+// @Param developer query int32  false "developer id filter"
+// @Param publisher query int32  false "publisher id filter"
+// @Success 200 {object}  GamesResponse
+// @Failure 500 {object}  web.ErrorResponse
 // @Router /games [get]
-func (g *Game) GetGames(c *gin.Context) {
+func (p *Provider) GetGames(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGames")
 	defer span.End()
 
-	pageSizeParam := c.DefaultQuery("pageSize", "20")
-	pageParam := c.DefaultQuery("page", "1")
-	orderByParam := c.DefaultQuery("orderBy", "default")
-	nameParam := c.DefaultQuery("name", "")
+	for key, values := range c.Request.URL.Query() {
+		if len(values) == 1 {
+			span.SetAttributes(att.String(key, values[0]))
+		} else if len(values) > 1 {
+			span.SetAttributes(att.StringSlice(key, values))
+		}
+	}
 
-	pageSize, err := strconv.ParseInt(pageSizeParam, 10, 32)
-	if err != nil || pageSize <= 0 {
-		web.Err(c, web.NewRequestError(errors.New("incorrect page size. Should be greater than 0"), http.StatusBadRequest))
+	// get query params and form filter
+	var queryParams GetGamesQueryParams
+	err := c.ShouldBindQuery(&queryParams)
+	if err != nil {
+		web.Err(c, web.NewRequestError(errors.New("incorrect query params"), http.StatusBadRequest))
 		return
 	}
 
-	page, err := strconv.ParseInt(pageParam, 10, 32)
-	if err != nil || page <= 0 {
-		web.Err(c, web.NewRequestError(errors.New("incorrect page. Should be greater than 0"), http.StatusBadRequest))
-		return
+	page, pageSize := queryParams.Page, queryParams.PageSize
+	var filter repo.GamesFilter
+	if len(queryParams.Name) >= minLengthForSearch {
+		filter.Name = queryParams.Name
 	}
-
-	var orderBy repo.OrderGamesBy
-	switch orderByParam {
-	case "default":
-		orderBy = repo.OrderGamesByDefault
+	if queryParams.Genre != 0 {
+		filter.GenreID = queryParams.Genre
+	}
+	if queryParams.Developer != 0 {
+		filter.DeveloperID = queryParams.Developer
+	}
+	if queryParams.Publisher != 0 {
+		filter.PublisherID = queryParams.Publisher
+	}
+	switch queryParams.OrderBy {
+	case "", "default":
+		filter.OrderBy = repo.OrderGamesByDefault
 	case "name":
-		orderBy = repo.OrderGamesByName
+		filter.OrderBy = repo.OrderGamesByName
 	case "releaseDate":
-		orderBy = repo.OrderGamesByReleaseDate
+		filter.OrderBy = repo.OrderGamesByReleaseDate
 	default:
 		web.Err(c, web.NewRequestError(errors.New("incorrect orderBy. Should be one of: default, releaseDate, name"), http.StatusBadRequest))
 		return
 	}
 
-	name := nameParam
-	if len(name) < minLengthForSearch {
-		name = ""
-	}
-
-	span.SetAttributes(att.Int64("data.pageSize", pageSize), att.Int64("data.page", page),
-		att.String("data.orderBy", orderByParam), att.String("data.name", nameParam))
-
 	list := make([]repo.Game, 0)
-	err = cache.Get(ctx, g.cache, getGamesKey(pageSize, page, string(orderBy), name), &list, func() ([]repo.Game, error) {
-		return g.storage.GetGames(ctx, int(pageSize), int(page), orderBy, name)
+	err = cache.Get(ctx, p.cache, getGamesKey(int64(pageSize), int64(page), filter), &list, func() ([]repo.Game, error) {
+		return p.storage.GetGames(ctx, pageSize, page, filter)
 	}, 0)
 	if err != nil {
 		web.Err(c, fmt.Errorf("getting games list: %w", err))
 		return
 	}
 
-	response := make([]GameResponse, 0, len(list))
+	var count uint64
+	err = cache.Get(ctx, p.cache, getGamesCountKey(filter), &count, func() (uint64, error) {
+		return p.storage.GetGamesCount(ctx, filter)
+	}, 0)
+	if err != nil {
+		web.Err(c, fmt.Errorf("getting games count: %w", err))
+		return
+	}
+
+	games := make([]GameResponse, 0, len(list))
 	for _, game := range list {
-		r, mErr := g.mapToGameResponse(c, game)
+		r, mErr := p.mapToGameResponse(c, game)
 		if mErr != nil {
 			web.Err(c, web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
 			return
 		}
-		response = append(response, r)
+		games = append(games, r)
 	}
 
+	response := GamesResponse{
+		Games: games,
+		Count: count,
+	}
 	web.Respond(c, response, http.StatusOK)
 }
 
 // GetGamesCount godoc
 // @Summary Get games count
+// @Deprecated Use /games [get] instead
 // @Description returns games count
 // @ID get-games-count
 // @Produce json
@@ -136,20 +125,21 @@ func (g *Game) GetGames(c *gin.Context) {
 // @Success 200 {array}  CountResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/count [get]
-func (g *Game) GetGamesCount(c *gin.Context) {
+func (p *Provider) GetGamesCount(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGamesCount")
 	defer span.End()
 
 	nameParam := c.DefaultQuery("name", "")
-	name := nameParam
-	if len(name) < minLengthForSearch {
-		name = ""
+
+	var filter repo.GamesFilter
+	if len(filter.Name) >= minLengthForSearch {
+		filter.Name = nameParam
 	}
 	span.SetAttributes(att.String("data.query", nameParam))
 
 	var count uint64
-	err := cache.Get(ctx, g.cache, getGamesCountKey(name), &count, func() (uint64, error) {
-		return g.storage.GetGamesCount(ctx, name)
+	err := cache.Get(ctx, p.cache, getGamesCountKey(filter), &count, func() (uint64, error) {
+		return p.storage.GetGamesCount(ctx, filter)
 	}, 0)
 	if err != nil {
 		web.Err(c, fmt.Errorf("getting games count: %w", err))
@@ -170,7 +160,7 @@ func (g *Game) GetGamesCount(c *gin.Context) {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
-func (g *Game) GetGame(c *gin.Context) {
+func (p *Provider) GetGame(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGame")
 	defer span.End()
 
@@ -182,8 +172,8 @@ func (g *Game) GetGame(c *gin.Context) {
 	span.SetAttributes(att.Int("data.id", int(id)))
 
 	var game repo.Game
-	err = cache.Get(ctx, g.cache, getGameKey(id), &game, func() (repo.Game, error) {
-		return g.storage.GetGameByID(ctx, id)
+	err = cache.Get(ctx, p.cache, getGameKey(id), &game, func() (repo.Game, error) {
+		return p.storage.GetGameByID(ctx, id)
 	}, 0)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound[int32]{}) {
@@ -194,7 +184,7 @@ func (g *Game) GetGame(c *gin.Context) {
 		return
 	}
 
-	resp, err := g.mapToGameResponse(c, game)
+	resp, err := p.mapToGameResponse(c, game)
 	if err != nil {
 		web.Err(c, web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
 		return
@@ -213,7 +203,7 @@ func (g *Game) GetGame(c *gin.Context) {
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
-func (g *Game) CreateGame(c *gin.Context) {
+func (p *Provider) CreateGame(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.createGame")
 	defer span.End()
 
@@ -233,13 +223,13 @@ func (g *Game) CreateGame(c *gin.Context) {
 
 	developer, publisher := cg.Developer, claims.Name
 	// get developer id or create developer
-	developerID, err := g.storage.GetCompanyIDByName(ctx, developer)
+	developerID, err := p.storage.GetCompanyIDByName(ctx, developer)
 	if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
 		web.Err(c, fmt.Errorf("get company id with name %s: %w", developer, err))
 		return
 	}
 	if developerID == 0 {
-		developerID, err = g.storage.CreateCompany(ctx, repo.Company{
+		developerID, err = p.storage.CreateCompany(ctx, repo.Company{
 			Name: developer,
 		})
 		if err != nil {
@@ -249,13 +239,13 @@ func (g *Game) CreateGame(c *gin.Context) {
 	}
 
 	// get id or create publisher
-	publisherID, err := g.storage.GetCompanyIDByName(ctx, publisher)
+	publisherID, err := p.storage.GetCompanyIDByName(ctx, publisher)
 	if err != nil && !errors.As(err, &repo.ErrNotFound[string]{}) {
 		web.Err(c, fmt.Errorf("get company id with name %s: %w", publisher, err))
 		return
 	}
 	if publisherID == 0 {
-		publisherID, err = g.storage.CreateCompany(ctx, repo.Company{
+		publisherID, err = p.storage.CreateCompany(ctx, repo.Company{
 			Name: publisher,
 		})
 		if err != nil {
@@ -266,7 +256,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 
 	create := mapToCreateGame(&cg, developerID, publisherID)
 
-	id, err := g.storage.CreateGame(ctx, create)
+	id, err := p.storage.CreateGame(ctx, create)
 	if err != nil {
 		web.Err(c, fmt.Errorf("adding new game: %w", err))
 		return
@@ -279,15 +269,15 @@ func (g *Game) CreateGame(c *gin.Context) {
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 
 		// invalidate companies cache
@@ -310,7 +300,7 @@ func (g *Game) CreateGame(c *gin.Context) {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [patch]
-func (g *Game) UpdateGame(c *gin.Context) {
+func (p *Provider) UpdateGame(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.updateGame")
 	defer span.End()
 
@@ -326,7 +316,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 	}
 	span.SetAttributes(att.Int("data.id", int(id)))
 
-	game, err := g.storage.GetGameByID(ctx, id)
+	game, err := p.storage.GetGameByID(ctx, id)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
@@ -343,13 +333,13 @@ func (g *Game) UpdateGame(c *gin.Context) {
 			developers = []int32{}
 		} else {
 			// get id or create developer
-			developerID, cErr := g.storage.GetCompanyIDByName(ctx, *developer)
+			developerID, cErr := p.storage.GetCompanyIDByName(ctx, *developer)
 			if cErr != nil && !errors.As(cErr, &repo.ErrNotFound[string]{}) {
 				web.Err(c, fmt.Errorf("get developer id with name %s: %w", *developer, cErr))
 				return
 			}
 			if developerID == 0 {
-				developerID, err = g.storage.CreateCompany(ctx, repo.Company{
+				developerID, err = p.storage.CreateCompany(ctx, repo.Company{
 					Name: *developer,
 				})
 				if err != nil {
@@ -364,7 +354,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 	update := mapToUpdateGame(game, ugr)
 	update.Developers = developers
 
-	err = g.storage.UpdateGame(ctx, id, update)
+	err = p.storage.UpdateGame(ctx, id, update)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
@@ -381,23 +371,23 @@ func (g *Game) UpdateGame(c *gin.Context) {
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 
 		// invalidate game cache
 		key = getGameKey(id)
-		err = cache.Delete(bCtx, g.cache, key)
+		err = cache.Delete(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
 		}
 		// recache game
-		err = cache.Get(bCtx, g.cache, key, new(repo.Game), func() (repo.Game, error) {
-			return g.storage.GetGameByID(bCtx, id)
+		err = cache.Get(bCtx, p.cache, key, new(repo.Game), func() (repo.Game, error) {
+			return p.storage.GetGameByID(bCtx, id)
 		}, 0)
 		if err != nil {
-			g.log.Error("recache game with id", zap.Int32("id", id), zap.Error(err))
+			p.log.Error("recache game with id", zap.Int32("id", id), zap.Error(err))
 		}
 
 		// invalidate companies cache
@@ -419,7 +409,7 @@ func (g *Game) UpdateGame(c *gin.Context) {
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [delete]
-func (g *Game) DeleteGame(c *gin.Context) {
+func (p *Provider) DeleteGame(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.deleteGame")
 	defer span.End()
 
@@ -430,13 +420,13 @@ func (g *Game) DeleteGame(c *gin.Context) {
 	}
 	span.SetAttributes(att.Int("data.id", int(id)))
 
-	err = g.storage.DeleteGame(ctx, id)
+	err = p.storage.DeleteGame(ctx, id)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
 			return
 		}
-		web.Err(c, fmt.Errorf("deleting game with id %v: %w", id, err))
+		web.Err(c, fmt.Errorf("deleting game with id %v: %v", id, err))
 		return
 	}
 
@@ -447,21 +437,21 @@ func (g *Game) DeleteGame(c *gin.Context) {
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		err = cache.DeleteByStartsWith(bCtx, g.cache, key)
+		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate game cache
 		key = getGameKey(id)
-		err = cache.Delete(bCtx, g.cache, key)
+		err = cache.Delete(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}
 	}()
 

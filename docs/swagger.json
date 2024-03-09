@@ -50,16 +50,31 @@
                         "description": "name filter",
                         "name": "name",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "genre filter",
+                        "name": "genre",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "developer id filter",
+                        "name": "developer",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "publisher id filter",
+                        "name": "publisher",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handler.GameResponse"
-                            }
+                            "$ref": "#/definitions/handler.GamesResponse"
                         }
                     },
                     "500": {
@@ -121,6 +136,7 @@
                 ],
                 "summary": "Get games count",
                 "operationId": "get-games-count",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -581,6 +597,20 @@
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.GamesResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "games": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.GameResponse"
                     }
                 }
             }

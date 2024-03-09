@@ -17,16 +17,19 @@ const (
 	userRatingsKey = "user-ratings"
 )
 
-func getGamesKey(pageSize, page int64, orderBy, name string) string {
-	return gamesKey + "|" + strconv.FormatInt(pageSize, 10) + "|" + strconv.FormatInt(page, 10) + "|" + orderBy + "|" + name
+func getGamesKey(pageSize, page int64, filter repo.GamesFilter) string {
+	return gamesKey + "|" + strconv.FormatInt(pageSize, 10) + "|" + strconv.FormatInt(page, 10) + "|" +
+		filter.OrderBy.Field + "|" + filter.Name + "|" + strconv.FormatInt(int64(filter.GenreID), 10) + "|" +
+		strconv.FormatInt(int64(filter.DeveloperID), 10) + "|" + strconv.FormatInt(int64(filter.PublisherID), 10)
 }
 
 func getGameKey(id int32) string {
 	return gameKey + "|" + strconv.FormatInt(int64(id), 10)
 }
 
-func getGamesCountKey(name string) string {
-	return gamesCountKey + "|" + name
+func getGamesCountKey(filter repo.GamesFilter) string {
+	return gamesCountKey + "|" + filter.Name + "|" + strconv.FormatInt(int64(filter.GenreID), 10) + "|" +
+		strconv.FormatInt(int64(filter.DeveloperID), 10) + "|" + strconv.FormatInt(int64(filter.PublisherID), 10)
 }
 
 func getUserRatingsKey(userID string) string {
@@ -35,9 +38,9 @@ func getUserRatingsKey(userID string) string {
 
 // Cached entities functions
 
-func (g *Game) getCompanyByID(ctx context.Context, id int32) (Company, bool, error) {
+func (p *Provider) getCompanyByID(ctx context.Context, id int32) (Company, bool, error) {
 	if companiesMap.Size() == 0 {
-		companies, err := g.storage.GetCompanies(ctx)
+		companies, err := p.storage.GetCompanies(ctx)
 		if err != nil {
 			return Company{}, false, err
 		}
@@ -52,9 +55,9 @@ func (g *Game) getCompanyByID(ctx context.Context, id int32) (Company, bool, err
 	return company, ok, nil
 }
 
-func (g *Game) getGenreByID(ctx context.Context, id int32) (Genre, bool, error) {
+func (p *Provider) getGenreByID(ctx context.Context, id int32) (Genre, bool, error) {
 	if genresMap.Size() == 0 {
-		genres, err := g.storage.GetGenres(ctx)
+		genres, err := p.storage.GetGenres(ctx)
 		if err != nil {
 			return Genre{}, false, err
 		}
@@ -69,9 +72,9 @@ func (g *Game) getGenreByID(ctx context.Context, id int32) (Genre, bool, error) 
 	return genre, ok, nil
 }
 
-func (g *Game) getPlatformByID(ctx context.Context, id int32) (Platform, bool, error) {
+func (p *Provider) getPlatformByID(ctx context.Context, id int32) (Platform, bool, error) {
 	if platformsMap.Size() == 0 {
-		platforms, err := g.storage.GetPlatforms(ctx)
+		platforms, err := p.storage.GetPlatforms(ctx)
 		if err != nil {
 			return Platform{}, false, err
 		}
@@ -151,7 +154,7 @@ func mapToUpdateGame(g repo.Game, ugr UpdateGameRequest) repo.UpdateGame {
 	return update
 }
 
-func (g *Game) mapToGameResponse(ctx context.Context, game repo.Game) (GameResponse, error) {
+func (p *Provider) mapToGameResponse(ctx context.Context, game repo.Game) (GameResponse, error) {
 	resp := GameResponse{
 		ID:          game.ID,
 		Name:        game.Name,
@@ -164,28 +167,28 @@ func (g *Game) mapToGameResponse(ctx context.Context, game repo.Game) (GameRespo
 		Websites:    game.Websites,
 	}
 	for _, gID := range game.Genres {
-		if genre, ok, err := g.getGenreByID(ctx, gID); err != nil {
+		if genre, ok, err := p.getGenreByID(ctx, gID); err != nil {
 			return GameResponse{}, fmt.Errorf("get genre %d by id: %v", gID, err)
 		} else if ok {
 			resp.Genres = append(resp.Genres, genre)
 		}
 	}
 	for _, pID := range game.Platforms {
-		if p, ok, err := g.getPlatformByID(ctx, pID); err != nil {
+		if p, ok, err := p.getPlatformByID(ctx, pID); err != nil {
 			return GameResponse{}, fmt.Errorf("get platform %d by id: %v", pID, err)
 		} else if ok {
 			resp.Platforms = append(resp.Platforms, p)
 		}
 	}
 	for _, cID := range game.Developers {
-		if c, ok, err := g.getCompanyByID(ctx, cID); err != nil {
+		if c, ok, err := p.getCompanyByID(ctx, cID); err != nil {
 			return GameResponse{}, fmt.Errorf("get developer %d by id: %v", cID, err)
 		} else if ok {
 			resp.Developers = append(resp.Developers, c)
 		}
 	}
 	for _, cID := range game.Publishers {
-		if c, ok, err := g.getCompanyByID(ctx, cID); err != nil {
+		if c, ok, err := p.getCompanyByID(ctx, cID); err != nil {
 			return GameResponse{}, fmt.Errorf("get publisher %d by id: %v", cID, err)
 		} else if ok {
 			resp.Publishers = append(resp.Publishers, c)

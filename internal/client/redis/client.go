@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	// InvalidTypeError represents error when invalid type provided
-	InvalidTypeError = errors.New("invalid type provided")
+	// ErrInvalidType represents error when invalid type provided
+	ErrInvalidType = errors.New("invalid type provided")
 )
 
 // Client represents redis client
@@ -73,7 +73,7 @@ func (c *Client) GetStruct(ctx context.Context, key string, value interface{}) e
 func (c *Client) SetStruct(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	bytes, err := json.Marshal(value)
 	if err != nil {
-		return InvalidTypeError
+		return ErrInvalidType
 	}
 	err = c.rdb.Set(ctx, key, bytes, c.getTTL(ttl)).Err()
 	if err != nil {

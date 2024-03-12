@@ -62,3 +62,47 @@ func (s *Storage) GetCompanyIDByName(ctx context.Context, name string) (id int32
 
 	return id, nil
 }
+
+// GetTopDevelopers returns top developers by amount of games
+func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies []Company, err error) {
+	ctx, span := tracer.Start(ctx, "db.getTopDevelopers")
+	defer span.End()
+
+	const q = `
+	SELECT c.id, c.name, c.igdb_id
+	FROM companies c
+	JOIN (
+		SELECT unnest(developers) AS company_id FROM games
+	) AS g ON c.id = g.company_id
+	GROUP BY c.id, c.name, c.igdb_id
+	ORDER BY COUNT(*) DESC
+	LIMIT $1`
+
+	if err = s.db.SelectContext(ctx, &companies, q, limit); err != nil {
+		return nil, err
+	}
+
+	return companies, nil
+}
+
+// GetTopPublishers returns top publishers by amount of games
+func (s *Storage) GetTopPublishers(ctx context.Context, limit int64) (companies []Company, err error) {
+	ctx, span := tracer.Start(ctx, "db.getTopPublishers")
+	defer span.End()
+
+	const q = `
+	SELECT c.id, c.name, c.igdb_id
+	FROM companies c
+	JOIN (
+		SELECT unnest(publishers) AS company_id FROM games
+	) AS g ON c.id = g.company_id
+	GROUP BY c.id, c.name, c.igdb_id
+	ORDER BY COUNT(*) DESC
+	LIMIT $1`
+
+	if err = s.db.SelectContext(ctx, &companies, q, limit); err != nil {
+		return nil, err
+	}
+
+	return companies, nil
+}

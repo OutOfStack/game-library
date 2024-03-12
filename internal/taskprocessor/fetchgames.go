@@ -112,8 +112,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 
 		for i := 0; i < fetchGamesRequestsCount; i++ {
 			ratingsCount, limit := getMinRatingsCountAndLimit(s.LastReleasedAt)
-			igdbGames, gErr := tp.igdbProvider.GetTopRatedGames(ctx, ratingsCount, fetchGamesMinRating,
-				s.LastReleasedAt, limit, allPlatformsIDs)
+			igdbGames, gErr := tp.igdbProvider.GetTopRatedGames(ctx, allPlatformsIDs, s.LastReleasedAt, ratingsCount, fetchGamesMinRating, limit)
 			if gErr != nil {
 				return settings, fmt.Errorf("get games from igdb: %v", gErr)
 			}

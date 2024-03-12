@@ -13,5 +13,5 @@ func TestSeed_ShouldBeNoError(t *testing.T) {
 	defer teardown(t)
 
 	err := schema.Seed(db)
-	require.NoError(t, err, "err should be nil")
+	require.NoError(t, err)
 }

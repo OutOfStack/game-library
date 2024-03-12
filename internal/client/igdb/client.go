@@ -40,8 +40,7 @@ func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 }
 
 // GetTopRatedGames returns top-rated games
-func (c *Client) GetTopRatedGames(ctx context.Context, minRatingsCount, minRating int64, releasedBefore time.Time,
-	limit int64, platformsIDs []int64) ([]TopRatedGamesResp, error) {
+func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedBefore time.Time, minRatingsCount, minRating, limit int64) ([]TopRatedGamesResp, error) {
 	if limit > maxLimit {
 		limit = maxLimit
 	}

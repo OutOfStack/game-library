@@ -28,7 +28,7 @@ import (
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/rate [post]
-func (g *Game) RateGame(c *gin.Context) {
+func (p *Provider) RateGame(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.rateGame")
 	defer span.End()
 
@@ -53,7 +53,7 @@ func (g *Game) RateGame(c *gin.Context) {
 
 	userID := claims.Subject
 
-	_, err = g.storage.GetGameByID(ctx, gameID)
+	_, err = p.storage.GetGameByID(ctx, gameID)
 	if err != nil {
 		if errors.As(err, &repo.ErrNotFound[int32]{}) {
 			web.Err(c, web.NewRequestError(err, http.StatusNotFound))
@@ -64,12 +64,12 @@ func (g *Game) RateGame(c *gin.Context) {
 	}
 
 	if cr.Rating == 0 {
-		err = g.storage.RemoveRating(ctx, repo.RemoveRating{
+		err = p.storage.RemoveRating(ctx, repo.RemoveRating{
 			UserID: userID,
 			GameID: gameID,
 		})
 	} else {
-		err = g.storage.AddRating(ctx, repo.CreateRating{
+		err = p.storage.AddRating(ctx, repo.CreateRating{
 			Rating: cr.Rating,
 			UserID: userID,
 			GameID: gameID,
@@ -80,9 +80,9 @@ func (g *Game) RateGame(c *gin.Context) {
 		return
 	}
 
-	err = g.storage.UpdateGameRating(ctx, gameID)
+	err = p.storage.UpdateGameRating(ctx, gameID)
 	if err != nil {
-		g.log.Error("updating game rating", zap.Int32("gameID", gameID), zap.Error(err))
+		p.log.Error("updating game rating", zap.Int32("gameID", gameID), zap.Error(err))
 	}
 
 	// invalidate cache
@@ -92,16 +92,16 @@ func (g *Game) RateGame(c *gin.Context) {
 
 		// invalidate user ratings
 		key := getUserRatingsKey(userID)
-		err = cache.Delete(bCtx, g.cache, key)
+		err = cache.Delete(bCtx, p.cache, key)
 		if err != nil {
-			g.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
+			p.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
 		}
 		// recache user ratings
-		err = cache.Get(bCtx, g.cache, key, &map[int32]uint8{}, func() (map[int32]uint8, error) {
-			return g.storage.GetUserRatings(bCtx, userID)
+		err = cache.Get(bCtx, p.cache, key, &map[int32]uint8{}, func() (map[int32]uint8, error) {
+			return p.storage.GetUserRatings(bCtx, userID)
 		}, 0)
 		if err != nil {
-			g.log.Error("recache user ratings", zap.String("user_id", userID), zap.Error(err))
+			p.log.Error("recache user ratings", zap.String("user_id", userID), zap.Error(err))
 		}
 	}()
 
@@ -121,7 +121,7 @@ func (g *Game) RateGame(c *gin.Context) {
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]
-func (g *Game) GetUserRatings(c *gin.Context) {
+func (p *Provider) GetUserRatings(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getUserRatings")
 	defer span.End()
 
@@ -146,8 +146,8 @@ func (g *Game) GetUserRatings(c *gin.Context) {
 	userID := claims.Subject
 
 	var ratings map[int32]uint8
-	err = cache.Get(ctx, g.cache, getUserRatingsKey(userID), &ratings, func() (map[int32]uint8, error) {
-		return g.storage.GetUserRatings(ctx, userID)
+	err = cache.Get(ctx, p.cache, getUserRatingsKey(userID), &ratings, func() (map[int32]uint8, error) {
+		return p.storage.GetUserRatings(ctx, userID)
 	}, 0)
 	if err != nil {
 		web.Err(c, fmt.Errorf("getting user ratings: %w", err))

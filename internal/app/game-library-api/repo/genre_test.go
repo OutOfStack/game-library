@@ -19,7 +19,7 @@ func TestCreateGenre_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
 	}
 
 	_, err := s.CreateGenre(context.Background(), genre)
-	require.NoError(t, err, "err should be nil")
+	require.NoError(t, err)
 }
 
 // TestGetGenres_DataExists_ShouldBeEqual tests case when we add one genre, then fetch first genre, and they should be equal
@@ -27,16 +27,18 @@ func TestGetGenres_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	genre := repo.Genre{
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	}
 
-	id, err := s.CreateGenre(context.Background(), genre)
-	require.NoError(t, err, "err should be nil")
+	id, err := s.CreateGenre(ctx, genre)
+	require.NoError(t, err)
 
-	genres, err := s.GetGenres(context.Background())
-	require.NoError(t, err, "err should be nil")
+	genres, err := s.GetGenres(ctx)
+	require.NoError(t, err)
 	require.Equal(t, len(genres), 1, "genres len should be 1")
 
 	want := genre

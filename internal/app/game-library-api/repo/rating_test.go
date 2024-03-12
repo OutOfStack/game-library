@@ -14,9 +14,11 @@ func TestAddRating_Success_ShouldBeNoError(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg := getCreateGameData()
-	gameID, err := s.CreateGame(context.Background(), cg)
-	require.NoError(t, err, "err should be nil")
+	gameID, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
 
 	rating := repo.CreateRating{
 		Rating: td.Uint8(),
@@ -24,8 +26,8 @@ func TestAddRating_Success_ShouldBeNoError(t *testing.T) {
 		GameID: gameID,
 	}
 
-	err = s.AddRating(context.Background(), rating)
-	require.NoError(t, err, "err should be nil")
+	err = s.AddRating(ctx, rating)
+	require.NoError(t, err)
 }
 
 // TestGetUserRatingsByGamesIDs_DataExists_ShouldBeEqual tests case when we add user rating, then get user ratings for
@@ -34,15 +36,17 @@ func TestGetUserRatingsByGamesIDs_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg1 := getCreateGameData()
-	gameID1, err := s.CreateGame(context.Background(), cg1)
-	require.NoError(t, err, "err should be nil")
+	gameID1, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
 	cg2 := getCreateGameData()
-	gameID2, err := s.CreateGame(context.Background(), cg2)
-	require.NoError(t, err, "err should be nil")
+	gameID2, err := s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
 	cg3 := getCreateGameData()
-	gameID3, err := s.CreateGame(context.Background(), cg3)
-	require.NoError(t, err, "err should be nil")
+	gameID3, err := s.CreateGame(ctx, cg3)
+	require.NoError(t, err)
 
 	userID := td.String()
 	rating1 := repo.CreateRating{
@@ -61,15 +65,15 @@ func TestGetUserRatingsByGamesIDs_DataExists_ShouldBeEqual(t *testing.T) {
 		GameID: gameID3,
 	}
 
-	err = s.AddRating(context.Background(), rating1)
-	require.NoError(t, err, "err should be nil")
-	err = s.AddRating(context.Background(), rating2)
-	require.NoError(t, err, "err should be nil")
-	err = s.AddRating(context.Background(), rating3)
-	require.NoError(t, err, "err should be nil")
+	err = s.AddRating(ctx, rating1)
+	require.NoError(t, err)
+	err = s.AddRating(ctx, rating2)
+	require.NoError(t, err)
+	err = s.AddRating(ctx, rating3)
+	require.NoError(t, err)
 
-	ratings, err := s.GetUserRatingsByGamesIDs(context.Background(), userID, []int32{rating1.GameID, rating3.GameID})
-	require.NoError(t, err, "err should be nil")
+	ratings, err := s.GetUserRatingsByGamesIDs(ctx, userID, []int32{rating1.GameID, rating3.GameID})
+	require.NoError(t, err)
 	require.Equal(t, len(ratings), 1, "ratings len should be 1")
 
 	want := rating1
@@ -85,15 +89,17 @@ func TestGetUserRatings_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg1 := getCreateGameData()
-	gameID1, err := s.CreateGame(context.Background(), cg1)
-	require.NoError(t, err, "err should be nil")
+	gameID1, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
 	cg2 := getCreateGameData()
-	gameID2, err := s.CreateGame(context.Background(), cg2)
-	require.NoError(t, err, "err should be nil")
+	gameID2, err := s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
 	cg3 := getCreateGameData()
-	gameID3, err := s.CreateGame(context.Background(), cg3)
-	require.NoError(t, err, "err should be nil")
+	gameID3, err := s.CreateGame(ctx, cg3)
+	require.NoError(t, err)
 
 	userID := td.String()
 	rating1 := repo.CreateRating{
@@ -112,15 +118,15 @@ func TestGetUserRatings_DataExists_ShouldBeEqual(t *testing.T) {
 		GameID: gameID3,
 	}
 
-	err = s.AddRating(context.Background(), rating1)
-	require.NoError(t, err, "err should be nil")
-	err = s.AddRating(context.Background(), rating2)
-	require.NoError(t, err, "err should be nil")
-	err = s.AddRating(context.Background(), rating3)
-	require.NoError(t, err, "err should be nil")
+	err = s.AddRating(ctx, rating1)
+	require.NoError(t, err)
+	err = s.AddRating(ctx, rating2)
+	require.NoError(t, err)
+	err = s.AddRating(ctx, rating3)
+	require.NoError(t, err)
 
-	ratings, err := s.GetUserRatings(context.Background(), userID)
-	require.NoError(t, err, "err should be nil")
+	ratings, err := s.GetUserRatings(ctx, userID)
+	require.NoError(t, err)
 	require.Equal(t, len(ratings), 2, "ratings len should be 2")
 
 	want1, want2 := rating1, rating2

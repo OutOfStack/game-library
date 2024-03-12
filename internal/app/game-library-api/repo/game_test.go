@@ -15,8 +15,8 @@ func TestGetGames_NotExist_ShouldReturnEmpty(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "")
-	require.NoError(t, err, "err should be nil")
+	games, err := s.GetGames(context.Background(), 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByDefault})
+	require.NoError(t, err)
 
 	require.Zero(t, len(games), "len of games should be 0")
 }
@@ -26,13 +26,15 @@ func TestGetGames_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg := getCreateGameData()
 
-	_, err := s.CreateGame(context.Background(), cg)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
 
-	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "")
-	require.NoError(t, err, "err should be nil")
+	games, err := s.GetGames(ctx, 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByDefault})
+	require.NoError(t, err)
 
 	require.Equal(t, 1, len(games), "len of games should be 1")
 
@@ -46,21 +48,23 @@ func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg1 := getCreateGameData()
 	cg1.ReleaseDate = "1990-01-01"
 	cg1.IGDBRating = 100
 	cg2 := getCreateGameData()
-	cg2.ReleaseDate = "2023-01-01"
+	cg2.ReleaseDate = "2024-01-01"
 	cg2.IGDBRating = 95
 
-	_, err := s.CreateGame(context.Background(), cg1)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
 
-	_, err = s.CreateGame(context.Background(), cg2)
-	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
 
-	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "")
-	require.NoError(t, err, "err should be nil")
+	games, err := s.GetGames(ctx, 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByDefault})
+	require.NoError(t, err)
 
 	require.Equal(t, 2, len(games), "len of games should be 2")
 
@@ -75,19 +79,21 @@ func TestGetGames_OrderByName_ShouldReturnOrdered(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg1 := getCreateGameData()
 	cg1.Name = "Yakuza"
 	cg2 := getCreateGameData()
 	cg2.Name = "Adventure Time"
 
-	_, err := s.CreateGame(context.Background(), cg1)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
 
-	_, err = s.CreateGame(context.Background(), cg2)
-	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
 
-	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByName, "")
-	require.NoError(t, err, "err should be nil")
+	games, err := s.GetGames(ctx, 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByName})
+	require.NoError(t, err)
 
 	require.Equal(t, 2, len(games), "len of games should be 2")
 
@@ -101,19 +107,21 @@ func TestGetGames_OrderByReleaseDate_ShouldReturnOrdered(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg1 := getCreateGameData()
-	cg1.ReleaseDate = "1990-01-01"
+	cg1.ReleaseDate = "1991-01-01"
 	cg2 := getCreateGameData()
 	cg2.ReleaseDate = "2023-01-01"
 
-	_, err := s.CreateGame(context.Background(), cg1)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
 
-	_, err = s.CreateGame(context.Background(), cg2)
-	require.NoError(t, err, "err should be nil")
+	_, err = s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
 
-	games, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByReleaseDate, "")
-	require.NoError(t, err, "err should be nil")
+	games, err := s.GetGames(ctx, 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByReleaseDate})
+	require.NoError(t, err)
 
 	require.Equal(t, 2, len(games), "len of games should be 2")
 
@@ -127,13 +135,15 @@ func TestGetGames_FilterByName_ShouldReturnEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg := getCreateGameData()
 
-	_, err := s.CreateGame(context.Background(), cg)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
 
-	matched, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, cg.Name)
-	require.NoError(t, err, "err should be nil")
+	matched, err := s.GetGames(ctx, 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByDefault, Name: cg.Name})
+	require.NoError(t, err)
 
 	require.Equal(t, 1, len(matched), "len of matched should be 1")
 
@@ -147,6 +157,8 @@ func TestGetGames_FilterByName_ShouldReturnMatched(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	ng1 := getCreateGameData()
 	ng1.Name = "test game name"
 	ng2 := getCreateGameData()
@@ -156,20 +168,59 @@ func TestGetGames_FilterByName_ShouldReturnMatched(t *testing.T) {
 	ng4 := getCreateGameData()
 	ng4.Name = "a TEST game name"
 
-	_, err := s.CreateGame(context.Background(), ng1)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng2)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng3)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng4)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, ng1)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng2)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng3)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng4)
+	require.NoError(t, err)
 
-	matched, err := s.GetGames(context.Background(), 20, 1, repo.OrderGamesByDefault, "test")
-	require.NoError(t, err, "err should be nil")
+	matched, err := s.GetGames(ctx, 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByDefault, Name: "test"})
+	require.NoError(t, err)
 
 	// ng1, ng2, ng4
 	require.Equal(t, 3, len(matched), "count should be 3")
+}
+
+// TestGetGames_Filte_ShouldReturnMatched tests case when we add multiple games, then filter games by developer, publisher and genre and we should get matches
+func TestGetGames_Filter_ShouldReturnMatched(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := context.Background()
+
+	developer1, developer2 := td.Int32(), td.Int32()
+	genre1, genre2 := td.Int32(), td.Int32()
+	publisher1, publisher2 := td.Int32(), td.Int32()
+
+	ng1 := getCreateGameData()
+	ng1.Developers = append(ng1.Developers, developer1, developer2)
+	ng1.Genres = append(ng1.Genres, genre1, genre2)
+	ng1.Publishers = append(ng1.Publishers, publisher1)
+	ng2 := getCreateGameData()
+	ng2.Developers = append(ng2.Developers, developer1, developer2)
+	ng2.Genres = append(ng2.Genres, genre2)
+	ng2.Publishers = append(ng2.Publishers, publisher2)
+	ng3 := getCreateGameData()
+	ng3.Developers = append(ng3.Developers, developer1, developer2)
+	ng3.Genres = append(ng3.Genres, genre1)
+	ng3.Publishers = append(ng3.Publishers, publisher1, publisher2)
+
+	_, err := s.CreateGame(ctx, ng1)
+	require.NoError(t, err)
+	g2ID, err := s.CreateGame(ctx, ng2)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng3)
+	require.NoError(t, err)
+
+	matched, err := s.GetGames(ctx, 20, 1, repo.GamesFilter{OrderBy: repo.OrderGamesByDefault, DeveloperID: developer2, PublisherID: publisher2, GenreID: genre2})
+	require.NoError(t, err)
+
+	// ng2
+	require.Equal(t, 1, len(matched), "count should be 1")
+	require.Equal(t, g2ID, matched[0].ID, "games ids should match")
 }
 
 // TestGetGamesCount_DataExists_ShouldReturnCount tests case when we add multiple games, get their count, and it should match
@@ -177,16 +228,18 @@ func TestGetGamesCount_DataExists_ShouldReturnCount(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	ng1 := getCreateGameData()
 	ng2 := getCreateGameData()
 
-	_, err := s.CreateGame(context.Background(), ng1)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng2)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, ng1)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng2)
+	require.NoError(t, err)
 
-	count, err := s.GetGamesCount(context.Background(), "")
-	require.NoError(t, err, "err should be nil")
+	count, err := s.GetGamesCount(ctx, repo.GamesFilter{})
+	require.NoError(t, err)
 
 	require.Equal(t, 2, int(count), "count should be 2")
 }
@@ -195,6 +248,8 @@ func TestGetGamesCount_DataExists_ShouldReturnCount(t *testing.T) {
 func TestGetGamesCount_FilterByName_ShouldReturnMatchedCount(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
+
+	ctx := context.Background()
 
 	ng1 := getCreateGameData()
 	ng1.Name = "the best Game"
@@ -205,20 +260,58 @@ func TestGetGamesCount_FilterByName_ShouldReturnMatchedCount(t *testing.T) {
 	ng4 := getCreateGameData()
 	ng4.Name = "the Gane"
 
-	_, err := s.CreateGame(context.Background(), ng1)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng2)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng3)
-	require.NoError(t, err, "err should be nil")
-	_, err = s.CreateGame(context.Background(), ng4)
-	require.NoError(t, err, "err should be nil")
+	_, err := s.CreateGame(ctx, ng1)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng2)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng3)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng4)
+	require.NoError(t, err)
 
-	count, err := s.GetGamesCount(context.Background(), "game")
-	require.NoError(t, err, "err should be nil")
+	count, err := s.GetGamesCount(ctx, repo.GamesFilter{Name: "game"})
+	require.NoError(t, err)
 
 	// ng1, ng2, ng3
 	require.Equal(t, 3, int(count), "count should be 3")
+}
+
+// TestGetGamesCount_Filter_ShouldReturnMatched tests case when we add multiple games, get count by developer, publisher and genre and we should get count of matches
+func TestGetGamesCount_Filter_ShouldReturnMatched(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := context.Background()
+
+	developer1, developer2 := td.Int32(), td.Int32()
+	genre1, genre2 := td.Int32(), td.Int32()
+	publisher1, publisher2 := td.Int32(), td.Int32()
+
+	ng1 := getCreateGameData()
+	ng1.Developers = append(ng1.Developers, developer1, developer2)
+	ng1.Genres = append(ng1.Genres, genre1, genre2)
+	ng1.Publishers = append(ng1.Publishers, publisher1)
+	ng2 := getCreateGameData()
+	ng2.Developers = append(ng2.Developers, developer1, developer2)
+	ng2.Genres = append(ng2.Genres, genre2)
+	ng2.Publishers = append(ng2.Publishers, publisher2)
+	ng3 := getCreateGameData()
+	ng3.Developers = append(ng3.Developers, developer1, developer2)
+	ng3.Genres = append(ng3.Genres, genre1)
+	ng3.Publishers = append(ng3.Publishers, publisher1, publisher2)
+
+	_, err := s.CreateGame(ctx, ng1)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng2)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, ng3)
+	require.NoError(t, err)
+
+	count, err := s.GetGamesCount(ctx, repo.GamesFilter{OrderBy: repo.OrderGamesByDefault, DeveloperID: developer1, PublisherID: publisher1, GenreID: genre1})
+	require.NoError(t, err)
+
+	// ng1, ng3
+	require.EqualValues(t, 2, count, "count should be 2")
 }
 
 // TestGetGamesCount_DataNotExist_ShouldReturnZero tests case when there ara no games, get their count, and it should be 0
@@ -226,8 +319,8 @@ func TestGetGamesCount_DataNotExist_ShouldReturnZero(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	count, err := s.GetGamesCount(context.Background(), "")
-	require.NoError(t, err, "err should be nil")
+	count, err := s.GetGamesCount(context.Background(), repo.GamesFilter{Name: ""})
+	require.NoError(t, err)
 
 	require.Equal(t, 0, int(count), "len of matched should be 0")
 }
@@ -248,13 +341,15 @@ func TestGetGameByID_DataExists_ShouldRetrieveEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cg := getCreateGameData()
 
-	id, err := s.CreateGame(context.Background(), cg)
-	require.NoError(t, err, "err should be nil")
+	id, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
 
-	gg, err := s.GetGameByID(context.Background(), id)
-	require.NoError(t, err, "err should be nil")
+	gg, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
 
 	want := cg
 	got := gg
@@ -266,10 +361,12 @@ func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cr := getCreateGameData()
 
-	id, err := s.CreateGame(context.Background(), cr)
-	require.NoError(t, err, "err should be nil")
+	id, err := s.CreateGame(ctx, cr)
+	require.NoError(t, err)
 
 	up := repo.UpdateGame{
 		Name:        td.String(),
@@ -287,11 +384,11 @@ func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 		IGDBID:      int64(td.Uint32()),
 	}
 
-	err = s.UpdateGame(context.Background(), id, up)
-	require.NoError(t, err, "err should be nil")
+	err = s.UpdateGame(ctx, id, up)
+	require.NoError(t, err)
 
-	g, err := s.GetGameByID(context.Background(), id)
-	require.NoError(t, err, "err should be nil")
+	g, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
 
 	want := up
 	got := g
@@ -314,14 +411,16 @@ func TestDeleteGame_Valid_ShouldDelete(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cr := getCreateGameData()
-	id, err := s.CreateGame(context.Background(), cr)
-	require.NoError(t, err, "err should be nil")
+	id, err := s.CreateGame(ctx, cr)
+	require.NoError(t, err)
 
-	err = s.DeleteGame(context.Background(), id)
-	require.NoError(t, err, "err should be nil")
+	err = s.DeleteGame(ctx, id)
+	require.NoError(t, err)
 
-	g, err := s.GetGameByID(context.Background(), id)
+	g, err := s.GetGameByID(ctx, id)
 	require.ErrorIs(t, err, repo.ErrNotFound[int32]{Entity: "game", ID: id}, "err should be NotFound")
 	require.Zero(t, g.ID, "id should be 0")
 }
@@ -331,23 +430,25 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
+	ctx := context.Background()
+
 	cr := getCreateGameData()
-	id, err := s.CreateGame(context.Background(), cr)
-	require.NoError(t, err, "err should be nil")
+	id, err := s.CreateGame(ctx, cr)
+	require.NoError(t, err)
 
 	var r1, r2, r3 uint8 = td.Uint8(), td.Uint8(), td.Uint8()
-	err = s.AddRating(context.Background(), repo.CreateRating{Rating: r1, UserID: td.String(), GameID: id})
-	require.NoError(t, err, "err should be nil")
-	err = s.AddRating(context.Background(), repo.CreateRating{Rating: r2, UserID: td.String(), GameID: id})
-	require.NoError(t, err, "err should be nil")
-	err = s.AddRating(context.Background(), repo.CreateRating{Rating: r3, UserID: td.String(), GameID: id})
-	require.NoError(t, err, "err should be nil")
+	err = s.AddRating(ctx, repo.CreateRating{Rating: r1, UserID: td.String(), GameID: id})
+	require.NoError(t, err)
+	err = s.AddRating(ctx, repo.CreateRating{Rating: r2, UserID: td.String(), GameID: id})
+	require.NoError(t, err)
+	err = s.AddRating(ctx, repo.CreateRating{Rating: r3, UserID: td.String(), GameID: id})
+	require.NoError(t, err)
 
-	err = s.UpdateGameRating(context.Background(), id)
-	require.NoError(t, err, "err should be nil")
+	err = s.UpdateGameRating(ctx, id)
+	require.NoError(t, err)
 
-	game, err := s.GetGameByID(context.Background(), id)
-	require.NoError(t, err, "err should be nil")
+	game, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
 
 	sum := int(r1) + int(r2) + int(r3)
 	want := float64(sum) / 3

@@ -93,6 +93,15 @@ definitions:
           type: string
         type: array
     type: object
+  handler.GamesResponse:
+    properties:
+      count:
+        type: integer
+      games:
+        items:
+          $ref: '#/definitions/handler.GameResponse'
+        type: array
+    type: object
   handler.Genre:
     properties:
       id:
@@ -206,15 +215,25 @@ paths:
         in: query
         name: name
         type: string
+      - description: genre filter
+        in: query
+        name: genre
+        type: integer
+      - description: developer id filter
+        in: query
+        name: developer
+        type: integer
+      - description: publisher id filter
+        in: query
+        name: publisher
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/handler.GameResponse'
-            type: array
+            $ref: '#/definitions/handler.GamesResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -382,6 +401,7 @@ paths:
       summary: Rate game
   /games/count:
     get:
+      deprecated: true
       description: returns games count
       operationId: get-games-count
       parameters:

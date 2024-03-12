@@ -27,13 +27,13 @@ type Storage interface {
 	GetCompanies(ctx context.Context) ([]repo.Company, error)
 }
 
-// IGDBProvider igdb client interface
-type IGDBProvider interface {
-	GetTopRatedGames(ctx context.Context, minRatingsCount, minRating int64, releasedAfter time.Time, limit int64, platformsIDs []int64) ([]igdb.TopRatedGamesResp, error)
+// IGDBClient igdb client interface
+type IGDBClient interface {
+	GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdb.TopRatedGamesResp, error)
 }
 
-// UploadcareProvider uploadcare client interface
-type UploadcareProvider interface {
+// UploadcareClient uploadcare client interface
+type UploadcareClient interface {
 	UploadImageFromURL(ctx context.Context, imageURL string) (newURL string, err error)
 }
 
@@ -41,17 +41,17 @@ type UploadcareProvider interface {
 type TaskProvider struct {
 	log                *zap.Logger
 	storage            Storage
-	igdbProvider       IGDBProvider
-	uploadcareProvider UploadcareProvider
+	igdbProvider       IGDBClient
+	uploadcareProvider UploadcareClient
 }
 
 // New creates new TaskProvider
-func New(log *zap.Logger, storage Storage, igdbProvider IGDBProvider, uploadcareProvider UploadcareProvider) *TaskProvider {
+func New(log *zap.Logger, storage Storage, igdbClient IGDBClient, uploadcareClient UploadcareClient) *TaskProvider {
 	return &TaskProvider{
 		log:                log,
 		storage:            storage,
-		igdbProvider:       igdbProvider,
-		uploadcareProvider: uploadcareProvider,
+		igdbProvider:       igdbClient,
+		uploadcareProvider: uploadcareClient,
 	}
 }
 

@@ -127,7 +127,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	}
 
 	// create redis cache service
-	rCache := cache.New(redisClient, logger)
+	rCache := cache.NewRedisStore(redisClient, logger)
 
 	// create storage
 	storage := repo.New(db)
@@ -144,13 +144,14 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	// start debug service
 	go func() {
 		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
-		err = http.ListenAndServe(cfg.Web.DebugAddress, nil)
+		debug := http.Server{Addr: cfg.Web.DebugAddress, ReadTimeout: time.Second}
+		err = debug.ListenAndServe()
 		if err != nil {
 			logger.Error("Debug service stopped", zap.Error(err))
 		}
 	}()
 
-	h, err := handler.Service(logger, db, authClient, storage, rCache, igdbClient, uploadcareClient, cfg.Web, cfg.Zipkin)
+	h, err := handler.Service(logger, db, authClient, storage, rCache, cfg.Web, cfg.Zipkin)
 	if err != nil {
 		return fmt.Errorf("can't create service handler: %w", err)
 	}

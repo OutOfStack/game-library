@@ -9,6 +9,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	unavailable = "unavailable"
+)
+
 // Check has methods for readiness and liveness probes
 type Check struct {
 	db *sqlx.DB
@@ -33,7 +37,7 @@ func (ch *Check) Readiness(c *gin.Context) {
 	var h health
 	host, err := os.Hostname()
 	if err != nil {
-		host = "unavailable"
+		host = unavailable
 	}
 	h.Host = host
 	if err = ch.db.Ping(); err != nil {
@@ -49,7 +53,7 @@ func (ch *Check) Readiness(c *gin.Context) {
 func (ch *Check) Liveness(c *gin.Context) {
 	host, err := os.Hostname()
 	if err != nil {
-		host = "unavailable"
+		host = unavailable
 	}
 	h := health{
 		Host:      host,

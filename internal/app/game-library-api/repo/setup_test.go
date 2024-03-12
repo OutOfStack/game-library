@@ -17,8 +17,11 @@ import (
 )
 
 const (
-	PgPwd    string = "temp_pwd"
-	HostPort string = "5439"
+	DatabaseName = "games"
+	DatabasePort = "5439"
+	DatabasePwd  = "password"
+	MigratiosSrc = "file://../../../../scripts/migrations"
+	pg           = "postgres"
 )
 
 var db *sqlx.DB
@@ -31,17 +34,17 @@ func TestMain(m *testing.M) {
 
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "postgres",
+		Repository: pg,
 		Tag:        "15-alpine",
 		Env: []string{
-			fmt.Sprintf("POSTGRES_PASSWORD=%s", PgPwd),
-			"POSTGRES_DB=games",
+			fmt.Sprintf("POSTGRES_PASSWORD=%s", DatabasePwd),
+			fmt.Sprintf("POSTGRES_DB=%s", DatabaseName),
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"5432/tcp": {
 				docker.PortBinding{
 					HostIP:   "0.0.0.0",
-					HostPort: HostPort,
+					HostPort: DatabasePort,
 				},
 			},
 		},
@@ -60,7 +63,7 @@ func TestMain(m *testing.M) {
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	counter := 1
 	err = pool.Retry(func() error {
-		db, err = sqlx.Open("postgres", fmt.Sprintf("postgres://postgres:%s@localhost:%s/games?sslmode=disable", PgPwd, HostPort))
+		db, err = sqlx.Open(pg, fmt.Sprintf("postgres://postgres:%s@localhost:%s/%s?sslmode=disable", DatabasePwd, DatabasePort, DatabaseName))
 		if err != nil {
 			log.Printf("Repo tests: Attempt %d connecting to database: %v", counter, err)
 			counter++
@@ -99,7 +102,7 @@ func setup(t *testing.T) *repo.Storage {
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://../../../../scripts/migrations", "games", driver)
+	m, err := migrate.NewWithDatabaseInstance(MigratiosSrc, "games", driver)
 	if err != nil {
 		t.Fatalf("error on connecting to db: %v", err)
 	}
@@ -115,7 +118,7 @@ func teardown(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://../../../../scripts/migrations", "games", driver)
+	m, err := migrate.NewWithDatabaseInstance(MigratiosSrc, "games", driver)
 	if err != nil {
 		t.Fatalf("error on connecting to db: %v", err)
 	}

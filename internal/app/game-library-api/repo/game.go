@@ -17,18 +17,56 @@ import (
 
 var (
 	tracer = otel.Tracer("")
+)
 
+var (
 	psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
 
-type OrderGamesBy string
+// SortOrder - type for query sort order
+type SortOrder string
+
+// SortOrder valeus
+const (
+	AscendingSortOrder  SortOrder = "ASC"
+	DescendingSortOrder SortOrder = "DESC"
+)
+
+const (
+	gameReleaseYearCoeff = 2.5
+	gameRatingCoeff      = 2.0
+)
+
+// GamesOrderBy type of games ordering
+type GamesOrderBy struct {
+	Field string
+	Order SortOrder
+}
 
 // OrderGamesBy options
-const (
-	OrderGamesByDefault     OrderGamesBy = "weight"
-	OrderGamesByReleaseDate OrderGamesBy = "release_date"
-	OrderGamesByName        OrderGamesBy = "name"
+var (
+	OrderGamesByDefault = GamesOrderBy{
+		Field: "weight",
+		Order: DescendingSortOrder,
+	}
+	OrderGamesByReleaseDate = GamesOrderBy{
+		Field: "release_date",
+		Order: DescendingSortOrder,
+	}
+	OrderGamesByName = GamesOrderBy{
+		Field: "name",
+		Order: AscendingSortOrder,
+	}
 )
+
+// GamesFilter games filter
+type GamesFilter struct {
+	Name        string
+	DeveloperID int32
+	PublisherID int32
+	GenreID     int32
+	OrderBy     GamesOrderBy
+}
 
 // Storage provides required dependencies for repository
 type Storage struct {
@@ -43,32 +81,29 @@ func New(db *sqlx.DB) *Storage {
 }
 
 // GetGames returns list of games with specified pageSize at specified page
-func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy OrderGamesBy, name string) (list []Game, err error) {
+func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter GamesFilter) (list []Game, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGames")
 	defer span.End()
 
-	var order string
-	switch orderBy {
-	case OrderGamesByDefault:
-		order = "DESC"
-	case OrderGamesByName:
-		order = "ASC"
-	case OrderGamesByReleaseDate:
-		order = "DESC"
-	default:
-		return nil, fmt.Errorf("unsupported OrderGamesBy option")
-	}
-
 	query := psql.Select("id", "name", "release_date", "logo_url", "rating", "summary", "genres", "platforms",
 		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id",
-		"(extract(year from release_date)/2.5 + igdb_rating + rating/2) weight").
+		fmt.Sprintf("(extract(year FROM release_date)/%f + igdb_rating + rating/%f) weight", gameReleaseYearCoeff, gameRatingCoeff)).
 		From("games").
 		Limit(uint64(pageSize)).
 		Offset(uint64((page - 1) * pageSize)).
-		OrderBy(fmt.Sprintf("%s %s", orderBy, order))
+		OrderBy(fmt.Sprintf("%s %s", filter.OrderBy.Field, filter.OrderBy.Order))
 
-	if name != "" {
-		query = query.Where(sq.Like{"lower(name)": "%" + strings.ToLower(name) + "%"})
+	if filter.Name != "" {
+		query = query.Where(sq.Like{"LOWER(name)": "%" + strings.ToLower(filter.Name) + "%"})
+	}
+	if filter.GenreID != 0 {
+		query = query.Where(sq.Expr("? = ANY(genres)", filter.GenreID))
+	}
+	if filter.PublisherID != 0 {
+		query = query.Where(sq.Expr("? = ANY(publishers)", filter.PublisherID))
+	}
+	if filter.DeveloperID != 0 {
+		query = query.Where(sq.Expr("? = ANY(developers)", filter.DeveloperID))
 	}
 
 	q, args, err := query.ToSql()
@@ -84,14 +119,24 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, orderBy Orde
 }
 
 // GetGamesCount returns games count
-func (s *Storage) GetGamesCount(ctx context.Context, name string) (count uint64, err error) {
+func (s *Storage) GetGamesCount(ctx context.Context, filter GamesFilter) (count uint64, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGamesCount")
 	defer span.End()
 
-	query := psql.Select("count(id)").
+	query := psql.Select("COUNT(id)").
 		From("games")
-	if name != "" {
-		query = query.Where(sq.Like{"lower(name)": "%" + strings.ToLower(name) + "%"})
+
+	if filter.Name != "" {
+		query = query.Where(sq.Like{"LOWER(name)": "%" + strings.ToLower(filter.Name) + "%"})
+	}
+	if filter.GenreID != 0 {
+		query = query.Where(sq.Expr("? = ANY(genres)", filter.GenreID))
+	}
+	if filter.PublisherID != 0 {
+		query = query.Where(sq.Expr("? = ANY(publishers)", filter.PublisherID))
+	}
+	if filter.DeveloperID != 0 {
+		query = query.Where(sq.Expr("? = ANY(developers)", filter.DeveloperID))
 	}
 
 	q, args, err := query.ToSql()

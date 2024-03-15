@@ -18,7 +18,7 @@ const docTemplate = `{
     "paths": {
         "/companies/top": {
             "get": {
-                "description": "returns top companies based on type (developer or publisher)",
+                "description": "returns top companies based on amount of games having it",
                 "produces": [
                     "application/json"
                 ],
@@ -382,6 +382,33 @@ const docTemplate = `{
                 ],
                 "summary": "Get genres",
                 "operationId": "get-genres",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.Genre"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/genres/top": {
+            "get": {
+                "description": "returns top genres based on amount of games having it",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get top genres",
+                "operationId": "get-top-genres",
                 "responses": {
                     "200": {
                         "description": "OK",

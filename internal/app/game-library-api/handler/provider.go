@@ -51,6 +51,7 @@ type Storage interface {
 	GetTopPublishers(ctx context.Context, limit int64) (companies []repo.Company, err error)
 
 	GetGenres(ctx context.Context) (genres []repo.Genre, err error)
+	GetTopGenres(ctx context.Context, limit int64) (genres []repo.Genre, err error)
 
 	GetPlatforms(ctx context.Context) (platforms []repo.Platform, err error)
 

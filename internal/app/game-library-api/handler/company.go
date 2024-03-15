@@ -14,6 +14,7 @@ import (
 
 const (
 	topCompaniesLimit = 10
+	topGenresLimit    = 10
 
 	companyTypeDeveloper = "dev"
 	companyTypePublisher = "pub"
@@ -21,7 +22,7 @@ const (
 
 // GetTopCompanies godoc
 // @Summary Get top companies
-// @Description returns top companies based on type (developer or publisher)
+// @Description returns top companies based on amount of games having it
 // @ID get-top-companies
 // @Produce json
 // @Param   type query string true "company type (dev or pub)" Enums(pub, dev)

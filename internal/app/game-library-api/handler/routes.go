@@ -82,6 +82,7 @@ func Service(
 
 	// genres
 	r.GET("/api/genres", pr.GetGenres)
+	r.GET("/api/genres/top", pr.GetTopGenres)
 
 	// platforms
 	r.GET("/api/platforms", pr.GetPlatforms)

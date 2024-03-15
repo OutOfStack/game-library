@@ -16,6 +16,7 @@ const (
 	gamesCountKey   = "games-count"
 	userRatingsKey  = "user-ratings"
 	topCompaniesKey = "top-companies"
+	topGenresKey    = "top-genres"
 )
 
 func getGamesKey(pageSize, page int64, filter repo.GamesFilter) string {
@@ -38,7 +39,11 @@ func getUserRatingsKey(userID string) string {
 }
 
 func getTopCompaniesKey(companyType string, limit int64) string {
-	return topCompaniesKey + "|" + companyType + strconv.FormatInt(limit, 10)
+	return topCompaniesKey + "|" + companyType + "|" + strconv.FormatInt(limit, 10)
+}
+
+func getTopGenresKey(limit int64) string {
+	return topGenresKey + "|" + strconv.FormatInt(limit, 10)
 }
 
 // Cached entities functions

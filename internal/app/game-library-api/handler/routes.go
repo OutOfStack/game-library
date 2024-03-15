@@ -62,7 +62,6 @@ func Service(
 	// games
 	r.GET("/api/games", pr.GetGames)
 	r.GET("/api/games/:id", pr.GetGame)
-	r.GET("/api/games/count", pr.GetGamesCount)
 	r.POST("/api/games",
 		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
 		pr.CreateGame)
@@ -83,9 +82,13 @@ func Service(
 
 	// genres
 	r.GET("/api/genres", pr.GetGenres)
+	r.GET("/api/genres/top", pr.GetTopGenres)
 
 	// platforms
 	r.GET("/api/platforms", pr.GetPlatforms)
+
+	// companies
+	r.GET("/api/companies/top", pr.GetTopCompanies)
 
 	// swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

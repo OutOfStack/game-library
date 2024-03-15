@@ -47,13 +47,13 @@ func (s *Storage) GetTopGenres(ctx context.Context, limit int64) (genres []Genre
 	defer span.End()
 
 	const q = `
-	SELECT gr.id, gr.name, gr.igdb_id, COUNT(*) AS total
+	SELECT gr.id, gr.name, gr.igdb_id
 	FROM genres gr
 	JOIN (
 		SELECT UNNEST(genres) AS genre_id FROM games
 	) AS g ON gr.id = g.genre_id
 	GROUP BY gr.id, gr.name, gr.igdb_id
-	ORDER BY total DESC
+	ORDER BY COUNT(*) DESC
 	LIMIT $1`
 
 	if err = s.db.SelectContext(ctx, &genres, q, limit); err != nil {

@@ -152,7 +152,7 @@ func TestGetTopPublishers_Ok(t *testing.T) {
 
 	ctx := context.Background()
 
-	// create 2 publishers and 3 games
+	// create 2 publishers and 4 games
 	publisher1ID, err := s.CreateCompany(ctx, repo.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},

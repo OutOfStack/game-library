@@ -1,6 +1,6 @@
 package handler
 
-// GetGamesQueryParams represents get games method query params
+// GetGamesQueryParams - get games query params
 type GetGamesQueryParams struct {
 	PageSize  int    `form:"pageSize" binding:"required,gt=0"`
 	Page      int    `form:"page" binding:"required,gt=0"`
@@ -11,7 +11,7 @@ type GetGamesQueryParams struct {
 	Publisher int32  `form:"publisher"`
 }
 
-// Game represents game
+// Game - game response
 type GameResponse struct {
 	ID          int32      `json:"id"`
 	Name        string     `json:"name"`
@@ -28,13 +28,13 @@ type GameResponse struct {
 	Websites    []string   `json:"websites"`
 }
 
-// GamesResponse represents games response
+// GamesResponse - games response
 type GamesResponse struct {
 	Games []GameResponse `json:"games"`
 	Count uint64         `json:"count"`
 }
 
-// CreateGameRequest represents create game request
+// CreateGameRequest - create game request
 type CreateGameRequest struct {
 	Name         string   `json:"name" validate:"required"`
 	Developer    string   `json:"developer" validate:"required"`
@@ -47,8 +47,7 @@ type CreateGameRequest struct {
 	Websites     []string `json:"websites"`
 }
 
-// UpdateGameRequest represents update game request
-// All fields are optional
+// UpdateGameRequest - update game request. All fields are optional
 type UpdateGameRequest struct {
 	Name        *string   `json:"name"`
 	Developer   *string   `json:"developer" validate:"omitempty"`
@@ -61,18 +60,18 @@ type UpdateGameRequest struct {
 	Websites    *[]string `json:"websites"`
 }
 
-// CreateRatingRequest represents create rating request
+// CreateRatingRequest - create rating request
 type CreateRatingRequest struct {
 	Rating uint8 `json:"rating" validate:"gte=0,lte=5"` // 0 - remove rating
 }
 
-// RatingResponse represents rating response
+// RatingResponse - rating response
 type RatingResponse struct {
 	GameID int32 `json:"gameId"`
 	Rating uint8 `json:"rating"`
 }
 
-// GetUserRatingsRequest represents get user ratings request
+// GetUserRatingsRequest - get user ratings request
 type GetUserRatingsRequest struct {
 	GameIDs []int32 `json:"gameIds"`
 }
@@ -99,9 +98,4 @@ type Platform struct {
 	ID           int32  `json:"id"`
 	Name         string `json:"name"`
 	Abbreviation string `json:"abbreviation"`
-}
-
-// CountResponse represent count response
-type CountResponse struct {
-	Count uint64 `json:"count"`
 }

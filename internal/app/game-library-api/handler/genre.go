@@ -16,13 +16,13 @@ import (
 // @Success 200 {array}  Genre
 // @Failure 500 {object} web.ErrorResponse
 // @Router /genres [get]
-func (g *Provider) GetGenres(c *gin.Context) {
+func (p *Provider) GetGenres(c *gin.Context) {
 	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGenres")
 	defer span.End()
 
-	list, err := g.storage.GetGenres(ctx)
+	list, err := p.storage.GetGenres(ctx)
 	if err != nil {
-		web.Err(c, fmt.Errorf("get genres: %w", err))
+		web.Err(c, fmt.Errorf("get genres: %v", err))
 		return
 	}
 

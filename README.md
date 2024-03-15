@@ -35,21 +35,22 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
     make dockerrunpg # runs postgres in docker container
     make createdb # creates db
     make migrate # applies migrations
-    make seed # [Optional] applies test data
+    # optionally
+    make seed # applies test data
     ```
 
 3. Install and run dependencies:
     ```bash
-    make dockerrunglog # runs graylog in docker container
-    make dockerrunredis # [Optional*] runs redis in docker container
-    make dockerrunzipkin # [Optional*] runs zipkin
+    make dockerrunglog # [Optional] runs graylog in docker container
+    make dockerrunredis # [Optional] runs redis in docker container
+    make dockerrunzipkin # [Optional] runs zipkin
     ```
 
-4. _[Optional*]_ Set up fetching games data:
+4. _[Optional]_ Set up fetching games data:
     - Get credentials from [IGDB API](https://api-docs.igdb.com/#account-creation) to run background task that fetches games
     - Get credentials from [Uploadcare API](https://uploadcare.com/api/) for uploading game images
 
-5. _[Optional*]_ Install [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
+5. _[Optional]_ Install [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
 6. Build and run the service:
     ```bash
@@ -57,7 +58,7 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
     make run
     ```
 
-_Optional*_ steps are required for full functionality but not required for minimal install.
+_Optional_ steps are not required for minimal install but required for full functionality.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
 

@@ -16,6 +16,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/companies/top": {
+            "get": {
+                "description": "returns top companies based on type (developer or publisher)",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get top companies",
+                "operationId": "get-top-companies",
+                "parameters": [
+                    {
+                        "enum": [
+                            "pub",
+                            "dev"
+                        ],
+                        "type": "string",
+                        "description": "company type (dev or pub)",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.Company"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or missing company type",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/games": {
             "get": {
                 "description": "returns paginated games",
@@ -120,42 +166,6 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/games/count": {
-            "get": {
-                "description": "returns games count",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Get games count",
-                "operationId": "get-games-count",
-                "deprecated": true,
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "name filter",
-                        "name": "name",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handler.CountResponse"
-                            }
                         }
                     },
                     "500": {
@@ -472,14 +482,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "handler.CountResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
                 }
             }
         },

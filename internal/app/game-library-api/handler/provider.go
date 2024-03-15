@@ -47,6 +47,8 @@ type Storage interface {
 	CreateCompany(ctx context.Context, c repo.Company) (id int32, err error)
 	GetCompanies(ctx context.Context) (companies []repo.Company, err error)
 	GetCompanyIDByName(ctx context.Context, name string) (id int32, err error)
+	GetTopDevelopers(ctx context.Context, limit int64) (companies []repo.Company, err error)
+	GetTopPublishers(ctx context.Context, limit int64) (companies []repo.Company, err error)
 
 	GetGenres(ctx context.Context) (genres []repo.Genre, err error)
 

@@ -64,21 +64,22 @@ func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
 	encoderCfg.EncodeTime = zapcore.RFC3339TimeEncoder
 	encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
 
-	gelfWriter, err := gelf.NewTCPWriter(cfg.Graylog.Address)
-	if err != nil {
-		return nil, fmt.Errorf("can't create gelf writer: %v", err)
-	}
 	consoleWriter := zapcore.Lock(os.Stderr)
 
-	core := zapcore.NewTee(
-		zapcore.NewCore(
-			zapcore.NewJSONEncoder(encoderCfg),
-			zapcore.AddSync(gelfWriter),
-			zap.InfoLevel),
-		zapcore.NewCore(
-			zapcore.NewJSONEncoder(encoderCfg),
-			consoleWriter,
-			zap.InfoLevel))
+	gelfWriter, err := gelf.NewTCPWriter(cfg.Graylog.Address)
+	if err != nil {
+		log.Printf("ERROR: can't create gelf writer: %v", err)
+	}
+
+	cores := []zapcore.Core{
+		zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), consoleWriter, zap.InfoLevel),
+	}
+	if gelfWriter != nil {
+		cores = append(cores,
+			zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), zapcore.AddSync(gelfWriter), zap.InfoLevel))
+	}
+
+	core := zapcore.NewTee(cores...)
 
 	logger := zap.New(core, zap.WithCaller(false)).With(zap.String("service", appconf.ServiceName))
 

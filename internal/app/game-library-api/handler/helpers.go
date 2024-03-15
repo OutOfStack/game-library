@@ -11,10 +11,11 @@ import (
 
 // Cache keys
 const (
-	gamesKey       = "games"
-	gameKey        = "game"
-	gamesCountKey  = "games-count"
-	userRatingsKey = "user-ratings"
+	gamesKey        = "games"
+	gameKey         = "game"
+	gamesCountKey   = "games-count"
+	userRatingsKey  = "user-ratings"
+	topCompaniesKey = "top-companies"
 )
 
 func getGamesKey(pageSize, page int64, filter repo.GamesFilter) string {
@@ -34,6 +35,10 @@ func getGamesCountKey(filter repo.GamesFilter) string {
 
 func getUserRatingsKey(userID string) string {
 	return userRatingsKey + "|" + userID
+}
+
+func getTopCompaniesKey(companyType string, limit int64) string {
+	return topCompaniesKey + "|" + companyType + strconv.FormatInt(limit, 10)
 }
 
 // Cached entities functions

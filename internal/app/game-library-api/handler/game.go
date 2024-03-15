@@ -115,40 +115,6 @@ func (p *Provider) GetGames(c *gin.Context) {
 	web.Respond(c, response, http.StatusOK)
 }
 
-// GetGamesCount godoc
-// @Summary Get games count
-// @Deprecated Use /games [get] instead
-// @Description returns games count
-// @ID get-games-count
-// @Produce json
-// @Param name query string false "name filter"
-// @Success 200 {array}  CountResponse
-// @Failure 500 {object} web.ErrorResponse
-// @Router /games/count [get]
-func (p *Provider) GetGamesCount(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.getGamesCount")
-	defer span.End()
-
-	nameParam := c.DefaultQuery("name", "")
-
-	var filter repo.GamesFilter
-	if len(filter.Name) >= minLengthForSearch {
-		filter.Name = nameParam
-	}
-	span.SetAttributes(att.String("data.query", nameParam))
-
-	var count uint64
-	err := cache.Get(ctx, p.cache, getGamesCountKey(filter), &count, func() (uint64, error) {
-		return p.storage.GetGamesCount(ctx, filter)
-	}, 0)
-	if err != nil {
-		web.Err(c, fmt.Errorf("getting games count: %w", err))
-		return
-	}
-
-	web.Respond(c, CountResponse{Count: count}, http.StatusOK)
-}
-
 // GetGame godoc
 // @Summary Get game
 // @Description returns game by ID

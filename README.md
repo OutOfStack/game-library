@@ -17,7 +17,6 @@ game-library is a web application for exploring and rating games written in Go a
 - [Documentation](#documentation)
 - [Examples](#examples)
 - [List of Make commands](#list-of-make-commands)
-- [Contributors](#contributors)
 - [License](#license)
 
 ## Installation
@@ -92,7 +91,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 ## Documentation
 
 API documentation is available at [Swagger UI](http://localhost:8000/swagger/index.html). 
-For regenerating documentation after handlers change run `make generate`.
+For regenerating documentation after swagger description change run `make generate`.
 
 ## Examples
 
@@ -126,11 +125,6 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     dockerrunmng-m  applies migrations to database using docker manage image
     dockerrunmng-r  rollbacks one last migration using docker manage image
     dockerrunmng-s  seeds test data to database using docker manage image
-
-## Contributors
-
-- [OutOfStack](https://github.com/OutOfStack)
-- For a complete list of contributors, refer to the GitHub repository.
 
 ## License
 

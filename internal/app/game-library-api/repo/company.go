@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 )
 
 // CreateCompany creates new company
-func (s *Storage) CreateCompany(ctx context.Context, c Company) (id int32, err error) {
+func (s *Storage) CreateCompany(ctx context.Context, c model.Company) (id int32, err error) {
 	ctx, span := tracer.Start(ctx, "db.createCompany")
 	defer span.End()
 
@@ -28,7 +31,7 @@ func (s *Storage) CreateCompany(ctx context.Context, c Company) (id int32, err e
 }
 
 // GetCompanies returns companies
-func (s *Storage) GetCompanies(ctx context.Context) (companies []Company, err error) {
+func (s *Storage) GetCompanies(ctx context.Context) (companies []model.Company, err error) {
 	ctx, span := tracer.Start(ctx, "db.getCompanies")
 	defer span.End()
 
@@ -55,7 +58,7 @@ func (s *Storage) GetCompanyIDByName(ctx context.Context, name string) (id int32
 
 	if err = s.db.GetContext(ctx, &id, q, strings.ToLower(name)); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, ErrNotFound[string]{Entity: "company", ID: name}
+			return 0, apperr.NewNotFoundError("company", name)
 		}
 		return 0, err
 	}
@@ -64,7 +67,7 @@ func (s *Storage) GetCompanyIDByName(ctx context.Context, name string) (id int32
 }
 
 // GetTopDevelopers returns top developers by amount of games
-func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies []Company, err error) {
+func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies []model.Company, err error) {
 	ctx, span := tracer.Start(ctx, "db.getTopDevelopers")
 	defer span.End()
 
@@ -86,7 +89,7 @@ func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies 
 }
 
 // GetTopPublishers returns top publishers by amount of games
-func (s *Storage) GetTopPublishers(ctx context.Context, limit int64) (companies []Company, err error) {
+func (s *Storage) GetTopPublishers(ctx context.Context, limit int64) (companies []model.Company, err error) {
 	ctx, span := tracer.Start(ctx, "db.getTopPublishers")
 	defer span.End()
 

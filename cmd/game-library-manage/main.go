@@ -18,7 +18,7 @@ func main() {
 
 	cfg := config{}
 	if err := conf.Load(".", "app", "env", &cfg); err != nil {
-		log.Fatalf("error parsing config: %v", err)
+		log.Fatalf("parse config: %v", err)
 	}
 
 	fmt.Printf("Host: %s, Name: %s, User: %s, RequireSSL: %v\n", cfg.DB.Host, cfg.DB.Name, cfg.DB.User, cfg.DB.RequireSSL)
@@ -39,7 +39,7 @@ func main() {
 	switch flag.Arg(0) {
 	case "migrate":
 		if err = schema.Migrate(db, true); err != nil {
-			log.Fatalf("applying migrations %v", err)
+			log.Fatalf("apply migrations %v", err)
 		}
 		log.Print("migration complete")
 	case "rollback":
@@ -49,7 +49,7 @@ func main() {
 		log.Print("migration rollback complete")
 	case "seed":
 		if err = schema.Seed(db); err != nil {
-			log.Fatalf("applying seeds %v", err)
+			log.Fatalf("apply seeds %v", err)
 		}
 		log.Print("Seed data inserted")
 	default:

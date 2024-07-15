@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +17,7 @@ func TestCreateCompany_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	company := repo.Company{
+	company := model.Company{
 		Name: td.String(),
 	}
 
@@ -31,7 +32,7 @@ func TestGetCompanies_DataExists_ShouldBeEqual(t *testing.T) {
 
 	ctx := context.Background()
 
-	company := repo.Company{
+	company := model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	}
@@ -57,7 +58,7 @@ func TestGetCompanyIDByName_CompanyExists_ShouldReturnID(t *testing.T) {
 
 	ctx := context.Background()
 
-	company := repo.Company{
+	company := model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	}
@@ -77,7 +78,7 @@ func TestGetCompanyIDByName_CompanyNotExist_ShouldReturnErrNotFound(t *testing.T
 
 	ctx := context.Background()
 
-	company := repo.Company{
+	company := model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	}
@@ -87,7 +88,7 @@ func TestGetCompanyIDByName_CompanyNotExist_ShouldReturnErrNotFound(t *testing.T
 
 	randomName := td.String()
 	gotID, err := s.GetCompanyIDByName(ctx, randomName)
-	require.ErrorIs(t, err, repo.ErrNotFound[string]{Entity: "company", ID: randomName}, "err should be NotFound")
+	require.ErrorIs(t, err, apperr.NewNotFoundError("company", randomName), "err should be NotFound")
 	require.Zero(t, gotID, "got id should be 0")
 }
 
@@ -98,19 +99,19 @@ func TestGetTopDevelopers_Ok(t *testing.T) {
 	ctx := context.Background()
 
 	// create 3 developers and 4 games
-	developer1ID, err := s.CreateCompany(ctx, repo.Company{
+	developer1ID, err := s.CreateCompany(ctx, model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	})
 	require.NoError(t, err)
 
-	developer2ID, err := s.CreateCompany(ctx, repo.Company{
+	developer2ID, err := s.CreateCompany(ctx, model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	})
 	require.NoError(t, err)
 
-	developer3ID, err := s.CreateCompany(ctx, repo.Company{
+	developer3ID, err := s.CreateCompany(ctx, model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	})
@@ -119,10 +120,10 @@ func TestGetTopDevelopers_Ok(t *testing.T) {
 	cg1, cg2, cg3, cg4 := getCreateGameData(), getCreateGameData(), getCreateGameData(), getCreateGameData()
 
 	// developer 1 developed 1 game, developer 2 developed 3 games, developer 3 developed 2 games
-	cg1.Developers = []int32{developer1ID}
-	cg2.Developers = []int32{developer2ID}
-	cg3.Developers = []int32{developer2ID, developer3ID}
-	cg4.Developers = []int32{developer2ID, developer3ID}
+	cg1.DevelopersIDs = []int32{developer1ID}
+	cg2.DevelopersIDs = []int32{developer2ID}
+	cg3.DevelopersIDs = []int32{developer2ID, developer3ID}
+	cg4.DevelopersIDs = []int32{developer2ID, developer3ID}
 
 	_, err = s.CreateGame(ctx, cg1)
 	require.NoError(t, err)
@@ -153,13 +154,13 @@ func TestGetTopPublishers_Ok(t *testing.T) {
 	ctx := context.Background()
 
 	// create 2 publishers and 4 games
-	publisher1ID, err := s.CreateCompany(ctx, repo.Company{
+	publisher1ID, err := s.CreateCompany(ctx, model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	})
 	require.NoError(t, err)
 
-	publisher2ID, err := s.CreateCompany(ctx, repo.Company{
+	publisher2ID, err := s.CreateCompany(ctx, model.Company{
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	})
@@ -168,10 +169,10 @@ func TestGetTopPublishers_Ok(t *testing.T) {
 	cg1, cg2, cg3, cg4 := getCreateGameData(), getCreateGameData(), getCreateGameData(), getCreateGameData()
 
 	// publisher 1 published 2 games, publisher 2 published 3 games
-	cg1.Publishers = []int32{publisher1ID}
-	cg2.Publishers = []int32{publisher2ID}
-	cg3.Publishers = []int32{publisher2ID}
-	cg4.Publishers = []int32{publisher1ID, publisher2ID}
+	cg1.PublishersIDs = []int32{publisher1ID}
+	cg2.PublishersIDs = []int32{publisher2ID}
+	cg3.PublishersIDs = []int32{publisher2ID}
+	cg4.PublishersIDs = []int32{publisher1ID, publisher2ID}
 
 	_, err = s.CreateGame(ctx, cg1)
 	require.NoError(t, err)

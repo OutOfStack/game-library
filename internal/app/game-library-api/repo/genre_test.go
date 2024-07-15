@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ func TestCreateGenre_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	genre := repo.Genre{
+	genre := model.Genre{
 		Name: td.String(),
 	}
 
@@ -29,7 +29,7 @@ func TestGetGenres_DataExists_ShouldBeEqual(t *testing.T) {
 
 	ctx := context.Background()
 
-	genre := repo.Genre{
+	genre := model.Genre{
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	}
@@ -55,13 +55,13 @@ func TestGetTopGenres_Ok(t *testing.T) {
 	ctx := context.Background()
 
 	// create 2 genres and 3 games
-	genre1ID, err := s.CreateGenre(ctx, repo.Genre{
+	genre1ID, err := s.CreateGenre(ctx, model.Genre{
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	})
 	require.NoError(t, err)
 
-	genre2ID, err := s.CreateGenre(ctx, repo.Genre{
+	genre2ID, err := s.CreateGenre(ctx, model.Genre{
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	})

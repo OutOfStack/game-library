@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 )
 
 // CreateGenre creates new genre
-func (s *Storage) CreateGenre(ctx context.Context, g Genre) (id int32, err error) {
+func (s *Storage) CreateGenre(ctx context.Context, g model.Genre) (id int32, err error) {
 	ctx, span := tracer.Start(ctx, "db.createGenre")
 	defer span.End()
 
@@ -26,7 +28,7 @@ func (s *Storage) CreateGenre(ctx context.Context, g Genre) (id int32, err error
 }
 
 // GetGenres returns genres
-func (s *Storage) GetGenres(ctx context.Context) (genres []Genre, err error) {
+func (s *Storage) GetGenres(ctx context.Context) (genres []model.Genre, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGenres")
 	defer span.End()
 
@@ -42,7 +44,7 @@ func (s *Storage) GetGenres(ctx context.Context) (genres []Genre, err error) {
 }
 
 // GetTopGenres returns genres
-func (s *Storage) GetTopGenres(ctx context.Context, limit int64) (genres []Genre, err error) {
+func (s *Storage) GetTopGenres(ctx context.Context, limit int64) (genres []model.Genre, err error) {
 	ctx, span := tracer.Start(ctx, "db.getTopGenres")
 	defer span.End()
 

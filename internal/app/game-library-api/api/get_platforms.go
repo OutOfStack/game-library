@@ -1,11 +1,13 @@
-package handler
+package api
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
+	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // GetPlatforms godoc
@@ -13,22 +15,23 @@ import (
 // @Description returns all platforms
 // @ID get-platforms
 // @Produce json
-// @Success 200 {array}  Platform
+// @Success 200 {array}  api.Platform
 // @Failure 500 {object} web.ErrorResponse
 // @Router /platforms [get]
 func (p *Provider) GetPlatforms(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.getPlatforms")
+	ctx, span := tracer.Start(c.Request.Context(), "api.getPlatforms")
 	defer span.End()
 
-	list, err := p.storage.GetPlatforms(ctx)
+	list, err := p.gameFacade.GetPlatforms(ctx)
 	if err != nil {
-		web.Err(c, fmt.Errorf("get platforms: %w", err))
+		p.log.Error("get platforms", zap.Error(err))
+		web.Err(c, errors.New("internal error"))
 		return
 	}
 
-	resp := make([]Platform, 0, len(list))
+	resp := make([]api.Platform, 0, len(list))
 	for _, p := range list {
-		resp = append(resp, Platform{
+		resp = append(resp, api.Platform{
 			ID:           p.ID,
 			Name:         p.Name,
 			Abbreviation: p.Abbreviation,

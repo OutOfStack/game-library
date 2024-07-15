@@ -27,9 +27,9 @@ var tracer = otel.Tracer("")
 
 // Client represents dependencies for uploadcare client
 type Client struct {
-	log *zap.Logger
-	hc  *http.Client
-	uc  *ucare.Client
+	log    *zap.Logger
+	client *http.Client
+	upload upload.Service
 }
 
 // New constructs Client instance
@@ -49,15 +49,17 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 		return nil, fmt.Errorf("creating uploadcare client: %v", err)
 	}
 
+	uploadService := upload.NewService(uClient)
+
 	return &Client{
-		log: log,
-		uc:  &uClient,
-		hc:  otelClient,
+		log:    log,
+		upload: uploadService,
+		client: otelClient,
 	}, nil
 }
 
 // UploadImageFromURL - uploads image from image url and returns new image url
-func (c *Client) UploadImageFromURL(ctx context.Context, imageURL string) (newURL string, err error) {
+func (c *Client) UploadImageFromURL(ctx context.Context, imageURL string) (string, error) {
 	ctx, span := tracer.Start(ctx, "uploadcare.uploadimagefromurl")
 	defer span.End()
 
@@ -66,7 +68,7 @@ func (c *Client) UploadImageFromURL(ctx context.Context, imageURL string) (newUR
 		return "", fmt.Errorf("creating get image by url request: %v", err)
 	}
 
-	resp, err := c.hc.Do(request)
+	resp, err := c.client.Do(request)
 	if err != nil {
 		return "", fmt.Errorf("get image by url: %v", err)
 	}
@@ -80,15 +82,13 @@ func (c *Client) UploadImageFromURL(ctx context.Context, imageURL string) (newUR
 	reader := bytes.NewReader(data)
 	fileName := path.Base(request.URL.Path)
 
-	service := upload.NewService(*c.uc)
-	fileParams := upload.FileParams{
+	fCtx, fSpan := tracer.Start(ctx, "uploadcare/uploadcare-go/upload.file", trace.WithAttributes(attribute.String("filename", fileName)))
+
+	fileID, err := c.upload.File(fCtx, upload.FileParams{
 		Data:    reader,
 		Name:    fileName,
 		ToStore: ucare.String(upload.ToStoreTrue),
-	}
-
-	fCtx, fSpan := tracer.Start(ctx, "uploadcare/uploadcare-go/upload.file", trace.WithAttributes(attribute.String("filename", fileName)))
-	fileID, err := service.File(fCtx, fileParams)
+	})
 	if err != nil {
 		fSpan.End()
 		return "", fmt.Errorf("upload image to ucare: %v", err)

@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"go.uber.org/zap"
 )
 
@@ -26,7 +26,7 @@ type fetchGamesSettings struct {
 	LastReleasedAt time.Time `json:"lastReleasedAt"`
 }
 
-func (f fetchGamesSettings) convertToTaskSettings() repo.TaskSettings {
+func (f fetchGamesSettings) convertToTaskSettings() model.TaskSettings {
 	b, _ := json.Marshal(f)
 	return b
 }
@@ -35,34 +35,26 @@ var (
 	startReleasedAtDate = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 	getMinRatingsCountAndLimit = func(date time.Time) (count, limit int64) {
-		// [start date, 2001.1.1)
-		if date.Year() < 2001 {
+		switch {
+		case date.Year() < 2001: // [start date, 2001.1.1)
 			return 200, 10
-		}
-		// [2001.1.1, 2011.1.1)
-		if date.Year() < 2011 {
+		case date.Year() < 2011: // [2001.1.1, 2011.1.1)
 			return 120, 15
-		}
-		// [2011.1.1, 2021.1.1)
-		if date.Year() < 2021 {
+		case date.Year() < 2021: // [2011.1.1, 2021.1.1)
 			return 80, 15
-		}
-		// [2021.1.1, now-6 months)
-		if date.Before(time.Now().AddDate(0, -6, 0)) {
+		case date.Before(time.Now().AddDate(0, -6, 0)): // [2021.1.1, now-6 months)
 			return 50, 10
-		}
-		// [now-6 months, now-1 month)
-		if date.Before(time.Now().AddDate(0, -1, 0)) {
+		case date.Before(time.Now().AddDate(0, -1, 0)): // [now-6 months, now-1 month)
 			return 30, 5
+		default: // [now-1 month, now]
+			return 15, 3
 		}
-		// [now-1 month, now]
-		return 15, 3
 	}
 )
 
 // StartFetchIGDBGames starts fetch igdb games task
 func (tp *TaskProvider) StartFetchIGDBGames() error {
-	task := func(ctx context.Context, settings repo.TaskSettings) (repo.TaskSettings, error) {
+	task := func(ctx context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
 		var s fetchGamesSettings
 		if settings != nil {
 			err := json.Unmarshal(settings, &s)
@@ -80,7 +72,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			return nil, fmt.Errorf("get platforms: %v", err)
 		}
 		var allPlatformsIDs []int64
-		igdbPlatforms := make(map[int64]repo.Platform)
+		igdbPlatforms := make(map[int64]model.Platform)
 		for _, p := range platforms {
 			allPlatformsIDs = append(allPlatformsIDs, p.IGDBID)
 			igdbPlatforms[p.IGDBID] = p
@@ -91,7 +83,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 		if err != nil {
 			return nil, fmt.Errorf("get companies: %v", err)
 		}
-		igdbCompanies := make(map[int64]repo.Company)
+		igdbCompanies := make(map[int64]model.Company)
 		for _, c := range companies {
 			if c.IGDBID.Valid {
 				igdbCompanies[c.IGDBID.Int64] = c
@@ -103,7 +95,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 		if err != nil {
 			return nil, fmt.Errorf("get genres: %v", err)
 		}
-		igdbGenres := make(map[int64]repo.Genre)
+		igdbGenres := make(map[int64]model.Genre)
 		for _, g := range genres {
 			igdbGenres[g.IGDBID] = g
 		}
@@ -123,7 +115,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					s.LastReleasedAt = time.Unix(g.FirstReleaseDate, 0)
 					settings = s.convertToTaskSettings()
 					continue
-				} else if !errors.As(err, &repo.ErrNotFound[int64]{}) {
+				} else if !apperr.IsStatusCode(err, apperr.NotFound) {
 					return settings, fmt.Errorf("get game id by igdb id: %v", err)
 				}
 
@@ -210,27 +202,27 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 						break
 					}
 					igdbScreenshotURL := igdb.GetImageURL(scr.URL, igdb.ImageScreenshotBigAlias)
-					screenshotURL, uErr := tp.uploadcareProvider.UploadImageFromURL(ctx, igdbScreenshotURL)
-					if uErr != nil {
-						return settings, fmt.Errorf("upload screenshot %s: %v", igdbScreenshotURL, uErr)
+					screenshotURL, suErr := tp.uploadcareProvider.UploadImageFromURL(ctx, igdbScreenshotURL)
+					if suErr != nil {
+						return settings, fmt.Errorf("upload screenshot %s: %v", igdbScreenshotURL, suErr)
 					}
 					screenshots = append(screenshots, screenshotURL)
 				}
 
-				cg := repo.CreateGame{
-					Name:        g.Name,
-					Developers:  developersIDs,
-					Publishers:  publishersIDs,
-					ReleaseDate: time.Unix(g.FirstReleaseDate, 0).Format("2006-01-02"),
-					Genres:      genresIDs,
-					LogoURL:     logoURL,
-					Summary:     g.Summary,
-					Slug:        g.Slug,
-					Platforms:   platformsIDs,
-					Screenshots: screenshots,
-					Websites:    websites,
-					IGDBRating:  g.TotalRating,
-					IGDBID:      g.ID,
+				cg := model.CreateGame{
+					Name:          g.Name,
+					DevelopersIDs: developersIDs,
+					PublishersIDs: publishersIDs,
+					ReleaseDate:   time.Unix(g.FirstReleaseDate, 0).Format("2006-01-02"),
+					Genres:        genresIDs,
+					LogoURL:       logoURL,
+					Summary:       g.Summary,
+					Slug:          g.Slug,
+					Platforms:     platformsIDs,
+					Screenshots:   screenshots,
+					Websites:      websites,
+					IGDBRating:    g.TotalRating,
+					IGDBID:        g.ID,
 				}
 
 				_, cErr := tp.storage.CreateGame(ctx, cg)

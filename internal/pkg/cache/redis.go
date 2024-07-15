@@ -24,7 +24,7 @@ type RedisStore struct {
 	log         *zap.Logger
 }
 
-// New creates new Cache instance
+// NewRedisStore creates new Cache instance
 func NewRedisStore(redisClient RedisClient, log *zap.Logger) *RedisStore {
 	return &RedisStore{
 		redisClient: redisClient,

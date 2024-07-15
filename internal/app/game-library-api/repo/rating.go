@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/lib/pq"
 )
 
 // AddRating adds rating to game
-func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
+func (s *Storage) AddRating(ctx context.Context, cr model.CreateRating) error {
 	ctx, span := tracer.Start(ctx, "db.addRating")
 	defer span.End()
 
@@ -27,7 +28,7 @@ func (s *Storage) AddRating(ctx context.Context, cr CreateRating) error {
 }
 
 // RemoveRating removes rating of game
-func (s *Storage) RemoveRating(ctx context.Context, rr RemoveRating) error {
+func (s *Storage) RemoveRating(ctx context.Context, rr model.RemoveRating) error {
 	ctx, span := tracer.Start(ctx, "db.removeRating")
 	defer span.End()
 
@@ -43,7 +44,7 @@ func (s *Storage) RemoveRating(ctx context.Context, rr RemoveRating) error {
 }
 
 // GetUserRatingsByGamesIDs returns user ratings for specified games
-func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, gameIDs []int32) (ratings []UserRating, err error) {
+func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, gameIDs []int32) (ratings []model.UserRating, err error) {
 	ctx, span := tracer.Start(ctx, "db.getUserRatingsByGamesIDs")
 	defer span.End()
 
@@ -64,7 +65,7 @@ func (s *Storage) GetUserRatings(ctx context.Context, userID string) (map[int32]
 	ctx, span := tracer.Start(ctx, "db.getUserRatings")
 	defer span.End()
 
-	ratings := make([]UserRating, 0)
+	ratings := make([]model.UserRating, 0)
 	const q = `
 	SELECT game_id, rating, user_id
 	FROM ratings

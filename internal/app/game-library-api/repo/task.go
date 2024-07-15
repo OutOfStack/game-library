@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
@@ -14,7 +16,7 @@ import (
 // GetTask returns task status.
 // If tx provided, query will be executed on it.
 // If task does not exist returns ErrNotFound
-func (s *Storage) GetTask(ctx context.Context, tx *sqlx.Tx, name string) (task Task, err error) {
+func (s *Storage) GetTask(ctx context.Context, tx *sqlx.Tx, name string) (task model.Task, err error) {
 	ctx, span := tracer.Start(ctx, "db.getTask")
 	defer span.End()
 
@@ -30,13 +32,13 @@ func (s *Storage) GetTask(ctx context.Context, tx *sqlx.Tx, name string) (task T
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Task{}, ErrNotFound[string]{Entity: "task", ID: name}
+			return model.Task{}, apperr.NewNotFoundError("task", name)
 		}
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == codeLockNotAvailable {
-			return Task{}, ErrTransactionLocked
+			return model.Task{}, ErrTransactionLocked
 		}
-		return Task{}, err
+		return model.Task{}, err
 	}
 
 	return task, nil
@@ -45,7 +47,7 @@ func (s *Storage) GetTask(ctx context.Context, tx *sqlx.Tx, name string) (task T
 // UpdateTask updates task.
 // If tx provided, query will be executed on it.
 // If task does not exist returns ErrNotFound
-func (s *Storage) UpdateTask(ctx context.Context, tx *sqlx.Tx, task Task) (err error) {
+func (s *Storage) UpdateTask(ctx context.Context, tx *sqlx.Tx, task model.Task) (err error) {
 	ctx, span := tracer.Start(ctx, "db.updateTask")
 	defer span.End()
 

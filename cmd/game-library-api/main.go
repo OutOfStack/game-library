@@ -12,7 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/handler"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/api"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/facade"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
@@ -40,10 +42,13 @@ import (
 // @query.collection.format multi
 // @schemes http
 func main() {
+	// load config
 	var cfg appconf.Cfg
 	if err := conf.Load(".", "app", "env", &cfg); err != nil {
 		log.Fatalf("can't parse config: %v", err)
 	}
+
+	// init logger
 	logger, err := initLogger(cfg)
 	if err != nil {
 		log.Fatalf("can't init logger: %v", err)
@@ -54,6 +59,7 @@ func main() {
 		}
 	}(logger)
 
+	// run
 	if err = run(logger, cfg); err != nil {
 		logger.Fatal("can't run app", zap.Error(err))
 	}
@@ -65,14 +71,13 @@ func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
 	encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
 
 	consoleWriter := zapcore.Lock(os.Stderr)
+	cores := []zapcore.Core{
+		zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), consoleWriter, zap.InfoLevel),
+	}
 
 	gelfWriter, err := gelf.NewTCPWriter(cfg.Graylog.Address)
 	if err != nil {
-		log.Printf("ERROR: can't create gelf writer: %v", err)
-	}
-
-	cores := []zapcore.Core{
-		zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), consoleWriter, zap.InfoLevel),
+		log.Printf("can't create gelf writer: %v", err)
 	}
 	if gelfWriter != nil {
 		cores = append(cores,
@@ -87,6 +92,7 @@ func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
 }
 
 func run(logger *zap.Logger, cfg appconf.Cfg) error {
+	// connect to database
 	db, err := database.Open(database.Config{
 		Host:       cfg.DB.Host,
 		Name:       cfg.DB.Name,
@@ -95,36 +101,36 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 		RequireSSL: cfg.DB.RequireSSL,
 	})
 	if err != nil {
-		return fmt.Errorf("opening db: %w", err)
+		return fmt.Errorf("open db: %w", err)
 	}
 	defer func(db *sqlx.DB) {
 		if err = db.Close(); err != nil {
-			logger.Error("calling database close", zap.Error(err))
+			logger.Error("call database close", zap.Error(err))
 		}
 	}(db)
 
 	// create auth module
 	authClient, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
-		return fmt.Errorf("creating Auth: %w", err)
+		return fmt.Errorf("create Auth: %w", err)
 	}
 
 	// create IGDB client
 	igdbClient, err := igdb.New(logger, cfg.IGDB)
 	if err != nil {
-		return fmt.Errorf("creating IGDB client: %w", err)
+		return fmt.Errorf("create IGDB client: %w", err)
 	}
 
 	// create uploadcare client
 	uploadcareClient, err := uploadcare.New(logger, cfg.Uploadcare)
 	if err != nil {
-		return fmt.Errorf("creating uploadcare client: %w", err)
+		return fmt.Errorf("create uploadcare client: %w", err)
 	}
 
 	// create redis client
 	redisClient, err := redis.New(cfg.Redis)
 	if err != nil {
-		return fmt.Errorf("creating redis client: %w", err)
+		return fmt.Errorf("create redis client: %w", err)
 	}
 
 	// create redis cache service
@@ -133,42 +139,47 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	// create storage
 	storage := repo.New(db)
 
+	// create game facade
+	gameFacade := facade.NewProvider(logger, storage, rCache)
+
+	// create api provider
+	apiProvider := api.NewProvider(logger, rCache, gameFacade)
+
 	// run background tasks
 	taskProvider := taskprocessor.New(logger, storage, igdbClient, uploadcareClient)
 	scheduler := gocron.NewScheduler(time.UTC)
-	_, err = scheduler.Cron(cfg.Scheduler.FetchIGDBGames).Do(taskProvider.StartFetchIGDBGames)
-	if err != nil {
-		logger.Error("run task", zap.String("task", taskprocessor.FetchIGDBGamesTaskName), zap.Error(err))
+	tasks := map[string]model.TaskInfo{
+		taskprocessor.FetchIGDBGamesTaskName: {cfg.Scheduler.FetchIGDBGames, taskProvider.StartFetchIGDBGames},
+	}
+	for name, task := range tasks {
+		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)
+		if err != nil {
+			logger.Error("run task", zap.String("task", name), zap.Error(err))
+			return fmt.Errorf("run task %s: %v", name, err)
+		}
 	}
 	scheduler.StartAsync()
 
 	// start debug service
 	go func() {
 		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
-		debug := http.Server{Addr: cfg.Web.DebugAddress, ReadTimeout: time.Second}
-		err = debug.ListenAndServe()
+		debugService := http.Server{Addr: cfg.Web.DebugAddress, ReadTimeout: time.Second}
+		err = debugService.ListenAndServe()
 		if err != nil {
 			logger.Error("Debug service stopped", zap.Error(err))
 		}
 	}()
 
-	h, err := handler.Service(logger, db, authClient, storage, rCache, cfg.Web, cfg.Zipkin)
-	if err != nil {
-		return fmt.Errorf("can't create service handler: %w", err)
-	}
-
 	// start API service
-	api := http.Server{
-		Addr:         cfg.Web.Address,
-		Handler:      h,
-		ReadTimeout:  cfg.Web.ReadTimeout,
-		WriteTimeout: cfg.Web.WriteTimeout,
+	apiService, err := api.Service(logger, db, authClient, apiProvider, cfg)
+	if err != nil {
+		return fmt.Errorf("can't create service api: %w", err)
 	}
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		logger.Info("API service started", zap.String("address", api.Addr))
-		serverErrors <- api.ListenAndServe()
+		logger.Info("API service started", zap.String("address", apiService.Addr))
+		serverErrors <- apiService.ListenAndServe()
 	}()
 
 	shutdown := make(chan os.Signal, 1)
@@ -183,9 +194,9 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		if err = api.Shutdown(ctx); err != nil {
+		if err = apiService.Shutdown(ctx); err != nil {
 			logger.Error("Shutdown did not complete", zap.Duration("timeout", timeout), zap.Error(err))
-			err = api.Close()
+			err = apiService.Close()
 			if err != nil {
 				return fmt.Errorf("shutdown: %w", err)
 			}

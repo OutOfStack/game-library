@@ -2,10 +2,12 @@ package repo
 
 import (
 	"context"
+
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 )
 
 // GetPlatforms returns platforms
-func (s *Storage) GetPlatforms(ctx context.Context) (platforms []Platform, err error) {
+func (s *Storage) GetPlatforms(ctx context.Context) (platforms []model.Platform, err error) {
 	ctx, span := tracer.Start(ctx, "db.getPlatforms")
 	defer span.End()
 

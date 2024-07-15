@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"fmt"
@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	_ "github.com/OutOfStack/game-library/docs" // swagger docs
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/api/tools"
 	"github.com/OutOfStack/game-library/internal/appconf"
-	auth_ "github.com/OutOfStack/game-library/internal/auth"
+	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -28,56 +27,52 @@ import (
 
 // Service constructs router with all API routes
 func Service(
-	logger *zap.Logger,
+	log *zap.Logger,
 	db *sqlx.DB,
-	auth *auth_.Auth,
-	storage *repo.Storage,
-	cache *cache.RedisStore,
-	conf appconf.Web,
-	zipkinConf appconf.Zipkin,
-) (http.Handler, error) {
-	err := initTracer(logger, zipkinConf.ReporterURL)
+	au *auth.Client,
+	pr *Provider,
+	conf appconf.Cfg,
+) (http.Server, error) {
+	err := initTracer(log, conf.Zipkin.ReporterURL)
 	if err != nil {
-		return nil, fmt.Errorf("initializing exporter: %w", err)
+		return http.Server{}, fmt.Errorf("initializing exporter: %w", err)
 	}
 	r := gin.Default()
 	r.Use(otelgin.Middleware(appconf.ServiceName))
-	r.Use(middleware.Errors(logger), middleware.Metrics(), cors.New(cors.Config{
+	r.Use(middleware.Errors(log), middleware.Metrics(), cors.New(cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			return strings.Contains(conf.AllowedCORSOrigin, origin)
+			return strings.Contains(conf.Web.AllowedCORSOrigin, origin)
 		},
 	}))
 
-	c := NewCheck(db)
+	hc := tools.NewHealthCheck(db)
 
-	pr := NewProvider(logger, storage, cache)
-
-	// health
-	r.GET("/api/readiness", c.Readiness)
-	r.GET("/api/liveness", c.Liveness)
+	// tools
+	r.GET("/api/readiness", hc.Readiness)
+	r.GET("/api/liveness", hc.Liveness)
 
 	// games
 	r.GET("/api/games", pr.GetGames)
 	r.GET("/api/games/:id", pr.GetGame)
 	r.POST("/api/games",
-		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
+		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RolePublisher),
 		pr.CreateGame)
 	r.DELETE("/api/games/:id",
-		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
+		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RolePublisher),
 		pr.DeleteGame)
 	r.PATCH("/api/games/:id",
-		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RolePublisher),
+		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RolePublisher),
 		pr.UpdateGame)
 	r.POST("/api/games/:id/rate",
-		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RoleRegisteredUser),
+		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RoleRegisteredUser),
 		pr.RateGame)
 
 	// user
 	r.POST("/api/user/ratings",
-		middleware.Authenticate(logger, auth), middleware.Authorize(logger, auth, auth_.RoleRegisteredUser),
+		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RoleRegisteredUser),
 		pr.GetUserRatings)
 
 	// genres
@@ -93,7 +88,12 @@ func Service(
 	// swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	return r, nil
+	return http.Server{
+		Addr:         conf.Web.Address,
+		Handler:      r,
+		ReadTimeout:  conf.Web.ReadTimeout,
+		WriteTimeout: conf.Web.WriteTimeout,
+	}, nil
 }
 
 func initTracer(logger *zap.Logger, reporterURL string) error {

@@ -9,27 +9,10 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/pkg/types"
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"go.opentelemetry.io/otel"
-)
-
-var (
-	tracer = otel.Tracer("")
-)
-
-var (
-	psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-)
-
-// SortOrder - type for query sort order
-type SortOrder string
-
-// SortOrder valeus
-const (
-	AscendingSortOrder  SortOrder = "ASC"
-	DescendingSortOrder SortOrder = "DESC"
 )
 
 const (
@@ -37,51 +20,24 @@ const (
 	gameRatingCoeff      = 2.0
 )
 
-// GamesOrderBy type of games ordering
-type GamesOrderBy struct {
-	Field string
-	Order SortOrder
-}
-
 // OrderGamesBy options
 var (
-	OrderGamesByDefault = GamesOrderBy{
+	OrderGamesByDefault = model.OrderBy{
 		Field: "weight",
-		Order: DescendingSortOrder,
+		Order: model.DescendingSortOrder,
 	}
-	OrderGamesByReleaseDate = GamesOrderBy{
+	OrderGamesByReleaseDate = model.OrderBy{
 		Field: "release_date",
-		Order: DescendingSortOrder,
+		Order: model.DescendingSortOrder,
 	}
-	OrderGamesByName = GamesOrderBy{
+	OrderGamesByName = model.OrderBy{
 		Field: "name",
-		Order: AscendingSortOrder,
+		Order: model.AscendingSortOrder,
 	}
 )
 
-// GamesFilter games filter
-type GamesFilter struct {
-	Name        string
-	DeveloperID int32
-	PublisherID int32
-	GenreID     int32
-	OrderBy     GamesOrderBy
-}
-
-// Storage provides required dependencies for repository
-type Storage struct {
-	db *sqlx.DB
-}
-
-// New creates new Storage
-func New(db *sqlx.DB) *Storage {
-	return &Storage{
-		db: db,
-	}
-}
-
 // GetGames returns list of games with specified pageSize at specified page
-func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter GamesFilter) (list []Game, err error) {
+func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) (list []model.Game, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGames")
 	defer span.End()
 
@@ -119,7 +75,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter Games
 }
 
 // GetGamesCount returns games count
-func (s *Storage) GetGamesCount(ctx context.Context, filter GamesFilter) (count uint64, err error) {
+func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (count uint64, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGamesCount")
 	defer span.End()
 
@@ -153,7 +109,7 @@ func (s *Storage) GetGamesCount(ctx context.Context, filter GamesFilter) (count 
 
 // GetGameByID returns game by id.
 // If game does not exist returns ErrNotFound
-func (s *Storage) GetGameByID(ctx context.Context, id int32) (game Game, err error) {
+func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGameByID")
 	defer span.End()
 
@@ -164,9 +120,9 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game Game, err err
 
 	if err = s.db.GetContext(ctx, &game, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Game{}, ErrNotFound[int32]{Entity: "game", ID: id}
+			return model.Game{}, apperr.NewNotFoundError("game", id)
 		}
-		return Game{}, err
+		return model.Game{}, err
 	}
 
 	return game, nil
@@ -184,7 +140,7 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 
 	if err = s.db.GetContext(ctx, &id, q, igdbID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, ErrNotFound[int64]{Entity: "game", ID: igdbID}
+			return 0, apperr.NewNotFoundError("game", igdbID)
 		}
 		return 0, err
 	}
@@ -193,7 +149,7 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 }
 
 // CreateGame creates new game
-func (s *Storage) CreateGame(ctx context.Context, cg CreateGame) (id int32, err error) {
+func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error) {
 	ctx, span := tracer.Start(ctx, "db.createGame")
 	defer span.End()
 
@@ -203,7 +159,7 @@ func (s *Storage) CreateGame(ctx context.Context, cg CreateGame) (id int32, err 
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::varchar(50), $12, $13, $14)
 	RETURNING id`
 
-	err = s.db.QueryRowContext(ctx, q, cg.Name, pq.Int32Array(cg.Developers), pq.Int32Array(cg.Publishers),
+	err = s.db.QueryRowContext(ctx, q, cg.Name, pq.Int32Array(cg.DevelopersIDs), pq.Int32Array(cg.PublishersIDs),
 		cg.ReleaseDate, pq.Int32Array(cg.Genres), cg.LogoURL, cg.Summary, pq.Int32Array(cg.Platforms),
 		pq.StringArray(cg.Screenshots), pq.StringArray(cg.Websites), cg.Slug, cg.IGDBRating, cg.IGDBID, time.Now()).
 		Scan(&id)
@@ -216,7 +172,7 @@ func (s *Storage) CreateGame(ctx context.Context, cg CreateGame) (id int32, err 
 
 // UpdateGame updates game
 // If game does not exist returns ErrNotFound
-func (s *Storage) UpdateGame(ctx context.Context, id int32, ug UpdateGame) error {
+func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGame) error {
 	ctx, span := tracer.Start(ctx, "db.updateGame")
 	defer span.End()
 
@@ -227,7 +183,7 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug UpdateGame) error
 
 	releaseDate, err := types.ParseDate(ug.ReleaseDate)
 	if err != nil {
-		return fmt.Errorf("invalid date %s: %v", releaseDate.String(), err)
+		return fmt.Errorf("invalid date %v: %v", releaseDate, err)
 	}
 	res, err := s.db.ExecContext(ctx, q, id, ug.Name, pq.Int32Array(ug.Developers), pq.Int32Array(ug.Publishers), releaseDate.String(),
 		pq.Int32Array(ug.Genres), ug.LogoURL, ug.Summary, pq.Int32Array(ug.Platforms), pq.StringArray(ug.Screenshots),

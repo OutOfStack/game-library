@@ -15,10 +15,10 @@ func (s *Storage) AddRating(ctx context.Context, cr model.CreateRating) error {
 	defer span.End()
 
 	const q = `
-	INSERT INTO ratings
-	(game_id, user_id, rating, created_at)
-	VALUES ($1, $2, $3, $4)
-	ON CONFLICT (game_id, user_id) DO UPDATE SET rating = $3, updated_at = $4`
+		INSERT INTO ratings (game_id, user_id, rating, created_at)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (game_id, user_id)
+		DO UPDATE SET rating = $3, updated_at = $4`
 
 	if _, err := s.db.ExecContext(ctx, q, cr.GameID, cr.UserID, cr.Rating, time.Now()); err != nil {
 		return fmt.Errorf("adding ratings to game with id %v from user with id %v: %w", cr.GameID, cr.UserID, err)
@@ -33,8 +33,8 @@ func (s *Storage) RemoveRating(ctx context.Context, rr model.RemoveRating) error
 	defer span.End()
 
 	const q = `
-	DELETE FROM ratings
-	WHERE game_id = $1 AND user_id = $2`
+		DELETE FROM ratings
+		WHERE game_id = $1 AND user_id = $2`
 
 	if _, err := s.db.ExecContext(ctx, q, rr.GameID, rr.UserID); err != nil {
 		return fmt.Errorf("remove rating of game with id %v from user with id %v: %w", rr.GameID, rr.UserID, err)
@@ -49,9 +49,9 @@ func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, g
 	defer span.End()
 
 	const q = `
-	SELECT game_id, rating, user_id
-	FROM ratings
-	WHERE user_id = $1 AND game_id = ANY($2)`
+		SELECT game_id, rating, user_id
+		FROM ratings
+		WHERE user_id = $1 AND game_id = ANY($2)`
 
 	if err = s.db.SelectContext(ctx, &ratings, q, userID, pq.Array(gameIDs)); err != nil {
 		return nil, err
@@ -67,9 +67,9 @@ func (s *Storage) GetUserRatings(ctx context.Context, userID string) (map[int32]
 
 	ratings := make([]model.UserRating, 0)
 	const q = `
-	SELECT game_id, rating, user_id
-	FROM ratings
-	WHERE user_id = $1`
+		SELECT game_id, rating, user_id
+		FROM ratings
+		WHERE user_id = $1`
 
 	if err := s.db.SelectContext(ctx, &ratings, q, userID); err != nil {
 		return nil, err

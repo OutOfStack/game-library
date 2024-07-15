@@ -51,7 +51,7 @@ func TestGetCompanies_DataExists_ShouldBeEqual(t *testing.T) {
 	require.Equal(t, want.IGDBID, got.IGDBID, "igdb id should be equal")
 }
 
-// GetCompanyIDByName_CompanyExists_ShouldReturnID tests case when we add one company, then get id by name
+// TestGetCompanyIDByName_CompanyExists_ShouldReturnID tests case when we add one company, then get id by name
 func TestGetCompanyIDByName_CompanyExists_ShouldReturnID(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
@@ -71,8 +71,8 @@ func TestGetCompanyIDByName_CompanyExists_ShouldReturnID(t *testing.T) {
 	require.Equal(t, id, gotID, "id should be equal")
 }
 
-// GetCompanyIDByName_CompanyNotExist_ShouldReturnErrNotFound tests case when we add one company, then get id by another name
-func TestGetCompanyIDByName_CompanyNotExist_ShouldReturnErrNotFound(t *testing.T) {
+// TestGetCompanyIDByName_CompanyNotExist_ShouldReturnNotFoundError tests case when we add one company, then get id by another name
+func TestGetCompanyIDByName_CompanyNotExist_ShouldReturnNotFoundError(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
@@ -90,6 +90,47 @@ func TestGetCompanyIDByName_CompanyNotExist_ShouldReturnErrNotFound(t *testing.T
 	gotID, err := s.GetCompanyIDByName(ctx, randomName)
 	require.ErrorIs(t, err, apperr.NewNotFoundError("company", randomName), "err should be NotFound")
 	require.Zero(t, gotID, "got id should be 0")
+}
+
+func TestGetCompanyByID_CompanyExists_ShouldReturnCompany(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := context.Background()
+
+	company := model.Company{
+		Name:   td.String(),
+		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
+	}
+
+	id, err := s.CreateCompany(ctx, company)
+	require.NoError(t, err)
+
+	gotCompany, err := s.GetCompanyByID(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, id, gotCompany.ID, "id should be equal")
+	require.Equal(t, company.Name, gotCompany.Name, "name should be equal")
+	require.Equal(t, company.IGDBID.Int64, gotCompany.IGDBID.Int64, "igdb id should be equal")
+}
+
+func TestGetCompanyByID_CompanyNotExist_ShouldReturnNotFoundError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := context.Background()
+
+	company := model.Company{
+		Name:   td.String(),
+		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
+	}
+
+	_, err := s.CreateCompany(ctx, company)
+	require.NoError(t, err)
+
+	randomID := td.Int32()
+	gotCompany, err := s.GetCompanyByID(ctx, randomID)
+	require.ErrorIs(t, err, apperr.NewNotFoundError("company", randomID), "err should be NotFound")
+	require.Zero(t, gotCompany.ID, "got id should be 0")
 }
 
 func TestGetTopDevelopers_Ok(t *testing.T) {

@@ -149,7 +149,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	taskProvider := taskprocessor.New(logger, storage, igdbClient, uploadcareClient)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
-		taskprocessor.FetchIGDBGamesTaskName: {cfg.Scheduler.FetchIGDBGames, taskProvider.StartFetchIGDBGames},
+		taskprocessor.FetchIGDBGamesTaskName: {Schedule: cfg.Scheduler.FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
 	}
 	for name, task := range tasks {
 		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)

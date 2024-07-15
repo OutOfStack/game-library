@@ -22,18 +22,30 @@ func (p *Provider) GetPlatforms(ctx context.Context) ([]model.Platform, error) {
 	return list, nil
 }
 
-// GetPlatformByID returns platform by id
-func (p *Provider) GetPlatformByID(ctx context.Context, id int32) (model.Platform, error) {
+// GetPlatformsMap returns all platforms map
+func (p *Provider) GetPlatformsMap(ctx context.Context) (map[int32]model.Platform, error) {
 	platforms, err := p.GetPlatforms(ctx)
 	if err != nil {
-		return model.Platform{}, fmt.Errorf("get platforms: %v", err)
+		return nil, fmt.Errorf("get platforms: %v", err)
 	}
 
-	for _, platform := range platforms {
-		if platform.ID == id {
-			return platform, nil
+	m := make(map[int32]model.Platform, len(platforms))
+	for _, pl := range platforms {
+		m[pl.ID] = pl
+	}
+
+	return m, nil
+}
+
+// GetPlatformByID returns platform by id
+func (p *Provider) GetPlatformByID(ctx context.Context, id int32) (model.Platform, error) {
+	platform, err := p.storage.GetPlatformByID(ctx, id)
+	if err != nil {
+		if apperr.IsStatusCode(err, apperr.NotFound) {
+			return model.Platform{}, err
 		}
+		return model.Platform{}, fmt.Errorf("get platform by id %d: %v", id, err)
 	}
 
-	return model.Platform{}, apperr.NewNotFoundError("platform", id)
+	return platform, nil
 }

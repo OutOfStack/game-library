@@ -22,10 +22,15 @@ type GameFacade interface {
 	GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error)
 
 	GetGenres(ctx context.Context) ([]model.Genre, error)
+	GetGenresMap(ctx context.Context) (map[int32]model.Genre, error)
 	GetGenreByID(ctx context.Context, id int32) (model.Genre, error)
 	GetTopGenres(ctx context.Context, limit int64) ([]model.Genre, error)
+
 	GetPlatforms(ctx context.Context) ([]model.Platform, error)
+	GetPlatformsMap(ctx context.Context) (map[int32]model.Platform, error)
 	GetPlatformByID(ctx context.Context, id int32) (model.Platform, error)
+
+	GetCompaniesMap(ctx context.Context) (map[int32]model.Company, error)
 	GetTopCompanies(ctx context.Context, companyType string, limit int64) ([]model.Company, error)
 	GetCompanyByID(ctx context.Context, id int32) (model.Company, error)
 }

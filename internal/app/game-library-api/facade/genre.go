@@ -22,6 +22,21 @@ func (p *Provider) GetGenres(ctx context.Context) ([]model.Genre, error) {
 	return list, nil
 }
 
+// GetGenresMap returns all genres map
+func (p *Provider) GetGenresMap(ctx context.Context) (map[int32]model.Genre, error) {
+	genres, err := p.GetGenres(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get genres: %v", err)
+	}
+
+	m := make(map[int32]model.Genre, len(genres))
+	for _, g := range genres {
+		m[g.ID] = g
+	}
+
+	return m, nil
+}
+
 // GetTopGenres returns top genres
 func (p *Provider) GetTopGenres(ctx context.Context, limit int64) ([]model.Genre, error) {
 	list := make([]model.Genre, 0)
@@ -37,16 +52,13 @@ func (p *Provider) GetTopGenres(ctx context.Context, limit int64) ([]model.Genre
 
 // GetGenreByID returns genre by id
 func (p *Provider) GetGenreByID(ctx context.Context, id int32) (model.Genre, error) {
-	genres, err := p.GetGenres(ctx)
+	genre, err := p.storage.GetGenreByID(ctx, id)
 	if err != nil {
-		return model.Genre{}, fmt.Errorf("get genres: %v", err)
-	}
-
-	for _, genre := range genres {
-		if genre.ID == id {
-			return genre, nil
+		if apperr.IsStatusCode(err, apperr.NotFound) {
+			return model.Genre{}, err
 		}
+		return model.Genre{}, fmt.Errorf("get genre by id %d: %v", id, err)
 	}
 
-	return model.Genre{}, apperr.NewNotFoundError("genre", id)
+	return genre, nil
 }

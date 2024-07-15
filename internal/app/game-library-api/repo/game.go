@@ -108,15 +108,16 @@ func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (
 }
 
 // GetGameByID returns game by id.
-// If game does not exist returns ErrNotFound
+// If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGameByID")
 	defer span.End()
 
-	const q = `SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
-       screenshots, websites, slug, igdb_rating, igdb_id
-	FROM games
-	WHERE id = $1`
+	const q = `
+		SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
+       		screenshots, websites, slug, igdb_rating, igdb_id
+		FROM games
+		WHERE id = $1`
 
 	if err = s.db.GetContext(ctx, &game, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -129,14 +130,15 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, e
 }
 
 // GetGameIDByIGDBID returns game id by igdb id.
-// If game does not exist returns ErrNotFound
+// If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error) {
 	ctx, span := tracer.Start(ctx, "db.getGameIdByIgdbId")
 	defer span.End()
 
-	const q = `SELECT id
-	FROM games
-	WHERE igdb_id = $1`
+	const q = `
+		SELECT id
+		FROM games
+		WHERE igdb_id = $1`
 
 	if err = s.db.GetContext(ctx, &id, q, igdbID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -153,11 +155,12 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32
 	ctx, span := tracer.Start(ctx, "db.createGame")
 	defer span.End()
 
-	const q = `INSERT INTO games
-    (name, developers, publishers, release_date, genres, logo_url, summary, platforms, screenshots,
-     	websites, slug, igdb_rating, igdb_id, created_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::varchar(50), $12, $13, $14)
-	RETURNING id`
+	const q = `
+		INSERT INTO games
+    		(name, developers, publishers, release_date, genres, logo_url, summary, platforms, screenshots,
+     		websites, slug, igdb_rating, igdb_id, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::varchar(50), $12, $13, $14)
+		RETURNING id`
 
 	err = s.db.QueryRowContext(ctx, q, cg.Name, pq.Int32Array(cg.DevelopersIDs), pq.Int32Array(cg.PublishersIDs),
 		cg.ReleaseDate, pq.Int32Array(cg.Genres), cg.LogoURL, cg.Summary, pq.Int32Array(cg.Platforms),
@@ -171,15 +174,16 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32
 }
 
 // UpdateGame updates game
-// If game does not exist returns ErrNotFound
+// If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGame) error {
 	ctx, span := tracer.Start(ctx, "db.updateGame")
 	defer span.End()
 
-	const q = `UPDATE games
-	SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8, platforms = $9,
-	    screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, igdb_id = $14, updated_at = $15
-	WHERE id = $1`
+	const q = `
+		UPDATE games
+		SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8, platforms = $9,
+	    	screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, igdb_id = $14, updated_at = $15
+		WHERE id = $1`
 
 	releaseDate, err := types.ParseDate(ug.ReleaseDate)
 	if err != nil {
@@ -196,18 +200,19 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGame)
 }
 
 // UpdateGameRating updates game rating
-// If game does not exist returns ErrNotFound
+// If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 	ctx, span := tracer.Start(ctx, "db.updateGameRating")
 	defer span.End()
 
-	const q = `UPDATE games
-	SET rating = (
-		SELECT COALESCE(SUM(rating)::numeric / COUNT(rating), 0)
-		FROM ratings
-		WHERE game_id = $1),
-	    updated_at = $2
-	WHERE id = $1`
+	const q = `
+		UPDATE games
+		SET rating = (
+			SELECT COALESCE(SUM(rating)::numeric / COUNT(rating), 0)
+			FROM ratings
+			WHERE game_id = $1),
+			updated_at = $2
+		WHERE id = $1`
 
 	res, err := s.db.ExecContext(ctx, q, id, time.Now())
 	if err != nil {
@@ -218,13 +223,14 @@ func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 }
 
 // DeleteGame deletes game by id.
-// If game does not exist returns ErrNotFound
+// If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
 	ctx, span := tracer.Start(ctx, "db.deleteGame")
 	defer span.End()
 
-	const q = `DELETE FROM games
-	WHERE id = $1`
+	const q = `
+		DELETE FROM games
+		WHERE id = $1`
 	res, err := s.db.ExecContext(ctx, q, id)
 	if err != nil {
 		return fmt.Errorf("deleting game %d: %v", id, err)

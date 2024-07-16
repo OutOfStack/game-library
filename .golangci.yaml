@@ -7,9 +7,13 @@ run:
 output:
   formats:
     - format: colored-line-number
+      path: stdout
 
 # All available settings of specific linters.
 linters-settings:
+  govet:
+    enable:
+      - shadow
   errcheck:
     # List of functions to exclude from checking, where each entry is a single function to exclude.
     # See https://github.com/kisielk/errcheck#excluding-functions for details.
@@ -34,7 +38,6 @@ linters:
     - unused
     - revive
     - typecheck
-    - shadow
 
 issues:
   exclude:

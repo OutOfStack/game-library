@@ -52,45 +52,46 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	}
 
 	for _, gID := range game.Genres {
-		if genre, ok := genres[gID]; !ok {
+		genre, ok := genres[gID]
+		if !ok {
 			return api.GameResponse{}, fmt.Errorf("genre %d not found", gID)
-		} else {
-			resp.Genres = append(resp.Genres, api.Genre{
-				ID:   genre.ID,
-				Name: genre.Name,
-			})
 		}
+		resp.Genres = append(resp.Genres, api.Genre{
+			ID:   genre.ID,
+			Name: genre.Name,
+		})
 	}
 	for _, plID := range game.Platforms {
-		if pl, ok := platforms[plID]; !ok {
+		pl, ok := platforms[plID]
+		if !ok {
 			return api.GameResponse{}, fmt.Errorf("platform %d not found", plID)
-		} else {
-			resp.Platforms = append(resp.Platforms, api.Platform{
-				ID:           pl.ID,
-				Name:         pl.Name,
-				Abbreviation: pl.Abbreviation,
-			})
 		}
+		resp.Platforms = append(resp.Platforms, api.Platform{
+			ID:           pl.ID,
+			Name:         pl.Name,
+			Abbreviation: pl.Abbreviation,
+		})
 	}
 	for _, cID := range game.Developers {
-		if c, ok := companies[cID]; !ok {
+		c, ok := companies[cID]
+		if !ok {
 			return api.GameResponse{}, fmt.Errorf("company %d not found", cID)
-		} else {
-			resp.Developers = append(resp.Developers, api.Company{
-				ID:   c.ID,
-				Name: c.Name,
-			})
 		}
+		resp.Developers = append(resp.Developers, api.Company{
+			ID:   c.ID,
+			Name: c.Name,
+		})
 	}
 	for _, cID := range game.Publishers {
-		if c, ok := companies[cID]; !ok {
+		c, ok := companies[cID]
+		if !ok {
 			return api.GameResponse{}, fmt.Errorf("company %d not found", cID)
-		} else {
-			resp.Publishers = append(resp.Publishers, api.Company{
-				ID:   c.ID,
-				Name: c.Name,
-			})
 		}
+		resp.Publishers = append(resp.Publishers, api.Company{
+			ID:   c.ID,
+			Name: c.Name,
+		})
+
 	}
 
 	return resp, nil

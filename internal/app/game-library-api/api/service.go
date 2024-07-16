@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	_ "github.com/OutOfStack/game-library/docs" // swagger docs
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/api/tools"
@@ -89,17 +90,18 @@ func Service(
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return http.Server{
-		Addr:         conf.Web.Address,
-		Handler:      r,
-		ReadTimeout:  conf.Web.ReadTimeout,
-		WriteTimeout: conf.Web.WriteTimeout,
+		Addr:              conf.Web.Address,
+		Handler:           r,
+		ReadTimeout:       conf.Web.ReadTimeout,
+		ReadHeaderTimeout: time.Second,
+		WriteTimeout:      conf.Web.WriteTimeout,
 	}, nil
 }
 
-func initTracer(logger *zap.Logger, reporterURL string) error {
+func initTracer(log *zap.Logger, reporterURL string) error {
 	exporter, err := zipkin.New(reporterURL)
 	if err != nil {
-		return fmt.Errorf("creating new exporter: %v", err)
+		return fmt.Errorf("create new exporter: %v", err)
 	}
 
 	tp := trace.NewTracerProvider(
@@ -114,7 +116,7 @@ func initTracer(logger *zap.Logger, reporterURL string) error {
 
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		logger.Error("zipkin error", zap.Error(err))
+		log.Error("zipkin error", zap.Error(err))
 	}))
 	otel.SetTracerProvider(tp)
 

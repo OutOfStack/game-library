@@ -18,7 +18,7 @@ func (t *Date) Scan(v interface{}) error {
 	}
 	d, ok := v.(time.Time)
 	if !ok {
-		return fmt.Errorf("parsing date to time.Time")
+		return fmt.Errorf("parse date to time.Time")
 	}
 	date := civil.DateOf(d)
 	*t = Date(date)

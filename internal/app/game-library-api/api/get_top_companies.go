@@ -1,23 +1,19 @@
-package handler
+package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/gin-gonic/gin"
 	att "go.opentelemetry.io/otel/attribute"
+	"go.uber.org/zap"
 )
 
 const (
 	topCompaniesLimit = 10
-	topGenresLimit    = 10
-
-	companyTypeDeveloper = "dev"
-	companyTypePublisher = "pub"
 )
 
 // GetTopCompanies godoc
@@ -26,40 +22,32 @@ const (
 // @ID get-top-companies
 // @Produce json
 // @Param   type query string true "company type (dev or pub)" Enums(pub, dev)
-// @Success 200 {array}  Company
+// @Success 200 {array}  api.Company
 // @Failure 400 {object} web.ErrorResponse "Invalid or missing company type"
 // @Failure 500 {object} web.ErrorResponse
 // @Router /companies/top [get]
 func (p *Provider) GetTopCompanies(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "handlers.getTopCompanies")
+	ctx, span := tracer.Start(c.Request.Context(), "api.getTopCompanies")
 	defer span.End()
 
 	companyType := c.Query("type")
-	if companyType != companyTypeDeveloper && companyType != companyTypePublisher {
+	if companyType != model.CompanyTypeDeveloper && companyType != model.CompanyTypePublisher {
 		web.Err(c, web.NewRequestError(errors.New("invalid company type: should be one of [dev, pub]"), http.StatusBadRequest))
 		return
 	}
 
 	span.SetAttributes(att.String("type", companyType))
 
-	list := make([]repo.Company, 0)
-	err := cache.Get(ctx, p.cache, getTopCompaniesKey(companyType, topCompaniesLimit), &list, func() ([]repo.Company, error) {
-		switch companyType {
-		case companyTypeDeveloper:
-			return p.storage.GetTopDevelopers(ctx, topCompaniesLimit)
-		case companyTypePublisher:
-			return p.storage.GetTopPublishers(ctx, topCompaniesLimit)
-		}
-		return nil, fmt.Errorf("unsopported companyType: %s", companyType)
-	}, 0)
+	list, err := p.gameFacade.GetTopCompanies(ctx, companyType, topCompaniesLimit)
 	if err != nil {
-		web.Err(c, fmt.Errorf("get top companies: %v", err))
+		p.log.Error("get top companies", zap.String("type", companyType), zap.Error(err))
+		web.Err(c, errors.New("internal error"))
 		return
 	}
 
-	resp := make([]Company, 0, len(list))
+	resp := make([]api.Company, 0, len(list))
 	for _, company := range list {
-		resp = append(resp, Company{
+		resp = append(resp, api.Company{
 			ID:   company.ID,
 			Name: company.Name,
 		})

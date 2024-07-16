@@ -11,7 +11,7 @@ import (
 )
 
 // Authenticate checks validity of token
-func Authenticate(log *zap.Logger, a *auth.Auth) gin.HandlerFunc {
+func Authenticate(log *zap.Logger, authClient *auth.Client) gin.HandlerFunc {
 
 	h := func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -31,9 +31,9 @@ func Authenticate(log *zap.Logger, a *auth.Auth) gin.HandlerFunc {
 		}
 
 		// if token is not valid return 401
-		if err := a.Verify(c.Request.Context(), tokenStr); err != nil {
+		if err := authClient.Verify(c.Request.Context(), tokenStr); err != nil {
 			log.Error("verifying token", zap.Error(err))
-			if err == auth.ErrVerifyAPIUnavailable {
+			if errors.Is(err, auth.ErrVerifyAPIUnavailable) {
 				web.Err(c, web.NewRequestError(err, http.StatusBadGateway))
 			} else {
 				web.Err(c, web.NewRequestError(err, http.StatusUnauthorized))
@@ -51,7 +51,7 @@ func Authenticate(log *zap.Logger, a *auth.Auth) gin.HandlerFunc {
 }
 
 // Authorize checks rights to perform certain request
-func Authorize(log *zap.Logger, a *auth.Auth, requiredRole string) gin.HandlerFunc {
+func Authorize(log *zap.Logger, authClient *auth.Client, requiredRole string) gin.HandlerFunc {
 
 	h := func(c *gin.Context) {
 		token, ok := c.Get(auth.CtxTokenKey)
@@ -63,7 +63,7 @@ func Authorize(log *zap.Logger, a *auth.Auth, requiredRole string) gin.HandlerFu
 			return
 		}
 		tokenStr := token.(string)
-		claims, err := a.ParseToken(tokenStr)
+		claims, err := authClient.ParseToken(tokenStr)
 		// if we can't parse after verification return 500 as it is unexpected
 		if err != nil {
 			log.Error("parsing token", zap.Error(err))

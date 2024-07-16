@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	DatabaseName = "games"
-	DatabasePort = "5439"
-	DatabasePwd  = "password"
-	MigratiosSrc = "file://../../../../scripts/migrations"
-	pg           = "postgres"
+	DatabaseName  = "games"
+	DatabasePort  = "5439"
+	DatabasePwd   = "password"
+	MigrationsSrc = "file://../../../../scripts/migrations"
+	pg            = "postgres"
 )
 
 var db *sqlx.DB
@@ -102,7 +102,7 @@ func setup(t *testing.T) *repo.Storage {
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance(MigratiosSrc, "games", driver)
+	m, err := migrate.NewWithDatabaseInstance(MigrationsSrc, "games", driver)
 	if err != nil {
 		t.Fatalf("error on connecting to db: %v", err)
 	}
@@ -118,7 +118,7 @@ func teardown(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance(MigratiosSrc, "games", driver)
+	m, err := migrate.NewWithDatabaseInstance(MigrationsSrc, "games", driver)
 	if err != nil {
 		t.Fatalf("error on connecting to db: %v", err)
 	}

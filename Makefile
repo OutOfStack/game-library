@@ -26,7 +26,7 @@ rollback:
 seed:
 	go run ./cmd/game-library-manage/. seed
 
-SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.2
+SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.3
 SWAG_BIN := $(shell go env GOPATH)/bin/swag
 generate:
 	@if \[ ! -f ${SWAG_BIN} \]; then \
@@ -35,13 +35,13 @@ generate:
   fi
 	@if \[ -f ${SWAG_BIN} \]; then \
   	echo "Found swag at '$(SWAG_BIN)', generating documentation..."; \
-    ${SWAG_BIN} init -g cmd/game-library-api/main.go; \
+    ${SWAG_BIN} init --parseDependency -g cmd/game-library-api/main.go; \
 	else \
     echo "swag not found or the file does not exist"; \
     exit 1; \
   fi
 
-LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \

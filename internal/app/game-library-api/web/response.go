@@ -28,7 +28,7 @@ func Respond(c *gin.Context, val interface{}, statusCode int) {
 	c.Status(statusCode)
 	_, err = c.Writer.Write(data)
 	if err != nil {
-		Err(c, fmt.Errorf("writing to client: %w", err))
+		Err(c, fmt.Errorf("writing to client: %v", err))
 		return
 	}
 }

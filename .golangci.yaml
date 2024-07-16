@@ -3,18 +3,17 @@ run:
   # Timeout for analysis, e.g. 30s, 5m.
   # Default: 1m
   timeout: 3m
-  # Which dirs to skip: issues from them won't be reported.
-  # Can use regexp here: `generated.*`, regexp is applied on full path.
-  # Default value is empty list,
-  # but default dirs are skipped independently of this option's value (see skip-dirs-use-default).
-  # "/" will be replaced by current OS file path separator to properly work on Windows.
-  skip-dirs:
-    - docs
+
+output:
+  formats:
+    - format: colored-line-number
+      path: stdout
 
 # All available settings of specific linters.
 linters-settings:
   govet:
-    check-shadowing: true
+    enable:
+      - shadow
   errcheck:
     # List of functions to exclude from checking, where each entry is a single function to exclude.
     # See https://github.com/kisielk/errcheck#excluding-functions for details.
@@ -44,3 +43,5 @@ issues:
   exclude:
     # pprof exposure. closed with auth
     - G108
+  exclude-dirs:
+    - docs

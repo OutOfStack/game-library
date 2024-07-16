@@ -43,20 +43,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.Company"
+                                "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company"
                             }
                         }
                     },
                     "400": {
                         "description": "Invalid or missing company type",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -123,13 +123,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.GamesResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GamesResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -151,7 +151,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateGameRequest"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateGameRequest"
                         }
                     }
                 ],
@@ -159,19 +159,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handler.IDResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.IDResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -198,25 +198,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.GameResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GameResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -247,19 +247,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -288,7 +288,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateGameRequest"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.UpdateGameRequest"
                         }
                     }
                 ],
@@ -299,19 +299,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -342,7 +342,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateRatingRequest"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateRatingRequest"
                         }
                     }
                 ],
@@ -350,25 +350,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.RatingResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.RatingResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -388,14 +388,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.Genre"
+                                "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -415,14 +415,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.Genre"
+                                "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -442,14 +442,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.Platform"
+                                "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Platform"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -470,7 +470,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.GetUserRatingsRequest"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GetUserRatingsRequest"
                         }
                     }
                 ],
@@ -487,13 +487,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
+                            "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse"
                         }
                     }
                 }
@@ -501,7 +501,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.Company": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company": {
             "type": "object",
             "properties": {
                 "id": {
@@ -512,7 +512,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateGameRequest": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateGameRequest": {
             "type": "object",
             "required": [
                 "developer",
@@ -560,7 +560,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateRatingRequest": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateRatingRequest": {
             "type": "object",
             "properties": {
                 "rating": {
@@ -571,19 +571,19 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GameResponse": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GameResponse": {
             "type": "object",
             "properties": {
                 "developers": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.Company"
+                        "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company"
                     }
                 },
                 "genres": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.Genre"
+                        "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre"
                     }
                 },
                 "id": {
@@ -598,13 +598,13 @@ const docTemplate = `{
                 "platforms": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.Platform"
+                        "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Platform"
                     }
                 },
                 "publishers": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.Company"
+                        "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company"
                     }
                 },
                 "rating": {
@@ -633,7 +633,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GamesResponse": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GamesResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -642,12 +642,12 @@ const docTemplate = `{
                 "games": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.GameResponse"
+                        "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GameResponse"
                     }
                 }
             }
         },
-        "handler.Genre": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre": {
             "type": "object",
             "properties": {
                 "id": {
@@ -658,7 +658,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GetUserRatingsRequest": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GetUserRatingsRequest": {
             "type": "object",
             "properties": {
                 "gameIds": {
@@ -669,7 +669,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.IDResponse": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.IDResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -677,7 +677,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.Platform": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Platform": {
             "type": "object",
             "properties": {
                 "abbreviation": {
@@ -691,7 +691,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RatingResponse": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.RatingResponse": {
             "type": "object",
             "properties": {
                 "gameId": {
@@ -702,7 +702,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateGameRequest": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.UpdateGameRequest": {
             "type": "object",
             "properties": {
                 "developer": {
@@ -746,7 +746,7 @@ const docTemplate = `{
                 }
             }
         },
-        "web.ErrorResponse": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -755,12 +755,12 @@ const docTemplate = `{
                 "fields": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/web.FieldError"
+                        "$ref": "#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.FieldError"
                     }
                 }
             }
         },
-        "web.FieldError": {
+        "github_com_OutOfStack_game-library_internal_app_game-library-api_web.FieldError": {
             "type": "object",
             "properties": {
                 "error": {

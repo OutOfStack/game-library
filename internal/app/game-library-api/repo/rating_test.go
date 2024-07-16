@@ -3,7 +3,7 @@ package repo_test
 import (
 	"testing"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func TestAddRating_Success_ShouldBeNoError(t *testing.T) {
 	gameID, err := s.CreateGame(ctx, cg)
 	require.NoError(t, err)
 
-	rating := repo.CreateRating{
+	rating := model.CreateRating{
 		Rating: td.Uint8(),
 		UserID: td.String(),
 		GameID: gameID,
@@ -49,17 +49,17 @@ func TestGetUserRatingsByGamesIDs_DataExists_ShouldBeEqual(t *testing.T) {
 	require.NoError(t, err)
 
 	userID := td.String()
-	rating1 := repo.CreateRating{
+	rating1 := model.CreateRating{
 		Rating: td.Uint8(),
 		UserID: userID,
 		GameID: gameID1,
 	}
-	rating2 := repo.CreateRating{
+	rating2 := model.CreateRating{
 		Rating: td.Uint8(),
 		UserID: userID,
 		GameID: gameID2,
 	}
-	rating3 := repo.CreateRating{
+	rating3 := model.CreateRating{
 		Rating: td.Uint8(),
 		UserID: td.String(),
 		GameID: gameID3,
@@ -102,17 +102,17 @@ func TestGetUserRatings_DataExists_ShouldBeEqual(t *testing.T) {
 	require.NoError(t, err)
 
 	userID := td.String()
-	rating1 := repo.CreateRating{
+	rating1 := model.CreateRating{
 		Rating: td.Uint8(),
 		UserID: userID,
 		GameID: gameID1,
 	}
-	rating2 := repo.CreateRating{
+	rating2 := model.CreateRating{
 		Rating: td.Uint8(),
 		UserID: userID,
 		GameID: gameID2,
 	}
-	rating3 := repo.CreateRating{
+	rating3 := model.CreateRating{
 		Rating: td.Uint8(),
 		UserID: td.String(),
 		GameID: gameID3,

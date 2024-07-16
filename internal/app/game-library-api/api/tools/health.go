@@ -1,4 +1,4 @@
-package handler
+package tools
 
 import (
 	"net/http"
@@ -13,16 +13,6 @@ const (
 	unavailable = "unavailable"
 )
 
-// Check has methods for readiness and liveness probes
-type Check struct {
-	db *sqlx.DB
-}
-
-// NewCheck creates new Check
-func NewCheck(db *sqlx.DB) *Check {
-	return &Check{db: db}
-}
-
 type health struct {
 	Status    string `json:"status,omitempty"`
 	Host      string `json:"host,omitempty"`
@@ -32,15 +22,25 @@ type health struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
+// HealthCheck has methods for readiness and liveness probes
+type HealthCheck struct {
+	db *sqlx.DB
+}
+
+// NewHealthCheck creates new HealthCheck
+func NewHealthCheck(db *sqlx.DB) *HealthCheck {
+	return &HealthCheck{db: db}
+}
+
 // Readiness determines whether service is ready
-func (ch *Check) Readiness(c *gin.Context) {
+func (hc *HealthCheck) Readiness(c *gin.Context) {
 	var h health
 	host, err := os.Hostname()
 	if err != nil {
 		host = unavailable
 	}
 	h.Host = host
-	if err = ch.db.Ping(); err != nil {
+	if err = hc.db.Ping(); err != nil {
 		h.Status = "database not ready"
 		web.Respond(c, h, http.StatusInternalServerError)
 		return
@@ -50,7 +50,7 @@ func (ch *Check) Readiness(c *gin.Context) {
 }
 
 // Liveness determines whether service is up
-func (ch *Check) Liveness(c *gin.Context) {
+func (hc *HealthCheck) Liveness(c *gin.Context) {
 	host, err := os.Hostname()
 	if err != nil {
 		host = unavailable

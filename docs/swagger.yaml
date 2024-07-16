@@ -1,13 +1,13 @@
 basePath: /api
 definitions:
-  handler.Company:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  handler.CreateGameRequest:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateGameRequest:
     properties:
       developer:
         type: string
@@ -39,7 +39,7 @@ definitions:
     - developer
     - name
     type: object
-  handler.CreateRatingRequest:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateRatingRequest:
     properties:
       rating:
         description: 0 - remove rating
@@ -47,15 +47,15 @@ definitions:
         minimum: 0
         type: integer
     type: object
-  handler.GameResponse:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GameResponse:
     properties:
       developers:
         items:
-          $ref: '#/definitions/handler.Company'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company'
         type: array
       genres:
         items:
-          $ref: '#/definitions/handler.Genre'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre'
         type: array
       id:
         type: integer
@@ -65,11 +65,11 @@ definitions:
         type: string
       platforms:
         items:
-          $ref: '#/definitions/handler.Platform'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Platform'
         type: array
       publishers:
         items:
-          $ref: '#/definitions/handler.Company'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company'
         type: array
       rating:
         type: number
@@ -88,35 +88,35 @@ definitions:
           type: string
         type: array
     type: object
-  handler.GamesResponse:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GamesResponse:
     properties:
       count:
         type: integer
       games:
         items:
-          $ref: '#/definitions/handler.GameResponse'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GameResponse'
         type: array
     type: object
-  handler.Genre:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  handler.GetUserRatingsRequest:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GetUserRatingsRequest:
     properties:
       gameIds:
         items:
           type: integer
         type: array
     type: object
-  handler.IDResponse:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.IDResponse:
     properties:
       id:
         type: integer
     type: object
-  handler.Platform:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Platform:
     properties:
       abbreviation:
         type: string
@@ -125,14 +125,14 @@ definitions:
       name:
         type: string
     type: object
-  handler.RatingResponse:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.RatingResponse:
     properties:
       gameId:
         type: integer
       rating:
         type: integer
     type: object
-  handler.UpdateGameRequest:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.UpdateGameRequest:
     properties:
       developer:
         type: string
@@ -161,16 +161,16 @@ definitions:
           type: string
         type: array
     type: object
-  web.ErrorResponse:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse:
     properties:
       error:
         type: string
       fields:
         items:
-          $ref: '#/definitions/web.FieldError'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.FieldError'
         type: array
     type: object
-  web.FieldError:
+  github_com_OutOfStack_game-library_internal_app_game-library-api_web.FieldError:
     properties:
       error:
         type: string
@@ -205,16 +205,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.Company'
+              $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Company'
             type: array
         "400":
           description: Invalid or missing company type
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Get top companies
   /games:
     get:
@@ -259,11 +259,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.GamesResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GamesResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Get games
     post:
       consumes:
@@ -276,22 +276,22 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/handler.CreateGameRequest'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateGameRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handler.IDResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.IDResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Create game
   /games/{id}:
     delete:
@@ -313,15 +313,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Delete game
     get:
       description: returns game by ID
@@ -338,19 +338,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.GameResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GameResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Get game
     patch:
       consumes:
@@ -368,7 +368,7 @@ paths:
         name: game
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateGameRequest'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.UpdateGameRequest'
       produces:
       - application/json
       responses:
@@ -377,15 +377,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Update game
   /games/{id}/rate:
     post:
@@ -404,26 +404,26 @@ paths:
         name: rating
         required: true
         schema:
-          $ref: '#/definitions/handler.CreateRatingRequest'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.CreateRatingRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.RatingResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.RatingResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Rate game
   /genres:
     get:
@@ -436,12 +436,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.Genre'
+              $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Get genres
   /genres/top:
     get:
@@ -454,12 +454,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.Genre'
+              $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Genre'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Get top genres
   /platforms:
     get:
@@ -472,12 +472,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.Platform'
+              $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.Platform'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Get platforms
   /user/ratings:
     post:
@@ -489,7 +489,7 @@ paths:
         name: gameIds
         required: true
         schema:
-          $ref: '#/definitions/handler.GetUserRatingsRequest'
+          $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_api_model.GetUserRatingsRequest'
       produces:
       - application/json
       responses:
@@ -502,11 +502,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/web.ErrorResponse'
+            $ref: '#/definitions/github_com_OutOfStack_game-library_internal_app_game-library-api_web.ErrorResponse'
       summary: Get user ratings for specified games
 schemes:
 - http

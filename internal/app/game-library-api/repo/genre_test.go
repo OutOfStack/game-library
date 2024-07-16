@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ func TestCreateGenre_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	genre := repo.Genre{
+	genre := model.Genre{
 		Name: td.String(),
 	}
 
@@ -29,7 +30,7 @@ func TestGetGenres_DataExists_ShouldBeEqual(t *testing.T) {
 
 	ctx := context.Background()
 
-	genre := repo.Genre{
+	genre := model.Genre{
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	}
@@ -48,6 +49,47 @@ func TestGetGenres_DataExists_ShouldBeEqual(t *testing.T) {
 	require.Equal(t, want.IGDBID, got.IGDBID, "igdb id should be equal")
 }
 
+func TestGetGenreByID_GenreExists_ShouldReturnGenre(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := context.Background()
+
+	genre := model.Genre{
+		Name:   td.String(),
+		IGDBID: td.Int64(),
+	}
+
+	id, err := s.CreateGenre(ctx, genre)
+	require.NoError(t, err)
+
+	gotGenre, err := s.GetGenreByID(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, id, gotGenre.ID, "id should be equal")
+	require.Equal(t, genre.Name, gotGenre.Name, "name should be equal")
+	require.Equal(t, genre.IGDBID, gotGenre.IGDBID, "igdb id should be equal")
+}
+
+func TestGetGenreByID_GenreNotExist_ShouldReturnNotFoundError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := context.Background()
+
+	genre := model.Genre{
+		Name:   td.String(),
+		IGDBID: td.Int64(),
+	}
+
+	_, err := s.CreateGenre(ctx, genre)
+	require.NoError(t, err)
+
+	randomID := td.Int32()
+	gotGenre, err := s.GetGenreByID(ctx, randomID)
+	require.ErrorIs(t, err, apperr.NewNotFoundError("genre", randomID), "err should be NotFound")
+	require.Zero(t, gotGenre.ID, "got id should be 0")
+}
+
 func TestGetTopGenres_Ok(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
@@ -55,13 +97,13 @@ func TestGetTopGenres_Ok(t *testing.T) {
 	ctx := context.Background()
 
 	// create 2 genres and 3 games
-	genre1ID, err := s.CreateGenre(ctx, repo.Genre{
+	genre1ID, err := s.CreateGenre(ctx, model.Genre{
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	})
 	require.NoError(t, err)
 
-	genre2ID, err := s.CreateGenre(ctx, repo.Genre{
+	genre2ID, err := s.CreateGenre(ctx, model.Genre{
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	})

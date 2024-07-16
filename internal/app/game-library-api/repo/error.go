@@ -3,7 +3,8 @@ package repo
 import (
 	"database/sql"
 	"errors"
-	"fmt"
+
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 )
 
 // pg error codes
@@ -17,28 +18,13 @@ var (
 	ErrTransactionLocked = errors.New("transaction locked")
 )
 
-// EntityIDType generics type for entity id
-type EntityIDType interface {
-	int32 | int64 | string
-}
-
-// ErrNotFound is used when a requested entity with id does not exist
-type ErrNotFound[T EntityIDType] struct {
-	Entity string
-	ID     T
-}
-
-func (e ErrNotFound[T]) Error() string {
-	return fmt.Sprintf("%v with id %v was not found", e.Entity, e.ID)
-}
-
-func checkRowsAffected[T EntityIDType](res sql.Result, entity string, id T) error {
+func checkRowsAffected[T apperr.EntityIDType](res sql.Result, entity string, id T) error {
 	count, err := res.RowsAffected()
 	if err != nil {
 		return err
 	}
 	if count == 0 {
-		return ErrNotFound[T]{Entity: entity, ID: id}
+		return apperr.NewNotFoundError(entity, id)
 	}
 	return nil
 }

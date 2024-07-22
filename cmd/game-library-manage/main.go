@@ -39,17 +39,20 @@ func main() {
 	switch flag.Arg(0) {
 	case "migrate":
 		if err = schema.Migrate(db, true); err != nil {
-			log.Fatalf("apply migrations %v", err)
+			log.Printf("Apply migrations failed: %v", err)
+			return
 		}
-		log.Print("migration complete")
+		log.Print("Migration complete")
 	case "rollback":
 		if err = schema.Migrate(db, false); err != nil {
-			log.Fatalf("rollback last migration %v", err)
+			log.Printf("Rollback last migration failed: %v", err)
+			return
 		}
-		log.Print("migration rollback complete")
+		log.Print("Migration rollback complete")
 	case "seed":
 		if err = schema.Seed(db); err != nil {
-			log.Fatalf("apply seeds %v", err)
+			log.Printf("Aapply seeds failed: %v", err)
+			return
 		}
 		log.Print("Seed data inserted")
 	default:

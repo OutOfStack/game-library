@@ -37,8 +37,8 @@ func TestMain(m *testing.M) {
 		Repository: pg,
 		Tag:        "15-alpine",
 		Env: []string{
-			fmt.Sprintf("POSTGRES_PASSWORD=%s", DatabasePwd),
-			fmt.Sprintf("POSTGRES_DB=%s", DatabaseName),
+			"POSTGRES_PASSWORD=" + DatabasePwd,
+			"POSTGRES_DB=" + DatabaseName,
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"5432/tcp": {
@@ -98,6 +98,8 @@ func TestMain(m *testing.M) {
 }
 
 func setup(t *testing.T) *repo.Storage {
+	t.Helper()
+
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)
@@ -114,6 +116,8 @@ func setup(t *testing.T) *repo.Storage {
 }
 
 func teardown(t *testing.T) {
+	t.Helper()
+
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		t.Fatalf("error on creating db driver: %v", err)

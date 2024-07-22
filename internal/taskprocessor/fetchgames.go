@@ -102,7 +102,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 
 		var gamesAdded int
 
-		for i := 0; i < fetchGamesRequestsCount; i++ {
+		for range fetchGamesRequestsCount {
 			ratingsCount, limit := getMinRatingsCountAndLimit(s.LastReleasedAt)
 			igdbGames, gErr := tp.igdbProvider.GetTopRatedGames(ctx, allPlatformsIDs, s.LastReleasedAt, ratingsCount, fetchGamesMinRating, limit)
 			if gErr != nil {

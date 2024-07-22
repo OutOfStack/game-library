@@ -38,7 +38,7 @@ func TestGetGames_DataExists_ShouldBeEqual(t *testing.T) {
 	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
 	require.NoError(t, err)
 
-	require.Equal(t, 1, len(games), "len of games should be 1")
+	require.Len(t, games, 1, "len of games should be 1")
 
 	want := cg
 	got := games[0]
@@ -68,7 +68,7 @@ func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
 	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
 	require.NoError(t, err)
 
-	require.Equal(t, 2, len(games), "len of games should be 2")
+	require.Len(t, games, 2, "len of games should be 2")
 
 	// weight of game 2 is higher
 	want := cg2
@@ -97,7 +97,7 @@ func TestGetGames_OrderByName_ShouldReturnOrdered(t *testing.T) {
 	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByName})
 	require.NoError(t, err)
 
-	require.Equal(t, 2, len(games), "len of games should be 2")
+	require.Len(t, games, 2, "len of games should be 2")
 
 	want := cg2
 	got := games[0]
@@ -125,7 +125,7 @@ func TestGetGames_OrderByReleaseDate_ShouldReturnOrdered(t *testing.T) {
 	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByReleaseDate})
 	require.NoError(t, err)
 
-	require.Equal(t, 2, len(games), "len of games should be 2")
+	require.Len(t, games, 2, "len of games should be 2")
 
 	want := cg2
 	got := games[0]
@@ -147,7 +147,7 @@ func TestGetGames_FilterByName_ShouldReturnEqual(t *testing.T) {
 	matched, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault, Name: cg.Name})
 	require.NoError(t, err)
 
-	require.Equal(t, 1, len(matched), "len of matched should be 1")
+	require.Len(t, matched, 1, "len of matched should be 1")
 
 	want := cg
 	got := matched[0]
@@ -183,7 +183,7 @@ func TestGetGames_FilterByName_ShouldReturnMatched(t *testing.T) {
 	require.NoError(t, err)
 
 	// ng1, ng2, ng4
-	require.Equal(t, 3, len(matched), "count should be 3")
+	require.Len(t, matched, 3, "len should be 3")
 }
 
 // TestGetGames_Filte_ShouldReturnMatched tests case when we add multiple games, then filter games by developer, publisher and genre and we should get matches
@@ -221,7 +221,7 @@ func TestGetGames_Filter_ShouldReturnMatched(t *testing.T) {
 	require.NoError(t, err)
 
 	// ng2
-	require.Equal(t, 1, len(matched), "count should be 1")
+	require.Len(t, matched, 1, "len should be 1")
 	require.Equal(t, g2ID, matched[0].ID, "games ids should match")
 }
 
@@ -438,7 +438,7 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 	id, err := s.CreateGame(ctx, cr)
 	require.NoError(t, err)
 
-	var r1, r2, r3 uint8 = td.Uint8(), td.Uint8(), td.Uint8()
+	var r1, r2, r3 = td.Uint8(), td.Uint8(), td.Uint8()
 	err = s.AddRating(ctx, model.CreateRating{Rating: r1, UserID: td.String(), GameID: id})
 	require.NoError(t, err)
 	err = s.AddRating(ctx, model.CreateRating{Rating: r2, UserID: td.String(), GameID: id})
@@ -477,6 +477,8 @@ func getCreateGameData() model.CreateGame {
 }
 
 func compareCreateGameAndGame(t *testing.T, want model.CreateGame, got model.Game) {
+	t.Helper()
+
 	require.Equal(t, want.Name, got.Name, "name should be equal")
 	require.Equal(t, want.DevelopersIDs, []int32(got.Developers), "developers should be equal")
 	require.Equal(t, want.PublishersIDs, []int32(got.Publishers), "publisher should be equal")
@@ -493,6 +495,8 @@ func compareCreateGameAndGame(t *testing.T, want model.CreateGame, got model.Gam
 }
 
 func compareUpdateGameAndGame(t *testing.T, want model.UpdateGame, got model.Game) {
+	t.Helper()
+
 	require.Equal(t, want.Name, got.Name, "name should be equal")
 	require.Equal(t, want.Developers, []int32(got.Developers), "developers should be equal")
 	require.Equal(t, want.Publishers, []int32(got.Publishers), "publisher should be equal")

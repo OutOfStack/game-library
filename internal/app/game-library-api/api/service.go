@@ -36,7 +36,7 @@ func Service(
 ) (http.Server, error) {
 	err := initTracer(log, conf.Zipkin.ReporterURL)
 	if err != nil {
-		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) // nolint:gosec
+		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) //nolint:gosec
 	}
 	r := gin.Default()
 	r.Use(otelgin.Middleware(appconf.ServiceName))

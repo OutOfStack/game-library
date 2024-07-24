@@ -102,7 +102,7 @@ func (c *Client) Verify(ctx context.Context, tokenStr string) error {
 		return fmt.Errorf("marshal verify token body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.verifyAPIURL, bytes.NewBuffer(body))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.verifyAPIURL, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("create verify request: %v", err)
 	}
@@ -126,8 +126,9 @@ func (c *Client) Verify(ctx context.Context, tokenStr string) error {
 	}
 
 	if !respBody.Valid {
-		return fmt.Errorf("invalid token")
+		return errors.New("invalid token")
 	}
+
 	return nil
 }
 
@@ -136,7 +137,8 @@ func (c *Client) ParseToken(tokenStr string) (*Claims, error) {
 	var claims Claims
 	_, _, err := c.parser.ParseUnverified(tokenStr, &claims)
 	if err != nil {
-		return &Claims{}, fmt.Errorf("parsing token: %w", err)
+		return nil, fmt.Errorf("parsing token: %w", err)
 	}
+
 	return &claims, nil
 }

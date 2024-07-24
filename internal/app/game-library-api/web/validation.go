@@ -25,7 +25,7 @@ func init() {
 	translator = ut.New(enLocale, enLocale)
 	lang, _ = translator.GetTranslator("en")
 	if err := entranslations.RegisterDefaultTranslations(validate, lang); err != nil {
-		log.Fatalf("register default transaltion for validator: %v", err)
+		log.Fatalf("register default translation for validator: %v", err)
 	}
 
 	if err := validate.RegisterValidation("date", validateDate); err != nil {
@@ -60,7 +60,7 @@ func addTranslation(tag string, errMessage string) {
 
 		t, err := ut.T(tag, fe.Field(), param)
 		if err != nil {
-			return fe.(error).Error()
+			return fe.Error()
 		}
 		return t
 	}

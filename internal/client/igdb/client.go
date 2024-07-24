@@ -45,7 +45,7 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 		limit = maxLimit
 	}
 
-	var platformsStr []string
+	platformsStr := make([]string, 0, len(platformsIDs))
 	for _, p := range platformsIDs {
 		platformsStr = append(platformsStr, strconv.Itoa(int(p)))
 	}
@@ -53,15 +53,15 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 
 	reqURL, _ := url.JoinPath(c.conf.APIURL, gamesEndpoint)
 	data := fmt.Sprintf(
-		`fields id, cover.url, first_release_date, genres.name, name, platforms, total_rating, total_rating_count, 
-		slug, summary, screenshots.url, websites.category, websites.url, 
+		`fields id, cover.url, first_release_date, genres.name, name, platforms, total_rating, total_rating_count,
+		slug, summary, screenshots.url, websites.category, websites.url,
 		involved_companies.company.name, involved_companies.developer, involved_companies.publisher;
 		sort first_release_date desc;
 		where total_rating != null & total_rating_count > %d & total_rating > %d & first_release_date < %d &
 		version_parent = null & parent_game = null & release_dates.platform = (%s);
 		limit %d;`,
 		minRatingsCount, minRating, releasedBefore.Unix(), platforms, limit)
-	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, bytes.NewBufferString(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(data))
 	if err != nil {
 		return nil, fmt.Errorf("create get top rated games request: %v", err)
 	}
@@ -78,7 +78,7 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		body, rErr := io.ReadAll(resp.Body)
 		if rErr != nil {
 			return nil, fmt.Errorf("read response body: %v", rErr)
@@ -114,7 +114,7 @@ func (c *Client) setAuthHeaders(ctx context.Context, header *http.Header) error 
 		return fmt.Errorf("getting igdb access token: %v", err)
 	}
 	header.Set("Client-ID", c.conf.ClientID)
-	header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	header.Set("Authorization", "Bearer "+token)
 	return nil
 }
 
@@ -126,7 +126,7 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	}
 
 	reqURL := c.conf.TokenURL
-	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("error creating igdb get token request: %v", err)
 	}

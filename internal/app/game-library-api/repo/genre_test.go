@@ -40,7 +40,7 @@ func TestGetGenres_DataExists_ShouldBeEqual(t *testing.T) {
 
 	genres, err := s.GetGenres(ctx)
 	require.NoError(t, err)
-	require.Equal(t, len(genres), 1, "genres len should be 1")
+	require.Len(t, genres, 1, "genres len should be 1")
 
 	want := genre
 	got := genres[0]

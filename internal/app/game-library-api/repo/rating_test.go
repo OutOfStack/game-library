@@ -74,7 +74,7 @@ func TestGetUserRatingsByGamesIDs_DataExists_ShouldBeEqual(t *testing.T) {
 
 	ratings, err := s.GetUserRatingsByGamesIDs(ctx, userID, []int32{rating1.GameID, rating3.GameID})
 	require.NoError(t, err)
-	require.Equal(t, len(ratings), 1, "ratings len should be 1")
+	require.Len(t, ratings, 1, "ratings len should be 1")
 
 	want := rating1
 	got := ratings[0]
@@ -127,7 +127,7 @@ func TestGetUserRatings_DataExists_ShouldBeEqual(t *testing.T) {
 
 	ratings, err := s.GetUserRatings(ctx, userID)
 	require.NoError(t, err)
-	require.Equal(t, len(ratings), 2, "ratings len should be 2")
+	require.Len(t, ratings, 2, "ratings len should be 2")
 
 	want1, want2 := rating1, rating2
 	got1, ok1 := ratings[rating1.GameID]

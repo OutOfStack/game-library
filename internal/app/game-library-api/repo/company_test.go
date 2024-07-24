@@ -42,7 +42,7 @@ func TestGetCompanies_DataExists_ShouldBeEqual(t *testing.T) {
 
 	companies, err := s.GetCompanies(ctx)
 	require.NoError(t, err)
-	require.Equal(t, len(companies), 1, "companies len should be 1")
+	require.Len(t, companies, 1, "companies len should be 1")
 
 	want := company
 	got := companies[0]

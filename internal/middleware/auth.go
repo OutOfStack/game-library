@@ -12,7 +12,6 @@ import (
 
 // Authenticate checks validity of token
 func Authenticate(log *zap.Logger, authClient *auth.Client) gin.HandlerFunc {
-
 	h := func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		// if no Authorization header provided return 401
@@ -52,7 +51,6 @@ func Authenticate(log *zap.Logger, authClient *auth.Client) gin.HandlerFunc {
 
 // Authorize checks rights to perform certain request
 func Authorize(log *zap.Logger, authClient *auth.Client, requiredRole string) gin.HandlerFunc {
-
 	h := func(c *gin.Context) {
 		token, ok := c.Get(auth.CtxTokenKey)
 		// if no value in context return 500 as it is unexpected
@@ -62,7 +60,13 @@ func Authorize(log *zap.Logger, authClient *auth.Client, requiredRole string) gi
 			c.Abort()
 			return
 		}
-		tokenStr := token.(string)
+		tokenStr, ok := token.(string)
+		if !ok {
+			log.Error("token is not string in request context")
+			web.Err(c, web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
+			c.Abort()
+			return
+		}
 		claims, err := authClient.ParseToken(tokenStr)
 		// if we can't parse after verification return 500 as it is unexpected
 		if err != nil {

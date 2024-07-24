@@ -8,7 +8,6 @@ import (
 
 // Errors handles errors in middleware chain
 func Errors(log *zap.Logger) gin.HandlerFunc {
-
 	h := func(c *gin.Context) {
 		c.Next()
 

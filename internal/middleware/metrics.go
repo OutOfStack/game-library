@@ -16,7 +16,6 @@ var m = struct {
 
 // Metrics updates program counters
 func Metrics() gin.HandlerFunc {
-
 	h := func(c *gin.Context) {
 		c.Next()
 

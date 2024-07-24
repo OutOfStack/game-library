@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	goredis "github.com/redis/go-redis/v9"
@@ -65,7 +64,7 @@ func Delete(ctx context.Context, c *RedisStore, key string) error {
 
 // DeleteByStartsWith removes data with key starting with provided key from cache
 func DeleteByStartsWith(ctx context.Context, rs *RedisStore, key string) error {
-	pattern := fmt.Sprintf("%s*", key)
+	pattern := key + "*"
 
 	return rs.redisClient.DeleteByMatch(ctx, pattern)
 }

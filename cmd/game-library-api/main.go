@@ -49,23 +49,20 @@ func main() {
 	}
 
 	// init logger
-	logger, err := initLogger(cfg)
-	if err != nil {
-		log.Fatalf("can't init logger: %v", err)
-	}
+	logger := initLogger(cfg)
 	defer func(logger *zap.Logger) {
-		if err = logger.Sync(); err != nil {
+		if err := logger.Sync(); err != nil {
 			log.Printf("can't sync logger: %v", err)
 		}
 	}(logger)
 
 	// run
-	if err = run(logger, cfg); err != nil {
+	if err := run(logger, cfg); err != nil {
 		logger.Fatal("can't run app", zap.Error(err))
 	}
 }
 
-func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
+func initLogger(cfg appconf.Cfg) *zap.Logger {
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.EncodeTime = zapcore.RFC3339TimeEncoder
 	encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
@@ -88,7 +85,7 @@ func initLogger(cfg appconf.Cfg) (*zap.Logger, error) {
 
 	logger := zap.New(core, zap.WithCaller(false)).With(zap.String("service", appconf.ServiceName))
 
-	return logger, nil
+	return logger
 }
 
 func run(logger *zap.Logger, cfg appconf.Cfg) error {

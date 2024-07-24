@@ -91,7 +91,6 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 			ID:   c.ID,
 			Name: c.Name,
 		})
-
 	}
 
 	return resp, nil

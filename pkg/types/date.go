@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,7 +19,7 @@ func (t *Date) Scan(v interface{}) error {
 	}
 	d, ok := v.(time.Time)
 	if !ok {
-		return fmt.Errorf("parse date to time.Time")
+		return errors.New("parse date to time.Time")
 	}
 	date := civil.DateOf(d)
 	*t = Date(date)
@@ -37,7 +38,7 @@ func (t Date) String() string {
 // ParseDate parses a string in 'YYYY-MM-DD' format and returns the date value it represents.
 func ParseDate(s string) (Date, error) {
 	if s == "" {
-		return Date{}, fmt.Errorf("date is empty")
+		return Date{}, errors.New("date is empty")
 	}
 	d, err := civil.ParseDate(s)
 	if err != nil {

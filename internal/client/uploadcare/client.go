@@ -63,7 +63,7 @@ func (c *Client) UploadImageFromURL(ctx context.Context, imageURL string) (strin
 	ctx, span := tracer.Start(ctx, "uploadcare.uploadimagefromurl")
 	defer span.End()
 
-	request, err := http.NewRequestWithContext(ctx, "GET", imageURL, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("creating get image by url request: %v", err)
 	}

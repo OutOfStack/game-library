@@ -124,7 +124,7 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdatedGa
 		} else {
 			// get id or create developer
 			developerID, cErr := p.storage.GetCompanyIDByName(ctx, *developer)
-			if cErr != nil && apperr.IsStatusCode(err, apperr.NotFound) {
+			if cErr != nil && !apperr.IsStatusCode(cErr, apperr.NotFound) {
 				return fmt.Errorf("get developer id by name %s: %v", *developer, cErr)
 			}
 			if developerID == 0 {

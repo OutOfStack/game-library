@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
@@ -49,7 +48,7 @@ func (p *Provider) GetGame(c *gin.Context) {
 	var resp api.GameResponse
 	resp, err = p.mapToGameResponse(c, game)
 	if err != nil {
-		web.Err(c, web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
+		web.Err(c, web.NewRequestError(errors.New("error converting response"), http.StatusInternalServerError))
 		return
 	}
 	web.Respond(c, resp, http.StatusOK)

@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
@@ -95,7 +94,7 @@ func (p *Provider) GetGames(c *gin.Context) {
 	for _, game := range list {
 		r, mErr := p.mapToGameResponse(c, game)
 		if mErr != nil {
-			web.Err(c, web.NewRequestError(fmt.Errorf("error converting response"), http.StatusInternalServerError))
+			web.Err(c, web.NewRequestError(errors.New("error converting response"), http.StatusInternalServerError))
 			return
 		}
 		games = append(games, r)

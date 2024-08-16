@@ -14,8 +14,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	swagfile "github.com/swaggo/files"
+	ginswag "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/zipkin"
@@ -87,7 +87,7 @@ func Service(
 	r.GET("/api/companies/top", pr.GetTopCompanies)
 
 	// swagger
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", ginswag.WrapHandler(swagfile.Handler))
 
 	return http.Server{
 		Addr:              conf.Web.Address,

@@ -41,7 +41,7 @@ generate:
     exit 1; \
   fi
 
-LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
+LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.60.1
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \

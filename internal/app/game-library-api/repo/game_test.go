@@ -20,7 +20,7 @@ func TestGetGames_NotExist_ShouldReturnEmpty(t *testing.T) {
 	games, err := s.GetGames(context.Background(), 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
 	require.NoError(t, err)
 
-	require.Zero(t, len(games), "len of games should be 0")
+	require.Empty(t, games, "games should be empty")
 }
 
 // TestGetGames_DataExists_ShouldBeEqual tests case when we add one game, then fetch first game, and they should be equal

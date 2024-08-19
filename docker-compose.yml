@@ -4,7 +4,7 @@ services:
 
   db:
     container_name: games_db
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     ports:
       - "5432:5432"
     restart: on-failure:5

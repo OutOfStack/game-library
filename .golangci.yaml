@@ -40,7 +40,6 @@ linters:
     - errcheck
     - errname
     - exhaustive
-    - exportloopref
     - fatcontext
     - forcetypeassert
     - gci
@@ -105,7 +104,6 @@ linters:
 
 issues:
   exclude:
-    # pprof exposure. closed with auth
-    - G108
+    - G115 # Disable integer overflow conversion warnings
   exclude-dirs:
     - docs

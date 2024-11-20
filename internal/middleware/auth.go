@@ -6,87 +6,101 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/auth"
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"golang.org/x/net/context"
 )
 
-// Authenticate checks validity of token
-func Authenticate(log *zap.Logger, authClient *auth.Client) gin.HandlerFunc {
-	h := func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		// if no Authorization header provided return 401
-		if authHeader == "" {
-			web.Err(c, web.NewRequestError(errors.New("no Authorization header found"), http.StatusUnauthorized))
-			c.Abort()
-			return
-		}
+type tokenKey int
+type claimsKey int
 
-		tokenStr := auth.ExtractToken(authHeader)
-		// if no Bearer token provided return 401
-		if tokenStr == "" {
-			web.Err(c, web.NewRequestError(errors.New("no Bearer token found"), http.StatusUnauthorized))
-			c.Abort()
-			return
-		}
+// Context keys for authentication and authorization
+var (
+	tokenCtxKey  tokenKey
+	claimsCtxKey claimsKey
+)
 
-		// if token is not valid return 401
-		if err := authClient.Verify(c.Request.Context(), tokenStr); err != nil {
-			log.Error("verifying token", zap.Error(err))
-			if errors.Is(err, auth.ErrVerifyAPIUnavailable) {
-				web.Err(c, web.NewRequestError(err, http.StatusBadGateway))
-			} else {
-				web.Err(c, web.NewRequestError(err, http.StatusUnauthorized))
+// Authenticate checks the validity of a token
+func Authenticate(log *zap.Logger, authClient *auth.Client) func(http.Handler) http.Handler {
+	h := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			// if no Authorization header provided, return 401
+			if authHeader == "" {
+				web.RespondError(w, web.NewErrorFromMessage("no Authorization header found", http.StatusUnauthorized))
+				return
 			}
-			c.Abort()
-			return
-		}
 
-		c.Set(auth.CtxTokenKey, tokenStr)
+			tokenStr := auth.ExtractToken(authHeader)
+			// if no Bearer token provided, return 401
+			if tokenStr == "" {
+				web.RespondError(w, web.NewErrorFromMessage("no Bearer token found", http.StatusUnauthorized))
+				return
+			}
 
-		c.Next()
+			// if token is not valid, return 401
+			err := authClient.Verify(r.Context(), tokenStr)
+			if err != nil {
+				log.Error("verifying token", zap.Error(err))
+				statusCode := http.StatusUnauthorized
+				if errors.Is(err, auth.ErrVerifyAPIUnavailable) {
+					statusCode = http.StatusBadGateway
+				}
+				web.RespondError(w, web.NewError(err, statusCode))
+				return
+			}
+
+			// store the token in the request context
+			ctx := context.WithValue(r.Context(), tokenCtxKey, tokenStr)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 
 	return h
 }
 
-// Authorize checks rights to perform certain request
-func Authorize(log *zap.Logger, authClient *auth.Client, requiredRole string) gin.HandlerFunc {
-	h := func(c *gin.Context) {
-		token, ok := c.Get(auth.CtxTokenKey)
-		// if no value in context return 500 as it is unexpected
-		if !ok {
-			log.Error("no token in request context")
-			web.Err(c, web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
-			c.Abort()
-			return
-		}
-		tokenStr, ok := token.(string)
-		if !ok {
-			log.Error("token is not string in request context")
-			web.Err(c, web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
-			c.Abort()
-			return
-		}
-		claims, err := authClient.ParseToken(tokenStr)
-		// if we can't parse after verification return 500 as it is unexpected
-		if err != nil {
-			log.Error("parsing token", zap.Error(err))
-			web.Err(c, web.NewRequestError(errors.New("internal server error"), http.StatusInternalServerError))
-			c.Abort()
-			return
-		}
-		// if user's role is not the same as required return 403 forbidden
-		if claims.UserRole != requiredRole {
-			log.Warn("access denied", zap.String("expected_role", requiredRole), zap.String("got_role", claims.UserRole))
-			web.Err(c, web.NewRequestError(errors.New("access denied"), http.StatusForbidden))
-			c.Abort()
-			return
-		}
+// Authorize checks rights to perform certain requests
+func Authorize(log *zap.Logger, authClient *auth.Client, requiredRole string) func(http.Handler) http.Handler {
+	h := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// retrieve the token from context
+			token, ok := r.Context().Value(tokenCtxKey).(string)
+			// if no value in context return 500 as it is unexpected
+			if !ok || token == "" {
+				log.Error("no token in request context")
+				web.RespondError(w, web.NewErrorFromStatusCode(http.StatusInternalServerError))
+				return
+			}
 
-		c.Set(auth.CtxClaimsKey, *claims)
+			// parse the token
+			claims, err := authClient.ParseToken(token)
+			if err != nil {
+				log.Error("parsing token", zap.Error(err))
+				web.RespondError(w, web.NewErrorFromStatusCode(http.StatusInternalServerError))
+				return
+			}
 
-		c.Next()
+			// check user's role
+			if claims.UserRole != requiredRole {
+				log.Warn("access denied", zap.String("required_role", requiredRole), zap.String("got_role", claims.UserRole))
+				web.RespondError(w, web.NewErrorFromMessage("access denied", http.StatusForbidden))
+				return
+			}
+
+			// store claims in the request context
+			ctx := context.WithValue(r.Context(), claimsCtxKey, *claims)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 
 	return h
+}
+
+// GetClaims returns user claims from context
+func GetClaims(ctx context.Context) (*auth.Claims, error) {
+	claims, ok := ctx.Value(claimsCtxKey).(auth.Claims)
+	if !ok {
+		return nil, errors.New("claims not found in context")
+	}
+	return &claims, nil
 }

@@ -16,8 +16,9 @@ type StatusCode int
 
 // supported status codes
 const (
-	NotFound StatusCode = http.StatusNotFound
-	Invalid  StatusCode = http.StatusBadRequest
+	NotFound  StatusCode = http.StatusNotFound
+	Invalid   StatusCode = http.StatusBadRequest
+	Forbidden StatusCode = http.StatusForbidden
 )
 
 // Error - custom error wrapper
@@ -54,6 +55,15 @@ func NewInvalidError[T EntityIDType](entity string, id T, msg string) Error[T] {
 	}
 }
 
+// NewForbiddenError - return new custom forbidden error
+func NewForbiddenError[T EntityIDType](entity string, id T) Error[T] {
+	return Error[T]{
+		Entity:   entity,
+		ID:       id,
+		StatCode: Forbidden,
+	}
+}
+
 // StatusCode returns status code
 func (e Error[T]) StatusCode() StatusCode {
 	return e.StatCode
@@ -75,6 +85,8 @@ func (e Error[T]) Error() string {
 			msg += ": " + e.Msg
 		}
 		return msg
+	case Forbidden:
+		return fmt.Sprintf("forbidden access to %s with id %v", e.Entity, e.ID)
 	}
 
 	return fmt.Sprintf("error %s with id %v: %s", e.Entity, e.ID, e.Msg)

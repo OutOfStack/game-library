@@ -2,29 +2,47 @@ package middleware
 
 import (
 	"expvar"
-
-	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 var m = struct {
-	req *expvar.Int
-	err *expvar.Int
+	req       *expvar.Int
+	err       *expvar.Int
+	serverErr *expvar.Int
 }{
-	req: expvar.NewInt("requests"),
-	err: expvar.NewInt("errors"),
+	req:       expvar.NewInt("requests"),
+	err:       expvar.NewInt("errors"),
+	serverErr: expvar.NewInt("server_errors"),
 }
 
-// Metrics updates program counters
-func Metrics() gin.HandlerFunc {
-	h := func(c *gin.Context) {
-		c.Next()
+type statusCodeResponseWriter struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+// WriteHeader writes status code to header
+func (w *statusCodeResponseWriter) WriteHeader(statusCode int) {
+	w.StatusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+// Metrics adds metrics
+func Metrics(next http.Handler) http.Handler {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		rw := &statusCodeResponseWriter{ResponseWriter: w}
+
+		next.ServeHTTP(w, r)
 
 		m.req.Add(1)
 
-		if len(c.Errors) > 0 {
+		if rw.StatusCode >= 400 {
 			m.err.Add(1)
+		}
+
+		if rw.StatusCode >= 500 {
+			m.serverErr.Add(1)
 		}
 	}
 
-	return h
+	return http.HandlerFunc(h)
 }

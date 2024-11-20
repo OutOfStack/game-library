@@ -46,8 +46,11 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model
 		fmt.Sprintf("(extract(year FROM release_date)/%f + igdb_rating + rating/%f) weight", gameReleaseYearCoeff, gameRatingCoeff)).
 		From("games").
 		Limit(uint64(pageSize)).
-		Offset(uint64((page - 1) * pageSize)).
-		OrderBy(fmt.Sprintf("%s %s", filter.OrderBy.Field, filter.OrderBy.Order))
+		Offset(uint64((page - 1) * pageSize))
+
+	if filter.OrderBy.Field != "" {
+		query = query.OrderBy(fmt.Sprintf("%s %s", filter.OrderBy.Field, filter.OrderBy.Order))
+	}
 
 	if filter.Name != "" {
 		query = query.Where(sq.Like{"LOWER(name)": "%" + strings.ToLower(filter.Name) + "%"})
@@ -175,7 +178,7 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32
 
 // UpdateGame updates game
 // If game does not exist returns apperr.Error with NotFound status code
-func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGame) error {
+func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameData) error {
 	ctx, span := tracer.Start(ctx, "db.updateGame")
 	defer span.End()
 

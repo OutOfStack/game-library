@@ -145,7 +145,10 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	defer resp.Body.Close()
 
 	var respBody TokenResp
-	json.NewDecoder(resp.Body).Decode(&respBody)
+	err = json.NewDecoder(resp.Body).Decode(&respBody)
+	if err != nil {
+		return "", fmt.Errorf("decode igdb token response: %v", err)
+	}
 
 	c.token.set(respBody.AccessToken, respBody.ExpiresIn)
 

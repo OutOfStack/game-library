@@ -370,7 +370,7 @@ func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 	id, err := s.CreateGame(ctx, cr)
 	require.NoError(t, err)
 
-	up := model.UpdateGame{
+	up := model.UpdateGameData{
 		Name:        td.String(),
 		Developers:  []int32{td.Int32(), td.Int32()},
 		Publishers:  []int32{td.Int32(), td.Int32()},
@@ -403,7 +403,7 @@ func TestUpdateGame_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	defer teardown(t)
 
 	id := int32(td.Uint32())
-	up := model.UpdateGame{ReleaseDate: "2022-05-18"}
+	up := model.UpdateGameData{ReleaseDate: "2022-05-18"}
 	err := s.UpdateGame(context.Background(), id, up)
 	require.ErrorIs(t, err, apperr.NewNotFoundError("game", id), "err should be NotFound")
 }
@@ -494,7 +494,7 @@ func compareCreateGameAndGame(t *testing.T, want model.CreateGame, got model.Gam
 	require.Equal(t, want.IGDBID, got.IGDBID, "igdb id should be equal")
 }
 
-func compareUpdateGameAndGame(t *testing.T, want model.UpdateGame, got model.Game) {
+func compareUpdateGameAndGame(t *testing.T, want model.UpdateGameData, got model.Game) {
 	t.Helper()
 
 	require.Equal(t, want.Name, got.Name, "name should be equal")

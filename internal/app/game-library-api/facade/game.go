@@ -107,20 +107,27 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 }
 
 // UpdateGame updates game
-func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdatedGame) error {
+func (p *Provider) UpdateGame(ctx context.Context, id int32, publisher string, upd model.UpdatedGame) error {
 	game, err := p.storage.GetGameByID(ctx, id)
 	if err != nil {
-		if apperr.IsStatusCode(err, apperr.NotFound) {
-			return err
-		}
-		return fmt.Errorf("get game by id %d: %v", id, err)
+		return fmt.Errorf("get game by id %d: %w", id, err)
+	}
+
+	// check game ownership by publisher
+	publisherID, err := p.storage.GetCompanyIDByName(ctx, publisher)
+	if err != nil {
+		return fmt.Errorf("get company id by name %s: %w", publisher, err)
+	}
+
+	if len(game.Publishers) != 1 || game.Publishers[0] != publisherID {
+		return apperr.NewForbiddenError("game", id)
 	}
 
 	developer := upd.Developer
-	developers := game.Developers
+	developersIDs := game.Developers
 	if developer != nil {
 		if *developer == "" {
-			developers = []int32{}
+			developersIDs = []int32{}
 		} else {
 			// get id or create developer
 			developerID, cErr := p.storage.GetCompanyIDByName(ctx, *developer)
@@ -135,12 +142,12 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdatedGa
 					return fmt.Errorf("create developer %s: %v", *developer, err)
 				}
 			}
-			developers = []int32{developerID}
+			developersIDs = []int32{developerID}
 		}
 	}
 
-	update := game.MapToUpdateGame(upd)
-	update.Developers = developers
+	update := game.MapToUpdateGameData(upd)
+	update.Developers = developersIDs
 
 	err = p.storage.UpdateGame(ctx, id, update)
 	if err != nil {
@@ -181,8 +188,23 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdatedGa
 }
 
 // DeleteGame deletes game by id
-func (p *Provider) DeleteGame(ctx context.Context, id int32) error {
-	err := p.storage.DeleteGame(ctx, id)
+func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) error {
+	// check game ownership by publisher
+	publisherID, err := p.storage.GetCompanyIDByName(ctx, publisher)
+	if err != nil {
+		return fmt.Errorf("get company id by name %s: %w", publisher, err)
+	}
+
+	game, err := p.storage.GetGameByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("get game by id %d: %w", id, err)
+	}
+
+	if len(game.Publishers) != 1 || game.Publishers[0] != publisherID {
+		return apperr.NewForbiddenError("game", id)
+	}
+
+	err = p.storage.DeleteGame(ctx, id)
 	if err != nil {
 		if apperr.IsStatusCode(err, apperr.NotFound) {
 			return err

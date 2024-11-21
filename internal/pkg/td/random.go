@@ -2,6 +2,7 @@
 package td
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"strings"
@@ -63,6 +64,11 @@ func Date() time.Time {
 // String returns random string value
 func String() string {
 	return Stringn(10)
+}
+
+// Email returns random email address
+func Email() string {
+	return fmt.Sprintf("%s@%s.%s", String(), String(), Stringn(3))
 }
 
 // Stringn returns random string value with specified length

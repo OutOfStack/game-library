@@ -2,8 +2,8 @@
 
 ## Introduction
 
-game-library is a web application for exploring and rating games written in Go and TypeScript. It consists of three services: 
-- current service is responsible for fetching, storing games data and providing it to UI, 
+game-library is a web application for exploring and rating games written in Go and TypeScript. It consists of three services:
+- current service is responsible for fetching, storing games data and providing it to UI,
 - [auth service](https://github.com/OutOfStack/game-library-auth) is responsible for user authentication and authorization,
 - [ui service](https://github.com/OutOfStack/game-library-ui) is responsible for UI representation.
 
@@ -85,12 +85,12 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 ## Configuration
 
 - The service can be configured using [app.env](./app.env) or environment variables, described in [settings.go](./internal/appconf/settings.go)
-- CI/CD configs are in _./.github/workflows/_ 
-- k8s deployment configs are in _./.k8s/_ 
+- CI/CD configs are in _./.github/workflows/_
+- k8s deployment configs are in _./.k8s/_
 
 ## Documentation
 
-API documentation is available at [Swagger UI](http://localhost:8000/swagger/index.html). 
+API documentation is available at [Swagger UI](http://localhost:8000/swagger/index.html).
 For regenerating documentation after swagger description change run `make generate`.
 
 ## Examples
@@ -106,7 +106,7 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     build           builds app
     run             runs app
     test            runs tests for the whole project
-    generate        generates documentation for swagger UI
+    generate        generates documentation for swagger UI and mocks
     lint            runs golangci-lint
 
     dockerrunpg     runs postgres server in docker container

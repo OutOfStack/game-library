@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,15 +24,18 @@ import (
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 )
 
 // @title Game library API
-// @version 0.2
+// @version 0.3
 // @description API for game library service
 // @termsOfService http://swagger.io/terms/
 
@@ -107,7 +109,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	}(db)
 
 	// create auth module
-	authClient, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL)
+	authClient, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL, otelhttp.DefaultClient)
 	if err != nil {
 		return fmt.Errorf("create Auth: %w", err)
 	}
@@ -160,7 +162,13 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	// start debug service
 	go func() {
 		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
-		debugService := http.Server{Addr: cfg.Web.DebugAddress, ReadTimeout: time.Second}
+		profilerRouter := chi.NewRouter()
+		profilerRouter.Mount("/debug", middleware.Profiler())
+		debugService := http.Server{
+			Addr:        cfg.Web.DebugAddress,
+			Handler:     profilerRouter,
+			ReadTimeout: time.Second,
+		}
 		err = debugService.ListenAndServe()
 		if err != nil {
 			logger.Error("Debug service stopped", zap.Error(err))

@@ -3,7 +3,6 @@ package model
 import (
 	"strings"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/pkg/types"
 	"github.com/lib/pq"
 )
@@ -47,8 +46,8 @@ type CreateGame struct {
 	Publisher     string // helper field
 }
 
-// UpdateGame represents data for updating game
-type UpdateGame struct {
+// UpdateGameData represents data for updating game
+type UpdateGameData struct {
 	Name        string
 	Developers  []int32
 	Publishers  []int32
@@ -65,7 +64,17 @@ type UpdateGame struct {
 }
 
 // UpdatedGame - updated game field
-type UpdatedGame model.UpdateGameRequest
+type UpdatedGame struct {
+	Name        *string
+	Developer   *string
+	ReleaseDate *string
+	GenresIDs   *[]int32
+	LogoURL     *string
+	Summary     *string
+	Platforms   *[]int32
+	Screenshots *[]string
+	Websites    *[]string
+}
 
 // GamesFilter games filter
 type GamesFilter struct {
@@ -81,9 +90,9 @@ func GetGameSlug(name string) string {
 	return strings.ReplaceAll(strings.ToLower(strings.ToValidUTF8(name, "")), " ", "-")
 }
 
-// MapToUpdateGame maps Game to UpdateGate
-func (g Game) MapToUpdateGame(upd UpdatedGame) UpdateGame {
-	update := UpdateGame{
+// MapToUpdateGameData maps Game to UpdateGateData
+func (g Game) MapToUpdateGameData(upd UpdatedGame) UpdateGameData {
+	update := UpdateGameData{
 		Name:        g.Name,
 		Developers:  g.Developers,
 		Publishers:  g.Publishers,

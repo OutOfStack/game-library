@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
-	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -33,7 +32,7 @@ func NewHealthCheck(db *sqlx.DB) *HealthCheck {
 }
 
 // Readiness determines whether service is ready
-func (hc *HealthCheck) Readiness(c *gin.Context) {
+func (hc *HealthCheck) Readiness(w http.ResponseWriter, _ *http.Request) {
 	var h health
 	host, err := os.Hostname()
 	if err != nil {
@@ -42,15 +41,15 @@ func (hc *HealthCheck) Readiness(c *gin.Context) {
 	h.Host = host
 	if err = hc.db.Ping(); err != nil {
 		h.Status = "database not ready"
-		web.Respond(c, h, http.StatusInternalServerError)
+		web.Respond(w, h, http.StatusServiceUnavailable)
 		return
 	}
 	h.Status = "OK"
-	web.Respond(c, h, http.StatusOK)
+	web.Respond(w, h, http.StatusOK)
 }
 
 // Liveness determines whether service is up
-func (hc *HealthCheck) Liveness(c *gin.Context) {
+func (hc *HealthCheck) Liveness(w http.ResponseWriter, _ *http.Request) {
 	host, err := os.Hostname()
 	if err != nil {
 		host = unavailable
@@ -64,5 +63,5 @@ func (hc *HealthCheck) Liveness(c *gin.Context) {
 		Namespace: os.Getenv("KUBERNETES_NAMESPACE"),
 	}
 
-	web.Respond(c, h, http.StatusOK)
+	web.Respond(w, h, http.StatusOK)
 }

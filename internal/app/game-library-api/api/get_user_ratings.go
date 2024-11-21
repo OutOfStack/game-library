@@ -1,13 +1,11 @@
 package api
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
-	"github.com/gin-gonic/gin"
+	"github.com/OutOfStack/game-library/internal/middleware"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -22,14 +20,14 @@ import (
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]
-func (p *Provider) GetUserRatings(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "api.getUserRatings")
+func (p *Provider) GetUserRatings(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "api.getUserRatings")
 	defer span.End()
 
 	var ur api.GetUserRatingsRequest
-	err := web.Decode(c, &ur)
+	err := web.Decode(r, &ur)
 	if err != nil {
-		web.Err(c, fmt.Errorf("decoding user ratings: %w", err))
+		web.RespondError(w, err)
 		return
 	}
 	idsVal := make([]int, 0, len(ur.GameIDs))
@@ -38,9 +36,10 @@ func (p *Provider) GetUserRatings(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.IntSlice("data.ids", idsVal))
 
-	claims, err := web.GetClaims(c)
+	claims, err := middleware.GetClaims(ctx)
 	if err != nil {
-		web.Err(c, fmt.Errorf("getting claims from context: %w", err))
+		p.log.Error("get claims from ctx", zap.Error(err))
+		web.Respond500(w)
 		return
 	}
 
@@ -49,7 +48,7 @@ func (p *Provider) GetUserRatings(c *gin.Context) {
 	ratings, err := p.gameFacade.GetUserRatings(ctx, userID)
 	if err != nil {
 		p.log.Error("get user ratings", zap.String("user_id", userID), zap.Error(err))
-		web.Err(c, errors.New("internal error"))
+		web.Respond500(w)
 		return
 	}
 
@@ -60,5 +59,5 @@ func (p *Provider) GetUserRatings(c *gin.Context) {
 		}
 	}
 
-	web.Respond(c, userRatings, http.StatusOK)
+	web.Respond(w, userRatings, http.StatusOK)
 }

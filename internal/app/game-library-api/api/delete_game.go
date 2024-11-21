@@ -1,12 +1,11 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/gin-gonic/gin"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -20,30 +19,39 @@ import (
 // @Param  	id path int32 true "Game ID"
 // @Success 204
 // @Failure 400 {object} web.ErrorResponse
+// @Failure 403 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [delete]
-func (p *Provider) DeleteGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "api.deleteGame")
+func (p *Provider) DeleteGame(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "api.deleteGame")
 	defer span.End()
 
-	id, err := web.GetIDParam(c)
+	id, err := web.GetIDParam(r)
 	if err != nil {
-		web.Err(c, err)
+		web.RespondError(w, err)
 		return
 	}
 	span.SetAttributes(att.Int("data.id", int(id)))
 
-	err = p.gameFacade.DeleteGame(ctx, id)
+	claims, err := middleware.GetClaims(ctx)
+	if err != nil {
+		p.log.Error("get claims from context", zap.Error(err))
+		web.Respond500(w)
+		return
+	}
+	publisher := claims.Name
+
+	err = p.gameFacade.DeleteGame(ctx, id, publisher)
 	if err != nil {
 		if appErr, ok := apperr.IsAppError(err); ok {
-			web.Err(c, web.NewRequestError(appErr, appErr.HTTPStatusCode()))
+			web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))
 			return
 		}
 		p.log.Error("delete game", zap.Int32("id", id), zap.Error(err))
-		web.Err(c, errors.New("internal error"))
+		web.Respond500(w)
 		return
 	}
 
-	web.Respond(c, nil, http.StatusNoContent)
+	web.Respond(w, nil, http.StatusNoContent)
 }

@@ -1,9 +1,9 @@
 package web
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // FieldError represents error in a struct field
@@ -12,24 +12,49 @@ type FieldError struct {
 	Error string `json:"error"`
 }
 
-// ErrorResponse is a response in case of an error
+// ErrorResponse represents response in case of a web error
 type ErrorResponse struct {
 	Error  string       `json:"error"`
 	Fields []FieldError `json:"fields,omitempty"`
 }
 
-// Error adds information to error in response
+// Error contains information about web error
 type Error struct {
-	Err    error
-	Status int
-	Fields []FieldError
+	Err        error
+	StatusCode int
+	Fields     []FieldError
 }
 
-// NewRequestError is used for creating known error
-func NewRequestError(err error, status int) error {
+// NewError creates error with status code
+func NewError(err error, statusCode int) error {
 	return &Error{
-		Err:    err,
-		Status: status,
+		Err:        err,
+		StatusCode: statusCode,
+	}
+}
+
+// NewErrorFromMessage creates error with status code from message
+func NewErrorFromMessage(message string, statusCode int) error {
+	return &Error{
+		Err:        errors.New(message),
+		StatusCode: statusCode,
+	}
+}
+
+// NewErrorFromStatusCode creates error from status code
+func NewErrorFromStatusCode(statusCode int) error {
+	return &Error{
+		Err:        errors.New(http.StatusText(statusCode)),
+		StatusCode: statusCode,
+	}
+}
+
+// NewErrorWithFields creates error with status code and error fields
+func NewErrorWithFields(err error, statusCode int, fields []FieldError) error {
+	return &Error{
+		Err:        err,
+		StatusCode: statusCode,
+		Fields:     fields,
 	}
 }
 
@@ -40,9 +65,4 @@ func (e *Error) Error() string {
 		fieldsMsg = fmt.Sprintf(" - fields: %v", e.Fields)
 	}
 	return fmt.Sprintf("%s%s", e.Err.Error(), fieldsMsg)
-}
-
-// Err - adds error err to gin.Context
-func Err(c *gin.Context, err error) {
-	_ = c.Error(err)
 }

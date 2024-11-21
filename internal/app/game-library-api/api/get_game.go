@@ -1,13 +1,11 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/gin-gonic/gin"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -23,13 +21,13 @@ import (
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
-func (p *Provider) GetGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "api.getGame")
+func (p *Provider) GetGame(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "api.getGame")
 	defer span.End()
 
-	id, err := web.GetIDParam(c)
+	id, err := web.GetIDParam(r)
 	if err != nil {
-		web.Err(c, err)
+		web.RespondError(w, err)
 		return
 	}
 	span.SetAttributes(att.Int("data.id", int(id)))
@@ -37,19 +35,19 @@ func (p *Provider) GetGame(c *gin.Context) {
 	game, err := p.gameFacade.GetGameByID(ctx, id)
 	if err != nil {
 		if appErr, ok := apperr.IsAppError(err); ok {
-			web.Err(c, web.NewRequestError(appErr, appErr.HTTPStatusCode()))
+			web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))
 			return
 		}
 		p.log.Error("get game", zap.Int32("id", id), zap.Error(err))
-		web.Err(c, errors.New("internal error"))
+		web.Respond500(w)
 		return
 	}
 
 	var resp api.GameResponse
-	resp, err = p.mapToGameResponse(c, game)
+	resp, err = p.mapToGameResponse(ctx, game)
 	if err != nil {
-		web.Err(c, web.NewRequestError(errors.New("error converting response"), http.StatusInternalServerError))
+		web.RespondError(w, web.NewErrorFromMessage("error converting response", http.StatusInternalServerError))
 		return
 	}
-	web.Respond(c, resp, http.StatusOK)
+	web.Respond(w, resp, http.StatusOK)
 }

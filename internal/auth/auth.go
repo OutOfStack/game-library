@@ -15,12 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// Context keys for authentication and authorization
-const (
-	CtxTokenKey  string = "auth_token"
-	CtxClaimsKey string = "auth_claims"
-)
-
 // User roles
 const (
 	RoleModerator      = "moderator"
@@ -61,20 +55,26 @@ type Client struct {
 	log          *zap.Logger
 	parser       *jwt.Parser
 	verifyAPIURL string
+	client       *http.Client
 }
 
 // New constructs Auth instance
-func New(log *zap.Logger, algorithm string, verifyAPIURL string) (*Client, error) {
+func New(log *zap.Logger, algorithm string, verifyAPIURL string, client *http.Client) (*Client, error) {
 	if jwt.GetSigningMethod(algorithm) == nil {
 		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
 	}
 
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{algorithm}))
 
+	if client == nil {
+		client = otelhttp.DefaultClient
+	}
+
 	return &Client{
 		log:          log,
 		parser:       parser,
 		verifyAPIURL: verifyAPIURL,
+		client:       client,
 	}, nil
 }
 
@@ -108,7 +108,7 @@ func (c *Client) Verify(ctx context.Context, tokenStr string) error {
 	}
 	request.Header["Content-Type"] = []string{"application/json"}
 
-	resp, err := otelhttp.DefaultClient.Do(request)
+	resp, err := c.client.Do(request)
 	if err != nil {
 		c.log.Error("call verify api", zap.String("url", c.verifyAPIURL), zap.Error(err))
 		return ErrVerifyAPIUnavailable

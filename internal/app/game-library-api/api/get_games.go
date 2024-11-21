@@ -1,21 +1,14 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/gin-gonic/gin"
+	"github.com/go-playground/form/v4"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
-)
-
-const (
-	minLengthForSearch = 2
 )
 
 // GetGames godoc
@@ -33,11 +26,11 @@ const (
 // @Success 200 {object}  api.GamesResponse
 // @Failure 500 {object}  web.ErrorResponse
 // @Router /games [get]
-func (p *Provider) GetGames(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "api.getGames")
+func (p *Provider) GetGames(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "api.getGames")
 	defer span.End()
 
-	for key, values := range c.Request.URL.Query() {
+	for key, values := range r.URL.Query() {
 		if len(values) == 1 {
 			span.SetAttributes(att.String(key, values[0]))
 		} else if len(values) > 1 {
@@ -45,64 +38,45 @@ func (p *Provider) GetGames(c *gin.Context) {
 		}
 	}
 
-	// get query params and form filter
-	var queryParams api.GetGamesQueryParams
-	err := c.ShouldBindQuery(&queryParams)
+	// get query params
+	var params api.GetGamesQueryParams
+	decoder := form.NewDecoder()
+	err := decoder.Decode(&params, r.URL.Query())
 	if err != nil {
-		web.Err(c, web.NewRequestError(errors.New("incorrect query params"), http.StatusBadRequest))
+		web.RespondError(w, web.NewErrorFromMessage("invalid query params", http.StatusBadRequest))
 		return
 	}
 
-	page, pageSize := queryParams.Page, queryParams.PageSize
-	var filter model.GamesFilter
-	if len(queryParams.Name) >= minLengthForSearch {
-		filter.Name = queryParams.Name
-	}
-	if queryParams.Genre != 0 {
-		filter.GenreID = queryParams.Genre
-	}
-	if queryParams.Developer != 0 {
-		filter.DeveloperID = queryParams.Developer
-	}
-	if queryParams.Publisher != 0 {
-		filter.PublisherID = queryParams.Publisher
-	}
-	switch queryParams.OrderBy {
-	case "", "default":
-		filter.OrderBy = repo.OrderGamesByDefault
-	case "name":
-		filter.OrderBy = repo.OrderGamesByName
-	case "releaseDate":
-		filter.OrderBy = repo.OrderGamesByReleaseDate
-	default:
-		web.Err(c, web.NewRequestError(errors.New("incorrect orderBy. Should be one of: default, releaseDate, name"), http.StatusBadRequest))
-		return
+	filter, err := mapToGamesFilter(&params)
+	if err != nil {
+		web.RespondError(w, web.NewErrorFromMessage(err.Error(), http.StatusBadRequest))
 	}
 
-	list, count, err := p.gameFacade.GetGames(ctx, page, pageSize, filter)
+	list, count, err := p.gameFacade.GetGames(ctx, params.Page, params.PageSize, filter)
 	if err != nil {
 		if appErr, ok := apperr.IsAppError(err); ok {
-			web.Err(c, web.NewRequestError(appErr, appErr.HTTPStatusCode()))
+			web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))
 			return
 		}
 		p.log.Error("get games", zap.Error(err))
-		web.Err(c, errors.New("internal error"))
+		web.Respond500(w)
 		return
 	}
 
 	games := make([]api.GameResponse, 0, len(list))
 	for _, game := range list {
-		r, mErr := p.mapToGameResponse(c, game)
+		gr, mErr := p.mapToGameResponse(ctx, game)
 		if mErr != nil {
-			web.Err(c, web.NewRequestError(errors.New("error converting response"), http.StatusInternalServerError))
+			p.log.Error("map game to response", zap.Error(mErr))
+			web.RespondError(w, web.NewErrorFromMessage("error converting response", http.StatusInternalServerError))
 			return
 		}
-		games = append(games, r)
+		games = append(games, gr)
 	}
 
 	response := api.GamesResponse{
 		Games: games,
 		Count: count,
 	}
-	web.Respond(c, response, http.StatusOK)
+	web.Respond(w, response, http.StatusOK)
 }

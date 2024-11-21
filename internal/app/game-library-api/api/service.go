@@ -11,12 +11,12 @@ import (
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	mw "github.com/go-chi/chi/v5/middleware"
+	chicors "github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
-	swagfile "github.com/swaggo/files"
-	ginswag "github.com/swaggo/gin-swagger"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"github.com/riandyrn/otelchi"
+	swag "github.com/swaggo/http-swagger/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/zipkin"
 	"go.opentelemetry.io/otel/propagation"
@@ -38,13 +38,17 @@ func Service(
 	if err != nil {
 		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) //nolint:gosec
 	}
-	r := gin.Default()
-	r.Use(otelgin.Middleware(appconf.ServiceName))
-	r.Use(middleware.Errors(log), middleware.Metrics(), cors.New(cors.Config{
-		AllowMethods:     []string{"GET", "POST", "PATCH", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-type", "Authorization"},
+	r := chi.NewRouter()
+	r.Use(mw.RequestID)
+	r.Use(middleware.Logger(log))
+	r.Use(mw.Recoverer)
+	r.Use(otelchi.Middleware(appconf.ServiceName))
+	r.Use(middleware.Metrics)
+	r.Use(chicors.Handler(chicors.Options{
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
+		AllowedHeaders:   []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
-		AllowOriginFunc: func(origin string) bool {
+		AllowOriginFunc: func(_ *http.Request, origin string) bool {
 			return strings.Contains(conf.Web.AllowedCORSOrigin, origin)
 		},
 	}))
@@ -52,42 +56,53 @@ func Service(
 	hc := tools.NewHealthCheck(db)
 
 	// tools
-	r.GET("/api/readiness", hc.Readiness)
-	r.GET("/api/liveness", hc.Liveness)
+	r.Get("/api/readiness", hc.Readiness)
+	r.Get("/api/liveness", hc.Liveness)
 
 	// games
-	r.GET("/api/games", pr.GetGames)
-	r.GET("/api/games/:id", pr.GetGame)
-	r.POST("/api/games",
-		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RolePublisher),
-		pr.CreateGame)
-	r.DELETE("/api/games/:id",
-		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RolePublisher),
-		pr.DeleteGame)
-	r.PATCH("/api/games/:id",
-		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RolePublisher),
-		pr.UpdateGame)
-	r.POST("/api/games/:id/rate",
-		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RoleRegisteredUser),
-		pr.RateGame)
+	r.Route("/api/games", func(r chi.Router) {
+		r.Get("/", pr.GetGames)
+		r.Get("/{id}", pr.GetGame)
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RolePublisher),
+		).Post("/", pr.CreateGame)
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RolePublisher),
+		).Delete("/{id}", pr.DeleteGame)
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RolePublisher),
+		).Patch("/{id}", pr.UpdateGame)
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RoleRegisteredUser),
+		).Post("/{id}/rate", pr.RateGame)
+	})
 
 	// user
-	r.POST("/api/user/ratings",
-		middleware.Authenticate(log, au), middleware.Authorize(log, au, auth.RoleRegisteredUser),
-		pr.GetUserRatings)
+	r.With(
+		middleware.Authenticate(log, au),
+		middleware.Authorize(log, au, auth.RoleRegisteredUser),
+	).Post("/api/user/ratings", pr.GetUserRatings)
 
 	// genres
-	r.GET("/api/genres", pr.GetGenres)
-	r.GET("/api/genres/top", pr.GetTopGenres)
+	r.Route("/api/genres", func(r chi.Router) {
+		r.Get("/", pr.GetGenres)
+		r.Get("/top", pr.GetTopGenres)
+	})
 
 	// platforms
-	r.GET("/api/platforms", pr.GetPlatforms)
+	r.Get("/api/platforms", pr.GetPlatforms)
 
 	// companies
-	r.GET("/api/companies/top", pr.GetTopCompanies)
+	r.Get("/api/companies/top", pr.GetTopCompanies)
 
 	// swagger
-	r.GET("/swagger/*any", ginswag.WrapHandler(swagfile.Handler))
+	r.Get("/swagger/*", swag.Handler(
+		swag.URL("/swagger/doc.json"),
+	))
 
 	return http.Server{
 		Addr:              conf.Web.Address,

@@ -1,13 +1,11 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
-	"github.com/gin-gonic/gin"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -26,13 +24,13 @@ const (
 // @Failure 400 {object} web.ErrorResponse "Invalid or missing company type"
 // @Failure 500 {object} web.ErrorResponse
 // @Router /companies/top [get]
-func (p *Provider) GetTopCompanies(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "api.getTopCompanies")
+func (p *Provider) GetTopCompanies(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "api.getTopCompanies")
 	defer span.End()
 
-	companyType := c.Query("type")
+	companyType := r.URL.Query().Get("type")
 	if companyType != model.CompanyTypeDeveloper && companyType != model.CompanyTypePublisher {
-		web.Err(c, web.NewRequestError(errors.New("invalid company type: should be one of [dev, pub]"), http.StatusBadRequest))
+		web.RespondError(w, web.NewErrorFromMessage("invalid company type: should be one of [dev, pub]", http.StatusBadRequest))
 		return
 	}
 
@@ -41,7 +39,7 @@ func (p *Provider) GetTopCompanies(c *gin.Context) {
 	list, err := p.gameFacade.GetTopCompanies(ctx, companyType, topCompaniesLimit)
 	if err != nil {
 		p.log.Error("get top companies", zap.String("type", companyType), zap.Error(err))
-		web.Err(c, errors.New("internal error"))
+		web.Respond500(w)
 		return
 	}
 
@@ -53,5 +51,5 @@ func (p *Provider) GetTopCompanies(c *gin.Context) {
 		})
 	}
 
-	web.Respond(c, resp, http.StatusOK)
+	web.Respond(w, resp, http.StatusOK)
 }

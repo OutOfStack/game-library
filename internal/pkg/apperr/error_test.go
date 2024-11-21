@@ -38,6 +38,19 @@ func TestNewInvalidError(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("invalid %s with id %d: %s", entity, id, msg), err.Error())
 }
 
+func TestNewForbiddenError(t *testing.T) {
+	id := td.Int64()
+	entity := td.String()
+
+	err := apperr.NewForbiddenError(entity, id)
+
+	assert.Equal(t, entity, err.Entity)
+	assert.Equal(t, id, err.ID)
+	assert.Equal(t, apperr.Forbidden, err.StatusCode())
+	assert.Equal(t, http.StatusForbidden, err.HTTPStatusCode())
+	assert.Equal(t, fmt.Sprintf("forbidden access to %s with id %v", entity, id), err.Error())
+}
+
 func TestError_Methods(t *testing.T) {
 	id := td.String()
 	entity := td.String()

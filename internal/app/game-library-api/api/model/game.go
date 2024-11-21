@@ -2,9 +2,9 @@ package model
 
 // GetGamesQueryParams - get games query params
 type GetGamesQueryParams struct {
-	PageSize  int    `form:"pageSize" binding:"required,gt=0"`
-	Page      int    `form:"page" binding:"required,gt=0"`
-	OrderBy   string `form:"orderBy" binding:"oneof=default name releaseDate"`
+	PageSize  int    `form:"pageSize"`
+	Page      int    `form:"page"`
+	OrderBy   string `form:"orderBy"`
 	Name      string `form:"name"`
 	Genre     int32  `form:"genre"`
 	Developer int32  `form:"developer"`

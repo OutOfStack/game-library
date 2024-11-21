@@ -2,10 +2,16 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+)
+
+const (
+	minLengthForSearch = 2
 )
 
 // Mappings
@@ -94,4 +100,50 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	}
 
 	return resp, nil
+}
+
+func mapToUpdateGame(ugr *api.UpdateGameRequest) model.UpdatedGame {
+	return model.UpdatedGame{
+		Name:        ugr.Name,
+		Developer:   ugr.Developer,
+		ReleaseDate: ugr.ReleaseDate,
+		GenresIDs:   ugr.GenresIDs,
+		LogoURL:     ugr.LogoURL,
+		Summary:     ugr.Summary,
+		Platforms:   ugr.Platforms,
+		Screenshots: ugr.Screenshots,
+		Websites:    ugr.Websites,
+	}
+}
+
+func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
+	if p.Page <= 0 || p.PageSize <= 0 {
+		return model.GamesFilter{}, errors.New("invalid page params: should be greater than 0")
+	}
+
+	var filter model.GamesFilter
+	switch p.OrderBy {
+	case "", "default":
+		filter.OrderBy = repo.OrderGamesByDefault
+	case "name":
+		filter.OrderBy = repo.OrderGamesByName
+	case "releaseDate":
+		filter.OrderBy = repo.OrderGamesByReleaseDate
+	default:
+		return model.GamesFilter{}, errors.New("invalid orderBy: should be one of [default, releaseDate, name]")
+	}
+	if len(p.Name) >= minLengthForSearch {
+		filter.Name = p.Name
+	}
+	if p.Genre != 0 {
+		filter.GenreID = p.Genre
+	}
+	if p.Developer != 0 {
+		filter.DeveloperID = p.Developer
+	}
+	if p.Publisher != 0 {
+		filter.PublisherID = p.Publisher
+	}
+
+	return filter, nil
 }

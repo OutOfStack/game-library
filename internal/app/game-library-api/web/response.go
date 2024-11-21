@@ -3,16 +3,13 @@ package web
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
-// Respond marshals a value to JSON and sends it to client
-func Respond(c *gin.Context, val interface{}, statusCode int) {
+// Respond marshals a value to JSON and writes it to response
+func Respond(w http.ResponseWriter, val interface{}, statusCode int) {
 	if statusCode == http.StatusNoContent {
-		c.Writer.WriteHeader(statusCode)
+		w.WriteHeader(statusCode)
 		return
 	}
 
@@ -21,32 +18,66 @@ func Respond(c *gin.Context, val interface{}, statusCode int) {
 	}
 	data, err := json.Marshal(val)
 	if err != nil {
-		Err(c, fmt.Errorf("marshalling value to json: %w", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		data, _ = json.Marshal(ErrorResponse{
+			Error: "marshal value to json:" + err.Error(),
+		})
+		_, _ = w.Write(data)
 		return
 	}
-	c.Header("content-type", "application/json;charset=utf-8")
-	c.Status(statusCode)
-	_, err = c.Writer.Write(data)
+
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	w.WriteHeader(statusCode)
+
+	_, err = w.Write(data)
 	if err != nil {
-		Err(c, fmt.Errorf("writing to client: %v", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		data, _ = json.Marshal(ErrorResponse{
+			Error: "write to client: " + err.Error(),
+		})
+		_, _ = w.Write(data)
 		return
 	}
 }
 
-// RespondError handles outgoing errors
-func RespondError(c *gin.Context, err error) {
+// RespondError handles outgoing errors by marshaling an error response.
+// if error is not of type Error, then err is ignored.
+// if no err is provided, InternalServerError returns to client
+func RespondError(w http.ResponseWriter, err error) {
+	var statusCode = http.StatusInternalServerError
+	response := ErrorResponse{
+		Error: http.StatusText(statusCode),
+	}
+
 	var webErr *Error
 	if ok := errors.As(err, &webErr); ok {
-		response := ErrorResponse{
-			Error:  webErr.Err.Error(),
+		statusCode = webErr.StatusCode
+		errMsg := webErr.Err.Error()
+		if statusCode >= 500 {
+			errMsg = http.StatusText(statusCode)
+		}
+		response = ErrorResponse{
+			Error:  errMsg,
 			Fields: webErr.Fields,
 		}
-		Respond(c, response, webErr.Status)
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	response := ErrorResponse{
-		Error: http.StatusText(http.StatusInternalServerError),
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	w.WriteHeader(statusCode)
+	_, err = w.Write(data)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
-	Respond(c, response, http.StatusInternalServerError)
+}
+
+// Respond500 returns InternalServerError to client
+func Respond500(w http.ResponseWriter) {
+	RespondError(w, nil)
 }

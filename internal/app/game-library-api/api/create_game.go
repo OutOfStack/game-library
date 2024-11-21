@@ -1,14 +1,12 @@
 package api
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/gin-gonic/gin"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -24,21 +22,22 @@ import (
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
-func (p *Provider) CreateGame(c *gin.Context) {
-	ctx, span := tracer.Start(c.Request.Context(), "api.createGame")
+func (p *Provider) CreateGame(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "api.createGame")
 	defer span.End()
 
 	var cg api.CreateGameRequest
-	err := web.Decode(c, &cg)
+	err := web.Decode(r, &cg)
 	if err != nil {
-		web.Err(c, fmt.Errorf("decoding new game: %w", err))
+		web.RespondError(w, err)
 		return
 	}
 	span.SetAttributes(att.String("data.name", cg.Name))
 
-	claims, err := web.GetClaims(c)
+	claims, err := middleware.GetClaims(ctx)
 	if err != nil {
-		web.Err(c, fmt.Errorf("getting claims from context: %w", err))
+		p.log.Error("get claims from context", zap.Error(err))
+		web.Respond500(w)
 		return
 	}
 
@@ -49,13 +48,13 @@ func (p *Provider) CreateGame(c *gin.Context) {
 	id, err := p.gameFacade.CreateGame(ctx, create)
 	if err != nil {
 		if appErr, ok := apperr.IsAppError(err); ok {
-			web.Err(c, web.NewRequestError(appErr, appErr.HTTPStatusCode()))
+			web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))
 			return
 		}
 		p.log.Error("create game", zap.String("name", create.Name), zap.String("user_id", claims.UserID()), zap.Error(err))
-		web.Err(c, errors.New("internal error"))
+		web.Respond500(w)
 		return
 	}
 
-	web.Respond(c, api.IDResponse{ID: id}, http.StatusCreated)
+	web.Respond(w, api.IDResponse{ID: id}, http.StatusCreated)
 }

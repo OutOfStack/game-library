@@ -1,6 +1,7 @@
 package web_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -8,7 +9,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestGetIDParam(t *testing.T) {

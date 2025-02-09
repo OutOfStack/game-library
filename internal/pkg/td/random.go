@@ -35,6 +35,11 @@ func Int32() int32 {
 	return random.Int31() * int32(sign)
 }
 
+// Int31 returns random non-negative int32 value
+func Int31() int32 {
+	return random.Int31()
+}
+
 // Intn returns random value in range [0, n)
 func Intn(n int) int {
 	return random.Intn(n)
@@ -87,4 +92,9 @@ func Stringn(n int) string {
 // Float64 returns random float64 value
 func Float64() float64 {
 	return random.Float64()
+}
+
+// Bool returns random bool value
+func Bool() bool {
+	return random.Intn(2) == 0
 }

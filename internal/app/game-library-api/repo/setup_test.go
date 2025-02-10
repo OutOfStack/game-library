@@ -1,12 +1,12 @@
 package repo_test
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -63,18 +63,19 @@ func TestMain(m *testing.M) {
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	counter := 1
 	err = pool.Retry(func() error {
-		db, err = sqlx.Open(pg, fmt.Sprintf("postgres://postgres:%s@localhost:%s/%s?sslmode=disable", DatabasePwd, DatabasePort, DatabaseName))
+		db, err = database.Open(database.Config{
+			Host:       "localhost:" + DatabasePort,
+			Name:       DatabaseName,
+			User:       "postgres",
+			Password:   DatabasePwd,
+			RequireSSL: false,
+		})
 		if err != nil {
 			log.Printf("Repo tests: Attempt %d connecting to database: %v", counter, err)
 			counter++
 			return err
 		}
-		err = db.Ping()
-		if err != nil {
-			log.Printf("Repo tests: Attempt %d pinging database: %v", counter, err)
-			counter++
-		}
-		return err
+		return nil
 	})
 	if err != nil {
 		if pErr := pool.Purge(resource); pErr != nil {

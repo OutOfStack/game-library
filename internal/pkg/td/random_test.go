@@ -25,6 +25,14 @@ func TestInt32(t *testing.T) {
 	}
 }
 
+func TestInt31(t *testing.T) {
+	for range n {
+		val := td.Int31()
+		assert.IsType(t, int32(0), val)
+		assert.GreaterOrEqual(t, val, int32(0))
+	}
+}
+
 func TestIntn(t *testing.T) {
 	for range n {
 		val := td.Intn(100)
@@ -111,4 +119,16 @@ func TestFloat64(t *testing.T) {
 		assert.GreaterOrEqual(t, val, 0.0)
 		assert.Less(t, val, 1.0)
 	}
+}
+
+func TestBool(t *testing.T) {
+	m := make(map[bool]int)
+	for range n {
+		val := td.Bool()
+		m[val]++
+		assert.IsType(t, false, val)
+		assert.Contains(t, []bool{true, false}, val)
+	}
+	assert.NotZero(t, m[true])
+	assert.NotZero(t, m[false])
 }

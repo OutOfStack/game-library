@@ -1,13 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 type tokenKey int
@@ -19,8 +19,14 @@ var (
 	claimsCtxKey claimsKey
 )
 
+// AuthClient - auth client interface
+type AuthClient interface {
+	ParseToken(tokenStr string) (*auth.Claims, error)
+	Verify(ctx context.Context, tokenStr string) error
+}
+
 // Authenticate checks the validity of a token
-func Authenticate(log *zap.Logger, authClient *auth.Client) func(http.Handler) http.Handler {
+func Authenticate(log *zap.Logger, authClient AuthClient) func(http.Handler) http.Handler {
 	h := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -60,7 +66,7 @@ func Authenticate(log *zap.Logger, authClient *auth.Client) func(http.Handler) h
 }
 
 // Authorize checks rights to perform certain requests
-func Authorize(log *zap.Logger, authClient *auth.Client, requiredRole string) func(http.Handler) http.Handler {
+func Authorize(log *zap.Logger, authClient AuthClient, requiredRole string) func(http.Handler) http.Handler {
 	h := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// retrieve the token from context
@@ -89,6 +95,7 @@ func Authorize(log *zap.Logger, authClient *auth.Client, requiredRole string) fu
 
 			// store claims in the request context
 			ctx := context.WithValue(r.Context(), claimsCtxKey, *claims)
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

@@ -108,6 +108,7 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     test            runs tests for the whole project
     generate        generates documentation for swagger UI and mocks
     lint            runs golangci-lint
+    cover           outputs tests coverage
 
     dockerrunpg     runs postgres server in docker container
     createdb        creates database on postgres server started by 'dockerrunpg'

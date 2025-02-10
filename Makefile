@@ -8,6 +8,9 @@ run:
 test:
 	go test -v -race ./...
 
+cover:
+	go test -cover -coverpkg=./... -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
+
 dockerrunpg:
 	docker compose up -d --no-recreate db
 
@@ -55,7 +58,9 @@ generate:
 		exit 1; \
   fi
 	${MOCKGEN_BIN} -source=internal/app/game-library-api/api/provider.go -destination=internal/app/game-library-api/api/mocks/provider.go -package=api_mock
-	${MOCKGEN_BIN} -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/redis/mocks/redis.go -package=cache_mock
+	${MOCKGEN_BIN} -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/mocks/redis.go -package=cache_mock
+	${MOCKGEN_BIN} -source=internal/app/game-library-api/facade/provider.go -destination=internal/app/game-library-api/facade/mocks/provider.go -package=facade_mock
+	${MOCKGEN_BIN} -source=internal/middleware/auth.go -destination=internal/middleware/mocks/auth.go -package=middleware_mock
 
 LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint

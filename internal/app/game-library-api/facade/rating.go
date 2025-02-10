@@ -35,18 +35,18 @@ func (p *Provider) RateGame(ctx context.Context, gameID int32, userID string, ra
 
 	// update avg game rating
 	go func() {
-		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
 
-		err = p.storage.UpdateGameRating(bCtx, gameID)
-		if err != nil {
-			p.log.Error("update game rating", zap.Int32("gameID", gameID), zap.Error(err))
+		ugErr := p.storage.UpdateGameRating(bCtx, gameID)
+		if ugErr != nil {
+			p.log.Error("update game rating", zap.Int32("gameID", gameID), zap.Error(ugErr))
 		}
 	}()
 
 	// invalidate cache
 	go func() {
-		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
 
 		// invalidate user ratings

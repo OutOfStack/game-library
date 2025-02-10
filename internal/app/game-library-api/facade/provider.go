@@ -51,5 +51,4 @@ type Storage interface {
 	AddRating(ctx context.Context, cr model.CreateRating) error
 	RemoveRating(ctx context.Context, rr model.RemoveRating) error
 	GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error)
-	GetUserRatingsByGamesIDs(ctx context.Context, userID string, gameIDs []int32) ([]model.UserRating, error)
 }

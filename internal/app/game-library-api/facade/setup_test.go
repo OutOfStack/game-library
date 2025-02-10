@@ -1,13 +1,11 @@
-package api_test
+package facade_test
 
 import (
-	"net/http"
-	"net/http/httptest"
+	"context"
 	"testing"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/api"
-	apimock "github.com/OutOfStack/game-library/internal/app/game-library-api/api/mocks"
-	mwmock "github.com/OutOfStack/game-library/internal/middleware/mocks"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/facade"
+	facademock "github.com/OutOfStack/game-library/internal/app/game-library-api/facade/mocks"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	cachemock "github.com/OutOfStack/game-library/internal/pkg/cache/mocks"
 	"github.com/stretchr/testify/suite"
@@ -17,27 +15,23 @@ import (
 
 type TestSuite struct {
 	suite.Suite
+	ctx             context.Context
 	ctrl            *gomock.Controller
-	gameFacadeMock  *apimock.MockGameFacade
 	log             *zap.Logger
+	storageMock     *facademock.MockStorage
 	cacheStore      *cache.RedisStore
 	redisClientMock *cachemock.MockRedisClient
-	authClient      *mwmock.MockAuthClient
-	httpResponse    *httptest.ResponseRecorder
-	httpRequest     *http.Request
-	provider        *api.Provider
+	provider        *facade.Provider
 }
 
 func (s *TestSuite) SetupTest() {
+	s.ctx = context.Background()
 	s.ctrl = gomock.NewController(s.T())
-	s.gameFacadeMock = apimock.NewMockGameFacade(s.ctrl)
+	s.storageMock = facademock.NewMockStorage(s.ctrl)
 	s.log = zap.NewNop()
 	s.redisClientMock = cachemock.NewMockRedisClient(s.ctrl)
 	s.cacheStore = cache.NewRedisStore(s.redisClientMock, s.log)
-	s.authClient = mwmock.NewMockAuthClient(s.ctrl)
-	s.httpResponse = httptest.NewRecorder()
-	s.httpRequest, _ = http.NewRequest(http.MethodGet, "/", nil)
-	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock)
+	s.provider = facade.NewProvider(s.log, s.storageMock, s.cacheStore)
 }
 
 func (s *TestSuite) TearDownTest() {

@@ -85,21 +85,6 @@ func (mr *MockGameFacadeMockRecorder) GetCompaniesMap(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompaniesMap", reflect.TypeOf((*MockGameFacade)(nil).GetCompaniesMap), ctx)
 }
 
-// GetCompanyByID mocks base method.
-func (m *MockGameFacade) GetCompanyByID(ctx context.Context, id int32) (model.Company, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCompanyByID", ctx, id)
-	ret0, _ := ret[0].(model.Company)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCompanyByID indicates an expected call of GetCompanyByID.
-func (mr *MockGameFacadeMockRecorder) GetCompanyByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompanyByID", reflect.TypeOf((*MockGameFacade)(nil).GetCompanyByID), ctx, id)
-}
-
 // GetGameByID mocks base method.
 func (m *MockGameFacade) GetGameByID(ctx context.Context, id int32) (model.Game, error) {
 	m.ctrl.T.Helper()
@@ -131,21 +116,6 @@ func (mr *MockGameFacadeMockRecorder) GetGames(ctx, page, pageSize, filter any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGames", reflect.TypeOf((*MockGameFacade)(nil).GetGames), ctx, page, pageSize, filter)
 }
 
-// GetGenreByID mocks base method.
-func (m *MockGameFacade) GetGenreByID(ctx context.Context, id int32) (model.Genre, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGenreByID", ctx, id)
-	ret0, _ := ret[0].(model.Genre)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetGenreByID indicates an expected call of GetGenreByID.
-func (mr *MockGameFacadeMockRecorder) GetGenreByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenreByID", reflect.TypeOf((*MockGameFacade)(nil).GetGenreByID), ctx, id)
-}
-
 // GetGenres mocks base method.
 func (m *MockGameFacade) GetGenres(ctx context.Context) ([]model.Genre, error) {
 	m.ctrl.T.Helper()
@@ -174,21 +144,6 @@ func (m *MockGameFacade) GetGenresMap(ctx context.Context) (map[int32]model.Genr
 func (mr *MockGameFacadeMockRecorder) GetGenresMap(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenresMap", reflect.TypeOf((*MockGameFacade)(nil).GetGenresMap), ctx)
-}
-
-// GetPlatformByID mocks base method.
-func (m *MockGameFacade) GetPlatformByID(ctx context.Context, id int32) (model.Platform, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPlatformByID", ctx, id)
-	ret0, _ := ret[0].(model.Platform)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPlatformByID indicates an expected call of GetPlatformByID.
-func (mr *MockGameFacadeMockRecorder) GetPlatformByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlatformByID", reflect.TypeOf((*MockGameFacade)(nil).GetPlatformByID), ctx, id)
 }
 
 // GetPlatforms mocks base method.

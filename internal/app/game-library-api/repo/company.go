@@ -97,7 +97,7 @@ func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies 
 		SELECT c.id, c.name, c.igdb_id
 		FROM companies c
 		JOIN (
-			SELECT unnest(developers) AS company_id FROM games
+			SELECT UNNEST(developers) AS company_id FROM games
 		) AS g ON c.id = g.company_id
 		GROUP BY c.id, c.name, c.igdb_id
 		ORDER BY COUNT(*) DESC
@@ -119,7 +119,7 @@ func (s *Storage) GetTopPublishers(ctx context.Context, limit int64) (companies 
 		SELECT c.id, c.name, c.igdb_id
 		FROM companies c
 		JOIN (
-			SELECT unnest(publishers) AS company_id FROM games
+			SELECT UNNEST(publishers) AS company_id FROM games
 		) AS g ON c.id = g.company_id
 		GROUP BY c.id, c.name, c.igdb_id
 		ORDER BY COUNT(*) DESC

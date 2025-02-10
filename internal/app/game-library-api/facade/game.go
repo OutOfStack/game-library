@@ -86,7 +86,7 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 
 	// invalidate cache
 	go func() {
-		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
 
 		// invalidate games cache
@@ -100,6 +100,20 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if err != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+		}
+		// cache game
+		key = getGameKey(id)
+		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
+			return p.storage.GetGameByID(bCtx, id)
+		}, 0)
+		if err != nil {
+			p.log.Error("cache game with id", zap.Int32("id", id), zap.Error(err))
+		}
+		// invalidate companies
+		key = getCompaniesKey()
+		err = cache.Delete(bCtx, p.cache, key)
+		if err != nil {
+			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(err))
 		}
 	}()
 
@@ -159,7 +173,7 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, publisher string, u
 
 	// invalidate cache
 	go func() {
-		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
 
 		// invalidate games cache
@@ -181,6 +195,13 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, publisher string, u
 		}, 0)
 		if err != nil {
 			p.log.Error("recache game with id", zap.Int32("id", id), zap.Error(err))
+		}
+
+		// invalidate companies
+		key = getCompaniesKey()
+		err = cache.Delete(bCtx, p.cache, key)
+		if err != nil {
+			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(err))
 		}
 	}()
 
@@ -214,7 +235,7 @@ func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) e
 
 	// invalidate cache
 	go func() {
-		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 1*time.Second)
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
 
 		// invalidate games cache

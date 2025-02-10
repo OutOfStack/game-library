@@ -50,6 +50,7 @@ func (p *Provider) GetGames(w http.ResponseWriter, r *http.Request) {
 	filter, err := mapToGamesFilter(&params)
 	if err != nil {
 		web.RespondError(w, web.NewErrorFromMessage(err.Error(), http.StatusBadRequest))
+		return
 	}
 
 	list, count, err := p.gameFacade.GetGames(ctx, params.Page, params.PageSize, filter)

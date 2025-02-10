@@ -1,12 +1,12 @@
 package facade
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
-	"golang.org/x/net/context"
 )
 
 // GetGenres returns all genres

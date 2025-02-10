@@ -54,7 +54,7 @@ var (
 
 // StartFetchIGDBGames starts fetch igdb games task
 func (tp *TaskProvider) StartFetchIGDBGames() error {
-	task := func(ctx context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
+	taskFn := func(ctx context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
 		var s fetchGamesSettings
 		if settings != nil {
 			err := json.Unmarshal(settings, &s)
@@ -245,5 +245,5 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 		return s.convertToTaskSettings(), nil
 	}
 
-	return tp.DoTask(FetchIGDBGamesTaskName, task)
+	return tp.DoTask(FetchIGDBGamesTaskName, taskFn)
 }

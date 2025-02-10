@@ -9,6 +9,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
+	"github.com/georgysavva/scany/v2/pgxscan"
 )
 
 // CreateGenre creates new genre
@@ -22,7 +23,7 @@ func (s *Storage) CreateGenre(ctx context.Context, g model.Genre) (id int32, err
 		ON CONFLICT (igdb_id) DO NOTHING
 		RETURNING id`
 
-	if err = s.db.QueryRowContext(ctx, q, g.Name, g.IGDBID, time.Now()).Scan(&id); err != nil {
+	if err = s.db.QueryRow(ctx, q, g.Name, g.IGDBID, time.Now()).Scan(&id); err != nil {
 		return 0, fmt.Errorf("create genre with name %s and igdb id %d: %v", g.Name, g.IGDBID, err)
 	}
 
@@ -38,7 +39,7 @@ func (s *Storage) GetGenres(ctx context.Context) (genres []model.Genre, err erro
 		SELECT id, name, igdb_id
 		FROM genres`
 
-	if err = s.db.SelectContext(ctx, &genres, q); err != nil {
+	if err = pgxscan.Select(ctx, s.db, &genres, q); err != nil {
 		return nil, err
 	}
 
@@ -56,7 +57,7 @@ func (s *Storage) GetGenreByID(ctx context.Context, id int32) (genre model.Genre
 		FROM genres
 		WHERE id = $1`
 
-	if err = s.db.GetContext(ctx, &genre, q, id); err != nil {
+	if err = pgxscan.Get(ctx, s.db, &genre, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Genre{}, apperr.NewNotFoundError("genre", id)
 		}
@@ -81,7 +82,7 @@ func (s *Storage) GetTopGenres(ctx context.Context, limit int64) (genres []model
 		ORDER BY COUNT(*) DESC
 		LIMIT $1`
 
-	if err = s.db.SelectContext(ctx, &genres, q, limit); err != nil {
+	if err = pgxscan.Select(ctx, s.db, &genres, q, limit); err != nil {
 		return nil, err
 	}
 

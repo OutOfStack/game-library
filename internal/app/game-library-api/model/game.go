@@ -4,27 +4,26 @@ import (
 	"strings"
 
 	"github.com/OutOfStack/game-library/pkg/types"
-	"github.com/lib/pq"
 )
 
 // Game represents database game model
 type Game struct {
-	ID          int32          `db:"id"`
-	Name        string         `db:"name"`
-	Developers  pq.Int32Array  `db:"developers"`
-	Publishers  pq.Int32Array  `db:"publishers"`
-	ReleaseDate types.Date     `db:"release_date"`
-	Genres      pq.Int32Array  `db:"genres"`
-	LogoURL     string         `db:"logo_url"`
-	Rating      float64        `db:"rating"`
-	Summary     string         `db:"summary"`
-	Slug        string         `db:"slug"`
-	Platforms   pq.Int32Array  `db:"platforms"`
-	Screenshots pq.StringArray `db:"screenshots"`
-	Websites    pq.StringArray `db:"websites"`
-	IGDBRating  float64        `db:"igdb_rating"`
-	IGDBID      int64          `db:"igdb_id"`
-	Weight      float64        `db:"weight"` // Readonly field
+	ID          int32      `db:"id"`
+	Name        string     `db:"name"`
+	Developers  []int32    `db:"developers"`
+	Publishers  []int32    `db:"publishers"`
+	ReleaseDate types.Date `db:"release_date"`
+	Genres      []int32    `db:"genres"`
+	LogoURL     string     `db:"logo_url"`
+	Rating      float64    `db:"rating"`
+	Summary     string     `db:"summary"`
+	Slug        string     `db:"slug"`
+	Platforms   []int32    `db:"platforms"`
+	Screenshots []string   `db:"screenshots"`
+	Websites    []string   `db:"websites"`
+	IGDBRating  float64    `db:"igdb_rating"`
+	IGDBID      int64      `db:"igdb_id"`
+	Weight      float64    `db:"weight"` // Readonly field
 }
 
 // CreateGame represents data for creating game

@@ -1,11 +1,11 @@
 package repo_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
-	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/require"
 )
 

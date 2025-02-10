@@ -7,7 +7,8 @@ services:
       - "5432:5432"
     restart: on-failure:5
     environment:
-      POSTGRES_PASSWORD: temp_pwd
+      POSTGRES_USER: games-user
+      POSTGRES_PASSWORD: games-password
     volumes:
       - ~/pgdata:/var/lib/postgresql/data
 
@@ -25,6 +26,7 @@ services:
     command: redis-server #--requirepass
     ports:
       - "6379:6379"
+    restart: always
 
   api:
     container_name: game-library
@@ -33,8 +35,7 @@ services:
       - "8000:8000"
       - "6060:6060"
     environment:
-      DB_HOST: db
-      DB_PASSWORD: temp_pwd
+      DB_DSN: postgres://games-user:games-password@db/games?sslmode=disable
       APP_ADDRESS: 0.0.0.0:8000
       DEBUG_ADDRESS: 0.0.0.0:6060
     depends_on:
@@ -46,8 +47,7 @@ services:
     container_name: game-library-mng
     image: game-library-mng:latest
     environment:
-      DB_HOST: db
-      DB_PASSWORD: temp_pwd
+      DB_DSN: postgres://games-user:games-password@db/games?sslmode=disable
     depends_on:
       - db
 

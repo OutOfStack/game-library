@@ -2,7 +2,7 @@ package repo
 
 import (
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
 )
 
@@ -16,11 +16,11 @@ var (
 
 // Storage provides required dependencies for repository
 type Storage struct {
-	db *sqlx.DB
+	db *pgxpool.Pool
 }
 
 // New creates new Storage
-func New(db *sqlx.DB) *Storage {
+func New(db *pgxpool.Pool) *Storage {
 	return &Storage{
 		db: db,
 	}

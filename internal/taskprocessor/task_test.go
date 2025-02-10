@@ -18,7 +18,7 @@ func (s *TestSuite) TestDoTask_Success() {
 		Settings: []byte(`{"lastReleasedAt":"2025-01-01T00:00:00Z"}`),
 	}
 
-	taskFn := func(ctx context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
+	taskFn := func(_ context.Context, _ model.TaskSettings) (model.TaskSettings, error) {
 		return []byte(`{"lastReleasedAt":"2025-01-02T00:00:00Z"}`), nil
 	}
 
@@ -35,7 +35,7 @@ func (s *TestSuite) TestDoTask_Success() {
 
 func (s *TestSuite) TestDoTask_ErrorOnBeginTx() {
 	taskName := td.String()
-	taskFn := func(ctx context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
+	taskFn := func(_ context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
 		return settings, nil
 	}
 
@@ -49,7 +49,7 @@ func (s *TestSuite) TestDoTask_ErrorOnBeginTx() {
 
 func (s *TestSuite) TestDoTask_TransactionLocked() {
 	taskName := td.String()
-	taskFn := func(ctx context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
+	taskFn := func(_ context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
 		return settings, nil
 	}
 
@@ -76,7 +76,7 @@ func (s *TestSuite) TestDoTask_ErrorOnUpdateTask() {
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(updateTaskErr)
 	s.tx.EXPECT().Rollback(gomock.Any()).Return(nil)
 
-	taskFn := func(ctx context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
+	taskFn := func(_ context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
 		return settings, nil
 	}
 

@@ -1,7 +1,6 @@
 package taskprocessor_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
@@ -13,7 +12,6 @@ import (
 
 type TestSuite struct {
 	suite.Suite
-	ctx            context.Context
 	ctrl           *gomock.Controller
 	log            *zap.Logger
 	storageMock    *mock.MockStorage

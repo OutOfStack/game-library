@@ -15,8 +15,8 @@ type TestSuite struct {
 	ctrl           *gomock.Controller
 	log            *zap.Logger
 	storageMock    *mock.MockStorage
-	uploadcareMock *mock.MockUploadcareClient
-	igdbClientMock *mock.MockIGDBClient
+	uploadcareMock *mock.MockUploadcareAPIClient
+	igdbClientMock *mock.MockIGDBAPIClient
 	tx             *mock.MockTx
 	provider       *taskprocessor.TaskProvider
 }
@@ -25,8 +25,8 @@ func (s *TestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.log = zap.NewNop()
 	s.storageMock = mock.NewMockStorage(s.ctrl)
-	s.uploadcareMock = mock.NewMockUploadcareClient(s.ctrl)
-	s.igdbClientMock = mock.NewMockIGDBClient(s.ctrl)
+	s.uploadcareMock = mock.NewMockUploadcareAPIClient(s.ctrl)
+	s.igdbClientMock = mock.NewMockIGDBAPIClient(s.ctrl)
 	s.tx = mock.NewMockTx(s.ctrl)
 	s.provider = taskprocessor.New(s.log, s.storageMock, s.igdbClientMock, s.uploadcareMock)
 }

@@ -31,10 +31,10 @@ jobs:
     - name: Run tests with coverage
       run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
 
-    - name: Show Total Test Coverage
+    - name: Show tests coverage
       run: go tool cover -func=coverage.out
 
-    - name: Upload Coverage Report
+    - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report

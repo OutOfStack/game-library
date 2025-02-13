@@ -1,15 +1,17 @@
 package taskprocessor
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
-	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
@@ -28,31 +30,32 @@ type Storage interface {
 	GetCompanies(ctx context.Context) ([]model.Company, error)
 }
 
-// IGDBClient igdb client interface
-type IGDBClient interface {
-	GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdb.TopRatedGamesResp, error)
+// IGDBAPIClient igdb api client interface
+type IGDBAPIClient interface {
+	GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdbapi.TopRatedGamesResp, error)
+	GetImageByURL(ctx context.Context, imageURL, imageType string) (*bytes.Reader, string, error)
 }
 
-// UploadcareClient uploadcare client interface
-type UploadcareClient interface {
-	UploadImageFromURL(ctx context.Context, imageURL string) (newURL string, err error)
+// UploadcareAPIClient uploadcare api client interface
+type UploadcareAPIClient interface {
+	UploadImage(ctx context.Context, data io.ReadSeeker, fileName string) (string, error)
 }
 
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
-	log                *zap.Logger
-	storage            Storage
-	igdbProvider       IGDBClient
-	uploadcareProvider UploadcareClient
+	log                 *zap.Logger
+	storage             Storage
+	igdbAPIClient       IGDBAPIClient
+	uploadcareAPIClient UploadcareAPIClient
 }
 
 // New creates new TaskProvider
-func New(log *zap.Logger, storage Storage, igdbClient IGDBClient, uploadcareClient UploadcareClient) *TaskProvider {
+func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, uploadcareClient UploadcareAPIClient) *TaskProvider {
 	return &TaskProvider{
-		log:                log,
-		storage:            storage,
-		igdbProvider:       igdbClient,
-		uploadcareProvider: uploadcareClient,
+		log:                 log,
+		storage:             storage,
+		igdbAPIClient:       igdbClient,
+		uploadcareAPIClient: uploadcareClient,
 	}
 }
 

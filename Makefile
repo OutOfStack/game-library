@@ -2,6 +2,10 @@ build:
 	mkdir -p bin
 	go build -o bin/game-library-api cmd/game-library-api/main.go
 
+build-mng:
+	mkdir -p bin
+	go build -o bin/game-library-manage cmd/game-library-manage/main.go
+
 run:
 	go run ./cmd/game-library-api/.
 
@@ -15,10 +19,10 @@ dockerrunpg:
 	docker compose up -d --no-recreate db
 
 createdb:
-	docker exec -it games_db createdb --username=postgres --owner=postgres games
+	docker exec -it games_db createdb --username=games-user --owner=games-user games
 
 dropdb:
-	docker exec -it games_db dropdb --username=postgres games
+	docker exec -it games_db dropdb --username=games-user games
 
 migrate:
 	go run ./cmd/game-library-manage/. migrate
@@ -61,6 +65,8 @@ generate:
 	${MOCKGEN_BIN} -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/mocks/redis.go -package=cache_mock
 	${MOCKGEN_BIN} -source=internal/app/game-library-api/facade/provider.go -destination=internal/app/game-library-api/facade/mocks/provider.go -package=facade_mock
 	${MOCKGEN_BIN} -source=internal/middleware/auth.go -destination=internal/middleware/mocks/auth.go -package=middleware_mock
+	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
+	${MOCKGEN_BIN} -destination=internal/taskprocessor/mocks/tx.go -package=taskprocessor_mock github.com/jackc/pgx/v5 Tx
 
 LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint

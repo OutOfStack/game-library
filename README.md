@@ -104,6 +104,7 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
 
 ## List of Make commands:
     build           builds app
+    build-mng       build manage app
     run             runs app
     test            runs tests for the whole project
     generate        generates documentation for swagger UI and mocks

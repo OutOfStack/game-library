@@ -9,36 +9,43 @@ type TokenResp struct {
 
 // TopRatedGamesResp - top-rated games response
 type TopRatedGamesResp struct {
-	ID               int64   `json:"id"`
-	Name             string  `json:"name"`
-	TotalRating      float64 `json:"total_rating"`
-	TotalRatingCount int64   `json:"total_rating_count"`
-	Cover            struct {
-		URL string `json:"url"`
-	} `json:"cover"`
-	FirstReleaseDate int64 `json:"first_release_date"`
-	Genres           []struct {
-		ID   int64  `json:"id"`
-		Name string `json:"name"`
-	} `json:"genres"`
-	InvolvedCompanies []struct {
-		Company struct {
-			ID   int64  `json:"id"`
-			Name string `json:"name"`
-		}
-		Developer bool `json:"developer"`
-		Publisher bool `json:"publisher"`
-	} `json:"involved_companies"`
-	Platforms   []int64 `json:"platforms"`
-	Screenshots []struct {
-		URL string `json:"url"`
-	} `json:"screenshots"`
-	Slug     string `json:"slug"`
-	Summary  string `json:"summary"`
-	Websites []struct {
-		Category int8   `json:"category"`
-		URL      string `json:"url"`
-	} `json:"websites"`
+	ID                int64     `json:"id"`
+	Name              string    `json:"name"`
+	TotalRating       float64   `json:"total_rating"`
+	TotalRatingCount  int64     `json:"total_rating_count"`
+	Cover             URL       `json:"cover"`
+	FirstReleaseDate  int64     `json:"first_release_date"`
+	Genres            []IDName  `json:"genres"`
+	InvolvedCompanies []Company `json:"involved_companies"`
+	Platforms         []int64   `json:"platforms"`
+	Screenshots       []URL     `json:"screenshots"`
+	Slug              string    `json:"slug"`
+	Summary           string    `json:"summary"`
+	Websites          []Website `json:"websites"`
+}
+
+// URL - struct containing url
+type URL struct {
+	URL string `json:"url"`
+}
+
+// IDName - struct containing id and name
+type IDName struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+// Company - company
+type Company struct {
+	Company   IDName `json:"company"`
+	Developer bool   `json:"developer"`
+	Publisher bool   `json:"publisher"`
+}
+
+// Website - website
+type Website struct {
+	Category int8   `json:"category"`
+	URL      string `json:"url"`
 }
 
 // WebsiteCategory - website category

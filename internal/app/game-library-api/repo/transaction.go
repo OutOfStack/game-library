@@ -2,12 +2,11 @@ package repo
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
 )
 
 // BeginTx starts transaction
-func (s *Storage) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
-	return s.db.BeginTxx(ctx, &sql.TxOptions{})
+func (s *Storage) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	return s.db.Begin(ctx)
 }

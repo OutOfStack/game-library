@@ -1,10 +1,10 @@
 package repo
 
 import (
-	"database/sql"
 	"errors"
 
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // pg error codes
@@ -18,11 +18,8 @@ var (
 	ErrTransactionLocked = errors.New("transaction locked")
 )
 
-func checkRowsAffected[T apperr.EntityIDType](res sql.Result, entity string, id T) error {
-	count, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
+func checkRowsAffected[T apperr.EntityIDType](res pgconn.CommandTag, entity string, id T) error {
+	count := res.RowsAffected()
 	if count == 0 {
 		return apperr.NewNotFoundError(entity, id)
 	}

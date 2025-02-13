@@ -9,7 +9,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/OutOfStack/game-library/pkg/types"
-	"github.com/lib/pq"
 	goredis "github.com/redis/go-redis/v9"
 	mock "go.uber.org/mock/gomock"
 )
@@ -18,15 +17,15 @@ func (s *TestSuite) TestGetGames_Success() {
 	games := []model.Game{{
 		ID:          td.Int32(),
 		Name:        td.String(),
-		Developers:  pq.Int32Array{td.Int32(), td.Int32()},
-		Publishers:  pq.Int32Array{td.Int32(), td.Int32()},
+		Developers:  []int32{td.Int32(), td.Int32()},
+		Publishers:  []int32{td.Int32(), td.Int32()},
 		ReleaseDate: types.DateOf(td.Date()),
-		Genres:      pq.Int32Array{td.Int32(), td.Int32()},
+		Genres:      []int32{td.Int32(), td.Int32()},
 		LogoURL:     td.String(),
 		Rating:      td.Float64(),
 		Summary:     td.String(),
 		Slug:        td.String(),
-		Platforms:   pq.Int32Array{td.Int32(), td.Int32()},
+		Platforms:   []int32{td.Int32(), td.Int32()},
 		Screenshots: []string{td.String(), td.String()},
 		Websites:    []string{td.String(), td.String()},
 		IGDBRating:  td.Float64(),
@@ -63,15 +62,15 @@ func (s *TestSuite) TestGetGameByID_Success() {
 	game := model.Game{
 		ID:          td.Int32(),
 		Name:        td.String(),
-		Developers:  pq.Int32Array{td.Int32(), td.Int32()},
-		Publishers:  pq.Int32Array{td.Int32(), td.Int32()},
+		Developers:  []int32{td.Int32(), td.Int32()},
+		Publishers:  []int32{td.Int32(), td.Int32()},
 		ReleaseDate: types.DateOf(td.Date()),
-		Genres:      pq.Int32Array{td.Int32(), td.Int32()},
+		Genres:      []int32{td.Int32(), td.Int32()},
 		LogoURL:     td.String(),
 		Rating:      td.Float64(),
 		Summary:     td.String(),
 		Slug:        td.String(),
-		Platforms:   pq.Int32Array{td.Int32(), td.Int32()},
+		Platforms:   []int32{td.Int32(), td.Int32()},
 		Screenshots: []string{td.String(), td.String()},
 		Websites:    []string{td.String(), td.String()},
 		IGDBRating:  td.Float64(),

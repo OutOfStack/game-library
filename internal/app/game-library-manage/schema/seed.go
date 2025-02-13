@@ -1,25 +1,28 @@
 package schema
 
 import (
+	"context"
+
 	"github.com/OutOfStack/game-library/scripts"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Seed seeds database
-func Seed(db *sqlx.DB) error {
+func Seed(db *pgxpool.Pool) error {
 	q := scripts.SeedSQL
 
-	tx, err := db.Begin()
+	ctx := context.Background()
+	tx, err := db.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	if _, err = tx.Exec(q); err != nil {
-		if rErr := tx.Rollback(); rErr != nil {
+	if _, err = tx.Exec(ctx, q); err != nil {
+		if rErr := tx.Rollback(ctx); rErr != nil {
 			return rErr
 		}
 		return err
 	}
 
-	return tx.Commit()
+	return tx.Commit(ctx)
 }

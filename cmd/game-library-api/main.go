@@ -27,7 +27,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
-	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -91,22 +90,14 @@ func initLogger(cfg appconf.Cfg) *zap.Logger {
 }
 
 func run(logger *zap.Logger, cfg appconf.Cfg) error {
+	ctx := context.Background()
+
 	// connect to database
-	db, err := database.Open(database.Config{
-		Host:       cfg.DB.Host,
-		Name:       cfg.DB.Name,
-		User:       cfg.DB.User,
-		Password:   cfg.DB.Password,
-		RequireSSL: cfg.DB.RequireSSL,
-	})
+	db, err := database.New(ctx, cfg.DB.DSN)
 	if err != nil {
-		return fmt.Errorf("open db: %w", err)
+		return fmt.Errorf("connect to db: %v", err)
 	}
-	defer func(db *sqlx.DB) {
-		if err = db.Close(); err != nil {
-			logger.Error("call database close", zap.Error(err))
-		}
-	}(db)
+	defer db.Close()
 
 	// create auth module
 	authClient, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL, otelhttp.DefaultClient)

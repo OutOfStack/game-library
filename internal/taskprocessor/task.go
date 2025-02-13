@@ -10,15 +10,15 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/client/igdb"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
 
 // Storage db storage interface
 type Storage interface {
-	BeginTx(ctx context.Context) (*sqlx.Tx, error)
-	GetTask(ctx context.Context, tx *sqlx.Tx, name string) (model.Task, error)
-	UpdateTask(ctx context.Context, tx *sqlx.Tx, task model.Task) error
+	BeginTx(ctx context.Context) (pgx.Tx, error)
+	GetTask(ctx context.Context, tx pgx.Tx, name string) (model.Task, error)
+	UpdateTask(ctx context.Context, tx pgx.Tx, task model.Task) error
 	CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error)
 	GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error)
 	GetPlatforms(ctx context.Context) ([]model.Platform, error)
@@ -70,13 +70,13 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 	task, err := tp.storage.GetTask(ctx, tx, name)
 	if err != nil {
 		if errors.Is(err, repo.ErrTransactionLocked) {
-			return tx.Rollback()
+			return tx.Rollback(ctx)
 		}
 		return err
 	}
 
 	if task.Status == model.RunningTaskStatus {
-		return tx.Rollback()
+		return tx.Rollback(ctx)
 	}
 
 	task.Status = model.RunningTaskStatus
@@ -89,14 +89,14 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 	err = tp.storage.UpdateTask(ctx, tx, task)
 	if err != nil {
 		tp.log.Error("update task", zap.Error(err))
-		rErr := tx.Rollback()
+		rErr := tx.Rollback(ctx)
 		if rErr != nil {
 			return rErr
 		}
 		return err
 	}
 
-	err = tx.Commit()
+	err = tx.Commit(ctx)
 	if err != nil {
 		return err
 	}

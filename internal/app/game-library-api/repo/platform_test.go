@@ -96,7 +96,7 @@ func createPlatform(ctx context.Context, p model.Platform) (id int32, err error)
 		ON CONFLICT (igdb_id) DO NOTHING
 		RETURNING id`
 
-	if err = db.QueryRowContext(ctx, q, p.Name, p.Abbreviation, p.IGDBID).Scan(&id); err != nil {
+	if err = db.QueryRow(ctx, q, p.Name, p.Abbreviation, p.IGDBID).Scan(&id); err != nil {
 		return 0, fmt.Errorf("create platform: %v", err)
 	}
 

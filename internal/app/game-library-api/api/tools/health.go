@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -23,23 +23,23 @@ type health struct {
 
 // HealthCheck has methods for readiness and liveness probes
 type HealthCheck struct {
-	db *sqlx.DB
+	db *pgxpool.Pool
 }
 
 // NewHealthCheck creates new HealthCheck
-func NewHealthCheck(db *sqlx.DB) *HealthCheck {
+func NewHealthCheck(db *pgxpool.Pool) *HealthCheck {
 	return &HealthCheck{db: db}
 }
 
 // Readiness determines whether service is ready
-func (hc *HealthCheck) Readiness(w http.ResponseWriter, _ *http.Request) {
+func (hc *HealthCheck) Readiness(w http.ResponseWriter, r *http.Request) {
 	var h health
 	host, err := os.Hostname()
 	if err != nil {
 		host = unavailable
 	}
 	h.Host = host
-	if err = hc.db.Ping(); err != nil {
+	if err = hc.db.Ping(r.Context()); err != nil {
 		h.Status = "database not ready"
 		web.Respond(w, h, http.StatusServiceUnavailable)
 		return

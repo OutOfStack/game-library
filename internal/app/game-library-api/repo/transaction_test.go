@@ -12,10 +12,11 @@ func TestCommit_Success(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	tx, err := s.BeginTx(context.Background())
+	ctx := context.Background()
+	tx, err := s.BeginTx(ctx)
 	require.NoError(t, err)
 
-	err = tx.Commit()
+	err = tx.Commit(ctx)
 	require.NoError(t, err)
 }
 
@@ -24,9 +25,10 @@ func TestRollback_Success(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	tx, err := s.BeginTx(context.Background())
+	ctx := context.Background()
+	tx, err := s.BeginTx(ctx)
 	require.NoError(t, err)
 
-	err = tx.Rollback()
+	err = tx.Rollback(ctx)
 	require.NoError(t, err)
 }

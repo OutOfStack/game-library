@@ -7,6 +7,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
+	"github.com/georgysavva/scany/v2/pgxscan"
 )
 
 // GetPlatforms returns platforms
@@ -18,7 +19,7 @@ func (s *Storage) GetPlatforms(ctx context.Context) (platforms []model.Platform,
 		SELECT id, name, abbreviation, igdb_id
 		FROM platforms`
 
-	if err = s.db.SelectContext(ctx, &platforms, q); err != nil {
+	if err = pgxscan.Select(ctx, s.db, &platforms, q); err != nil {
 		return nil, err
 	}
 
@@ -36,7 +37,7 @@ func (s *Storage) GetPlatformByID(ctx context.Context, id int32) (platform model
 		FROM platforms
 		WHERE id = $1`
 
-	if err = s.db.GetContext(ctx, &platform, q, id); err != nil {
+	if err = pgxscan.Get(ctx, s.db, &platform, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Platform{}, apperr.NewNotFoundError("platform", id)
 		}

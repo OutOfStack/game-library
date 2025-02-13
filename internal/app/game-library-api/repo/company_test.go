@@ -82,11 +82,11 @@ func TestGetCompanyIDByName_CompanyNotExist_ShouldReturnNotFoundError(t *testing
 		Name:   td.String(),
 		IGDBID: sql.NullInt64{Int64: td.Int64(), Valid: true},
 	}
+	randomName := td.String()
 
 	_, err := s.CreateCompany(ctx, company)
 	require.NoError(t, err)
 
-	randomName := td.String()
 	gotID, err := s.GetCompanyIDByName(ctx, randomName)
 	require.ErrorIs(t, err, apperr.NewNotFoundError("company", randomName), "err should be NotFound")
 	require.Zero(t, gotID, "got id should be 0")

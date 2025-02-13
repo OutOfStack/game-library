@@ -12,7 +12,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/pkg/types"
-	"github.com/lib/pq"
+	"github.com/georgysavva/scany/v2/pgxscan"
 )
 
 const (
@@ -70,7 +70,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model
 		return nil, err
 	}
 
-	if err = s.db.SelectContext(ctx, &list, q, args...); err != nil {
+	if err = pgxscan.Select(ctx, s.db, &list, q, args...); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (
 		return 0, err
 	}
 
-	if err = s.db.GetContext(ctx, &count, q, args...); err != nil {
+	if err = pgxscan.Get(ctx, s.db, &count, q, args...); err != nil {
 		return 0, err
 	}
 
@@ -122,7 +122,7 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, e
 		FROM games
 		WHERE id = $1`
 
-	if err = s.db.GetContext(ctx, &game, q, id); err != nil {
+	if err = pgxscan.Get(ctx, s.db, &game, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Game{}, apperr.NewNotFoundError("game", id)
 		}
@@ -143,7 +143,7 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 		FROM games
 		WHERE igdb_id = $1`
 
-	if err = s.db.GetContext(ctx, &id, q, igdbID); err != nil {
+	if err = pgxscan.Get(ctx, s.db, &id, q, igdbID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, apperr.NewNotFoundError("game", igdbID)
 		}
@@ -160,14 +160,14 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32
 
 	const q = `
 		INSERT INTO games
-    		(name, developers, publishers, release_date, genres, logo_url, summary, platforms, screenshots,
-     		websites, slug, igdb_rating, igdb_id, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::varchar(50), $12, $13, $14)
+    		(name, developers, publishers, release_date, genres, logo_url, summary,
+    		 platforms, screenshots, websites, slug, igdb_rating, igdb_id, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7,
+		        $8, $9, $10, $11::varchar(50), $12, $13, $14)
 		RETURNING id`
 
-	err = s.db.QueryRowContext(ctx, q, cg.Name, pq.Int32Array(cg.DevelopersIDs), pq.Int32Array(cg.PublishersIDs),
-		cg.ReleaseDate, pq.Int32Array(cg.Genres), cg.LogoURL, cg.Summary, pq.Int32Array(cg.Platforms),
-		pq.StringArray(cg.Screenshots), pq.StringArray(cg.Websites), cg.Slug, cg.IGDBRating, cg.IGDBID, time.Now()).
+	err = s.db.QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.Genres, cg.LogoURL, cg.Summary,
+		cg.Platforms, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBID, time.Now()).
 		Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)
@@ -184,17 +184,16 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameD
 
 	const q = `
 		UPDATE games
-		SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8, platforms = $9,
-	    	screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, igdb_id = $14, updated_at = $15
+		SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8,
+		    platforms = $9, screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, igdb_id = $14, updated_at = $15
 		WHERE id = $1`
 
 	releaseDate, err := types.ParseDate(ug.ReleaseDate)
 	if err != nil {
 		return fmt.Errorf("invalid date %v: %v", releaseDate, err)
 	}
-	res, err := s.db.ExecContext(ctx, q, id, ug.Name, pq.Int32Array(ug.Developers), pq.Int32Array(ug.Publishers), releaseDate.String(),
-		pq.Int32Array(ug.Genres), ug.LogoURL, ug.Summary, pq.Int32Array(ug.Platforms), pq.StringArray(ug.Screenshots),
-		pq.StringArray(ug.Websites), ug.Slug, ug.IGDBRating, ug.IGDBID, time.Now())
+	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.Developers, ug.Publishers, releaseDate.String(), ug.Genres, ug.LogoURL, ug.Summary,
+		ug.Platforms, ug.Screenshots, ug.Websites, ug.Slug, ug.IGDBRating, ug.IGDBID, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d: %v", id, err)
 	}
@@ -217,7 +216,7 @@ func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 			updated_at = $2
 		WHERE id = $1`
 
-	res, err := s.db.ExecContext(ctx, q, id, time.Now())
+	res, err := s.db.Exec(ctx, q, id, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d rating: %v", id, err)
 	}
@@ -234,7 +233,7 @@ func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
 	const q = `
 		DELETE FROM games
 		WHERE id = $1`
-	res, err := s.db.ExecContext(ctx, q, id)
+	res, err := s.db.Exec(ctx, q, id)
 	if err != nil {
 		return fmt.Errorf("deleting game %d: %v", id, err)
 	}

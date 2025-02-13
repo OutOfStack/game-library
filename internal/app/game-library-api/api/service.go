@@ -14,7 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
 	chicors "github.com/go-chi/cors"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riandyrn/otelchi"
 	swag "github.com/swaggo/http-swagger/v2"
 	"go.opentelemetry.io/otel"
@@ -29,7 +29,7 @@ import (
 // Service constructs router with all API routes
 func Service(
 	log *zap.Logger,
-	db *sqlx.DB,
+	db *pgxpool.Pool,
 	au *auth.Client,
 	pr *Provider,
 	conf appconf.Cfg,

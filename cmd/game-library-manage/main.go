@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -21,15 +22,8 @@ func main() {
 		log.Fatalf("parse config: %v", err)
 	}
 
-	fmt.Printf("Host: %s, Name: %s, User: %s, RequireSSL: %v\n", cfg.DB.Host, cfg.DB.Name, cfg.DB.User, cfg.DB.RequireSSL)
-
-	db, err := database.Open(database.Config{
-		Host:       cfg.DB.Host,
-		Name:       cfg.DB.Name,
-		User:       cfg.DB.User,
-		Password:   cfg.DB.Password,
-		RequireSSL: cfg.DB.RequireSSL,
-	})
+	ctx := context.Background()
+	db, err := database.New(ctx, cfg.DB.DSN)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,13 +32,13 @@ func main() {
 	flag.Parse()
 	switch flag.Arg(0) {
 	case "migrate":
-		if err = schema.Migrate(db, true); err != nil {
+		if err = schema.Migrate(cfg.DB.DSN, true); err != nil {
 			log.Printf("Apply migrations failed: %v", err)
 			return
 		}
 		log.Print("Migration complete")
 	case "rollback":
-		if err = schema.Migrate(db, false); err != nil {
+		if err = schema.Migrate(cfg.DB.DSN, false); err != nil {
 			log.Printf("Rollback last migration failed: %v", err)
 			return
 		}

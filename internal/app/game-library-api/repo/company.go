@@ -10,6 +10,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
+	"github.com/georgysavva/scany/v2/pgxscan"
 )
 
 // CreateCompany creates new company
@@ -23,7 +24,7 @@ func (s *Storage) CreateCompany(ctx context.Context, c model.Company) (id int32,
 		ON CONFLICT (igdb_id) DO NOTHING
 		RETURNING id`
 
-	if err = s.db.QueryRowContext(ctx, q, c.Name, c.IGDBID, time.Now()).Scan(&id); err != nil {
+	if err = s.db.QueryRow(ctx, q, c.Name, c.IGDBID, time.Now()).Scan(&id); err != nil {
 		return 0, fmt.Errorf("create company with name %s and igdb id %d: %v", c.Name, c.IGDBID.Int64, err)
 	}
 
@@ -39,7 +40,7 @@ func (s *Storage) GetCompanies(ctx context.Context) (companies []model.Company, 
 		SELECT id, name, igdb_id
 		FROM companies`
 
-	if err = s.db.SelectContext(ctx, &companies, q); err != nil {
+	if err = pgxscan.Select(ctx, s.db, &companies, q); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +58,7 @@ func (s *Storage) GetCompanyIDByName(ctx context.Context, name string) (id int32
 		FROM companies
 		WHERE lower(name) = $1`
 
-	if err = s.db.GetContext(ctx, &id, q, strings.ToLower(name)); err != nil {
+	if err = pgxscan.Get(ctx, s.db, &id, q, strings.ToLower(name)); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, apperr.NewNotFoundError("company", name)
 		}
@@ -78,7 +79,7 @@ func (s *Storage) GetCompanyByID(ctx context.Context, id int32) (company model.C
 		FROM companies
 		WHERE id = $1`
 
-	if err = s.db.GetContext(ctx, &company, q, id); err != nil {
+	if err = pgxscan.Get(ctx, s.db, &company, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Company{}, apperr.NewNotFoundError("company", id)
 		}
@@ -103,7 +104,7 @@ func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies 
 		ORDER BY COUNT(*) DESC
 		LIMIT $1`
 
-	if err = s.db.SelectContext(ctx, &companies, q, limit); err != nil {
+	if err = pgxscan.Select(ctx, s.db, &companies, q, limit); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +126,7 @@ func (s *Storage) GetTopPublishers(ctx context.Context, limit int64) (companies 
 		ORDER BY COUNT(*) DESC
 		LIMIT $1`
 
-	if err = s.db.SelectContext(ctx, &companies, q, limit); err != nil {
+	if err = pgxscan.Select(ctx, s.db, &companies, q, limit); err != nil {
 		return nil, err
 	}
 

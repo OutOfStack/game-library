@@ -17,9 +17,10 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
-	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/authapi"
+	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/client/redis"
-	"github.com/OutOfStack/game-library/internal/client/uploadcare"
+	"github.com/OutOfStack/game-library/internal/client/uploadcareapi"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
@@ -27,7 +28,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
@@ -99,22 +99,22 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	}
 	defer db.Close()
 
-	// create auth module
-	authClient, err := auth.New(logger, cfg.Auth.SigningAlgorithm, cfg.Auth.VerifyTokenAPIURL, otelhttp.DefaultClient)
-	if err != nil {
-		return fmt.Errorf("create Auth: %w", err)
-	}
-
 	// create IGDB client
-	igdbClient, err := igdb.New(logger, cfg.IGDB)
+	igdbAPIClient, err := igdbapi.New(logger, cfg.IGDB)
 	if err != nil {
 		return fmt.Errorf("create IGDB client: %w", err)
 	}
 
-	// create uploadcare client
-	uploadcareClient, err := uploadcare.New(logger, cfg.Uploadcare)
+	// create uploadcare api client
+	uploadcareAPIClient, err := uploadcareapi.New(logger, cfg.Uploadcare)
 	if err != nil {
 		return fmt.Errorf("create uploadcare client: %w", err)
+	}
+
+	// create auth api client
+	authAPIClient, err := authapi.New(logger, cfg.Auth.VerifyTokenAPIURL)
+	if err != nil {
+		return fmt.Errorf("create auth api client: %w", err)
 	}
 
 	// create redis client
@@ -129,6 +129,12 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	// create storage
 	storage := repo.New(db)
 
+	// create auth facade
+	authFacade, err := auth.New(logger, cfg.Auth.SigningAlgorithm, authAPIClient)
+	if err != nil {
+		return fmt.Errorf("create Auth: %w", err)
+	}
+
 	// create game facade
 	gameFacade := facade.NewProvider(logger, storage, rCache)
 
@@ -136,7 +142,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	apiProvider := api.NewProvider(logger, rCache, gameFacade)
 
 	// run background tasks
-	taskProvider := taskprocessor.New(logger, storage, igdbClient, uploadcareClient)
+	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, uploadcareAPIClient)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
 		taskprocessor.FetchIGDBGamesTaskName: {Schedule: cfg.Scheduler.FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
@@ -167,7 +173,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	}()
 
 	// start API service
-	apiService, err := api.Service(logger, db, authClient, apiProvider, cfg)
+	apiService, err := api.Service(logger, db, authFacade, apiProvider, cfg)
 	if err != nil {
 		return fmt.Errorf("can't create service api: %w", err)
 	}

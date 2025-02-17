@@ -1,15 +1,14 @@
-package uploadcare
+package uploadcareapi
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
+	"github.com/OutOfStack/game-library/internal/pkg/observability"
 	"github.com/uploadcare/uploadcare-go/ucare"
 	"github.com/uploadcare/uploadcare-go/upload"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -28,7 +27,6 @@ var tracer = otel.Tracer("")
 // Client represents dependencies for uploadcare client
 type Client struct {
 	log    *zap.Logger
-	client *http.Client
 	upload upload.Service
 }
 
@@ -39,61 +37,37 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 		PublicKey: conf.PublicKey,
 	}
 
-	otelClient := otelhttp.DefaultClient
+	client := &http.Client{
+		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "uploadcare"),
+	}
 
-	uClient, err := ucare.NewClient(creds, &ucare.Config{
+	ucareClient, err := ucare.NewClient(creds, &ucare.Config{
 		SignBasedAuthentication: true,
-		HTTPClient:              otelClient,
+		HTTPClient:              client,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating uploadcare client: %v", err)
 	}
 
-	uploadService := upload.NewService(uClient)
-
 	return &Client{
 		log:    log,
-		upload: uploadService,
-		client: otelClient,
+		upload: upload.NewService(ucareClient),
 	}, nil
 }
 
-// UploadImageFromURL - uploads image from image url and returns new image url
-func (c *Client) UploadImageFromURL(ctx context.Context, imageURL string) (string, error) {
-	ctx, span := tracer.Start(ctx, "uploadcare.uploadimagefromurl")
-	defer span.End()
-
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("creating get image by url request: %v", err)
-	}
-
-	resp, err := c.client.Do(request)
-	if err != nil {
-		return "", fmt.Errorf("get image by url: %v", err)
-	}
-	defer resp.Body.Close()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read response body: %v", err)
-	}
-
-	reader := bytes.NewReader(data)
-	fileName := path.Base(request.URL.Path)
-
-	fCtx, fSpan := tracer.Start(ctx, "uploadcare/uploadcare-go/upload.file", trace.WithAttributes(attribute.String("filename", fileName)))
+// UploadImage - uploads image and returns new image url
+func (c *Client) UploadImage(ctx context.Context, data io.ReadSeeker, fileName string) (string, error) {
+	fCtx, fSpan := tracer.Start(ctx, "uploadcare.uploadFile", trace.WithAttributes(attribute.String("filename", fileName)))
+	defer fSpan.End()
 
 	fileID, err := c.upload.File(fCtx, upload.FileParams{
-		Data:    reader,
+		Data:    data,
 		Name:    fileName,
 		ToStore: ucare.String(upload.ToStoreTrue),
 	})
 	if err != nil {
-		fSpan.End()
 		return "", fmt.Errorf("upload image to ucare: %v", err)
 	}
-	fSpan.End()
 
 	return getFileURL(fileID)
 }

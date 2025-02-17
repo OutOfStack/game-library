@@ -15,6 +15,7 @@ import (
 	mw "github.com/go-chi/chi/v5/middleware"
 	chicors "github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/riandyrn/otelchi"
 	swag "github.com/swaggo/http-swagger/v2"
 	"go.opentelemetry.io/otel"
@@ -40,10 +41,10 @@ func Service(
 	}
 	r := chi.NewRouter()
 	r.Use(mw.RequestID)
+	r.Use(middleware.Metrics)
 	r.Use(middleware.Logger(log))
 	r.Use(mw.Recoverer)
 	r.Use(otelchi.Middleware(appconf.ServiceName))
-	r.Use(middleware.Metrics)
 	r.Use(chicors.Handler(chicors.Options{
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Content-type", "Authorization"},
@@ -55,26 +56,35 @@ func Service(
 
 	hc := tools.NewHealthCheck(db)
 
+	// metrics
+	r.Handle("/metrics", promhttp.Handler())
+
 	// tools
 	r.Get("/api/readiness", hc.Readiness)
+
 	r.Get("/api/liveness", hc.Liveness)
 
 	// games
 	r.Route("/api/games", func(r chi.Router) {
 		r.Get("/", pr.GetGames)
+
 		r.Get("/{id}", pr.GetGame)
+
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
 		).Post("/", pr.CreateGame)
+
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
 		).Delete("/{id}", pr.DeleteGame)
+
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
 		).Patch("/{id}", pr.UpdateGame)
+
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RoleRegisteredUser),
@@ -90,6 +100,7 @@ func Service(
 	// genres
 	r.Route("/api/genres", func(r chi.Router) {
 		r.Get("/", pr.GetGenres)
+
 		r.Get("/top", pr.GetTopGenres)
 	})
 

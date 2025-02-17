@@ -1,4 +1,4 @@
-package igdb
+package igdbapi
 
 import (
 	"bytes"
@@ -8,12 +8,15 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
+	"github.com/OutOfStack/game-library/internal/pkg/observability"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
@@ -23,24 +26,35 @@ const (
 	maxLimit = 500
 )
 
+var tracer = otel.Tracer("")
+
 // Client represents dependencies for igdb client
 type Client struct {
-	log   *zap.Logger
-	conf  appconf.IGDB
-	token *tokenInfo
+	log    *zap.Logger
+	conf   appconf.IGDB
+	token  *tokenInfo
+	client *http.Client
 }
 
 // New constructs Client instance
 func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
+	client := &http.Client{
+		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "igdb"),
+	}
+
 	return &Client{
-		log:   log,
-		token: &tokenInfo{},
-		conf:  conf,
+		log:    log,
+		token:  &tokenInfo{},
+		conf:   conf,
+		client: client,
 	}, nil
 }
 
 // GetTopRatedGames returns top-rated games
 func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedBefore time.Time, minRatingsCount, minRating, limit int64) ([]TopRatedGamesResp, error) {
+	ctx, span := tracer.Start(ctx, "igdb.getTopRatedGames")
+	defer span.End()
+
 	if limit > maxLimit {
 		limit = maxLimit
 	}
@@ -71,12 +85,16 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 		return nil, fmt.Errorf("set auth headers: %v", err)
 	}
 
-	resp, err := otelhttp.DefaultClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		c.log.Error("request igdb api", zap.String("url", reqURL), zap.Error(err))
 		return nil, fmt.Errorf("igdb api unavailable: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			c.log.Error("failed to close response body", zap.Error(err))
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, rErr := io.ReadAll(resp.Body)
@@ -95,10 +113,43 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 	return respBody, nil
 }
 
-// GetImageURL returns fixed image url
-func GetImageURL(igdbImageURL string, imageType string) string {
+// GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name
+func (c *Client) GetImageByURL(ctx context.Context, imageURL, imageType string) (*bytes.Reader, string, error) {
+	ctx, span := tracer.Start(ctx, "igdb.downloadImage")
+	defer span.End()
+
+	imageURL = getImageURL(imageURL, imageType)
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("creating get image by url request: %v", err)
+	}
+
+	resp, err := c.client.Do(request)
+	if err != nil {
+		return nil, "", fmt.Errorf("get image by url: %v", err)
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			c.log.Error("failed to close response body", zap.Error(err))
+		}
+	}()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("read response body: %v", err)
+	}
+
+	reader := bytes.NewReader(data)
+	fileName := path.Base(request.URL.Path)
+
+	return reader, fileName, nil
+}
+
+// returns updated image url for provided image type
+func getImageURL(igdbImageURL string, imageType string) string {
 	if imageType != "" {
-		igdbImageURL = strings.Replace(igdbImageURL, ImageThumbAlias, imageType, 1)
+		igdbImageURL = strings.Replace(igdbImageURL, ImageTypeThumbAlias, imageType, 1)
 	}
 	u, err := url.Parse(igdbImageURL)
 	if err != nil {
@@ -120,6 +171,9 @@ func (c *Client) setAuthHeaders(ctx context.Context, header *http.Header) error 
 
 // accessToken returns access token
 func (c *Client) accessToken(ctx context.Context) (string, error) {
+	ctx, span := tracer.Start(ctx, "igdb.token")
+	defer span.End()
+
 	token := c.token.get()
 	if token != "" {
 		return token, nil
@@ -137,12 +191,16 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	q.Add("client_secret", c.conf.ClientSecret)
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := otelhttp.DefaultClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		c.log.Error("calling token api", zap.String("url", c.conf.TokenURL), zap.Error(err))
 		return "", fmt.Errorf("token api unavailable: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			c.log.Error("failed to close response body", zap.Error(err))
+		}
+	}()
 
 	var respBody TokenResp
 	err = json.NewDecoder(resp.Body).Decode(&respBody)

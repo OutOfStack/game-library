@@ -25,16 +25,16 @@ spec:
                     httpGet:
                         path: /api/readiness
                         port: 8000
-                    initialDelaySeconds: 20
-                    periodSeconds: 181
+                    initialDelaySeconds: 10
+                    periodSeconds: 30
                     timeoutSeconds: 5
                     failureThreshold: 2
                 livenessProbe:
                     httpGet:
                         path: /api/liveness
                         port: 8000
-                    initialDelaySeconds: 20
-                    periodSeconds: 179
+                    initialDelaySeconds: 10
+                    periodSeconds: 30
                     timeoutSeconds: 2
                     failureThreshold: 2
                 ports:

@@ -1,4 +1,4 @@
-package igdb
+package igdbapi
 
 // TokenResp - access token response
 type TokenResp struct {
@@ -63,11 +63,11 @@ const (
 	WebsiteCategoryGOG       WebsiteCategory = 17
 )
 
-// Image aliases
+// Image types aliases
 const (
-	ImageThumbAlias         = "thumb"
-	ImageCoverBig2xAlias    = "cover_big_2x"
-	ImageScreenshotBigAlias = "screenshot_big"
+	ImageTypeThumbAlias         = "thumb"
+	ImageTypeCoverBig2xAlias    = "cover_big_2x"
+	ImageTypeScreenshotBigAlias = "screenshot_big"
 )
 
 // WebsiteCategoryNames - mapping of website category to name

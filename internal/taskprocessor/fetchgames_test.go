@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"go.uber.org/mock/gomock"
@@ -26,45 +26,45 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		{ID: td.Int31(), IGDBID: td.Int64()},
 	}
 
-	logoURL, screenshotURL := td.String(), td.String()
+	logoURL, logoFileName, screenshotURL, screenshotFileName := td.String(), td.String(), td.String(), td.String()
 	developerID, developerIGDBID, developerName := td.Int31(), td.Int64(), td.String()
 	publisherID, publisherIGDBID, publisherName := td.Int31(), td.Int64(), td.String()
 	genreID, genreIGDBID, genreName := td.Int31(), td.Int64(), td.String()
 
-	igdbGame := igdb.TopRatedGamesResp{
+	igdbGame := igdbapi.TopRatedGamesResp{
 		ID:               td.Int64(),
 		Name:             td.String(),
 		TotalRating:      td.Float64(),
 		TotalRatingCount: td.Int64(),
-		Cover: igdb.URL{
+		Cover: igdbapi.URL{
 			URL: fmt.Sprintf("https://%s.com/cover.jpg", td.String()),
 		},
 		FirstReleaseDate: time.Now().Add(-time.Minute).Unix(),
-		Genres: []igdb.IDName{{
+		Genres: []igdbapi.IDName{{
 			ID:   genreIGDBID,
 			Name: genreName,
 		}},
-		InvolvedCompanies: []igdb.Company{{
-			Company: igdb.IDName{
+		InvolvedCompanies: []igdbapi.Company{{
+			Company: igdbapi.IDName{
 				ID:   developerIGDBID,
 				Name: developerName,
 			},
 			Developer: true,
 		}, {
-			Company: igdb.IDName{
+			Company: igdbapi.IDName{
 				ID:   publisherIGDBID,
 				Name: publisherName,
 			},
 			Publisher: true,
 		}},
 		Platforms: []int64{platforms[0].IGDBID},
-		Screenshots: []igdb.URL{
+		Screenshots: []igdbapi.URL{
 			{URL: fmt.Sprintf("https://%s.com/screenshot.png", td.String())},
 		},
 		Slug:    td.String(),
 		Summary: td.String(),
-		Websites: []igdb.Website{
-			{URL: td.String(), Category: int8(igdb.WebsiteCategorySteam)},
+		Websites: []igdbapi.Website{
+			{URL: td.String(), Category: int8(igdbapi.WebsiteCategorySteam)},
 			{URL: td.String(), Category: int8(-1)},
 		},
 	}
@@ -79,7 +79,7 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return(nil, nil)
 
 	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, gomock.Cond(func(x time.Time) bool { return x.Sub(lastReleasedAt) < time.Second }), gomock.Any(), int64(60), gomock.Any()).
-		Return([]igdb.TopRatedGamesResp{igdbGame}, nil).Times(1)
+		Return([]igdbapi.TopRatedGamesResp{igdbGame}, nil).Times(1)
 	// next iterations - return no games in order to stop
 	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(60), gomock.Any()).
 		Return(nil, nil).Times(4)
@@ -88,8 +88,10 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		Return(developerID, nil)
 	s.storageMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: publisherName, IGDBID: sql.NullInt64{Valid: true, Int64: publisherIGDBID}}).Return(publisherID, nil)
 	s.storageMock.EXPECT().CreateGenre(gomock.Any(), model.Genre{Name: genreName, IGDBID: genreIGDBID}).Return(genreID, nil)
-	s.uploadcareMock.EXPECT().UploadImageFromURL(gomock.Any(), igdbGame.Cover.URL).Return(logoURL, nil)
-	s.uploadcareMock.EXPECT().UploadImageFromURL(gomock.Any(), igdbGame.Screenshots[0].URL).Return(screenshotURL, nil)
+	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias).Return(nil, logoFileName, nil)
+	s.uploadcareMock.EXPECT().UploadImage(gomock.Any(), gomock.Any(), logoFileName).Return(logoURL, nil)
+	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Screenshots[0].URL, igdbapi.ImageTypeScreenshotBigAlias).Return(nil, screenshotFileName, nil)
+	s.uploadcareMock.EXPECT().UploadImage(gomock.Any(), gomock.Any(), screenshotFileName).Return(screenshotURL, nil)
 	s.storageMock.EXPECT().CreateGame(gomock.Any(), model.CreateGame{
 		Name:          igdbGame.Name,
 		DevelopersIDs: []int32{developerID},

@@ -1,80 +1,52 @@
 package auth
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
+	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/golang-jwt/jwt/v4"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
-// User roles
-const (
-	RoleModerator      = "moderator"
-	RolePublisher      = "publisher"
-	RoleRegisteredUser = "user"
-)
-
 var tracer = otel.Tracer("")
 
-// ErrVerifyAPIUnavailable - error representing unavailability of verify api
-var ErrVerifyAPIUnavailable = errors.New("verify API is unavailable")
+var (
+	tokenVerificationFailures = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "auth_token_verification_failures_total",
+		Help: "Total number of token verification failures",
+	})
+)
 
-// Claims represents jwt claims
-type Claims struct {
-	jwt.RegisteredClaims
-	UserRole string `json:"user_role,omitempty"`
-	Username string `json:"username,omitempty"`
-	Name     string `json:"name,omitempty"`
-}
-
-// UserID return user id from claims
-func (c *Claims) UserID() string {
-	return c.Subject
-}
-
-// VerifyToken is a request type for JWT verification
-type VerifyToken struct {
-	Token string `json:"token" validate:"jwt"`
-}
-
-// VerifyTokenResp is a response type for JWT verification
-type VerifyTokenResp struct {
-	Valid bool `json:"valid"`
+// APIClient auth client api interface
+type APIClient interface {
+	VerifyToken(ctx context.Context, token string) (authapi.VerifyTokenResp, error)
 }
 
 // Client represents auth client
 type Client struct {
-	log          *zap.Logger
-	parser       *jwt.Parser
-	verifyAPIURL string
-	client       *http.Client
+	log           *zap.Logger
+	parser        *jwt.Parser
+	authAPIClient APIClient
 }
 
 // New constructs Auth instance
-func New(log *zap.Logger, algorithm string, verifyAPIURL string, client *http.Client) (*Client, error) {
+func New(log *zap.Logger, algorithm string, authAPIClient APIClient) (*Client, error) {
 	if jwt.GetSigningMethod(algorithm) == nil {
 		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
 	}
 
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{algorithm}))
 
-	if client == nil {
-		client = otelhttp.DefaultClient
-	}
-
 	return &Client{
-		log:          log,
-		parser:       parser,
-		verifyAPIURL: verifyAPIURL,
-		client:       client,
+		log:           log,
+		parser:        parser,
+		authAPIClient: authAPIClient,
 	}, nil
 }
 
@@ -94,38 +66,13 @@ func (c *Client) Verify(ctx context.Context, tokenStr string) error {
 	ctx, span := tracer.Start(ctx, "auth.verify")
 	defer span.End()
 
-	data := VerifyToken{
-		Token: tokenStr,
-	}
-	body, err := json.Marshal(data)
+	result, err := c.authAPIClient.VerifyToken(ctx, tokenStr)
 	if err != nil {
-		return fmt.Errorf("marshal verify token body: %w", err)
+		return fmt.Errorf("verify token: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.verifyAPIURL, bytes.NewBuffer(body))
-	if err != nil {
-		return fmt.Errorf("create verify request: %v", err)
-	}
-	request.Header["Content-Type"] = []string{"application/json"}
-
-	resp, err := c.client.Do(request)
-	if err != nil {
-		c.log.Error("call verify api", zap.String("url", c.verifyAPIURL), zap.Error(err))
-		return ErrVerifyAPIUnavailable
-	}
-	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			c.log.Error("failed to close response body", zap.String("url", c.verifyAPIURL), zap.Error(err))
-		}
-	}()
-
-	var respBody VerifyTokenResp
-	err = json.NewDecoder(resp.Body).Decode(&respBody)
-	if err != nil {
-		return fmt.Errorf("invalid response: %v", err)
-	}
-
-	if !respBody.Valid {
+	if !result.Valid {
+		tokenVerificationFailures.Inc()
 		return errors.New("invalid token")
 	}
 

@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/client/igdb"
+	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 )
 
@@ -50,6 +52,18 @@ var (
 			return 15, 3
 		}
 	}
+)
+
+var (
+	fetchGamesAddedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "fetch_igdb_games_added_total",
+		Help: "Total number of games successfully added by the fetch IGDB games task",
+	})
+
+	fetchGamesSkippedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "fetch_igdb_games_skipped_total",
+		Help: "Total number of games skipped because they already exist",
+	})
 )
 
 // StartFetchIGDBGames starts fetch igdb games task
@@ -104,7 +118,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 
 		for range fetchGamesRequestsCount {
 			ratingsCount, limit := getMinRatingsCountAndLimit(s.LastReleasedAt)
-			igdbGames, gErr := tp.igdbProvider.GetTopRatedGames(ctx, allPlatformsIDs, s.LastReleasedAt, ratingsCount, fetchGamesMinRating, limit)
+			igdbGames, gErr := tp.igdbAPIClient.GetTopRatedGames(ctx, allPlatformsIDs, s.LastReleasedAt, ratingsCount, fetchGamesMinRating, limit)
 			if gErr != nil {
 				return settings, fmt.Errorf("get games from igdb: %v", gErr)
 			}
@@ -112,6 +126,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			for _, g := range igdbGames {
 				_, err = tp.storage.GetGameIDByIGDBID(ctx, g.ID)
 				if err == nil {
+					fetchGamesSkippedTotal.Inc()
 					s.LastReleasedAt = time.Unix(g.FirstReleaseDate, 0)
 					settings = s.convertToTaskSettings()
 					continue
@@ -183,28 +198,35 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				// get websites
 				var websites []string
 				for _, w := range g.Websites {
-					if _, ok := igdb.WebsiteCategoryNames[igdb.WebsiteCategory(w.Category)]; ok {
+					if _, ok := igdbapi.WebsiteCategoryNames[igdbapi.WebsiteCategory(w.Category)]; ok {
 						websites = append(websites, w.URL)
 					}
 				}
 
-				// get logo url
-				igdbLogoURL := igdb.GetImageURL(g.Cover.URL, igdb.ImageCoverBig2xAlias)
-				logoURL, uErr := tp.uploadcareProvider.UploadImageFromURL(ctx, igdbLogoURL)
-				if uErr != nil {
-					return settings, fmt.Errorf("upload logo %s: %v", igdbLogoURL, uErr)
+				// reupload logo url
+				logoData, logoFileName, lErr := tp.igdbAPIClient.GetImageByURL(ctx, g.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias)
+				if lErr != nil {
+					return settings, fmt.Errorf("get logo by url %s: %v", g.Cover.URL, lErr)
 				}
 
-				// get screenshots
+				logoURL, uErr := tp.uploadcareAPIClient.UploadImage(ctx, logoData, logoFileName)
+				if uErr != nil {
+					return settings, fmt.Errorf("upload logo %s: %v", g.Cover.URL, uErr)
+				}
+
+				// reupload screenshots
 				var screenshots []string
 				for j, scr := range g.Screenshots {
 					if j == fetchGamesScreenshotsLimit {
 						break
 					}
-					igdbScreenshotURL := igdb.GetImageURL(scr.URL, igdb.ImageScreenshotBigAlias)
-					screenshotURL, suErr := tp.uploadcareProvider.UploadImageFromURL(ctx, igdbScreenshotURL)
-					if suErr != nil {
-						return settings, fmt.Errorf("upload screenshot %s: %v", igdbScreenshotURL, suErr)
+					scrData, scrFileName, sErr := tp.igdbAPIClient.GetImageByURL(ctx, scr.URL, igdbapi.ImageTypeScreenshotBigAlias)
+					if sErr != nil {
+						return settings, fmt.Errorf("get screenshot by url %s: %v", scr.URL, sErr)
+					}
+					screenshotURL, sErr := tp.uploadcareAPIClient.UploadImage(ctx, scrData, scrFileName)
+					if sErr != nil {
+						return settings, fmt.Errorf("upload screenshot %s: %v", scr.URL, sErr)
 					}
 					screenshots = append(screenshots, screenshotURL)
 				}
@@ -230,6 +252,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					return settings, fmt.Errorf("create game %s with igdb id %d: %v", cg.Name, cg.IGDBID, cErr)
 				}
 
+				fetchGamesAddedTotal.Inc()
 				gamesAdded++
 				s.LastReleasedAt = time.Unix(g.FirstReleaseDate, 0)
 				settings = s.convertToTaskSettings()

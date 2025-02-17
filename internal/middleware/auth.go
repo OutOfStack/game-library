@@ -7,6 +7,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/auth"
+	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"go.uber.org/zap"
 )
 
@@ -48,7 +49,7 @@ func Authenticate(log *zap.Logger, authClient AuthClient) func(http.Handler) htt
 			if err != nil {
 				log.Error("verifying token", zap.Error(err))
 				statusCode := http.StatusUnauthorized
-				if errors.Is(err, auth.ErrVerifyAPIUnavailable) {
+				if errors.Is(err, authapi.ErrVerifyAPIUnavailable) {
 					statusCode = http.StatusBadGateway
 				}
 				web.RespondError(w, web.NewError(err, statusCode))

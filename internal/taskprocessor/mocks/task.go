@@ -10,12 +10,14 @@
 package taskprocessor_mock
 
 import (
+	bytes "bytes"
 	context "context"
+	io "io"
 	reflect "reflect"
 	time "time"
 
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	igdb "github.com/OutOfStack/game-library/internal/client/igdb"
+	igdbapi "github.com/OutOfStack/game-library/internal/client/igdbapi"
 	pgx "github.com/jackc/pgx/v5"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -193,80 +195,96 @@ func (mr *MockStorageMockRecorder) UpdateTask(ctx, tx, task any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockStorage)(nil).UpdateTask), ctx, tx, task)
 }
 
-// MockIGDBClient is a mock of IGDBClient interface.
-type MockIGDBClient struct {
+// MockIGDBAPIClient is a mock of IGDBAPIClient interface.
+type MockIGDBAPIClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockIGDBClientMockRecorder
+	recorder *MockIGDBAPIClientMockRecorder
 	isgomock struct{}
 }
 
-// MockIGDBClientMockRecorder is the mock recorder for MockIGDBClient.
-type MockIGDBClientMockRecorder struct {
-	mock *MockIGDBClient
+// MockIGDBAPIClientMockRecorder is the mock recorder for MockIGDBAPIClient.
+type MockIGDBAPIClientMockRecorder struct {
+	mock *MockIGDBAPIClient
 }
 
-// NewMockIGDBClient creates a new mock instance.
-func NewMockIGDBClient(ctrl *gomock.Controller) *MockIGDBClient {
-	mock := &MockIGDBClient{ctrl: ctrl}
-	mock.recorder = &MockIGDBClientMockRecorder{mock}
+// NewMockIGDBAPIClient creates a new mock instance.
+func NewMockIGDBAPIClient(ctrl *gomock.Controller) *MockIGDBAPIClient {
+	mock := &MockIGDBAPIClient{ctrl: ctrl}
+	mock.recorder = &MockIGDBAPIClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIGDBClient) EXPECT() *MockIGDBClientMockRecorder {
+func (m *MockIGDBAPIClient) EXPECT() *MockIGDBAPIClientMockRecorder {
 	return m.recorder
 }
 
+// GetImageByURL mocks base method.
+func (m *MockIGDBAPIClient) GetImageByURL(ctx context.Context, imageURL, imageType string) (*bytes.Reader, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetImageByURL", ctx, imageURL, imageType)
+	ret0, _ := ret[0].(*bytes.Reader)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetImageByURL indicates an expected call of GetImageByURL.
+func (mr *MockIGDBAPIClientMockRecorder) GetImageByURL(ctx, imageURL, imageType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImageByURL", reflect.TypeOf((*MockIGDBAPIClient)(nil).GetImageByURL), ctx, imageURL, imageType)
+}
+
 // GetTopRatedGames mocks base method.
-func (m *MockIGDBClient) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdb.TopRatedGamesResp, error) {
+func (m *MockIGDBAPIClient) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdbapi.TopRatedGamesResp, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTopRatedGames", ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit)
-	ret0, _ := ret[0].([]igdb.TopRatedGamesResp)
+	ret0, _ := ret[0].([]igdbapi.TopRatedGamesResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTopRatedGames indicates an expected call of GetTopRatedGames.
-func (mr *MockIGDBClientMockRecorder) GetTopRatedGames(ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit any) *gomock.Call {
+func (mr *MockIGDBAPIClientMockRecorder) GetTopRatedGames(ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTopRatedGames", reflect.TypeOf((*MockIGDBClient)(nil).GetTopRatedGames), ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTopRatedGames", reflect.TypeOf((*MockIGDBAPIClient)(nil).GetTopRatedGames), ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit)
 }
 
-// MockUploadcareClient is a mock of UploadcareClient interface.
-type MockUploadcareClient struct {
+// MockUploadcareAPIClient is a mock of UploadcareAPIClient interface.
+type MockUploadcareAPIClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockUploadcareClientMockRecorder
+	recorder *MockUploadcareAPIClientMockRecorder
 	isgomock struct{}
 }
 
-// MockUploadcareClientMockRecorder is the mock recorder for MockUploadcareClient.
-type MockUploadcareClientMockRecorder struct {
-	mock *MockUploadcareClient
+// MockUploadcareAPIClientMockRecorder is the mock recorder for MockUploadcareAPIClient.
+type MockUploadcareAPIClientMockRecorder struct {
+	mock *MockUploadcareAPIClient
 }
 
-// NewMockUploadcareClient creates a new mock instance.
-func NewMockUploadcareClient(ctrl *gomock.Controller) *MockUploadcareClient {
-	mock := &MockUploadcareClient{ctrl: ctrl}
-	mock.recorder = &MockUploadcareClientMockRecorder{mock}
+// NewMockUploadcareAPIClient creates a new mock instance.
+func NewMockUploadcareAPIClient(ctrl *gomock.Controller) *MockUploadcareAPIClient {
+	mock := &MockUploadcareAPIClient{ctrl: ctrl}
+	mock.recorder = &MockUploadcareAPIClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockUploadcareClient) EXPECT() *MockUploadcareClientMockRecorder {
+func (m *MockUploadcareAPIClient) EXPECT() *MockUploadcareAPIClientMockRecorder {
 	return m.recorder
 }
 
-// UploadImageFromURL mocks base method.
-func (m *MockUploadcareClient) UploadImageFromURL(ctx context.Context, imageURL string) (string, error) {
+// UploadImage mocks base method.
+func (m *MockUploadcareAPIClient) UploadImage(ctx context.Context, data io.ReadSeeker, fileName string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadImageFromURL", ctx, imageURL)
+	ret := m.ctrl.Call(m, "UploadImage", ctx, data, fileName)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UploadImageFromURL indicates an expected call of UploadImageFromURL.
-func (mr *MockUploadcareClientMockRecorder) UploadImageFromURL(ctx, imageURL any) *gomock.Call {
+// UploadImage indicates an expected call of UploadImage.
+func (mr *MockUploadcareAPIClientMockRecorder) UploadImage(ctx, data, fileName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImageFromURL", reflect.TypeOf((*MockUploadcareClient)(nil).UploadImageFromURL), ctx, imageURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockUploadcareAPIClient)(nil).UploadImage), ctx, data, fileName)
 }

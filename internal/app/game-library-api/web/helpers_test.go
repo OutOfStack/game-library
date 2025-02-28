@@ -1,7 +1,6 @@
 package web_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -62,7 +61,7 @@ func TestGetIDParam(t *testing.T) {
 				w.Write([]byte(string(id))) //nolint
 			})
 
-			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, tt.url, nil)
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, tt.url, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

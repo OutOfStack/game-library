@@ -35,7 +35,6 @@ func Service(
 	pr *Provider,
 	conf appconf.Cfg,
 ) (http.Server, error) {
-
 	err := initTracer(log, conf.Zipkin.ReporterURL)
 	if err != nil {
 		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) //nolint:gosec

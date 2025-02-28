@@ -1,7 +1,6 @@
 package repo_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -14,7 +13,7 @@ func TestAddRating_Success_ShouldBeNoError(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg := getCreateGameData()
 	gameID, err := s.CreateGame(ctx, cg)
@@ -36,7 +35,7 @@ func TestGetUserRatingsByGamesIDs_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg1 := getCreateGameData()
 	gameID1, err := s.CreateGame(ctx, cg1)
@@ -89,7 +88,7 @@ func TestGetUserRatings_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg1 := getCreateGameData()
 	gameID1, err := s.CreateGame(ctx, cg1)

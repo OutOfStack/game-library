@@ -1,7 +1,6 @@
 package repo_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,7 +11,7 @@ func TestCommit_Success(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	tx, err := s.BeginTx(ctx)
 	require.NoError(t, err)
 
@@ -25,7 +24,7 @@ func TestRollback_Success(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	tx, err := s.BeginTx(ctx)
 	require.NoError(t, err)
 

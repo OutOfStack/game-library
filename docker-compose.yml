@@ -9,8 +9,7 @@ services:
     environment:
       POSTGRES_USER: games-user
       POSTGRES_PASSWORD: games-password
-    volumes:
-      - ~/pgdata:/var/lib/postgresql/data
+      POSTGRES_DB: games
 
   zipkin:
     container_name: zipkin

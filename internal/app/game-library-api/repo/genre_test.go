@@ -1,7 +1,6 @@
 package repo_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -19,7 +18,7 @@ func TestCreateGenre_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
 		Name: td.String(),
 	}
 
-	_, err := s.CreateGenre(context.Background(), genre)
+	_, err := s.CreateGenre(t.Context(), genre)
 	require.NoError(t, err)
 }
 
@@ -28,7 +27,7 @@ func TestGetGenres_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	genre := model.Genre{
 		Name:   td.String(),
@@ -53,7 +52,7 @@ func TestGetGenreByID_GenreExists_ShouldReturnGenre(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	genre := model.Genre{
 		Name:   td.String(),
@@ -74,7 +73,7 @@ func TestGetGenreByID_GenreNotExist_ShouldReturnNotFoundError(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	genre := model.Genre{
 		Name:   td.String(),
@@ -94,7 +93,7 @@ func TestGetTopGenres_Ok(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// create 2 genres and 3 games
 	genre1ID, err := s.CreateGenre(ctx, model.Genre{

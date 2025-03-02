@@ -18,12 +18,6 @@ cover:
 dockerrunpg:
 	docker compose up -d --no-recreate db
 
-createdb:
-	docker exec -it games_db createdb --username=games-user --owner=games-user games
-
-dropdb:
-	docker exec -it games_db dropdb --username=games-user games
-
 migrate:
 	go run ./cmd/game-library-manage/. migrate
 
@@ -69,7 +63,7 @@ generate:
 	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
 	${MOCKGEN_BIN} -destination=internal/taskprocessor/mocks/tx.go -package=taskprocessor_mock github.com/jackc/pgx/v5 Tx
 
-LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0
+LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \

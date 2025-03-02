@@ -1,5 +1,5 @@
 # build
-FROM golang:1.23-alpine3.20 as builder
+FROM golang:1.24-alpine3.21 as builder
 
 WORKDIR /tmp/game-library-api
 
@@ -15,7 +15,7 @@ COPY . .
 RUN go build -o ./out/game-library-api cmd/game-library-api/main.go
 
 # run
-FROM alpine:3.19
+FROM alpine:3.21
 
 WORKDIR /app
 

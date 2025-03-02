@@ -1,7 +1,6 @@
 package repo_test
 
 import (
-	"context"
 	"database/sql"
 	"strings"
 	"testing"
@@ -21,7 +20,7 @@ func TestCreateCompany_IGDBIDIsNull_ShouldBeNoError(t *testing.T) {
 		Name: td.String(),
 	}
 
-	_, err := s.CreateCompany(context.Background(), company)
+	_, err := s.CreateCompany(t.Context(), company)
 	require.NoError(t, err)
 }
 
@@ -30,7 +29,7 @@ func TestGetCompanies_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	company := model.Company{
 		Name:   td.String(),
@@ -56,7 +55,7 @@ func TestGetCompanyIDByName_CompanyExists_ShouldReturnID(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	company := model.Company{
 		Name:   td.String(),
@@ -76,7 +75,7 @@ func TestGetCompanyIDByName_CompanyNotExist_ShouldReturnNotFoundError(t *testing
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	company := model.Company{
 		Name:   td.String(),
@@ -96,7 +95,7 @@ func TestGetCompanyByID_CompanyExists_ShouldReturnCompany(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	company := model.Company{
 		Name:   td.String(),
@@ -117,7 +116,7 @@ func TestGetCompanyByID_CompanyNotExist_ShouldReturnNotFoundError(t *testing.T) 
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	company := model.Company{
 		Name:   td.String(),
@@ -137,7 +136,7 @@ func TestGetTopDevelopers_Ok(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// create 3 developers and 4 games
 	developer1ID, err := s.CreateCompany(ctx, model.Company{
@@ -192,7 +191,7 @@ func TestGetTopPublishers_Ok(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// create 2 publishers and 4 games
 	publisher1ID, err := s.CreateCompany(ctx, model.Company{

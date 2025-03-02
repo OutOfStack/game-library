@@ -15,7 +15,7 @@ func TestGetPlatforms_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	platform := model.Platform{
 		Name:         td.String(),
@@ -49,7 +49,7 @@ func TestPlatformByID_PlatformExists_ShouldReturnPlatform(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	platform := model.Platform{
 		Name:         td.String(),
@@ -72,7 +72,7 @@ func TestGetPlatformByID_PlatformNotExist_ShouldReturnNotFoundError(t *testing.T
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	platform := model.Platform{
 		Name:         td.String(),

@@ -1,7 +1,6 @@
 package repo_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -17,7 +16,7 @@ func TestGetGames_NotExist_ShouldReturnEmpty(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	games, err := s.GetGames(context.Background(), 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
+	games, err := s.GetGames(t.Context(), 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
 	require.NoError(t, err)
 
 	require.Empty(t, games, "games should be empty")
@@ -28,7 +27,7 @@ func TestGetGames_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg := getCreateGameData()
 
@@ -50,7 +49,7 @@ func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg1 := getCreateGameData()
 	cg1.ReleaseDate = "1990-01-01"
@@ -81,7 +80,7 @@ func TestGetGames_OrderByName_ShouldReturnOrdered(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg1 := getCreateGameData()
 	cg1.Name = "Yakuza"
@@ -109,7 +108,7 @@ func TestGetGames_OrderByReleaseDate_ShouldReturnOrdered(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg1 := getCreateGameData()
 	cg1.ReleaseDate = "1991-01-01"
@@ -137,7 +136,7 @@ func TestGetGames_FilterByName_ShouldReturnEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg := getCreateGameData()
 
@@ -159,7 +158,7 @@ func TestGetGames_FilterByName_ShouldReturnMatched(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	ng1 := getCreateGameData()
 	ng1.Name = "test game name"
@@ -191,7 +190,7 @@ func TestGetGames_Filter_ShouldReturnMatched(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	developer1, developer2 := td.Int32(), td.Int32()
 	genre1, genre2 := td.Int32(), td.Int32()
@@ -230,7 +229,7 @@ func TestGetGamesCount_DataExists_ShouldReturnCount(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	ng1 := getCreateGameData()
 	ng2 := getCreateGameData()
@@ -251,7 +250,7 @@ func TestGetGamesCount_FilterByName_ShouldReturnMatchedCount(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	ng1 := getCreateGameData()
 	ng1.Name = "the best Game"
@@ -283,7 +282,7 @@ func TestGetGamesCount_Filter_ShouldReturnMatched(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	developer1, developer2 := td.Int32(), td.Int32()
 	genre1, genre2 := td.Int32(), td.Int32()
@@ -321,7 +320,7 @@ func TestGetGamesCount_DataNotExist_ShouldReturnZero(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	count, err := s.GetGamesCount(context.Background(), model.GamesFilter{Name: ""})
+	count, err := s.GetGamesCount(t.Context(), model.GamesFilter{Name: ""})
 	require.NoError(t, err)
 
 	require.Equal(t, 0, int(count), "len of matched should be 0")
@@ -333,7 +332,7 @@ func TestGetGameByID_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 	defer teardown(t)
 
 	id := int32(td.Uint32())
-	g, err := s.GetGameByID(context.Background(), id)
+	g, err := s.GetGameByID(t.Context(), id)
 	require.ErrorIs(t, err, apperr.NewNotFoundError("game", id), "err should be NotFound")
 	require.Zero(t, g.ID, "id should be 0")
 }
@@ -343,7 +342,7 @@ func TestGetGameByID_DataExists_ShouldRetrieveEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cg := getCreateGameData()
 
@@ -363,7 +362,7 @@ func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cr := getCreateGameData()
 
@@ -404,7 +403,7 @@ func TestUpdateGame_NotExist_ShouldReturnNotFoundError(t *testing.T) {
 
 	id := int32(td.Uint32())
 	up := model.UpdateGameData{ReleaseDate: "2022-05-18"}
-	err := s.UpdateGame(context.Background(), id, up)
+	err := s.UpdateGame(t.Context(), id, up)
 	require.ErrorIs(t, err, apperr.NewNotFoundError("game", id), "err should be NotFound")
 }
 
@@ -413,7 +412,7 @@ func TestDeleteGame_Valid_ShouldDelete(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cr := getCreateGameData()
 	id, err := s.CreateGame(ctx, cr)
@@ -432,7 +431,7 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cr := getCreateGameData()
 	id, err := s.CreateGame(ctx, cr)

@@ -15,21 +15,21 @@ import (
 
 func (s *TestSuite) TestGetGames_Success() {
 	games := []model.Game{{
-		ID:          td.Int32(),
-		Name:        td.String(),
-		Developers:  []int32{td.Int32(), td.Int32()},
-		Publishers:  []int32{td.Int32(), td.Int32()},
-		ReleaseDate: types.DateOf(td.Date()),
-		Genres:      []int32{td.Int32(), td.Int32()},
-		LogoURL:     td.String(),
-		Rating:      td.Float64(),
-		Summary:     td.String(),
-		Slug:        td.String(),
-		Platforms:   []int32{td.Int32(), td.Int32()},
-		Screenshots: []string{td.String(), td.String()},
-		Websites:    []string{td.String(), td.String()},
-		IGDBRating:  td.Float64(),
-		IGDBID:      td.Int64(),
+		ID:            td.Int32(),
+		Name:          td.String(),
+		DevelopersIDs: []int32{td.Int32(), td.Int32()},
+		PublishersIDs: []int32{td.Int32(), td.Int32()},
+		ReleaseDate:   types.DateOf(td.Date()),
+		GenresIDs:     []int32{td.Int32(), td.Int32()},
+		LogoURL:       td.String(),
+		Rating:        td.Float64(),
+		Summary:       td.String(),
+		Slug:          td.String(),
+		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
+		Screenshots:   []string{td.String(), td.String()},
+		Websites:      []string{td.String(), td.String()},
+		IGDBRating:    td.Float64(),
+		IGDBID:        td.Int64(),
 	}}
 	var count = td.Uint64()
 
@@ -60,21 +60,21 @@ func (s *TestSuite) TestGetGames_Error() {
 
 func (s *TestSuite) TestGetGameByID_Success() {
 	game := model.Game{
-		ID:          td.Int32(),
-		Name:        td.String(),
-		Developers:  []int32{td.Int32(), td.Int32()},
-		Publishers:  []int32{td.Int32(), td.Int32()},
-		ReleaseDate: types.DateOf(td.Date()),
-		Genres:      []int32{td.Int32(), td.Int32()},
-		LogoURL:     td.String(),
-		Rating:      td.Float64(),
-		Summary:     td.String(),
-		Slug:        td.String(),
-		Platforms:   []int32{td.Int32(), td.Int32()},
-		Screenshots: []string{td.String(), td.String()},
-		Websites:    []string{td.String(), td.String()},
-		IGDBRating:  td.Float64(),
-		IGDBID:      td.Int64(),
+		ID:            td.Int32(),
+		Name:          td.String(),
+		DevelopersIDs: []int32{td.Int32(), td.Int32()},
+		PublishersIDs: []int32{td.Int32(), td.Int32()},
+		ReleaseDate:   types.DateOf(td.Date()),
+		GenresIDs:     []int32{td.Int32(), td.Int32()},
+		LogoURL:       td.String(),
+		Rating:        td.Float64(),
+		Summary:       td.String(),
+		Slug:          td.String(),
+		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
+		Screenshots:   []string{td.String(), td.String()},
+		Websites:      []string{td.String(), td.String()},
+		IGDBRating:    td.Float64(),
+		IGDBID:        td.Int64(),
 	}
 
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
@@ -107,11 +107,11 @@ func (s *TestSuite) TestCreateGame_Success() {
 		Publisher:     td.String(),
 		PublishersIDs: []int32{publisherID},
 		ReleaseDate:   td.Date().String(),
-		Genres:        []int32{td.Int32(), td.Int32()},
+		GenresIDs:     []int32{td.Int32(), td.Int32()},
 		LogoURL:       td.String(),
 		Summary:       td.String(),
 		Slug:          td.String(),
-		Platforms:     []int32{td.Int32(), td.Int32()},
+		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
 		Screenshots:   []string{td.String(), td.String()},
 		Websites:      []string{td.String(), td.String()},
 		IGDBRating:    td.Float64(),
@@ -154,14 +154,14 @@ func (s *TestSuite) TestCreateGame_Error() {
 
 func (s *TestSuite) TestUpdateGame_Success() {
 	game := model.Game{
-		ID:         td.Int32(),
-		Publishers: []int32{td.Int32()},
+		ID:            td.Int32(),
+		PublishersIDs: []int32{td.Int32()},
 	}
 	publisher := td.String()
 	updatedGame := model.UpdatedGame{}
 
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
-	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(game.Publishers[0], nil)
+	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(game.PublishersIDs[0], nil)
 	s.storageMock.EXPECT().UpdateGame(s.ctx, game.ID, mock.Any()).Return(nil)
 
 	s.redisClientMock.EXPECT().DeleteByMatch(mock.Any(), mock.Any()).Return(nil).AnyTimes()
@@ -204,11 +204,11 @@ func (s *TestSuite) TestUpdateGame_Error() {
 func (s *TestSuite) TestDeleteGame_Success() {
 	publisher := td.String()
 	game := model.Game{
-		ID:         td.Int32(),
-		Publishers: []int32{td.Int32()},
+		ID:            td.Int32(),
+		PublishersIDs: []int32{td.Int32()},
 	}
 
-	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(game.Publishers[0], nil)
+	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(game.PublishersIDs[0], nil)
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
 	s.storageMock.EXPECT().DeleteGame(s.ctx, game.ID).Return(nil)
 
@@ -238,11 +238,11 @@ func (s *TestSuite) TestDeleteGame_Forbidden() {
 func (s *TestSuite) TestDeleteGame_Error() {
 	publisher := td.String()
 	game := model.Game{
-		ID:         td.Int32(),
-		Publishers: []int32{td.Int32()},
+		ID:            td.Int32(),
+		PublishersIDs: []int32{td.Int32()},
 	}
 
-	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(game.Publishers[0], nil)
+	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(game.PublishersIDs[0], nil)
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
 	s.storageMock.EXPECT().DeleteGame(s.ctx, game.ID).Return(errors.New("new error"))
 

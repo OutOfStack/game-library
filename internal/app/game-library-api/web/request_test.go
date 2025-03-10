@@ -9,28 +9,48 @@ import (
 	"strings"
 	"testing"
 
+	apimodel "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
-	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 // Mocked structures for testing
 type ReqBody struct {
-	Name  string `json:"name" validate:"required"`
-	Email string `json:"email" validate:"required,email"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
-type MockTranslator struct{}
+func (r *ReqBody) Validate() (bool, []web.FieldError) {
+	var validationErrors []web.FieldError
 
-func (m *MockTranslator) Translate(err validator.FieldError) string {
-	return err.Error() // Simple mock translation
+	if r.Name == "" {
+		validationErrors = append(validationErrors, web.FieldError{
+			Field: "name",
+			Error: apimodel.ErrRequiredMsg,
+		})
+	}
+	if !strings.Contains(r.Email, "@") {
+		validationErrors = append(validationErrors, web.FieldError{
+			Field: "email",
+			Error: "invalid email",
+		})
+	}
+
+	return len(validationErrors) == 0, validationErrors
+}
+
+func (r *ReqBody) Sanitize() {
+	r.Name = strings.TrimSpace(r.Name)
+	r.Email = strings.TrimSpace(r.Email)
 }
 
 func TestDecodeChi_Success(t *testing.T) {
+	email := td.Email()
 	input := ReqBody{
 		Name:  td.String(),
-		Email: td.Email(),
+		Email: " " + email + " ",
 	}
 	body, _ := json.Marshal(input)
 
@@ -38,10 +58,11 @@ func TestDecodeChi_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(req, &decoded)
+	err := web.Decode(zap.NewNop(), req, &decoded)
 
 	require.NoError(t, err)
-	require.Equal(t, input, decoded)
+	require.Equal(t, input.Name, decoded.Name)
+	require.Equal(t, email, decoded.Email)
 }
 
 func TestDecodeChi_InvalidJSON(t *testing.T) {
@@ -49,7 +70,7 @@ func TestDecodeChi_InvalidJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(req, &decoded)
+	err := web.Decode(zap.NewNop(), req, &decoded)
 
 	require.Error(t, err)
 	require.IsType(t, &web.Error{}, err)
@@ -67,7 +88,7 @@ func TestDecodeChi_ValidationError(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(req, &decoded)
+	err := web.Decode(zap.NewNop(), req, &decoded)
 
 	require.Error(t, err)
 	require.IsType(t, &web.Error{}, err)
@@ -78,10 +99,10 @@ func TestDecodeChi_ValidationError(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, validationErr.StatusCode)
 	require.Len(t, validationErr.Fields, 2)
 
-	require.Equal(t, "Name", validationErr.Fields[0].Field)
+	require.Equal(t, "name", validationErr.Fields[0].Field)
 	require.Contains(t, validationErr.Fields[0].Error, "required")
-	require.Equal(t, "Email", validationErr.Fields[1].Field)
-	require.Contains(t, validationErr.Fields[1].Error, "email")
+	require.Equal(t, "email", validationErr.Fields[1].Field)
+	require.Contains(t, validationErr.Fields[1].Error, "invalid email")
 }
 
 func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
@@ -92,7 +113,7 @@ func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(req, &decoded)
+	err := web.Decode(zap.NewNop(), req, &decoded)
 
 	// Ensure the error is of type *Error
 	require.Error(t, err)
@@ -105,8 +126,8 @@ func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
 
 	// Ensure fields contain validation errors
 	require.Len(t, validationErr.Fields, 2)
-	require.Equal(t, "Name", validationErr.Fields[0].Field)
+	require.Equal(t, "name", validationErr.Fields[0].Field)
 	require.Contains(t, validationErr.Fields[0].Error, "required")
-	require.Equal(t, "Email", validationErr.Fields[1].Field)
+	require.Equal(t, "email", validationErr.Fields[1].Field)
 	require.Contains(t, strings.ToLower(validationErr.Fields[1].Error), "email")
 }

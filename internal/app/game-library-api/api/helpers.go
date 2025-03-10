@@ -18,17 +18,17 @@ const (
 
 func mapToCreateGame(cgr *api.CreateGameRequest, developer, publisher string) model.CreateGame {
 	return model.CreateGame{
-		Name:        cgr.Name,
-		ReleaseDate: cgr.ReleaseDate,
-		Developer:   developer,
-		Publisher:   publisher,
-		Genres:      cgr.GenresIDs,
-		LogoURL:     cgr.LogoURL,
-		Summary:     cgr.Summary,
-		Slug:        model.GetGameSlug(cgr.Name),
-		Platforms:   cgr.PlatformsIDs,
-		Screenshots: cgr.Screenshots,
-		Websites:    cgr.Websites,
+		Name:         cgr.Name,
+		ReleaseDate:  cgr.ReleaseDate,
+		Developer:    developer,
+		Publisher:    publisher,
+		GenresIDs:    cgr.GenresIDs,
+		LogoURL:      cgr.LogoURL,
+		Summary:      cgr.Summary,
+		Slug:         model.GetGameSlug(cgr.Name),
+		PlatformsIDs: cgr.PlatformsIDs,
+		Screenshots:  cgr.Screenshots,
+		Websites:     cgr.Websites,
 	}
 }
 
@@ -57,7 +57,7 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 		return api.GameResponse{}, fmt.Errorf("get platforms: %v", err)
 	}
 
-	for _, gID := range game.Genres {
+	for _, gID := range game.GenresIDs {
 		genre, ok := genres[gID]
 		if !ok {
 			return api.GameResponse{}, fmt.Errorf("genre %d not found", gID)
@@ -67,7 +67,7 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 			Name: genre.Name,
 		})
 	}
-	for _, plID := range game.Platforms {
+	for _, plID := range game.PlatformsIDs {
 		pl, ok := platforms[plID]
 		if !ok {
 			return api.GameResponse{}, fmt.Errorf("platform %d not found", plID)
@@ -78,7 +78,7 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 			Abbreviation: pl.Abbreviation,
 		})
 	}
-	for _, cID := range game.Developers {
+	for _, cID := range game.DevelopersIDs {
 		c, ok := companies[cID]
 		if !ok {
 			return api.GameResponse{}, fmt.Errorf("company %d not found", cID)
@@ -88,7 +88,7 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 			Name: c.Name,
 		})
 	}
-	for _, cID := range game.Publishers {
+	for _, cID := range game.PublishersIDs {
 		c, ok := companies[cID]
 		if !ok {
 			return api.GameResponse{}, fmt.Errorf("company %d not found", cID)
@@ -104,15 +104,15 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 
 func mapToUpdateGame(ugr *api.UpdateGameRequest) model.UpdatedGame {
 	return model.UpdatedGame{
-		Name:        ugr.Name,
-		Developer:   ugr.Developer,
-		ReleaseDate: ugr.ReleaseDate,
-		GenresIDs:   ugr.GenresIDs,
-		LogoURL:     ugr.LogoURL,
-		Summary:     ugr.Summary,
-		Platforms:   ugr.Platforms,
-		Screenshots: ugr.Screenshots,
-		Websites:    ugr.Websites,
+		Name:         ugr.Name,
+		Developer:    ugr.Developer,
+		ReleaseDate:  ugr.ReleaseDate,
+		GenresIDs:    ugr.GenresIDs,
+		LogoURL:      ugr.LogoURL,
+		Summary:      ugr.Summary,
+		PlatformsIDs: ugr.PlatformsIDs,
+		Screenshots:  ugr.Screenshots,
+		Websites:     ugr.Websites,
 	}
 }
 
@@ -135,14 +135,14 @@ func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
 	if len(p.Name) >= minLengthForSearch {
 		filter.Name = p.Name
 	}
-	if p.Genre != 0 {
-		filter.GenreID = p.Genre
+	if p.GenreID != 0 {
+		filter.GenreID = p.GenreID
 	}
-	if p.Developer != 0 {
-		filter.DeveloperID = p.Developer
+	if p.DeveloperID != 0 {
+		filter.DeveloperID = p.DeveloperID
 	}
-	if p.Publisher != 0 {
-		filter.PublisherID = p.Publisher
+	if p.PublisherID != 0 {
+		filter.PublisherID = p.PublisherID
 	}
 
 	return filter, nil

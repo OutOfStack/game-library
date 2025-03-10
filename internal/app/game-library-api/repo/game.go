@@ -166,8 +166,8 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32
 		        $8, $9, $10, $11::varchar(50), $12, $13, $14)
 		RETURNING id`
 
-	err = s.db.QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.Genres, cg.LogoURL, cg.Summary,
-		cg.Platforms, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBID, time.Now()).
+	err = s.db.QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.GenresIDs, cg.LogoURL, cg.Summary,
+		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBID, time.Now()).
 		Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)
@@ -193,7 +193,7 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameD
 		return fmt.Errorf("invalid date %v: %v", releaseDate, err)
 	}
 	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.Developers, ug.Publishers, releaseDate.String(), ug.Genres, ug.LogoURL, ug.Summary,
-		ug.Platforms, ug.Screenshots, ug.Websites, ug.Slug, ug.IGDBRating, ug.IGDBID, time.Now())
+		ug.PlatformsIDs, ug.Screenshots, ug.Websites, ug.Slug, ug.IGDBRating, ug.IGDBID, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d: %v", id, err)
 	}

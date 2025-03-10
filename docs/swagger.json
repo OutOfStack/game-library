@@ -523,10 +523,6 @@
         },
         "model.CreateGameRequest": {
             "type": "object",
-            "required": [
-                "developer",
-                "name"
-            ],
             "properties": {
                 "developer": {
                     "type": "string"
@@ -543,7 +539,7 @@
                 "name": {
                     "type": "string"
                 },
-                "platformsIDs": {
+                "platformsIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -729,7 +725,7 @@
                 "name": {
                     "type": "string"
                 },
-                "platforms": {
+                "platformsIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"

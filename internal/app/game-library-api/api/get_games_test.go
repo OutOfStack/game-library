@@ -18,12 +18,12 @@ func (s *TestSuite) Test_GetGames_Success() {
 	genreID, developerID, publisherID, platformID, count := td.Int31(), td.Int31(), td.Int31(), td.Int31(), uint64(td.Uint32())
 
 	games := []model.Game{{
-		ID:         td.Int31(),
-		Name:       name,
-		Developers: []int32{developerID},
-		Publishers: []int32{publisherID},
-		Genres:     []int32{genreID},
-		Platforms:  []int32{platformID},
+		ID:            td.Int31(),
+		Name:          name,
+		DevelopersIDs: []int32{developerID},
+		PublishersIDs: []int32{publisherID},
+		GenresIDs:     []int32{genreID},
+		PlatformsIDs:  []int32{platformID},
 	}}
 	genresMap := map[int32]model.Genre{genreID: {
 		ID:   genreID,

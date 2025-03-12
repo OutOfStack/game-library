@@ -93,14 +93,9 @@ dockerrunredis:
 dockerrunglog:
 	docker compose up -d graylog
 
+dockerrunprom:
+	docker compose up -d prometheus
+
 dockerbuildmng:
 	docker build -f Dockerfile.mng -t game-library-mng:latest .
 
-dockerrunmng-m:
-	docker compose run --rm mng migrate
-
-dockerrunmng-r:
-	docker compose run --rm mng rollback
-
-dockerrunmng-s:
-	docker compose run --rm mng seed

@@ -5,30 +5,40 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
+// Validator interface that request structs must implement
+type Validator interface {
+	Validate() (bool, []FieldError)
+}
+
+// Sanitizer interface that request structs must implement
+type Sanitizer interface {
+	Sanitize()
+}
+
 // Decode unmarshalls JSON request body
-func Decode(r *http.Request, val interface{}) error {
+func Decode(log *zap.Logger, r *http.Request, val interface{}) error {
 	err := json.NewDecoder(r.Body).Decode(val)
 	if err != nil {
-		return NewError(err, http.StatusBadRequest)
+		log.Error("Decode request", zap.Error(err))
+		return NewErrorFromMessage("invalid request", http.StatusBadRequest)
 	}
 
-	if err = validate.Struct(val); err != nil {
-		var vErrs validator.ValidationErrors
-		if ok := errors.As(err, &vErrs); !ok {
-			return err
+	// validate
+	v, ok := val.(Validator)
+	// if it doesn't implement Validator, we assume no validation is needed
+	if ok {
+		if valid, validationErrors := v.Validate(); !valid {
+			return NewErrorWithFields(errors.New("validation error"), http.StatusBadRequest, validationErrors)
 		}
+	}
 
-		var fields []FieldError
-		for _, vErr := range vErrs {
-			fields = append(fields, FieldError{
-				Field: vErr.Field(),
-				Error: vErr.Translate(lang),
-			})
-		}
-		return NewErrorWithFields(errors.New("validation error"), http.StatusBadRequest, fields)
+	// sanitize
+	s, ok := val.(Sanitizer)
+	if ok {
+		s.Sanitize()
 	}
 
 	return nil

@@ -21,7 +21,7 @@ linters-settings:
       - (*encoding/json.Decoder).Decode
   goconst:
     min-len: 3
-    min-occurrences: 2
+    min-occurrences: 3
 
 linters:
   enable:

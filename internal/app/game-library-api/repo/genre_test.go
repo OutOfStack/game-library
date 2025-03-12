@@ -111,9 +111,9 @@ func TestGetTopGenres_Ok(t *testing.T) {
 	cg1, cg2, cg3 := getCreateGameData(), getCreateGameData(), getCreateGameData()
 
 	// genre 1 is in 2 games, genre 2 is in 3 games
-	cg1.Genres = []int32{genre1ID, genre2ID}
-	cg2.Genres = []int32{genre2ID}
-	cg3.Genres = []int32{genre1ID, genre2ID}
+	cg1.GenresIDs = []int32{genre1ID, genre2ID}
+	cg2.GenresIDs = []int32{genre2ID}
+	cg3.GenresIDs = []int32{genre1ID, genre2ID}
 
 	_, err = s.CreateGame(ctx, cg1)
 	require.NoError(t, err)

@@ -34,14 +34,14 @@ MOCKGEN_BIN := $(shell go env GOPATH)/bin/mockgen
 generate:
 	@if \[ ! -f ${SWAG_BIN} \]; then \
 		echo "Installing swag..."; \
-    go install ${SWAG_PKG}; \
-  fi
+    	go install ${SWAG_PKG}; \
+  	fi
 	@if \[ -f ${SWAG_BIN} \]; then \
-  	echo "Found swag at '$(SWAG_BIN)', generating documentation..."; \
+  		echo "Found swag at '$(SWAG_BIN)', generating documentation..."; \
 	else \
-    echo "swag not found or the file does not exist"; \
-    exit 1; \
-  fi
+    	echo "swag not found or the file does not exist"; \
+    	exit 1; \
+  	fi
 	${SWAG_BIN} init \
 	-d cmd/game-library-api,internal/app/game-library-api/api,internal/app/game-library-api/api/model,internal/app/game-library-api/web
 
@@ -54,7 +54,7 @@ generate:
 	else \
 		echo "mockgen not found or the file does not exist"; \
 		exit 1; \
-  fi
+  	fi
 	${MOCKGEN_BIN} -source=internal/app/game-library-api/api/provider.go -destination=internal/app/game-library-api/api/mocks/provider.go -package=api_mock
 	${MOCKGEN_BIN} -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/mocks/redis.go -package=cache_mock
 	${MOCKGEN_BIN} -source=internal/app/game-library-api/facade/provider.go -destination=internal/app/game-library-api/facade/mocks/provider.go -package=facade_mock
@@ -63,19 +63,19 @@ generate:
 	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
 	${MOCKGEN_BIN} -destination=internal/taskprocessor/mocks/tx.go -package=taskprocessor_mock github.com/jackc/pgx/v5 Tx
 
-LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64
+LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.6
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \
 		echo "Installing golangci-lint..."; \
-    go install ${LINT_PKG}; \
-  fi
+    	go install ${LINT_PKG}; \
+  	fi
 	@if \[ -f ${LINT_BIN} \]; then \
-  	echo "Found golangci-lint at '$(LINT_BIN)', running..."; \
+  		echo "Found golangci-lint at '$(LINT_BIN)', running..."; \
 	else \
-    echo "golangci-lint not found or the file does not exist"; \
-    exit 1; \
-  fi
+    	echo "golangci-lint not found or the file does not exist"; \
+    	exit 1; \
+  	fi
 	${LINT_BIN} run
 
 dockerbuildapi:

@@ -27,8 +27,7 @@ func (p *Provider) CreateGame(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	var cg api.CreateGameRequest
-	err := web.Decode(r, &cg)
-	if err != nil {
+	if err := web.Decode(p.log, r, &cg); err != nil {
 		web.RespondError(w, err)
 		return
 	}

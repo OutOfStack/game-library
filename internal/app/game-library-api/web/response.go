@@ -50,7 +50,7 @@ func RespondError(w http.ResponseWriter, err error) {
 	}
 
 	var webErr *Error
-	if ok := errors.As(err, &webErr); ok {
+	if errors.As(err, &webErr) {
 		statusCode = webErr.StatusCode
 		errMsg := webErr.Err.Error()
 		if statusCode >= 500 {

@@ -36,7 +36,7 @@ func (p *Provider) RateGame(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Int("data.id", int(gameID)))
 
 	var cr api.CreateRatingRequest
-	if err = web.Decode(r, &cr); err != nil {
+	if err = web.Decode(p.log, r, &cr); err != nil {
 		web.RespondError(w, err)
 		return
 	}

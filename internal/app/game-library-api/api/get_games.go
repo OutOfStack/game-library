@@ -40,8 +40,7 @@ func (p *Provider) GetGames(w http.ResponseWriter, r *http.Request) {
 
 	// get query params
 	var params api.GetGamesQueryParams
-	decoder := form.NewDecoder()
-	err := decoder.Decode(&params, r.URL.Query())
+	err := form.NewDecoder().Decode(&params, r.URL.Query())
 	if err != nil {
 		web.RespondError(w, web.NewErrorFromMessage("invalid query params", http.StatusBadRequest))
 		return

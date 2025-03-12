@@ -19,7 +19,7 @@ definitions:
         type: string
       name:
         type: string
-      platformsIDs:
+      platformsIds:
         items:
           type: integer
         type: array
@@ -35,9 +35,6 @@ definitions:
         items:
           type: string
         type: array
-    required:
-    - developer
-    - name
     type: object
   model.CreateRatingRequest:
     properties:
@@ -144,7 +141,7 @@ definitions:
         type: string
       name:
         type: string
-      platforms:
+      platformsIds:
         items:
           type: integer
         type: array

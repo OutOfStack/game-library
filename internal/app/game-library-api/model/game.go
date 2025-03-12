@@ -8,22 +8,22 @@ import (
 
 // Game represents database game model
 type Game struct {
-	ID          int32      `db:"id"`
-	Name        string     `db:"name"`
-	Developers  []int32    `db:"developers"`
-	Publishers  []int32    `db:"publishers"`
-	ReleaseDate types.Date `db:"release_date"`
-	Genres      []int32    `db:"genres"`
-	LogoURL     string     `db:"logo_url"`
-	Rating      float64    `db:"rating"`
-	Summary     string     `db:"summary"`
-	Slug        string     `db:"slug"`
-	Platforms   []int32    `db:"platforms"`
-	Screenshots []string   `db:"screenshots"`
-	Websites    []string   `db:"websites"`
-	IGDBRating  float64    `db:"igdb_rating"`
-	IGDBID      int64      `db:"igdb_id"`
-	Weight      float64    `db:"weight"` // Readonly field
+	ID            int32      `db:"id"`
+	Name          string     `db:"name"`
+	DevelopersIDs []int32    `db:"developers"`
+	PublishersIDs []int32    `db:"publishers"`
+	ReleaseDate   types.Date `db:"release_date"`
+	GenresIDs     []int32    `db:"genres"`
+	LogoURL       string     `db:"logo_url"`
+	Rating        float64    `db:"rating"`
+	Summary       string     `db:"summary"`
+	Slug          string     `db:"slug"`
+	PlatformsIDs  []int32    `db:"platforms"`
+	Screenshots   []string   `db:"screenshots"`
+	Websites      []string   `db:"websites"`
+	IGDBRating    float64    `db:"igdb_rating"`
+	IGDBID        int64      `db:"igdb_id"`
+	Weight        float64    `db:"weight"` // Readonly field
 }
 
 // CreateGame represents data for creating game
@@ -32,11 +32,11 @@ type CreateGame struct {
 	DevelopersIDs []int32
 	PublishersIDs []int32
 	ReleaseDate   string
-	Genres        []int32
+	GenresIDs     []int32
 	LogoURL       string
 	Summary       string
 	Slug          string
-	Platforms     []int32
+	PlatformsIDs  []int32
 	Screenshots   []string
 	Websites      []string
 	IGDBRating    float64
@@ -47,32 +47,32 @@ type CreateGame struct {
 
 // UpdateGameData represents data for updating game
 type UpdateGameData struct {
-	Name        string
-	Developers  []int32
-	Publishers  []int32
-	ReleaseDate string
-	Genres      []int32
-	LogoURL     string
-	Summary     string
-	Slug        string
-	Platforms   []int32
-	Screenshots []string
-	Websites    []string
-	IGDBRating  float64
-	IGDBID      int64
+	Name         string
+	Developers   []int32
+	Publishers   []int32
+	ReleaseDate  string
+	Genres       []int32
+	LogoURL      string
+	Summary      string
+	Slug         string
+	PlatformsIDs []int32
+	Screenshots  []string
+	Websites     []string
+	IGDBRating   float64
+	IGDBID       int64
 }
 
 // UpdatedGame - updated game field
 type UpdatedGame struct {
-	Name        *string
-	Developer   *string
-	ReleaseDate *string
-	GenresIDs   *[]int32
-	LogoURL     *string
-	Summary     *string
-	Platforms   *[]int32
-	Screenshots *[]string
-	Websites    *[]string
+	Name         *string
+	Developer    *string
+	ReleaseDate  *string
+	GenresIDs    *[]int32
+	LogoURL      *string
+	Summary      *string
+	PlatformsIDs *[]int32
+	Screenshots  *[]string
+	Websites     *[]string
 }
 
 // GamesFilter games filter
@@ -92,19 +92,19 @@ func GetGameSlug(name string) string {
 // MapToUpdateGameData maps Game to UpdateGateData
 func (g Game) MapToUpdateGameData(upd UpdatedGame) UpdateGameData {
 	update := UpdateGameData{
-		Name:        g.Name,
-		Developers:  g.Developers,
-		Publishers:  g.Publishers,
-		ReleaseDate: g.ReleaseDate.String(),
-		Genres:      g.Genres,
-		LogoURL:     g.LogoURL,
-		Summary:     g.Summary,
-		Slug:        g.Slug,
-		Platforms:   g.Platforms,
-		Screenshots: g.Screenshots,
-		Websites:    g.Websites,
-		IGDBRating:  g.IGDBRating,
-		IGDBID:      g.IGDBID,
+		Name:         g.Name,
+		Developers:   g.DevelopersIDs,
+		Publishers:   g.PublishersIDs,
+		ReleaseDate:  g.ReleaseDate.String(),
+		Genres:       g.GenresIDs,
+		LogoURL:      g.LogoURL,
+		Summary:      g.Summary,
+		Slug:         g.Slug,
+		PlatformsIDs: g.PlatformsIDs,
+		Screenshots:  g.Screenshots,
+		Websites:     g.Websites,
+		IGDBRating:   g.IGDBRating,
+		IGDBID:       g.IGDBID,
 	}
 
 	if upd.Name != nil {
@@ -123,8 +123,8 @@ func (g Game) MapToUpdateGameData(upd UpdatedGame) UpdateGameData {
 	if upd.Summary != nil {
 		update.Summary = *upd.Summary
 	}
-	if upd.Platforms != nil {
-		update.Platforms = *upd.Platforms
+	if upd.PlatformsIDs != nil {
+		update.PlatformsIDs = *upd.PlatformsIDs
 	}
 	if upd.Screenshots != nil {
 		update.Screenshots = *upd.Screenshots

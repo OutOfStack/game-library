@@ -198,15 +198,15 @@ func TestGetGames_Filter_ShouldReturnMatched(t *testing.T) {
 
 	ng1 := getCreateGameData()
 	ng1.DevelopersIDs = append(ng1.DevelopersIDs, developer1, developer2)
-	ng1.Genres = append(ng1.Genres, genre1, genre2)
+	ng1.GenresIDs = append(ng1.GenresIDs, genre1, genre2)
 	ng1.PublishersIDs = append(ng1.PublishersIDs, publisher1)
 	ng2 := getCreateGameData()
 	ng2.DevelopersIDs = append(ng2.DevelopersIDs, developer1, developer2)
-	ng2.Genres = append(ng2.Genres, genre2)
+	ng2.GenresIDs = append(ng2.GenresIDs, genre2)
 	ng2.PublishersIDs = append(ng2.PublishersIDs, publisher2)
 	ng3 := getCreateGameData()
 	ng3.DevelopersIDs = append(ng3.DevelopersIDs, developer1, developer2)
-	ng3.Genres = append(ng3.Genres, genre1)
+	ng3.GenresIDs = append(ng3.GenresIDs, genre1)
 	ng3.PublishersIDs = append(ng3.PublishersIDs, publisher1, publisher2)
 
 	_, err := s.CreateGame(ctx, ng1)
@@ -290,15 +290,15 @@ func TestGetGamesCount_Filter_ShouldReturnMatched(t *testing.T) {
 
 	ng1 := getCreateGameData()
 	ng1.DevelopersIDs = append(ng1.DevelopersIDs, developer1, developer2)
-	ng1.Genres = append(ng1.Genres, genre1, genre2)
+	ng1.GenresIDs = append(ng1.GenresIDs, genre1, genre2)
 	ng1.PublishersIDs = append(ng1.PublishersIDs, publisher1)
 	ng2 := getCreateGameData()
 	ng2.DevelopersIDs = append(ng2.DevelopersIDs, developer1, developer2)
-	ng2.Genres = append(ng2.Genres, genre2)
+	ng2.GenresIDs = append(ng2.GenresIDs, genre2)
 	ng2.PublishersIDs = append(ng2.PublishersIDs, publisher2)
 	ng3 := getCreateGameData()
 	ng3.DevelopersIDs = append(ng3.DevelopersIDs, developer1, developer2)
-	ng3.Genres = append(ng3.Genres, genre1)
+	ng3.GenresIDs = append(ng3.GenresIDs, genre1)
 	ng3.PublishersIDs = append(ng3.PublishersIDs, publisher1, publisher2)
 
 	_, err := s.CreateGame(ctx, ng1)
@@ -370,19 +370,19 @@ func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 	require.NoError(t, err)
 
 	up := model.UpdateGameData{
-		Name:        td.String(),
-		Developers:  []int32{td.Int32(), td.Int32()},
-		Publishers:  []int32{td.Int32(), td.Int32()},
-		ReleaseDate: types.DateOf(td.Date()).String(),
-		Genres:      []int32{td.Int32(), td.Int32()},
-		LogoURL:     td.String(),
-		Summary:     td.String(),
-		Slug:        td.String(),
-		Platforms:   []int32{td.Int32(), td.Int32()},
-		Screenshots: []string{td.String(), td.String()},
-		Websites:    []string{td.String(), td.String()},
-		IGDBRating:  td.Float64(),
-		IGDBID:      int64(td.Uint32()),
+		Name:         td.String(),
+		Developers:   []int32{td.Int32(), td.Int32()},
+		Publishers:   []int32{td.Int32(), td.Int32()},
+		ReleaseDate:  types.DateOf(td.Date()).String(),
+		Genres:       []int32{td.Int32(), td.Int32()},
+		LogoURL:      td.String(),
+		Summary:      td.String(),
+		Slug:         td.String(),
+		PlatformsIDs: []int32{td.Int32(), td.Int32()},
+		Screenshots:  []string{td.String(), td.String()},
+		Websites:     []string{td.String(), td.String()},
+		IGDBRating:   td.Float64(),
+		IGDBID:       int64(td.Uint32()),
 	}
 
 	err = s.UpdateGame(ctx, id, up)
@@ -463,11 +463,11 @@ func getCreateGameData() model.CreateGame {
 		DevelopersIDs: []int32{td.Int32(), td.Int32()},
 		PublishersIDs: []int32{td.Int32(), td.Int32()},
 		ReleaseDate:   td.Date().Format("2006-01-02"),
-		Genres:        []int32{td.Int32(), td.Int32()},
+		GenresIDs:     []int32{td.Int32(), td.Int32()},
 		LogoURL:       td.String(),
 		Summary:       td.String(),
 		Slug:          td.String(),
-		Platforms:     []int32{td.Int32(), td.Int32()},
+		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
 		Screenshots:   []string{td.String(), td.String()},
 		Websites:      []string{td.String(), td.String()},
 		IGDBRating:    td.Float64(),
@@ -479,14 +479,14 @@ func compareCreateGameAndGame(t *testing.T, want model.CreateGame, got model.Gam
 	t.Helper()
 
 	require.Equal(t, want.Name, got.Name, "name should be equal")
-	require.Equal(t, want.DevelopersIDs, got.Developers, "developers should be equal")
-	require.Equal(t, want.PublishersIDs, got.Publishers, "publisher should be equal")
+	require.Equal(t, want.DevelopersIDs, got.DevelopersIDs, "developers should be equal")
+	require.Equal(t, want.PublishersIDs, got.PublishersIDs, "publisher should be equal")
 	require.Equal(t, want.ReleaseDate, got.ReleaseDate.String(), "release date should be equal")
-	require.Equal(t, want.Genres, got.Genres, "genres should be equal")
+	require.Equal(t, want.GenresIDs, got.GenresIDs, "genres should be equal")
 	require.Equal(t, want.LogoURL, got.LogoURL, "logo url should be equal")
 	require.Equal(t, want.Summary, got.Summary, "summary should be equal")
 	require.Equal(t, want.Slug, got.Slug, "slug should be equal")
-	require.Equal(t, want.Platforms, got.Platforms, "platforms should be equal")
+	require.Equal(t, want.PlatformsIDs, got.PlatformsIDs, "platforms should be equal")
 	require.Equal(t, want.Screenshots, got.Screenshots, "screenshots should be equal")
 	require.Equal(t, want.Websites, got.Websites, "websites should be equal")
 	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.01, "igdb rating should be almost equal")
@@ -497,14 +497,14 @@ func compareUpdateGameAndGame(t *testing.T, want model.UpdateGameData, got model
 	t.Helper()
 
 	require.Equal(t, want.Name, got.Name, "name should be equal")
-	require.Equal(t, want.Developers, got.Developers, "developers should be equal")
-	require.Equal(t, want.Publishers, got.Publishers, "publisher should be equal")
+	require.Equal(t, want.Developers, got.DevelopersIDs, "developers should be equal")
+	require.Equal(t, want.Publishers, got.PublishersIDs, "publisher should be equal")
 	require.Equal(t, want.ReleaseDate, got.ReleaseDate.String(), "release date should be equal")
-	require.Equal(t, want.Genres, got.Genres, "genres should be equal")
+	require.Equal(t, want.Genres, got.GenresIDs, "genres should be equal")
 	require.Equal(t, want.LogoURL, got.LogoURL, "logo url should be equal")
 	require.Equal(t, want.Summary, got.Summary, "summary should be equal")
 	require.Equal(t, want.Slug, got.Slug, "slug should be equal")
-	require.Equal(t, want.Platforms, got.Platforms, "platforms should be equal")
+	require.Equal(t, want.PlatformsIDs, got.PlatformsIDs, "platforms should be equal")
 	require.Equal(t, want.Screenshots, got.Screenshots, "screenshots should be equal")
 	require.Equal(t, want.Websites, got.Websites, "websites should be equal")
 	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.01, "igdb rating should be almost equal")

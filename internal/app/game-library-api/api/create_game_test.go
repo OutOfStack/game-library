@@ -19,9 +19,15 @@ func (s *TestSuite) Test_CreateGame_Success() {
 	role, gameID, authToken := td.String(), td.Int32(), td.String()
 
 	requestData := api.CreateGameRequest{
-		Name:        td.String(),
-		Developer:   td.String(),
-		ReleaseDate: td.Date().Format("2006-01-02"),
+		Name:         td.String(),
+		Developer:    td.String(),
+		ReleaseDate:  td.Date().Format("2006-01-02"),
+		GenresIDs:    []int32{td.Int31()},
+		LogoURL:      s.getImageURL(),
+		Summary:      td.String(),
+		PlatformsIDs: []int32{td.Int31()},
+		Screenshots:  []string{s.getImageURL()},
+		Websites:     []string{s.getWebsiteURL()},
 	}
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
@@ -42,7 +48,7 @@ func (s *TestSuite) Test_CreateGame_Success() {
 }
 
 func (s *TestSuite) Test_CreateGame_DecodeError() {
-	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader([]byte("invalid json")))
+	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader([]byte("{invalid json}")))
 
 	s.provider.CreateGame(s.httpResponse, req)
 
@@ -51,9 +57,15 @@ func (s *TestSuite) Test_CreateGame_DecodeError() {
 
 func (s *TestSuite) Test_CreateGame_MissingClaims() {
 	requestData := api.CreateGameRequest{
-		Name:        td.String(),
-		Developer:   td.String(),
-		ReleaseDate: td.Date().Format("2006-01-02"),
+		Name:         td.String(),
+		Developer:    td.String(),
+		ReleaseDate:  td.Date().Format("2006-01-02"),
+		GenresIDs:    []int32{td.Int31()},
+		LogoURL:      s.getImageURL(),
+		Summary:      td.String(),
+		PlatformsIDs: []int32{td.Int31()},
+		Screenshots:  []string{s.getImageURL()},
+		Websites:     []string{s.getWebsiteURL()},
 	}
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
@@ -67,9 +79,15 @@ func (s *TestSuite) Test_CreateGame_FacadeError() {
 	role, authToken := td.String(), td.String()
 
 	requestData := api.CreateGameRequest{
-		Name:        td.String(),
-		Developer:   td.String(),
-		ReleaseDate: td.Date().Format("2006-01-02"),
+		Name:         td.String(),
+		Developer:    td.String(),
+		ReleaseDate:  td.Date().Format("2006-01-02"),
+		GenresIDs:    []int32{td.Int31()},
+		LogoURL:      s.getImageURL(),
+		Summary:      td.String(),
+		PlatformsIDs: []int32{td.Int31()},
+		Screenshots:  []string{s.getImageURL()},
+		Websites:     []string{s.getWebsiteURL()},
 	}
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
@@ -86,4 +104,17 @@ func (s *TestSuite) Test_CreateGame_FacadeError() {
 	handler.ServeHTTP(s.httpResponse, req)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
+}
+
+func (s *TestSuite) getImageURL() string {
+	return fmt.Sprintf("https://ucarecdn.com/%s.jpg", td.String())
+}
+
+func (s *TestSuite) getWebsiteURL() string {
+	var websites = []string{
+		"https://gog.com/",
+		"https://twitch.tv/",
+		"https://youtube.com/",
+	}
+	return websites[td.Intn(len(websites))] + td.String()
 }

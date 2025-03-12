@@ -133,12 +133,12 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, publisher string, u
 		return fmt.Errorf("get company id by name %s: %w", publisher, err)
 	}
 
-	if len(game.Publishers) != 1 || game.Publishers[0] != publisherID {
+	if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
 		return apperr.NewForbiddenError("game", id)
 	}
 
 	developer := upd.Developer
-	developersIDs := game.Developers
+	developersIDs := game.DevelopersIDs
 	if developer != nil {
 		if *developer == "" {
 			developersIDs = []int32{}
@@ -221,7 +221,7 @@ func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) e
 		return fmt.Errorf("get game by id %d: %w", id, err)
 	}
 
-	if len(game.Publishers) != 1 || game.Publishers[0] != publisherID {
+	if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
 		return apperr.NewForbiddenError("game", id)
 	}
 

@@ -526,10 +526,6 @@ const docTemplate = `{
         },
         "model.CreateGameRequest": {
             "type": "object",
-            "required": [
-                "developer",
-                "name"
-            ],
             "properties": {
                 "developer": {
                     "type": "string"
@@ -546,7 +542,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "platformsIDs": {
+                "platformsIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -732,7 +728,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "platforms": {
+                "platformsIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"

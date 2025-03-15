@@ -8,8 +8,8 @@ metadata:
 spec:
     replicas: 1
     strategy:
-      # use this because of error "1 node(s) didn't have free ports for the requested pod ports"
-      type: Recreate
+        # use this because of error "1 node(s) didn't have free ports for the requested pod ports"
+        type: Recreate
     selector:
         matchLabels:
             app: game-library
@@ -45,29 +45,29 @@ spec:
                 env:
                   - name: KUBERNETES_NAMESPACE
                     valueFrom:
-                      fieldRef:
-                        fieldPath: metadata.namespace
+                        fieldRef:
+                            fieldPath: metadata.namespace
                   - name: KUBERNETES_PODNAME
                     valueFrom:
-                      fieldRef:
-                        fieldPath: metadata.name
+                        fieldRef:
+                            fieldPath: metadata.name
                   - name: KUBERNETES_PODIP
                     valueFrom:
-                      fieldRef:
-                        fieldPath: status.podIP
+                        fieldRef:
+                            fieldPath: status.podIP
                   - name: KUBERNETES_NODENAME
                     valueFrom:
-                      fieldRef:
-                        fieldPath: spec.nodeName
+                        fieldRef:
+                            fieldPath: spec.nodeName
                 envFrom:
                   - secretRef:
-                      name: game-library-dbconfig
+                        name: game-library-dbconfig
                   - secretRef:
-                      name: game-library-igdb
+                        name: game-library-igdb
                   - secretRef:
-                      name: game-library-uploadcare
+                        name: game-library-uploadcare
                   - configMapRef:
-                      name: game-library-config
+                        name: game-library-config
                 imagePullPolicy: Always
             # had problems with https calls in pod (tls handshake failure).
             # 10.152.183.10 is kube-dns
@@ -107,7 +107,7 @@ spec:
         spec:
             containers:
               - name: zipkin
-                image: openzipkin/zipkin:2.24
+                image: openzipkin/zipkin:3.5
                 ports:
                   - name: zipkin
                     containerPort: 9411
@@ -122,69 +122,117 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: redis-deployment
-  namespace: game-library
-  labels:
-    app: redis
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis
-  template:
-    metadata:
-      labels:
+    name: redis-deployment
+    namespace: game-library
+    labels:
         app: redis
-    spec:
-      containers:
-        - name: redis
-          image: redis:7.0.10-alpine
-          ports:
-            - name: redis
-              containerPort: 6379
-      hostAliases:
-        - ip: _K8S_IP_
-          hostnames:
-            - _K8S_URL_
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: redis
+    template:
+        metadata:
+            labels:
+                app: redis
+        spec:
+            containers:
+              - name: redis
+                image: redis:7.4-alpine
+                ports:
+                  - name: redis
+                    containerPort: 6379
+            hostAliases:
+              - ip: _K8S_IP_
+                hostnames:
+                  - _K8S_URL_
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: graylog-deployment
-  namespace: game-library
-  labels:
-    app: graylog
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: graylog
-  template:
-    metadata:
-      labels:
+    name: graylog-deployment
+    namespace: game-library
+    labels:
         app: graylog
-    spec:
-      volumes:
-        - name: graylog-data
-          persistentVolumeClaim:
-            claimName: graylog-data-pvc
-      containers:
-        - name: graylog
-          image: graylog/graylog:5.1.4
-          volumeMounts:
-            - name: graylog-data
-              mountPath: /usr/share/graylog/data
-          envFrom:
-            - configMapRef:
-                name: graylog-config
-            - secretRef:
-                name: game-library-graylog
-          ports:
-            - name: http
-              containerPort: 9000
-            - name: gelf
-              containerPort: 12201
-      hostAliases:
-        - ip: _K8S_IP_
-          hostnames:
-            - _K8S_URL_
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: graylog
+    template:
+        metadata:
+            labels:
+                app: graylog
+        spec:
+            volumes:
+              - name: graylog-data
+                persistentVolumeClaim:
+                    claimName: graylog-data-pvc
+            containers:
+              - name: graylog
+                image: graylog/graylog:5.2
+                volumeMounts:
+                  - name: graylog-data
+                    mountPath: /usr/share/graylog/data
+                envFrom:
+                  - configMapRef:
+                        name: graylog-config
+                  - secretRef:
+                        name: game-library-graylog
+                ports:
+                  - name: http
+                    containerPort: 9000
+                  - name: gelf
+                    containerPort: 12201
+            hostAliases:
+              - ip: _K8S_IP_
+                hostnames:
+                  - _K8S_URL_
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    name: prometheus-deployment
+    namespace: game-library
+    labels:
+        app: prometheus
+spec:
+    replicas: 1
+    strategy:
+        # use this because of lock db directory error
+        type: Recreate
+    selector:
+        matchLabels:
+            app: prometheus
+    template:
+        metadata:
+            labels:
+                app: prometheus
+        spec:
+            volumes:
+              - name: prometheus-config-volume
+                configMap:
+                    name: prometheus-config
+              - name: prometheus-data
+                persistentVolumeClaim:
+                    claimName: prometheus-data-pvc
+            containers:
+              - name: prometheus
+                image: prom/prometheus:v3.2.1
+                args:
+                  - "--config.file=/etc/prometheus/prometheus.yml"
+                  - "--storage.tsdb.path=/prometheus"
+                  # for ingress path /_metrics/
+                  - "--web.external-url=/_metrics"
+                ports:
+                  - name: prometheus
+                    containerPort: 9090
+                volumeMounts:
+                  - name: prometheus-config-volume
+                    mountPath: /etc/prometheus
+                  - name: prometheus-data
+                    mountPath: /prometheus
+            hostAliases:
+              - ip: _K8S_IP_
+                hostnames:
+                  - _K8S_URL_

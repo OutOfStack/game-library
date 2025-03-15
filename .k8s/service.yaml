@@ -61,3 +61,18 @@ spec:
       targetPort: gelf
   selector:
     app: graylog
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: prometheus-service
+  namespace: game-library
+spec:
+  ports:
+    - protocol: TCP
+      name: prometheus
+      port: 9090
+      targetPort: prometheus
+  selector:
+    app: prometheus
+

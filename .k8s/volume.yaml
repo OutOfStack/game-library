@@ -2,7 +2,6 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: graylog-pv
-  namespace: game-library
 spec:
   capacity:
     storage: 2Gi
@@ -28,3 +27,31 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: graylog-storage-class
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: prometheus-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: prometheus-storage-class
+  hostPath:
+    # make folder writable: chmod -R o+w prometheus
+    path: /data/prometheus
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: prometheus-data-pvc
+  namespace: game-library
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: prometheus-storage-class

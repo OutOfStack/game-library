@@ -40,9 +40,10 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 
 3. Install and run dependencies:
     ```bash
-    make dockerrunglog # [Optional] runs graylog in docker container
     make dockerrunredis # [Optional] runs redis in docker container
-    make dockerrunzipkin # [Optional] runs zipkin
+    make dockerrunzipkin # [Optional] runs zipkin in docker container
+    make dockerrunglog # [Optional] runs graylog in docker container
+    make dockerrunprom # [Optional] runs prometheus in docker container
     ```
 
 4. _[Optional]_ Set up fetching games data:
@@ -121,12 +122,10 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     dockerbuildapi  builds app docker image
     dockerrunapi    runs app in docker container
     dockerrunzipkin runs zipkin in docker container
-    dockerrunglog   runs graylog in docker container
     dockerrunredis  runs redis in docker container
+    dockerrunglog   runs graylog in docker container
+    dockerrunprom   runs prometheus in docker container
     dockerbuildmng  builds manage app docker image
-    dockerrunmng-m  applies migrations to database using docker manage image
-    dockerrunmng-r  rollbacks one last migration using docker manage image
-    dockerrunmng-s  seeds test data to database using docker manage image
 
 ## License
 

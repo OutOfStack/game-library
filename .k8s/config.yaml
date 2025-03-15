@@ -4,7 +4,6 @@ metadata:
     name: game-library-config
     namespace: game-library
 data:
-    GIN_MODE: "release"
     APP_ADDRESS: "0.0.0.0:8000"
     DEBUG_ADDRESS: "0.0.0.0:6060"
     APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_"
@@ -26,7 +25,40 @@ data:
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: graylog-config
-  namespace: game-library
+    name: graylog-config
+    namespace: game-library
 data:
-  GRAYLOG_HTTP_EXTERNAL_URI: "https://_K8S_URL_/_log/"
+    GRAYLOG_HTTP_EXTERNAL_URI: "https://_K8S_URL_/_log/"
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+    name: prometheus-config
+    namespace: game-library
+data:
+    prometheus.yml: |
+        global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+            scrape_timeout: 1s
+          
+        scrape_configs:
+          - job_name: 'prometheus'
+            # because of ingress prefix
+            metrics_path: '/_metrics/metrics'
+            static_configs:
+              - targets: [ 'localhost:9090' ]
+              
+          - job_name: 'game-library'
+            kubernetes_sd_configs:
+              - role: endpoints
+                namespaces:
+                    names:
+                      - game-library
+            relabel_configs:
+              - source_labels: [ __meta_kubernetes_service_name ]
+                action: keep
+                regex: game-library-service
+              - source_labels: [ __meta_kubernetes_endpoint_port_name ]
+                action: keep
+                regex: api

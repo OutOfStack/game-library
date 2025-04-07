@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var tracer = otel.Tracer("")
+var tracer = otel.Tracer("authapi")
 
 // ErrVerifyAPIUnavailable - error representing unavailability of verify api
 var ErrVerifyAPIUnavailable = errors.New("verify API is unavailable")
@@ -41,7 +41,7 @@ func New(log *zap.Logger, apiURL string) (*Client, error) {
 
 // VerifyToken returns result of token verification
 func (c *Client) VerifyToken(ctx context.Context, token string) (VerifyTokenResp, error) {
-	ctx, span := tracer.Start(ctx, "auth.verifyToken")
+	ctx, span := tracer.Start(ctx, "verifyToken")
 	defer span.End()
 
 	data := VerifyToken{

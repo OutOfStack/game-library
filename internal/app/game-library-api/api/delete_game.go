@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [delete]
 func (p *Provider) DeleteGame(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.deleteGame")
+	ctx, span := tracer.Start(r.Context(), "deleteGame")
 	defer span.End()
 
 	id, err := web.GetIDParam(r)

@@ -25,7 +25,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id}/rate [post]
 func (p *Provider) RateGame(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.rateGame")
+	ctx, span := tracer.Start(r.Context(), "rateGame")
 	defer span.End()
 
 	gameID, err := web.GetIDParam(r)

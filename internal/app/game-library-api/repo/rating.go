@@ -11,7 +11,7 @@ import (
 
 // AddRating adds rating to game
 func (s *Storage) AddRating(ctx context.Context, cr model.CreateRating) error {
-	ctx, span := tracer.Start(ctx, "db.addRating")
+	ctx, span := tracer.Start(ctx, "addRating")
 	defer span.End()
 
 	const q = `
@@ -29,7 +29,7 @@ func (s *Storage) AddRating(ctx context.Context, cr model.CreateRating) error {
 
 // RemoveRating removes rating of game
 func (s *Storage) RemoveRating(ctx context.Context, rr model.RemoveRating) error {
-	ctx, span := tracer.Start(ctx, "db.removeRating")
+	ctx, span := tracer.Start(ctx, "removeRating")
 	defer span.End()
 
 	const q = `
@@ -45,7 +45,7 @@ func (s *Storage) RemoveRating(ctx context.Context, rr model.RemoveRating) error
 
 // GetUserRatingsByGamesIDs returns user ratings for specified games
 func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, gameIDs []int32) (ratings []model.UserRating, err error) {
-	ctx, span := tracer.Start(ctx, "db.getUserRatingsByGamesIDs")
+	ctx, span := tracer.Start(ctx, "getUserRatingsByGamesIDs")
 	defer span.End()
 
 	const q = `
@@ -62,7 +62,7 @@ func (s *Storage) GetUserRatingsByGamesIDs(ctx context.Context, userID string, g
 
 // GetUserRatings returns all user ratings
 func (s *Storage) GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error) {
-	ctx, span := tracer.Start(ctx, "db.getUserRatings")
+	ctx, span := tracer.Start(ctx, "getUserRatings")
 	defer span.End()
 
 	ratings := make([]model.UserRating, 0)

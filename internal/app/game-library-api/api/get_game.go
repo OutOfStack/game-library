@@ -22,7 +22,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/{id} [get]
 func (p *Provider) GetGame(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.getGame")
+	ctx, span := tracer.Start(r.Context(), "getGame")
 	defer span.End()
 
 	id, err := web.GetIDParam(r)

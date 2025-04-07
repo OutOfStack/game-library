@@ -12,6 +12,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
+	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
@@ -41,21 +42,28 @@ type UploadcareAPIClient interface {
 	UploadImage(ctx context.Context, data io.ReadSeeker, fileName string) (string, error)
 }
 
+// S3Client s3 store client interface
+type S3Client interface {
+	Upload(ctx context.Context, data io.ReadSeeker, fileName string) (s3.UploadResult, error)
+}
+
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
 	log                 *zap.Logger
 	storage             Storage
 	igdbAPIClient       IGDBAPIClient
 	uploadcareAPIClient UploadcareAPIClient
+	s3Client            S3Client
 }
 
 // New creates new TaskProvider
-func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, uploadcareClient UploadcareAPIClient) *TaskProvider {
+func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, uploadcareClient UploadcareAPIClient, s3Client S3Client) *TaskProvider {
 	return &TaskProvider{
 		log:                 log,
 		storage:             storage,
 		igdbAPIClient:       igdbClient,
 		uploadcareAPIClient: uploadcareClient,
+		s3Client:            s3Client,
 	}
 }
 

@@ -26,7 +26,7 @@ const (
 	maxLimit = 500
 )
 
-var tracer = otel.Tracer("")
+var tracer = otel.Tracer("igdbapi")
 
 // Client represents dependencies for igdb client
 type Client struct {
@@ -52,7 +52,7 @@ func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 
 // GetTopRatedGames returns top-rated games
 func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedBefore time.Time, minRatingsCount, minRating, limit int64) ([]TopRatedGamesResp, error) {
-	ctx, span := tracer.Start(ctx, "igdb.getTopRatedGames")
+	ctx, span := tracer.Start(ctx, "getTopRatedGames")
 	defer span.End()
 
 	if limit > maxLimit {
@@ -115,7 +115,7 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 
 // GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name
 func (c *Client) GetImageByURL(ctx context.Context, imageURL, imageType string) (*bytes.Reader, string, error) {
-	ctx, span := tracer.Start(ctx, "igdb.downloadImage")
+	ctx, span := tracer.Start(ctx, "downloadImage")
 	defer span.End()
 
 	imageURL = getImageURL(imageURL, imageType)
@@ -171,7 +171,7 @@ func (c *Client) setAuthHeaders(ctx context.Context, header *http.Header) error 
 
 // accessToken returns access token
 func (c *Client) accessToken(ctx context.Context) (string, error) {
-	ctx, span := tracer.Start(ctx, "igdb.token")
+	ctx, span := tracer.Start(ctx, "token")
 	defer span.End()
 
 	token := c.token.get()

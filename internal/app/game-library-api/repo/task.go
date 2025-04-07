@@ -18,7 +18,7 @@ import (
 // If tx provided, query will be executed on it.
 // If task does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetTask(ctx context.Context, tx pgx.Tx, name string) (task model.Task, err error) {
-	ctx, span := tracer.Start(ctx, "db.getTask")
+	ctx, span := tracer.Start(ctx, "getTask")
 	defer span.End()
 
 	q := `
@@ -50,7 +50,7 @@ func (s *Storage) GetTask(ctx context.Context, tx pgx.Tx, name string) (task mod
 // If tx provided, query will be executed on it.
 // If task does not exist returns apperr.Error with NotFound status code
 func (s *Storage) UpdateTask(ctx context.Context, tx pgx.Tx, task model.Task) (err error) {
-	ctx, span := tracer.Start(ctx, "db.updateTask")
+	ctx, span := tracer.Start(ctx, "updateTask")
 	defer span.End()
 
 	q := `

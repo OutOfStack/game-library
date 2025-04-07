@@ -12,7 +12,7 @@ import (
 
 // GetPlatforms returns platforms
 func (s *Storage) GetPlatforms(ctx context.Context) (platforms []model.Platform, err error) {
-	ctx, span := tracer.Start(ctx, "db.getPlatforms")
+	ctx, span := tracer.Start(ctx, "getPlatforms")
 	defer span.End()
 
 	const q = `
@@ -29,7 +29,7 @@ func (s *Storage) GetPlatforms(ctx context.Context) (platforms []model.Platform,
 // GetPlatformByID returns platform by id
 // If company does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetPlatformByID(ctx context.Context, id int32) (platform model.Platform, err error) {
-	ctx, span := tracer.Start(ctx, "db.getPlatformByID")
+	ctx, span := tracer.Start(ctx, "getPlatformByID")
 	defer span.End()
 
 	const q = `

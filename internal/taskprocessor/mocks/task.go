@@ -18,6 +18,7 @@ import (
 
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	igdbapi "github.com/OutOfStack/game-library/internal/client/igdbapi"
+	s3 "github.com/OutOfStack/game-library/internal/client/s3"
 	pgx "github.com/jackc/pgx/v5"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -287,4 +288,43 @@ func (m *MockUploadcareAPIClient) UploadImage(ctx context.Context, data io.ReadS
 func (mr *MockUploadcareAPIClientMockRecorder) UploadImage(ctx, data, fileName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockUploadcareAPIClient)(nil).UploadImage), ctx, data, fileName)
+}
+
+// MockS3Client is a mock of S3Client interface.
+type MockS3Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockS3ClientMockRecorder
+	isgomock struct{}
+}
+
+// MockS3ClientMockRecorder is the mock recorder for MockS3Client.
+type MockS3ClientMockRecorder struct {
+	mock *MockS3Client
+}
+
+// NewMockS3Client creates a new mock instance.
+func NewMockS3Client(ctrl *gomock.Controller) *MockS3Client {
+	mock := &MockS3Client{ctrl: ctrl}
+	mock.recorder = &MockS3ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockS3Client) EXPECT() *MockS3ClientMockRecorder {
+	return m.recorder
+}
+
+// Upload mocks base method.
+func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, fileName string) (s3.UploadResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upload", ctx, data, fileName)
+	ret0, _ := ret[0].(s3.UploadResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Upload indicates an expected call of Upload.
+func (mr *MockS3ClientMockRecorder) Upload(ctx, data, fileName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, fileName)
 }

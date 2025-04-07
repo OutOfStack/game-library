@@ -20,6 +20,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/client/redis"
+	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/client/uploadcareapi"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
@@ -123,6 +124,12 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 		return fmt.Errorf("create redis client: %w", err)
 	}
 
+	// create s3 client
+	s3Client, err := s3.New(logger, cfg.S3)
+	if err != nil {
+		return fmt.Errorf("create S3 client: %w", err)
+	}
+
 	// create redis cache service
 	rCache := cache.NewRedisStore(redisClient, logger)
 
@@ -142,7 +149,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	apiProvider := api.NewProvider(logger, rCache, gameFacade)
 
 	// run background tasks
-	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, uploadcareAPIClient)
+	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, uploadcareAPIClient, s3Client)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
 		taskprocessor.FetchIGDBGamesTaskName: {Schedule: cfg.Scheduler.FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},

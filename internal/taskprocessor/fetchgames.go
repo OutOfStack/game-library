@@ -19,8 +19,8 @@ const (
 	// FetchIGDBGamesTaskName ...
 	FetchIGDBGamesTaskName = "fetch_igdb_games"
 
-	fetchGamesMinRating        = 60
-	fetchGamesScreenshotsLimit = 7
+	fetchGamesMinRating        = 50
+	fetchGamesScreenshotsLimit = 8
 	fetchGamesRequestsCount    = 5
 )
 
@@ -34,7 +34,7 @@ func (f fetchGamesSettings) convertToTaskSettings() model.TaskSettings {
 }
 
 var (
-	startReleasedAtDate = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
+	startReleasedAtDate = time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 	getMinRatingsCountAndLimit = func(date time.Time) (count, limit int64) {
 		switch {

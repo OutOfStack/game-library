@@ -13,6 +13,8 @@ data:
     REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
     REDIS_TTL: "2h"
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
+    S3_REGION: "auto"
+    S3_BUCKET_NAME: "game-library"
 ---
 kind: ConfigMap
 apiVersion: v1

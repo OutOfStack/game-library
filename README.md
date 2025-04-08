@@ -48,7 +48,7 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 
 4. _[Optional]_ Set up fetching games data:
     - Get credentials from [IGDB API](https://api-docs.igdb.com/#account-creation) to run background task that fetches games
-    - Get credentials from [Uploadcare API](https://uploadcare.com/api/) for uploading game images
+    - Get S3 compatible storage, for example [AWS S3](https://aws.amazon.com/s3/) or [Cloudflare R2](https://www.cloudflare.com/en-gb/developer-platform/products/r2/) for uploading game images
 
 5. _[Optional]_ Install [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
@@ -79,7 +79,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 - Tracing with Zipkin.
 - Log management with Graylog.
 - Background fetching of game data from [IGDB](https://api-docs.igdb.com/).
-- Reuploading game images to Uploadcare CDN.
+- Reuploading game images to Cloudflare R2 storage.
 - Code analysis with golangci-lint.
 - CI/CD with GitHub Actions and deploy to Kubernetes (microk8s) cluster.
 

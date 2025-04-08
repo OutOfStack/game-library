@@ -10,7 +10,6 @@
 package taskprocessor_mock
 
 import (
-	bytes "bytes"
 	context "context"
 	io "io"
 	reflect "reflect"
@@ -221,13 +220,12 @@ func (m *MockIGDBAPIClient) EXPECT() *MockIGDBAPIClientMockRecorder {
 }
 
 // GetImageByURL mocks base method.
-func (m *MockIGDBAPIClient) GetImageByURL(ctx context.Context, imageURL, imageType string) (*bytes.Reader, string, error) {
+func (m *MockIGDBAPIClient) GetImageByURL(ctx context.Context, imageURL, imageType string) (igdbapi.GetImageResp, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetImageByURL", ctx, imageURL, imageType)
-	ret0, _ := ret[0].(*bytes.Reader)
-	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].(igdbapi.GetImageResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetImageByURL indicates an expected call of GetImageByURL.
@@ -249,45 +247,6 @@ func (m *MockIGDBAPIClient) GetTopRatedGames(ctx context.Context, platformsIDs [
 func (mr *MockIGDBAPIClientMockRecorder) GetTopRatedGames(ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTopRatedGames", reflect.TypeOf((*MockIGDBAPIClient)(nil).GetTopRatedGames), ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit)
-}
-
-// MockUploadcareAPIClient is a mock of UploadcareAPIClient interface.
-type MockUploadcareAPIClient struct {
-	ctrl     *gomock.Controller
-	recorder *MockUploadcareAPIClientMockRecorder
-	isgomock struct{}
-}
-
-// MockUploadcareAPIClientMockRecorder is the mock recorder for MockUploadcareAPIClient.
-type MockUploadcareAPIClientMockRecorder struct {
-	mock *MockUploadcareAPIClient
-}
-
-// NewMockUploadcareAPIClient creates a new mock instance.
-func NewMockUploadcareAPIClient(ctrl *gomock.Controller) *MockUploadcareAPIClient {
-	mock := &MockUploadcareAPIClient{ctrl: ctrl}
-	mock.recorder = &MockUploadcareAPIClientMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockUploadcareAPIClient) EXPECT() *MockUploadcareAPIClientMockRecorder {
-	return m.recorder
-}
-
-// UploadImage mocks base method.
-func (m *MockUploadcareAPIClient) UploadImage(ctx context.Context, data io.ReadSeeker, fileName string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadImage", ctx, data, fileName)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UploadImage indicates an expected call of UploadImage.
-func (mr *MockUploadcareAPIClientMockRecorder) UploadImage(ctx, data, fileName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockUploadcareAPIClient)(nil).UploadImage), ctx, data, fileName)
 }
 
 // MockS3Client is a mock of S3Client interface.
@@ -315,16 +274,16 @@ func (m *MockS3Client) EXPECT() *MockS3ClientMockRecorder {
 }
 
 // Upload mocks base method.
-func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, fileName string) (s3.UploadResult, error) {
+func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, fileName, contentType string) (s3.UploadResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upload", ctx, data, fileName)
+	ret := m.ctrl.Call(m, "Upload", ctx, data, fileName, contentType)
 	ret0, _ := ret[0].(s3.UploadResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upload indicates an expected call of Upload.
-func (mr *MockS3ClientMockRecorder) Upload(ctx, data, fileName any) *gomock.Call {
+func (mr *MockS3ClientMockRecorder) Upload(ctx, data, fileName, contentType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, fileName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, fileName, contentType)
 }

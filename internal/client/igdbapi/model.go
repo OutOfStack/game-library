@@ -1,5 +1,7 @@
 package igdbapi
 
+import "bytes"
+
 // TokenResp - access token response
 type TokenResp struct {
 	AccessToken string `json:"access_token"`
@@ -80,4 +82,11 @@ var WebsiteCategoryNames = map[WebsiteCategory]string{
 	WebsiteCategorySteam:     "Steam",
 	WebsiteCategoryEpicGames: "EpicGames",
 	WebsiteCategoryGOG:       "GOG",
+}
+
+// GetImageResp - get image response
+type GetImageResp struct {
+	Body        *bytes.Reader
+	FileName    string
+	ContentType string
 }

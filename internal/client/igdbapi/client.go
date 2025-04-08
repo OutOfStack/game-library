@@ -114,7 +114,7 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 }
 
 // GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name
-func (c *Client) GetImageByURL(ctx context.Context, imageURL, imageType string) (*bytes.Reader, string, error) {
+func (c *Client) GetImageByURL(ctx context.Context, imageURL, imageType string) (GetImageResp, error) {
 	ctx, span := tracer.Start(ctx, "downloadImage")
 	defer span.End()
 
@@ -122,12 +122,12 @@ func (c *Client) GetImageByURL(ctx context.Context, imageURL, imageType string) 
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
 	if err != nil {
-		return nil, "", fmt.Errorf("creating get image by url request: %v", err)
+		return GetImageResp{}, fmt.Errorf("creating get image by url request: %v", err)
 	}
 
 	resp, err := c.client.Do(request)
 	if err != nil {
-		return nil, "", fmt.Errorf("get image by url: %v", err)
+		return GetImageResp{}, fmt.Errorf("get image by url: %v", err)
 	}
 	defer func() {
 		if err = resp.Body.Close(); err != nil {
@@ -137,13 +137,18 @@ func (c *Client) GetImageByURL(ctx context.Context, imageURL, imageType string) 
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, "", fmt.Errorf("read response body: %v", err)
+		return GetImageResp{}, fmt.Errorf("read response body: %v", err)
 	}
 
 	reader := bytes.NewReader(data)
 	fileName := path.Base(request.URL.Path)
+	contentType := resp.Header.Get("Content-Type")
 
-	return reader, fileName, nil
+	return GetImageResp{
+		Body:        reader,
+		ContentType: contentType,
+		FileName:    fileName,
+	}, nil
 }
 
 // returns updated image url for provided image type

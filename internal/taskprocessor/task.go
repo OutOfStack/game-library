@@ -1,7 +1,6 @@
 package taskprocessor
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -34,36 +33,29 @@ type Storage interface {
 // IGDBAPIClient igdb api client interface
 type IGDBAPIClient interface {
 	GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdbapi.TopRatedGamesResp, error)
-	GetImageByURL(ctx context.Context, imageURL, imageType string) (*bytes.Reader, string, error)
-}
-
-// UploadcareAPIClient uploadcare api client interface
-type UploadcareAPIClient interface {
-	UploadImage(ctx context.Context, data io.ReadSeeker, fileName string) (string, error)
+	GetImageByURL(ctx context.Context, imageURL, imageType string) (igdbapi.GetImageResp, error)
 }
 
 // S3Client s3 store client interface
 type S3Client interface {
-	Upload(ctx context.Context, data io.ReadSeeker, fileName string) (s3.UploadResult, error)
+	Upload(ctx context.Context, data io.ReadSeeker, fileName, contentType string) (s3.UploadResult, error)
 }
 
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
-	log                 *zap.Logger
-	storage             Storage
-	igdbAPIClient       IGDBAPIClient
-	uploadcareAPIClient UploadcareAPIClient
-	s3Client            S3Client
+	log           *zap.Logger
+	storage       Storage
+	igdbAPIClient IGDBAPIClient
+	s3Client      S3Client
 }
 
 // New creates new TaskProvider
-func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, uploadcareClient UploadcareAPIClient, s3Client S3Client) *TaskProvider {
+func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client) *TaskProvider {
 	return &TaskProvider{
-		log:                 log,
-		storage:             storage,
-		igdbAPIClient:       igdbClient,
-		uploadcareAPIClient: uploadcareClient,
-		s3Client:            s3Client,
+		log:           log,
+		storage:       storage,
+		igdbAPIClient: igdbClient,
+		s3Client:      s3Client,
 	}
 }
 

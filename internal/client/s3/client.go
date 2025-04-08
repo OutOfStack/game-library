@@ -65,7 +65,7 @@ func New(log *zap.Logger, conf appconf.S3) (*Client, error) {
 }
 
 // Upload uploads a file to S3 storage
-func (c *Client) Upload(ctx context.Context, data io.ReadSeeker, fileName string) (UploadResult, error) {
+func (c *Client) Upload(ctx context.Context, data io.ReadSeeker, fileName, contentType string) (UploadResult, error) {
 	ext := strings.ToLower(filepath.Ext(fileName))
 	objectKey := uuid.NewString()
 	if ext != "" {
@@ -82,10 +82,16 @@ func (c *Client) Upload(ctx context.Context, data io.ReadSeeker, fileName string
 		return UploadResult{}, fmt.Errorf("seek file start: %v", err)
 	}
 
+	var ct *string
+	if contentType != "" {
+		ct = aws.String(contentType)
+	}
+
 	_, err := c.s3Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(c.bucketName),
-		Key:    aws.String(objectKey),
-		Body:   data,
+		Bucket:      aws.String(c.bucketName),
+		Key:         aws.String(objectKey),
+		Body:        data,
+		ContentType: ct,
 		Metadata: map[string]string{
 			"fileName": fileName,
 		},

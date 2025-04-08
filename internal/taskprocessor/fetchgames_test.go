@@ -79,10 +79,10 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return(nil, nil)
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return(nil, nil)
 
-	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, gomock.Cond(func(x time.Time) bool { return x.Sub(lastReleasedAt) < time.Second }), gomock.Any(), int64(60), gomock.Any()).
+	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, gomock.Cond(func(x time.Time) bool { return x.Sub(lastReleasedAt) < time.Second }), gomock.Any(), int64(50), gomock.Any()).
 		Return([]igdbapi.TopRatedGamesResp{igdbGame}, nil).Times(1)
 	// next iterations - return no games in order to stop
-	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(60), gomock.Any()).
+	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(50), gomock.Any()).
 		Return(nil, nil).Times(4)
 	s.storageMock.EXPECT().GetGameIDByIGDBID(gomock.Any(), igdbGame.ID).Return(int32(0), apperr.NewNotFoundError("game", igdbGame.ID))
 	s.storageMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: developerName, IGDBID: sql.NullInt64{Valid: true, Int64: developerIGDBID}}).
@@ -91,10 +91,12 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	s.storageMock.EXPECT().CreateGenre(gomock.Any(), model.Genre{Name: genreName, IGDBID: genreIGDBID}).Return(genreID, nil)
 	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias).Return(
 		igdbapi.GetImageResp{FileName: logoFileName, ContentType: contentType}, nil)
-	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), logoFileName, contentType).Return(s3.UploadResult{FileURL: logoURL}, nil)
+	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), contentType, map[string]string{"fileName": logoFileName, "game": igdbGame.Name}).
+		Return(s3.UploadResult{FileURL: logoURL}, nil)
 	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Screenshots[0].URL, igdbapi.ImageTypeScreenshotBigAlias).Return(
 		igdbapi.GetImageResp{FileName: screenshotFileName, ContentType: contentType}, nil)
-	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), screenshotFileName, contentType).Return(s3.UploadResult{FileURL: screenshotURL}, nil)
+	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), contentType, map[string]string{"fileName": screenshotFileName, "game": igdbGame.Name}).
+		Return(s3.UploadResult{FileURL: screenshotURL}, nil)
 	s.storageMock.EXPECT().CreateGame(gomock.Any(), model.CreateGame{
 		Name:          igdbGame.Name,
 		DevelopersIDs: []int32{developerID},

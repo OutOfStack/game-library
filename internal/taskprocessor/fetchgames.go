@@ -209,7 +209,10 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					return settings, fmt.Errorf("get logo by url %s: %v", g.Cover.URL, lErr)
 				}
 
-				logoUploadData, uErr := tp.s3Client.Upload(ctx, logoData.Body, logoData.FileName, logoData.ContentType)
+				logoUploadData, uErr := tp.s3Client.Upload(ctx, logoData.Body, logoData.ContentType, map[string]string{
+					"fileName": logoData.FileName,
+					"game":     g.Name,
+				})
 				if uErr != nil {
 					return settings, fmt.Errorf("upload logo %s: %v", g.Cover.URL, uErr)
 				}
@@ -224,7 +227,10 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					if sErr != nil {
 						return settings, fmt.Errorf("get screenshot by url %s: %v", scr.URL, sErr)
 					}
-					screnshotUploadData, sErr := tp.s3Client.Upload(ctx, scrData.Body, scrData.FileName, scrData.ContentType)
+					screnshotUploadData, sErr := tp.s3Client.Upload(ctx, scrData.Body, scrData.ContentType, map[string]string{
+						"fileName": scrData.FileName,
+						"game":     g.Name,
+					})
 					if sErr != nil {
 						return settings, fmt.Errorf("upload screenshot %s: %v", scr.URL, sErr)
 					}

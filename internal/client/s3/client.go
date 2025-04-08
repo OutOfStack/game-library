@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
-	"path/filepath"
-	"strings"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/pkg/observability"
@@ -18,7 +17,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -65,36 +63,33 @@ func New(log *zap.Logger, conf appconf.S3) (*Client, error) {
 }
 
 // Upload uploads a file to S3 storage
-func (c *Client) Upload(ctx context.Context, data io.ReadSeeker, fileName, contentType string) (UploadResult, error) {
-	ext := strings.ToLower(filepath.Ext(fileName))
-	objectKey := uuid.NewString()
-	if ext != "" {
-		objectKey += ext
-	}
-
-	ctx, span := tracer.Start(ctx, "upload", trace.WithAttributes(
-		attribute.String("objectKey", objectKey),
-		attribute.String("fileName", fileName),
-	))
+func (c *Client) Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (UploadResult, error) {
+	ctx, span := tracer.Start(ctx, "upload")
 	defer span.End()
 
-	if _, err := data.Seek(0, io.SeekStart); err != nil {
+	// get file extension and construct object key
+	var fileContentType *string
+	fileExt, err := getExtensionByContentType(contentType)
+	if err != nil {
+		c.log.Warn("detect content type", zap.String("type", contentType), zap.Error(err))
+	} else {
+		fileContentType = aws.String(contentType)
+	}
+	objectKey := uuid.NewString() + fileExt
+
+	span.SetAttributes(attribute.String("objectKey", objectKey))
+
+	_, err = data.Seek(0, io.SeekStart)
+	if err != nil {
 		return UploadResult{}, fmt.Errorf("seek file start: %v", err)
 	}
 
-	var ct *string
-	if contentType != "" {
-		ct = aws.String(contentType)
-	}
-
-	_, err := c.s3Client.PutObject(ctx, &s3.PutObjectInput{
+	_, err = c.s3Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(c.bucketName),
 		Key:         aws.String(objectKey),
 		Body:        data,
-		ContentType: ct,
-		Metadata: map[string]string{
-			"fileName": fileName,
-		},
+		ContentType: fileContentType,
+		Metadata:    md,
 	})
 	if err != nil {
 		return UploadResult{}, fmt.Errorf("putting object: %v", err)
@@ -106,4 +101,22 @@ func (c *Client) Upload(ctx context.Context, data io.ReadSeeker, fileName, conte
 		FileID:  objectKey,
 		FileURL: fileURL,
 	}, nil
+}
+
+var contentTypeExtensionOverrides = map[string]string{
+	"image/jpeg": ".jpg",
+}
+
+func getExtensionByContentType(contentType string) (string, error) {
+	if ext, ok := contentTypeExtensionOverrides[contentType]; ok {
+		return ext, nil
+	}
+	exts, err := mime.ExtensionsByType(contentType)
+	if err != nil {
+		return "", err
+	}
+	if len(exts) > 0 {
+		return exts[0], nil
+	}
+	return "", nil
 }

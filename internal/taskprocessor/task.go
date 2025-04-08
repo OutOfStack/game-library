@@ -38,7 +38,7 @@ type IGDBAPIClient interface {
 
 // S3Client s3 store client interface
 type S3Client interface {
-	Upload(ctx context.Context, data io.ReadSeeker, fileName, contentType string) (s3.UploadResult, error)
+	Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (s3.UploadResult, error)
 }
 
 // TaskProvider contains dependencies for tasks

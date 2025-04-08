@@ -274,16 +274,16 @@ func (m *MockS3Client) EXPECT() *MockS3ClientMockRecorder {
 }
 
 // Upload mocks base method.
-func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, fileName, contentType string) (s3.UploadResult, error) {
+func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (s3.UploadResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upload", ctx, data, fileName, contentType)
+	ret := m.ctrl.Call(m, "Upload", ctx, data, contentType, md)
 	ret0, _ := ret[0].(s3.UploadResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upload indicates an expected call of Upload.
-func (mr *MockS3ClientMockRecorder) Upload(ctx, data, fileName, contentType any) *gomock.Call {
+func (mr *MockS3ClientMockRecorder) Upload(ctx, data, contentType, md any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, fileName, contentType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, contentType, md)
 }

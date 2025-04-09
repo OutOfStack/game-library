@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	tracer = otel.Tracer("")
+	tracer = otel.Tracer("db")
 )
 
 var (

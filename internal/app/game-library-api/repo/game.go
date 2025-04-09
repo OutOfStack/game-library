@@ -38,7 +38,7 @@ var (
 
 // GetGames returns list of games with specified pageSize at specified page
 func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) (list []model.Game, err error) {
-	ctx, span := tracer.Start(ctx, "db.getGames")
+	ctx, span := tracer.Start(ctx, "getGames")
 	defer span.End()
 
 	query := psql.Select("id", "name", "release_date", "logo_url", "rating", "summary", "genres", "platforms",
@@ -79,7 +79,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model
 
 // GetGamesCount returns games count
 func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (count uint64, err error) {
-	ctx, span := tracer.Start(ctx, "db.getGamesCount")
+	ctx, span := tracer.Start(ctx, "getGamesCount")
 	defer span.End()
 
 	query := psql.Select("COUNT(id)").
@@ -113,7 +113,7 @@ func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (
 // GetGameByID returns game by id.
 // If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, err error) {
-	ctx, span := tracer.Start(ctx, "db.getGameByID")
+	ctx, span := tracer.Start(ctx, "getGameByID")
 	defer span.End()
 
 	const q = `
@@ -135,7 +135,7 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, e
 // GetGameIDByIGDBID returns game id by igdb id.
 // If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error) {
-	ctx, span := tracer.Start(ctx, "db.getGameIdByIgdbId")
+	ctx, span := tracer.Start(ctx, "getGameIdByIgdbId")
 	defer span.End()
 
 	const q = `
@@ -155,7 +155,7 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 
 // CreateGame creates new game
 func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error) {
-	ctx, span := tracer.Start(ctx, "db.createGame")
+	ctx, span := tracer.Start(ctx, "createGame")
 	defer span.End()
 
 	const q = `
@@ -179,7 +179,7 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32
 // UpdateGame updates game
 // If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameData) error {
-	ctx, span := tracer.Start(ctx, "db.updateGame")
+	ctx, span := tracer.Start(ctx, "updateGame")
 	defer span.End()
 
 	const q = `
@@ -204,7 +204,7 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameD
 // UpdateGameRating updates game rating
 // If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
-	ctx, span := tracer.Start(ctx, "db.updateGameRating")
+	ctx, span := tracer.Start(ctx, "updateGameRating")
 	defer span.End()
 
 	const q = `
@@ -227,7 +227,7 @@ func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 // DeleteGame deletes game by id.
 // If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
-	ctx, span := tracer.Start(ctx, "db.deleteGame")
+	ctx, span := tracer.Start(ctx, "deleteGame")
 	defer span.End()
 
 	const q = `

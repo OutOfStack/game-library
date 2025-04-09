@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
 func (p *Provider) CreateGame(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.createGame")
+	ctx, span := tracer.Start(r.Context(), "createGame")
 	defer span.End()
 
 	var cg api.CreateGameRequest

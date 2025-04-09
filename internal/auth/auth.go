@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var tracer = otel.Tracer("")
+var tracer = otel.Tracer("auth")
 
 var (
 	tokenVerificationFailures = promauto.NewCounter(prometheus.CounterOpts{
@@ -60,10 +60,10 @@ func ExtractToken(authHeader string) string {
 	return ""
 }
 
-// Verify calls Verify API and returns error if token is invalid.
+// Verify calls Verify API method and returns error if token is invalid.
 // If verify API is unavailable ErrVerifyAPIUnavailable is returned
 func (c *Client) Verify(ctx context.Context, tokenStr string) error {
-	ctx, span := tracer.Start(ctx, "auth.verify")
+	ctx, span := tracer.Start(ctx, "verify")
 	defer span.End()
 
 	result, err := c.authAPIClient.VerifyToken(ctx, tokenStr)
@@ -79,7 +79,8 @@ func (c *Client) Verify(ctx context.Context, tokenStr string) error {
 	return nil
 }
 
-// ParseToken returns token as a set of claims
+// ParseToken returns token as a set of claims.
+// No verification is done here, use Verify for that
 func (c *Client) ParseToken(tokenStr string) (*Claims, error) {
 	var claims Claims
 	_, _, err := c.parser.ParseUnverified(tokenStr, &claims)

@@ -17,7 +17,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /genres [get]
 func (p *Provider) GetGenres(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.getGenres")
+	ctx, span := tracer.Start(r.Context(), "getGenres")
 	defer span.End()
 
 	list, err := p.gameFacade.GetGenres(ctx)

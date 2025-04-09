@@ -7,6 +7,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
+	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"go.uber.org/mock/gomock"
@@ -26,7 +27,7 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		{ID: td.Int31(), IGDBID: td.Int64()},
 	}
 
-	logoURL, logoFileName, screenshotURL, screenshotFileName := td.String(), td.String(), td.String(), td.String()
+	logoURL, logoFileName, screenshotURL, screenshotFileName, contentType := td.String(), td.String(), td.String(), td.String(), td.String()
 	developerID, developerIGDBID, developerName := td.Int31(), td.Int64(), td.String()
 	publisherID, publisherIGDBID, publisherName := td.Int31(), td.Int64(), td.String()
 	genreID, genreIGDBID, genreName := td.Int31(), td.Int64(), td.String()
@@ -78,20 +79,24 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return(nil, nil)
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return(nil, nil)
 
-	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, gomock.Cond(func(x time.Time) bool { return x.Sub(lastReleasedAt) < time.Second }), gomock.Any(), int64(60), gomock.Any()).
+	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, gomock.Cond(func(x time.Time) bool { return x.Sub(lastReleasedAt) < time.Second }), gomock.Any(), int64(50), gomock.Any()).
 		Return([]igdbapi.TopRatedGamesResp{igdbGame}, nil).Times(1)
 	// next iterations - return no games in order to stop
-	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(60), gomock.Any()).
+	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(50), gomock.Any()).
 		Return(nil, nil).Times(4)
 	s.storageMock.EXPECT().GetGameIDByIGDBID(gomock.Any(), igdbGame.ID).Return(int32(0), apperr.NewNotFoundError("game", igdbGame.ID))
 	s.storageMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: developerName, IGDBID: sql.NullInt64{Valid: true, Int64: developerIGDBID}}).
 		Return(developerID, nil)
 	s.storageMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: publisherName, IGDBID: sql.NullInt64{Valid: true, Int64: publisherIGDBID}}).Return(publisherID, nil)
 	s.storageMock.EXPECT().CreateGenre(gomock.Any(), model.Genre{Name: genreName, IGDBID: genreIGDBID}).Return(genreID, nil)
-	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias).Return(nil, logoFileName, nil)
-	s.uploadcareMock.EXPECT().UploadImage(gomock.Any(), gomock.Any(), logoFileName).Return(logoURL, nil)
-	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Screenshots[0].URL, igdbapi.ImageTypeScreenshotBigAlias).Return(nil, screenshotFileName, nil)
-	s.uploadcareMock.EXPECT().UploadImage(gomock.Any(), gomock.Any(), screenshotFileName).Return(screenshotURL, nil)
+	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias).Return(
+		igdbapi.GetImageResp{FileName: logoFileName, ContentType: contentType}, nil)
+	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), contentType, map[string]string{"fileName": logoFileName, "game": igdbGame.Name}).
+		Return(s3.UploadResult{FileURL: logoURL}, nil)
+	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Screenshots[0].URL, igdbapi.ImageTypeScreenshotBigAlias).Return(
+		igdbapi.GetImageResp{FileName: screenshotFileName, ContentType: contentType}, nil)
+	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), contentType, map[string]string{"fileName": screenshotFileName, "game": igdbGame.Name}).
+		Return(s3.UploadResult{FileURL: screenshotURL}, nil)
 	s.storageMock.EXPECT().CreateGame(gomock.Any(), model.CreateGame{
 		Name:          igdbGame.Name,
 		DevelopersIDs: []int32{developerID},

@@ -49,9 +49,7 @@ func Service(
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
-		AllowOriginFunc: func(_ *http.Request, origin string) bool {
-			return strings.Contains(conf.Web.AllowedCORSOrigin, origin)
-		},
+		AllowedOrigins:   strings.Split(conf.Web.AllowedCORSOrigin, ","),
 	}))
 
 	hc := tools.NewHealthCheck(db)
@@ -111,9 +109,7 @@ func Service(
 	r.Get("/api/companies/top", pr.GetTopCompanies)
 
 	// swagger
-	r.Get("/swagger/*", swag.Handler(
-		swag.URL("/swagger/doc.json"),
-	))
+	r.Get("/swagger/*", swag.Handler())
 
 	return http.Server{
 		Addr:              conf.Web.Address,

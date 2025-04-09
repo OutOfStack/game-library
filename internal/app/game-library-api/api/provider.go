@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var tracer = otel.Tracer("")
+var tracer = otel.Tracer("api")
 
 // GameFacade represents methods for working with games
 type GameFacade interface {

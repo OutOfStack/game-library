@@ -17,7 +17,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /platforms [get]
 func (p *Provider) GetPlatforms(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.getPlatforms")
+	ctx, span := tracer.Start(r.Context(), "getPlatforms")
 	defer span.End()
 
 	list, err := p.gameFacade.GetPlatforms(ctx)

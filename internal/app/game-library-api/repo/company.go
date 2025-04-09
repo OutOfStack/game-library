@@ -15,7 +15,7 @@ import (
 
 // CreateCompany creates new company
 func (s *Storage) CreateCompany(ctx context.Context, c model.Company) (id int32, err error) {
-	ctx, span := tracer.Start(ctx, "db.createCompany")
+	ctx, span := tracer.Start(ctx, "createCompany")
 	defer span.End()
 
 	const q = `
@@ -33,7 +33,7 @@ func (s *Storage) CreateCompany(ctx context.Context, c model.Company) (id int32,
 
 // GetCompanies returns companies
 func (s *Storage) GetCompanies(ctx context.Context) (companies []model.Company, err error) {
-	ctx, span := tracer.Start(ctx, "db.getCompanies")
+	ctx, span := tracer.Start(ctx, "getCompanies")
 	defer span.End()
 
 	const q = `
@@ -50,7 +50,7 @@ func (s *Storage) GetCompanies(ctx context.Context) (companies []model.Company, 
 // GetCompanyIDByName returns company id by name
 // If company does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetCompanyIDByName(ctx context.Context, name string) (id int32, err error) {
-	ctx, span := tracer.Start(ctx, "db.getCompanyIDByName")
+	ctx, span := tracer.Start(ctx, "getCompanyIDByName")
 	defer span.End()
 
 	const q = `
@@ -71,7 +71,7 @@ func (s *Storage) GetCompanyIDByName(ctx context.Context, name string) (id int32
 // GetCompanyByID returns company by id
 // If company does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetCompanyByID(ctx context.Context, id int32) (company model.Company, err error) {
-	ctx, span := tracer.Start(ctx, "db.getCompanyByID")
+	ctx, span := tracer.Start(ctx, "getCompanyByID")
 	defer span.End()
 
 	const q = `
@@ -91,7 +91,7 @@ func (s *Storage) GetCompanyByID(ctx context.Context, id int32) (company model.C
 
 // GetTopDevelopers returns top developers by amount of games
 func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies []model.Company, err error) {
-	ctx, span := tracer.Start(ctx, "db.getTopDevelopers")
+	ctx, span := tracer.Start(ctx, "getTopDevelopers")
 	defer span.End()
 
 	const q = `
@@ -113,7 +113,7 @@ func (s *Storage) GetTopDevelopers(ctx context.Context, limit int64) (companies 
 
 // GetTopPublishers returns top publishers by amount of games
 func (s *Storage) GetTopPublishers(ctx context.Context, limit int64) (companies []model.Company, err error) {
-	ctx, span := tracer.Start(ctx, "db.getTopPublishers")
+	ctx, span := tracer.Start(ctx, "getTopPublishers")
 	defer span.End()
 
 	const q = `

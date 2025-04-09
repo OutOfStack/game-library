@@ -21,7 +21,7 @@ import (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /user/ratings [post]
 func (p *Provider) GetUserRatings(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.getUserRatings")
+	ctx, span := tracer.Start(r.Context(), "getUserRatings")
 	defer span.End()
 
 	var ur api.GetUserRatingsRequest

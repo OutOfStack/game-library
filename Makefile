@@ -29,7 +29,7 @@ seed:
 
 SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.4
 SWAG_BIN := $(shell go env GOPATH)/bin/swag
-MOCKGEN_PKG := go.uber.org/mock/mockge@v0.5.0
+MOCKGEN_PKG := go.uber.org/mock/mockgen@v0.5.0
 MOCKGEN_BIN := $(shell go env GOPATH)/bin/mockgen
 generate:
 	@if \[ ! -f ${SWAG_BIN} \]; then \

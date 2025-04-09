@@ -27,7 +27,7 @@ import (
 // @Failure 500 {object}  web.ErrorResponse
 // @Router /games [get]
 func (p *Provider) GetGames(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.getGames")
+	ctx, span := tracer.Start(r.Context(), "getGames")
 	defer span.End()
 
 	for key, values := range r.URL.Query() {

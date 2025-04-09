@@ -25,7 +25,7 @@ const (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /companies/top [get]
 func (p *Provider) GetTopCompanies(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.getTopCompanies")
+	ctx, span := tracer.Start(r.Context(), "getTopCompanies")
 	defer span.End()
 
 	companyType := r.URL.Query().Get("type")

@@ -19,8 +19,8 @@ const (
 	// FetchIGDBGamesTaskName ...
 	FetchIGDBGamesTaskName = "fetch_igdb_games"
 
-	fetchGamesMinRating        = 60
-	fetchGamesScreenshotsLimit = 7
+	fetchGamesMinRating        = 50
+	fetchGamesScreenshotsLimit = 8
 	fetchGamesRequestsCount    = 5
 )
 
@@ -34,7 +34,7 @@ func (f fetchGamesSettings) convertToTaskSettings() model.TaskSettings {
 }
 
 var (
-	startReleasedAtDate = time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC)
+	startReleasedAtDate = time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 	getMinRatingsCountAndLimit = func(date time.Time) (count, limit int64) {
 		switch {
@@ -204,12 +204,15 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				}
 
 				// reupload logo url
-				logoData, logoFileName, lErr := tp.igdbAPIClient.GetImageByURL(ctx, g.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias)
+				logoData, lErr := tp.igdbAPIClient.GetImageByURL(ctx, g.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias)
 				if lErr != nil {
 					return settings, fmt.Errorf("get logo by url %s: %v", g.Cover.URL, lErr)
 				}
 
-				logoURL, uErr := tp.uploadcareAPIClient.UploadImage(ctx, logoData, logoFileName)
+				logoUploadData, uErr := tp.s3Client.Upload(ctx, logoData.Body, logoData.ContentType, map[string]string{
+					"fileName": logoData.FileName,
+					"game":     g.Name,
+				})
 				if uErr != nil {
 					return settings, fmt.Errorf("upload logo %s: %v", g.Cover.URL, uErr)
 				}
@@ -220,15 +223,18 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					if j == fetchGamesScreenshotsLimit {
 						break
 					}
-					scrData, scrFileName, sErr := tp.igdbAPIClient.GetImageByURL(ctx, scr.URL, igdbapi.ImageTypeScreenshotBigAlias)
+					scrData, sErr := tp.igdbAPIClient.GetImageByURL(ctx, scr.URL, igdbapi.ImageTypeScreenshotBigAlias)
 					if sErr != nil {
 						return settings, fmt.Errorf("get screenshot by url %s: %v", scr.URL, sErr)
 					}
-					screenshotURL, sErr := tp.uploadcareAPIClient.UploadImage(ctx, scrData, scrFileName)
+					screnshotUploadData, sErr := tp.s3Client.Upload(ctx, scrData.Body, scrData.ContentType, map[string]string{
+						"fileName": scrData.FileName,
+						"game":     g.Name,
+					})
 					if sErr != nil {
 						return settings, fmt.Errorf("upload screenshot %s: %v", scr.URL, sErr)
 					}
-					screenshots = append(screenshots, screenshotURL)
+					screenshots = append(screenshots, screnshotUploadData.FileURL)
 				}
 
 				cg := model.CreateGame{
@@ -237,7 +243,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					PublishersIDs: publishersIDs,
 					ReleaseDate:   time.Unix(g.FirstReleaseDate, 0).Format("2006-01-02"),
 					GenresIDs:     genresIDs,
-					LogoURL:       logoURL,
+					LogoURL:       logoUploadData.FileURL,
 					Summary:       g.Summary,
 					Slug:          g.Slug,
 					PlatformsIDs:  platformsIDs,

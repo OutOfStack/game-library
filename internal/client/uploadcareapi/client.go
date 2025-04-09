@@ -22,7 +22,7 @@ const (
 	uploadcareCDNURL = "https://ucarecdn.com/"
 )
 
-var tracer = otel.Tracer("")
+var tracer = otel.Tracer("uploadcareapi")
 
 // Client represents dependencies for uploadcare client
 type Client struct {
@@ -57,7 +57,7 @@ func New(log *zap.Logger, conf appconf.Uploadcare) (*Client, error) {
 
 // UploadImage - uploads image and returns new image url
 func (c *Client) UploadImage(ctx context.Context, data io.ReadSeeker, fileName string) (string, error) {
-	fCtx, fSpan := tracer.Start(ctx, "uploadcare.uploadFile", trace.WithAttributes(attribute.String("filename", fileName)))
+	fCtx, fSpan := tracer.Start(ctx, "uploadFile", trace.WithAttributes(attribute.String("filename", fileName)))
 	defer fSpan.End()
 
 	fileID, err := c.upload.File(fCtx, upload.FileParams{

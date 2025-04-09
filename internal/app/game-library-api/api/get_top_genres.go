@@ -21,7 +21,7 @@ const (
 // @Failure 500 {object} web.ErrorResponse
 // @Router /genres/top [get]
 func (p *Provider) GetTopGenres(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "api.getTopGenres")
+	ctx, span := tracer.Start(r.Context(), "getTopGenres")
 	defer span.End()
 
 	list, err := p.gameFacade.GetTopGenres(ctx, topGenresLimit)

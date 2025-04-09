@@ -38,9 +38,20 @@ func (p *Provider) RateGame(ctx context.Context, gameID int32, userID string, ra
 		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
 
-		ugErr := p.storage.UpdateGameRating(bCtx, gameID)
-		if ugErr != nil {
-			p.log.Error("update game rating", zap.Int32("gameID", gameID), zap.Error(ugErr))
+		gErr := p.storage.UpdateGameRating(bCtx, gameID)
+		if gErr != nil {
+			p.log.Error("update game rating", zap.Int32("id", gameID), zap.Error(gErr))
+		}
+
+		// invalidate game cache
+		gErr = cache.Delete(bCtx, p.cache, getGameKey(gameID))
+		if gErr != nil {
+			p.log.Error("remove game cache", zap.Int32("id", gameID), zap.Error(gErr))
+		}
+		// recache game
+		_, gErr = p.GetGameByID(bCtx, gameID)
+		if gErr != nil {
+			p.log.Error("recache game", zap.Int32("id", gameID), zap.Error(gErr))
 		}
 	}()
 
@@ -51,16 +62,14 @@ func (p *Provider) RateGame(ctx context.Context, gameID int32, userID string, ra
 
 		// invalidate user ratings
 		key := getUserRatingsKey(userID)
-		err = cache.Delete(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
+		gErr := cache.Delete(bCtx, p.cache, key)
+		if gErr != nil {
+			p.log.Error("remove cache by key", zap.String("key", key), zap.Error(gErr))
 		}
 		// recache user ratings
-		err = cache.Get(bCtx, p.cache, key, &map[int32]uint8{}, func() (map[int32]uint8, error) {
-			return p.storage.GetUserRatings(bCtx, userID)
-		}, 0)
-		if err != nil {
-			p.log.Error("recache user ratings", zap.String("user_id", userID), zap.Error(err))
+		_, gErr = p.GetUserRatings(bCtx, userID)
+		if gErr != nil {
+			p.log.Error("recache user ratings", zap.String("user_id", userID), zap.Error(gErr))
 		}
 	}()
 

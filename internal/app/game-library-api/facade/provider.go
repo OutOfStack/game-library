@@ -24,7 +24,7 @@ func NewProvider(logger *zap.Logger, storage Storage, cache *cache.RedisStore) *
 	}
 }
 
-// Storage provides methods for working with repo
+// Storage provides methods for working with database
 type Storage interface {
 	GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) (list []model.Game, err error)
 	GetGamesCount(ctx context.Context, filter model.GamesFilter) (count uint64, err error)

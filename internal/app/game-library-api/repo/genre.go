@@ -14,7 +14,7 @@ import (
 
 // CreateGenre creates new genre
 func (s *Storage) CreateGenre(ctx context.Context, g model.Genre) (id int32, err error) {
-	ctx, span := tracer.Start(ctx, "db.createGenre")
+	ctx, span := tracer.Start(ctx, "createGenre")
 	defer span.End()
 
 	const q = `
@@ -32,7 +32,7 @@ func (s *Storage) CreateGenre(ctx context.Context, g model.Genre) (id int32, err
 
 // GetGenres returns genres
 func (s *Storage) GetGenres(ctx context.Context) (genres []model.Genre, err error) {
-	ctx, span := tracer.Start(ctx, "db.getGenres")
+	ctx, span := tracer.Start(ctx, "getGenres")
 	defer span.End()
 
 	const q = `
@@ -49,7 +49,7 @@ func (s *Storage) GetGenres(ctx context.Context) (genres []model.Genre, err erro
 // GetGenreByID returns genre by id
 // If company does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetGenreByID(ctx context.Context, id int32) (genre model.Genre, err error) {
-	ctx, span := tracer.Start(ctx, "db.getGenreByID")
+	ctx, span := tracer.Start(ctx, "getGenreByID")
 	defer span.End()
 
 	const q = `
@@ -69,7 +69,7 @@ func (s *Storage) GetGenreByID(ctx context.Context, id int32) (genre model.Genre
 
 // GetTopGenres returns genres
 func (s *Storage) GetTopGenres(ctx context.Context, limit int64) (genres []model.Genre, err error) {
-	ctx, span := tracer.Start(ctx, "db.getTopGenres")
+	ctx, span := tracer.Start(ctx, "getTopGenres")
 	defer span.End()
 
 	const q = `

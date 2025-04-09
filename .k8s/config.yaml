@@ -6,13 +6,15 @@ metadata:
 data:
     APP_ADDRESS: "0.0.0.0:8000"
     DEBUG_ADDRESS: "0.0.0.0:6060"
-    APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_"
+    APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_,https://_UI_URL_"
     AUTH_VERIFYTOKENURL: "https://_K8S_URL_/_auth/token/verify"
     ZIPKIN_REPORTERURL: "http://zipkin-service.game-library.svc.cluster.local:9411/api/v2/spans"
     SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
     REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
     REDIS_TTL: "2h"
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
+    S3_REGION: "auto"
+    S3_BUCKET_NAME: "game-library"
 ---
 kind: ConfigMap
 apiVersion: v1

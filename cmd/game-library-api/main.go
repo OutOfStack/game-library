@@ -20,7 +20,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/client/redis"
-	"github.com/OutOfStack/game-library/internal/client/uploadcareapi"
+	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
@@ -105,12 +105,6 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 		return fmt.Errorf("create IGDB client: %w", err)
 	}
 
-	// create uploadcare api client
-	uploadcareAPIClient, err := uploadcareapi.New(logger, cfg.Uploadcare)
-	if err != nil {
-		return fmt.Errorf("create uploadcare client: %w", err)
-	}
-
 	// create auth api client
 	authAPIClient, err := authapi.New(logger, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
@@ -121,6 +115,12 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	redisClient, err := redis.New(cfg.Redis)
 	if err != nil {
 		return fmt.Errorf("create redis client: %w", err)
+	}
+
+	// create s3 client
+	s3Client, err := s3.New(logger, cfg.S3)
+	if err != nil {
+		return fmt.Errorf("create S3 client: %w", err)
 	}
 
 	// create redis cache service
@@ -142,7 +142,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	apiProvider := api.NewProvider(logger, rCache, gameFacade)
 
 	// run background tasks
-	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, uploadcareAPIClient)
+	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
 		taskprocessor.FetchIGDBGamesTaskName: {Schedule: cfg.Scheduler.FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},

@@ -66,6 +66,8 @@ spec:
                         name: game-library-igdb
                   - secretRef:
                         name: game-library-uploadcare
+                  - secretRef:
+                        name: game-library-s3
                   - configMapRef:
                         name: game-library-config
                 imagePullPolicy: Always

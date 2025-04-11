@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
-	"github.com/snovichkov/zap-gelf"
+	gelf "github.com/snovichkov/zap-gelf"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

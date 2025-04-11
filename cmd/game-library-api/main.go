@@ -24,13 +24,12 @@ import (
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
+	zaplog "github.com/OutOfStack/game-library/internal/pkg/log"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 )
 
 // @title Game library API
@@ -50,7 +49,7 @@ func main() {
 	}
 
 	// init logger
-	logger := initLogger(cfg)
+	logger := zaplog.New(cfg)
 	defer func(logger *zap.Logger) {
 		if err := logger.Sync(); err != nil {
 			log.Printf("can't sync logger: %v", err)
@@ -61,32 +60,6 @@ func main() {
 	if err := run(logger, cfg); err != nil {
 		logger.Fatal("can't run app", zap.Error(err))
 	}
-}
-
-func initLogger(cfg appconf.Cfg) *zap.Logger {
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.EncodeTime = zapcore.RFC3339TimeEncoder
-	encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
-
-	consoleWriter := zapcore.Lock(os.Stderr)
-	cores := []zapcore.Core{
-		zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), consoleWriter, zap.InfoLevel),
-	}
-
-	gelfWriter, err := gelf.NewTCPWriter(cfg.Graylog.Address)
-	if err != nil {
-		log.Printf("can't create gelf writer: %v", err)
-	}
-	if gelfWriter != nil {
-		cores = append(cores,
-			zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), zapcore.AddSync(gelfWriter), zap.InfoLevel))
-	}
-
-	core := zapcore.NewTee(cores...)
-
-	logger := zap.New(core, zap.WithCaller(false)).With(zap.String("service", appconf.ServiceName))
-
-	return logger
 }
 
 func run(logger *zap.Logger, cfg appconf.Cfg) error {

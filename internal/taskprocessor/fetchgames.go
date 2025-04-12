@@ -34,22 +34,22 @@ func (f fetchGamesSettings) convertToTaskSettings() model.TaskSettings {
 }
 
 var (
-	startReleasedAtDate = time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC)
+	startReleasedAtDate = time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 	getMinRatingsCountAndLimit = func(date time.Time) (count, limit int64) {
 		switch {
 		case date.Year() < 2001: // [start date, 2001.1.1)
-			return 200, 10
+			return 60, 20
 		case date.Year() < 2011: // [2001.1.1, 2011.1.1)
-			return 120, 15
+			return 60, 30
 		case date.Year() < 2021: // [2011.1.1, 2021.1.1)
-			return 80, 15
+			return 40, 30
 		case date.Before(time.Now().AddDate(0, -6, 0)): // [2021.1.1, now-6 months)
-			return 50, 10
+			return 30, 20
 		case date.Before(time.Now().AddDate(0, -1, 0)): // [now-6 months, now-1 month)
-			return 30, 5
+			return 20, 10
 		default: // [now-1 month, now]
-			return 15, 3
+			return 10, 5
 		}
 	}
 )

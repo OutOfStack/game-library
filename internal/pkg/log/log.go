@@ -1,7 +1,6 @@
 package log
 
 import (
-	"log"
 	"os"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
@@ -12,20 +11,27 @@ import (
 
 // New returns new zap logger instance
 func New(cfg appconf.Cfg) *zap.Logger {
+	// log level
+	logLevel := zap.InfoLevel
+	parsedLevel, lErr := zapcore.ParseLevel(cfg.Log.Level)
+	if lErr == nil {
+		logLevel = parsedLevel
+	}
+
+	// log format
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.EncodeTime = zapcore.RFC3339TimeEncoder
 	encoderCfg.EncodeLevel = zapcore.CapitalLevelEncoder
 
+	// set console output
 	consoleWriter := zapcore.Lock(os.Stderr)
 	cores := []zapcore.Core{
-		zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), consoleWriter, zap.InfoLevel),
+		zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), consoleWriter, logLevel),
 	}
 
+	// set Graylog output
 	host, _ := os.Hostname()
-	gelfCore, err := gelf.NewCore(gelf.Addr(cfg.Graylog.Address), gelf.Host(host))
-	if err != nil {
-		log.Printf("can't create gelf core: %v", err)
-	}
+	gelfCore, gelfErr := gelf.NewCore(gelf.Addr(cfg.Graylog.Address), gelf.Host(host), gelf.Level(logLevel))
 	if gelfCore != nil {
 		cores = append(cores, gelfCore)
 	}
@@ -33,6 +39,14 @@ func New(cfg appconf.Cfg) *zap.Logger {
 	core := zapcore.NewTee(cores...)
 
 	logger := zap.New(core, zap.WithCaller(false)).With(zap.String("service", appconf.ServiceName))
+
+	// log deferred errors if any
+	if lErr != nil {
+		logger.Error("parse log level", zap.Error(lErr), zap.String("level", cfg.Log.Level))
+	}
+	if gelfErr != nil {
+		logger.Error("create gelf logger", zap.Error(gelfErr))
+	}
 
 	return logger
 }

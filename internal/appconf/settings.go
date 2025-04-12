@@ -17,6 +17,7 @@ type Cfg struct {
 	Redis      Redis      `mapstructure:",squash"`
 	Graylog    Graylog    `mapstructure:",squash"`
 	S3         S3         `mapstructure:",squash"`
+	Log        Log        `mapstructure:",squash"`
 }
 
 // DB represents settings for database
@@ -84,4 +85,9 @@ type S3 struct {
 	Endpoint        string `mapstructure:"S3_ENDPOINT"`
 	BucketName      string `mapstructure:"S3_BUCKET_NAME"`
 	CDNBaseURL      string `mapstructure:"S3_CDN_BASE_URL"`
+}
+
+// Log represents settings for logging
+type Log struct {
+	Level string `mapstructure:"LOG_LEVEL"`
 }

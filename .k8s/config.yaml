@@ -15,6 +15,7 @@ data:
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
     S3_REGION: "auto"
     S3_BUCKET_NAME: "game-library"
+    LOG_LEVEL: "INFO"
 ---
 kind: ConfigMap
 apiVersion: v1

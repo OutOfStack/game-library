@@ -21,7 +21,7 @@ type Storage interface {
 	BeginTx(ctx context.Context) (pgx.Tx, error)
 	GetTask(ctx context.Context, tx pgx.Tx, name string) (model.Task, error)
 	UpdateTask(ctx context.Context, tx pgx.Tx, task model.Task) error
-	CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error)
+	CreateGame(ctx context.Context, cgd model.CreateGameData) (id int32, err error)
 	GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error)
 	GetPlatforms(ctx context.Context) ([]model.Platform, error)
 	CreateGenre(ctx context.Context, g model.Genre) (int32, error)

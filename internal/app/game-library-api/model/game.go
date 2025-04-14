@@ -6,66 +6,91 @@ import (
 	"github.com/OutOfStack/game-library/pkg/types"
 )
 
-// Game represents database game model
+const (
+	// ModerationStatusReady represents a game that is ready
+	ModerationStatusReady = "ready"
+	// ModerationStatusCheck represents a game that needs moderation
+	ModerationStatusCheck = "check"
+	// ModerationStatusRecheck represents a game that needs moderation after update
+	ModerationStatusRecheck = "recheck"
+)
+
+// Game - db game model
 type Game struct {
-	ID            int32      `db:"id"`
-	Name          string     `db:"name"`
-	DevelopersIDs []int32    `db:"developers"`
-	PublishersIDs []int32    `db:"publishers"`
-	ReleaseDate   types.Date `db:"release_date"`
-	GenresIDs     []int32    `db:"genres"`
-	LogoURL       string     `db:"logo_url"`
-	Rating        float64    `db:"rating"`
-	Summary       string     `db:"summary"`
-	Slug          string     `db:"slug"`
-	PlatformsIDs  []int32    `db:"platforms"`
-	Screenshots   []string   `db:"screenshots"`
-	Websites      []string   `db:"websites"`
-	IGDBRating    float64    `db:"igdb_rating"`
-	IGDBID        int64      `db:"igdb_id"`
-	Weight        float64    `db:"weight"` // Readonly field
+	ID               int32      `db:"id"`
+	Name             string     `db:"name"`
+	DevelopersIDs    []int32    `db:"developers"`
+	PublishersIDs    []int32    `db:"publishers"`
+	ReleaseDate      types.Date `db:"release_date"`
+	GenresIDs        []int32    `db:"genres"`
+	LogoURL          string     `db:"logo_url"`
+	Rating           float64    `db:"rating"`
+	Summary          string     `db:"summary"`
+	Slug             string     `db:"slug"`
+	PlatformsIDs     []int32    `db:"platforms"`
+	Screenshots      []string   `db:"screenshots"`
+	Websites         []string   `db:"websites"`
+	IGDBRating       float64    `db:"igdb_rating"`
+	IGDBID           int64      `db:"igdb_id"`
+	ModerationStatus string     `db:"moderation_status"`
+	Weight           float64    `db:"weight"` // Readonly field
 }
 
-// CreateGame represents data for creating game
+// CreateGameData - data for creating game in db
+type CreateGameData struct {
+	Name             string
+	DevelopersIDs    []int32
+	PublishersIDs    []int32
+	ReleaseDate      string
+	GenresIDs        []int32
+	LogoURL          string
+	Summary          string
+	Slug             string
+	PlatformsIDs     []int32
+	Screenshots      []string
+	Websites         []string
+	IGDBRating       float64
+	IGDBID           int64
+	ModerationStatus string
+}
+
+// CreateGame - create game data
 type CreateGame struct {
-	Name          string
-	DevelopersIDs []int32
-	PublishersIDs []int32
-	ReleaseDate   string
-	GenresIDs     []int32
-	LogoURL       string
-	Summary       string
-	Slug          string
-	PlatformsIDs  []int32
-	Screenshots   []string
-	Websites      []string
-	IGDBRating    float64
-	IGDBID        int64
-	Developer     string // helper field
-	Publisher     string // helper field
-}
-
-// UpdateGameData represents data for updating game
-type UpdateGameData struct {
 	Name         string
-	Developers   []int32
-	Publishers   []int32
 	ReleaseDate  string
-	Genres       []int32
+	GenresIDs    []int32
 	LogoURL      string
 	Summary      string
 	Slug         string
 	PlatformsIDs []int32
 	Screenshots  []string
 	Websites     []string
-	IGDBRating   float64
-	IGDBID       int64
+	Developer    string // helper field
+	Publisher    string // helper field
 }
 
-// UpdatedGame - updated game field
-type UpdatedGame struct {
+// UpdateGameData - data for updating game in db
+type UpdateGameData struct {
+	Name             string
+	Developers       []int32
+	Publishers       []int32
+	ReleaseDate      string
+	Genres           []int32
+	LogoURL          string
+	Summary          string
+	Slug             string
+	PlatformsIDs     []int32
+	Screenshots      []string
+	Websites         []string
+	ModerationStatus string
+	IGDBRating       float64
+}
+
+// UpdateGame - update game fields
+type UpdateGame struct {
 	Name         *string
 	Developer    *string
+	Publisher    string
 	ReleaseDate  *string
 	GenresIDs    *[]int32
 	LogoURL      *string
@@ -75,7 +100,7 @@ type UpdatedGame struct {
 	Websites     *[]string
 }
 
-// GamesFilter games filter
+// GamesFilter - games filter
 type GamesFilter struct {
 	Name        string
 	DeveloperID int32
@@ -89,8 +114,8 @@ func GetGameSlug(name string) string {
 	return strings.ReplaceAll(strings.ToLower(strings.ToValidUTF8(name, "")), " ", "-")
 }
 
-// MapToUpdateGameData maps Game to UpdateGateData
-func (g Game) MapToUpdateGameData(upd UpdatedGame) UpdateGameData {
+// MapToUpdateGameData maps UpdateGame and Game to UpdateGameData
+func (ug UpdateGame) MapToUpdateGameData(g Game, developersIDs []int32) UpdateGameData {
 	update := UpdateGameData{
 		Name:         g.Name,
 		Developers:   g.DevelopersIDs,
@@ -103,35 +128,54 @@ func (g Game) MapToUpdateGameData(upd UpdatedGame) UpdateGameData {
 		PlatformsIDs: g.PlatformsIDs,
 		Screenshots:  g.Screenshots,
 		Websites:     g.Websites,
-		IGDBRating:   g.IGDBRating,
-		IGDBID:       g.IGDBID,
 	}
 
-	if upd.Name != nil {
-		update.Name = *upd.Name
-		update.Slug = GetGameSlug(*upd.Name)
+	update.Developers = developersIDs
+	update.ModerationStatus = ModerationStatusRecheck
+
+	if ug.Name != nil {
+		update.Name = *ug.Name
+		update.Slug = GetGameSlug(*ug.Name)
 	}
-	if upd.ReleaseDate != nil {
-		update.ReleaseDate = *upd.ReleaseDate
+	if ug.ReleaseDate != nil {
+		update.ReleaseDate = *ug.ReleaseDate
 	}
-	if upd.GenresIDs != nil {
-		update.Genres = *upd.GenresIDs
+	if ug.GenresIDs != nil {
+		update.Genres = *ug.GenresIDs
 	}
-	if upd.LogoURL != nil && *upd.LogoURL != "" {
-		update.LogoURL = *upd.LogoURL
+	if ug.LogoURL != nil && *ug.LogoURL != "" {
+		update.LogoURL = *ug.LogoURL
 	}
-	if upd.Summary != nil {
-		update.Summary = *upd.Summary
+	if ug.Summary != nil {
+		update.Summary = *ug.Summary
 	}
-	if upd.PlatformsIDs != nil {
-		update.PlatformsIDs = *upd.PlatformsIDs
+	if ug.PlatformsIDs != nil {
+		update.PlatformsIDs = *ug.PlatformsIDs
 	}
-	if upd.Screenshots != nil {
-		update.Screenshots = *upd.Screenshots
+	if ug.Screenshots != nil {
+		update.Screenshots = *ug.Screenshots
 	}
-	if upd.Websites != nil {
-		update.Websites = *upd.Websites
+	if ug.Websites != nil {
+		update.Websites = *ug.Websites
 	}
 
 	return update
+}
+
+// MapToCreateGameData maps CreateGame to CreateGameData
+func (cg CreateGame) MapToCreateGameData(publisherID, developerID int32) CreateGameData {
+	return CreateGameData{
+		Name:             cg.Name,
+		DevelopersIDs:    []int32{developerID},
+		PublishersIDs:    []int32{publisherID},
+		ReleaseDate:      cg.ReleaseDate,
+		GenresIDs:        cg.GenresIDs,
+		LogoURL:          cg.LogoURL,
+		Summary:          cg.Summary,
+		Slug:             cg.Slug,
+		PlatformsIDs:     cg.PlatformsIDs,
+		Screenshots:      cg.Screenshots,
+		Websites:         cg.Websites,
+		ModerationStatus: ModerationStatusCheck,
+	}
 }

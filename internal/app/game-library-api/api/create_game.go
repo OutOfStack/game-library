@@ -40,9 +40,9 @@ func (p *Provider) CreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	developer, publisher := cg.Developer, claims.Name
+	publisher := claims.Name
 
-	create := mapToCreateGame(&cg, developer, publisher)
+	create := mapToCreateGame(&cg, publisher)
 
 	id, err := p.gameFacade.CreateGame(ctx, create)
 	if err != nil {

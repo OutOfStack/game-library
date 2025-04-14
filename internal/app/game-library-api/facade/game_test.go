@@ -101,27 +101,38 @@ func (s *TestSuite) TestCreateGame_Success() {
 	gameID := td.Int31()
 	developerID, publisherID := td.Int31(), td.Int31()
 	createGame := model.CreateGame{
-		Name:          td.String(),
-		Developer:     td.String(),
-		DevelopersIDs: []int32{developerID},
-		Publisher:     td.String(),
-		PublishersIDs: []int32{publisherID},
-		ReleaseDate:   td.Date().String(),
-		GenresIDs:     []int32{td.Int32(), td.Int32()},
-		LogoURL:       td.String(),
-		Summary:       td.String(),
-		Slug:          td.String(),
-		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
-		Screenshots:   []string{td.String(), td.String()},
-		Websites:      []string{td.String(), td.String()},
-		IGDBRating:    td.Float64(),
-		IGDBID:        td.Int64(),
+		Name:         td.String(),
+		Developer:    td.String(),
+		Publisher:    td.String(),
+		ReleaseDate:  td.Date().String(),
+		GenresIDs:    []int32{td.Int32(), td.Int32()},
+		LogoURL:      td.String(),
+		Summary:      td.String(),
+		Slug:         td.String(),
+		PlatformsIDs: []int32{td.Int32(), td.Int32()},
+		Screenshots:  []string{td.String(), td.String()},
+		Websites:     []string{td.String(), td.String()},
+	}
+
+	createGameData := model.CreateGameData{
+		Name:             createGame.Name,
+		DevelopersIDs:    []int32{developerID},
+		PublishersIDs:    []int32{publisherID},
+		ReleaseDate:      createGame.ReleaseDate,
+		GenresIDs:        createGame.GenresIDs,
+		LogoURL:          createGame.LogoURL,
+		Summary:          createGame.Summary,
+		Slug:             createGame.Slug,
+		PlatformsIDs:     createGame.PlatformsIDs,
+		Screenshots:      createGame.Screenshots,
+		Websites:         createGame.Websites,
+		ModerationStatus: model.ModerationStatusCheck,
 	}
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(int32(0), nil)
 	s.storageMock.EXPECT().CreateCompany(s.ctx, model.Company{Name: createGame.Developer}).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
-	s.storageMock.EXPECT().CreateGame(s.ctx, createGame).Return(gameID, nil)
+	s.storageMock.EXPECT().CreateGame(s.ctx, createGameData).Return(gameID, nil)
 
 	s.redisClientMock.EXPECT().DeleteByMatch(mock.Any(), mock.Any()).Return(nil).AnyTimes()
 	s.redisClientMock.EXPECT().GetStruct(mock.Any(), mock.Any(), mock.Any()).Return(nil).AnyTimes()
@@ -136,15 +147,19 @@ func (s *TestSuite) TestCreateGame_Success() {
 func (s *TestSuite) TestCreateGame_Error() {
 	developerID, publisherID := td.Int32(), td.Int32()
 	createGame := model.CreateGame{
-		Developer:     td.String(),
-		DevelopersIDs: []int32{developerID},
-		Publisher:     td.String(),
-		PublishersIDs: []int32{publisherID},
+		Developer: td.String(),
+		Publisher: td.String(),
+	}
+
+	createGameData := model.CreateGameData{
+		DevelopersIDs:    []int32{developerID},
+		PublishersIDs:    []int32{publisherID},
+		ModerationStatus: model.ModerationStatusCheck,
 	}
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
-	s.storageMock.EXPECT().CreateGame(s.ctx, createGame).Return(int32(0), errors.New("new error"))
+	s.storageMock.EXPECT().CreateGame(s.ctx, createGameData).Return(int32(0), errors.New("new error"))
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
@@ -157,18 +172,23 @@ func (s *TestSuite) TestUpdateGame_Success() {
 		ID:            td.Int32(),
 		PublishersIDs: []int32{td.Int32()},
 	}
-	publisher := td.String()
-	updatedGame := model.UpdatedGame{}
+	updateGame := model.UpdateGame{
+		Publisher: td.String(),
+	}
+	updateGameData := model.UpdateGameData{
+		Publishers:       game.PublishersIDs,
+		ModerationStatus: model.ModerationStatusRecheck,
+	}
 
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
-	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(game.PublishersIDs[0], nil)
-	s.storageMock.EXPECT().UpdateGame(s.ctx, game.ID, mock.Any()).Return(nil)
+	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(game.PublishersIDs[0], nil)
+	s.storageMock.EXPECT().UpdateGame(s.ctx, game.ID, updateGameData).Return(nil)
 
 	s.redisClientMock.EXPECT().DeleteByMatch(mock.Any(), mock.Any()).Return(nil).AnyTimes()
 	s.redisClientMock.EXPECT().GetStruct(mock.Any(), mock.Any(), mock.Any()).Return(nil).AnyTimes()
 	s.redisClientMock.EXPECT().Delete(mock.Any(), mock.Any()).Return(nil).AnyTimes()
 
-	err := s.provider.UpdateGame(s.ctx, game.ID, publisher, updatedGame)
+	err := s.provider.UpdateGame(s.ctx, game.ID, updateGame)
 
 	s.NoError(err)
 }
@@ -177,13 +197,14 @@ func (s *TestSuite) TestUpdateGame_Forbidden() {
 	game := model.Game{
 		ID: td.Int32(),
 	}
-	publisher := td.String()
-	updatedGame := model.UpdatedGame{}
+	updateGame := model.UpdateGame{
+		Publisher: td.String(),
+	}
 
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
-	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisher).Return(td.Int32(), nil)
+	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(td.Int32(), nil)
 
-	err := s.provider.UpdateGame(s.ctx, game.ID, publisher, updatedGame)
+	err := s.provider.UpdateGame(s.ctx, game.ID, updateGame)
 
 	s.Error(err)
 	s.True(apperr.IsStatusCode(err, http.StatusForbidden))
@@ -191,12 +212,13 @@ func (s *TestSuite) TestUpdateGame_Forbidden() {
 
 func (s *TestSuite) TestUpdateGame_Error() {
 	gameID := td.Int32()
-	publisher := td.String()
-	updatedGame := model.UpdatedGame{}
+	updateGame := model.UpdateGame{
+		Publisher: td.String(),
+	}
 
 	s.storageMock.EXPECT().GetGameByID(s.ctx, gameID).Return(model.Game{}, errors.New("new error"))
 
-	err := s.provider.UpdateGame(s.ctx, gameID, publisher, updatedGame)
+	err := s.provider.UpdateGame(s.ctx, gameID, updateGame)
 
 	s.Error(err)
 }

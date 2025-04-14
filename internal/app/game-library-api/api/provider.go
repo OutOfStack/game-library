@@ -16,7 +16,7 @@ type GameFacade interface {
 	GetGames(ctx context.Context, page, pageSize int, filter model.GamesFilter) (games []model.Game, count uint64, err error)
 	GetGameByID(ctx context.Context, id int32) (model.Game, error)
 	CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error)
-	UpdateGame(ctx context.Context, id int32, publisher string, upd model.UpdatedGame) error
+	UpdateGame(ctx context.Context, id int32, upd model.UpdateGame) error
 	DeleteGame(ctx context.Context, id int32, publisher string) error
 	RateGame(ctx context.Context, gameID int32, userID string, rating uint8) error
 	GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error)

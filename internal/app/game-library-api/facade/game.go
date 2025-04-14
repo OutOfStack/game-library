@@ -62,7 +62,7 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 		}
 	}
 
-	// get id or create publisher
+	// get publisher id or create publisher
 	publisherID, err := p.storage.GetCompanyIDByName(ctx, cg.Publisher)
 	if err != nil && !apperr.IsStatusCode(err, apperr.NotFound) {
 		return 0, fmt.Errorf("get company id by name %s: %w", cg.Publisher, err)
@@ -76,10 +76,9 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 		}
 	}
 
-	cg.DevelopersIDs = []int32{developerID}
-	cg.PublishersIDs = []int32{publisherID}
+	create := cg.MapToCreateGameData(publisherID, developerID)
 
-	id, err = p.storage.CreateGame(ctx, cg)
+	id, err = p.storage.CreateGame(ctx, create)
 	if err != nil {
 		return 0, fmt.Errorf("add new game: %w", err)
 	}
@@ -121,16 +120,16 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 }
 
 // UpdateGame updates game
-func (p *Provider) UpdateGame(ctx context.Context, id int32, publisher string, upd model.UpdatedGame) error {
+func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdateGame) error {
 	game, err := p.storage.GetGameByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("get game by id %d: %w", id, err)
 	}
 
 	// check game ownership by publisher
-	publisherID, err := p.storage.GetCompanyIDByName(ctx, publisher)
+	publisherID, err := p.storage.GetCompanyIDByName(ctx, upd.Publisher)
 	if err != nil {
-		return fmt.Errorf("get company id by name %s: %w", publisher, err)
+		return fmt.Errorf("get company id by name %s: %w", upd.Publisher, err)
 	}
 
 	if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
@@ -160,8 +159,7 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, publisher string, u
 		}
 	}
 
-	update := game.MapToUpdateGameData(upd)
-	update.Developers = developersIDs
+	update := upd.MapToUpdateGameData(game, developersIDs)
 
 	err = p.storage.UpdateGame(ctx, id, update)
 	if err != nil {

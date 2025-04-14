@@ -236,15 +236,15 @@ func (mr *MockGameFacadeMockRecorder) RateGame(ctx, gameID, userID, rating any) 
 }
 
 // UpdateGame mocks base method.
-func (m *MockGameFacade) UpdateGame(ctx context.Context, id int32, publisher string, upd model.UpdatedGame) error {
+func (m *MockGameFacade) UpdateGame(ctx context.Context, id int32, upd model.UpdateGame) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateGame", ctx, id, publisher, upd)
+	ret := m.ctrl.Call(m, "UpdateGame", ctx, id, upd)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateGame indicates an expected call of UpdateGame.
-func (mr *MockGameFacadeMockRecorder) UpdateGame(ctx, id, publisher, upd any) *gomock.Call {
+func (mr *MockGameFacadeMockRecorder) UpdateGame(ctx, id, upd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGame", reflect.TypeOf((*MockGameFacade)(nil).UpdateGame), ctx, id, publisher, upd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGame", reflect.TypeOf((*MockGameFacade)(nil).UpdateGame), ctx, id, upd)
 }

@@ -77,18 +77,18 @@ func (mr *MockStorageMockRecorder) CreateCompany(ctx, c any) *gomock.Call {
 }
 
 // CreateGame mocks base method.
-func (m *MockStorage) CreateGame(ctx context.Context, cg model.CreateGame) (int32, error) {
+func (m *MockStorage) CreateGame(ctx context.Context, cgd model.CreateGameData) (int32, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateGame", ctx, cg)
+	ret := m.ctrl.Call(m, "CreateGame", ctx, cgd)
 	ret0, _ := ret[0].(int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateGame indicates an expected call of CreateGame.
-func (mr *MockStorageMockRecorder) CreateGame(ctx, cg any) *gomock.Call {
+func (mr *MockStorageMockRecorder) CreateGame(ctx, cgd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGame", reflect.TypeOf((*MockStorage)(nil).CreateGame), ctx, cg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGame", reflect.TypeOf((*MockStorage)(nil).CreateGame), ctx, cgd)
 }
 
 // CreateGenre mocks base method.

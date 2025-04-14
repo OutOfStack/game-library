@@ -55,7 +55,7 @@ spec:
       name: http
       port: 9000
       targetPort: http
-    - protocol: TCP
+    - protocol: UDP
       name: gelf
       port: 12201
       targetPort: gelf

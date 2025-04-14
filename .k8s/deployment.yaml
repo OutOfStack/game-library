@@ -184,8 +184,10 @@ spec:
                 ports:
                   - name: http
                     containerPort: 9000
+                    protocol: TCP
                   - name: gelf
                     containerPort: 12201
+                    protocol: UDP
             hostAliases:
               - ip: _K8S_IP_
                 hostnames:

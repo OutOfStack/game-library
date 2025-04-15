@@ -47,11 +47,12 @@ func (p *Provider) UpdateGame(w http.ResponseWriter, r *http.Request) {
 		web.Respond500(w)
 		return
 	}
+
 	publisher := claims.Name
 
-	update := mapToUpdateGame(&ugr)
+	update := mapToUpdateGame(&ugr, publisher)
 
-	err = p.gameFacade.UpdateGame(ctx, id, publisher, update)
+	err = p.gameFacade.UpdateGame(ctx, id, update)
 	if err != nil {
 		if appErr, ok := apperr.IsAppError(err); ok {
 			web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))

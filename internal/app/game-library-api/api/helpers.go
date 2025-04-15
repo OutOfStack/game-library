@@ -18,12 +18,10 @@ const (
 
 // Mappings
 
-func mapToCreateGame(cgr *api.CreateGameRequest, developer, publisher string) model.CreateGame {
+func mapToCreateGame(cgr *api.CreateGameRequest, publisher string) model.CreateGame {
 	return model.CreateGame{
 		Name:         cgr.Name,
 		ReleaseDate:  cgr.ReleaseDate,
-		Developer:    developer,
-		Publisher:    publisher,
 		GenresIDs:    cgr.GenresIDs,
 		LogoURL:      cgr.LogoURL,
 		Summary:      cgr.Summary,
@@ -31,6 +29,8 @@ func mapToCreateGame(cgr *api.CreateGameRequest, developer, publisher string) mo
 		PlatformsIDs: cgr.PlatformsIDs,
 		Screenshots:  cgr.Screenshots,
 		Websites:     cgr.Websites,
+		Developer:    cgr.Developer,
+		Publisher:    publisher,
 	}
 }
 
@@ -110,10 +110,11 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	return resp, nil
 }
 
-func mapToUpdateGame(ugr *api.UpdateGameRequest) model.UpdatedGame {
-	return model.UpdatedGame{
+func mapToUpdateGame(ugr *api.UpdateGameRequest, publisher string) model.UpdateGame {
+	return model.UpdateGame{
 		Name:         ugr.Name,
 		Developer:    ugr.Developer,
+		Publisher:    publisher,
 		ReleaseDate:  ugr.ReleaseDate,
 		GenresIDs:    ugr.GenresIDs,
 		LogoURL:      ugr.LogoURL,

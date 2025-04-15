@@ -237,20 +237,21 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					screenshots = append(screenshots, screnshotUploadData.FileURL)
 				}
 
-				cg := model.CreateGame{
-					Name:          g.Name,
-					DevelopersIDs: developersIDs,
-					PublishersIDs: publishersIDs,
-					ReleaseDate:   time.Unix(g.FirstReleaseDate, 0).Format("2006-01-02"),
-					GenresIDs:     genresIDs,
-					LogoURL:       logoUploadData.FileURL,
-					Summary:       g.Summary,
-					Slug:          g.Slug,
-					PlatformsIDs:  platformsIDs,
-					Screenshots:   screenshots,
-					Websites:      websites,
-					IGDBRating:    g.TotalRating,
-					IGDBID:        g.ID,
+				cg := model.CreateGameData{
+					Name:             g.Name,
+					DevelopersIDs:    developersIDs,
+					PublishersIDs:    publishersIDs,
+					ReleaseDate:      time.Unix(g.FirstReleaseDate, 0).Format("2006-01-02"),
+					GenresIDs:        genresIDs,
+					LogoURL:          logoUploadData.FileURL,
+					Summary:          g.Summary,
+					Slug:             g.Slug,
+					PlatformsIDs:     platformsIDs,
+					Screenshots:      screenshots,
+					Websites:         websites,
+					IGDBRating:       g.TotalRating,
+					IGDBID:           g.ID,
+					ModerationStatus: model.ModerationStatusReady,
 				}
 
 				_, cErr := tp.storage.CreateGame(ctx, cg)
@@ -269,7 +270,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			}
 		}
 
-		tp.log.Info("task info", zap.String("name", FetchIGDBGamesTaskName), zap.Int("games_added", gamesAdded), zap.Time("last_released_at", s.LastReleasedAt))
+		tp.log.Info("task info", zap.String("name", FetchIGDBGamesTaskName), zap.Int("games_added", gamesAdded), zap.String("last_released_at", s.LastReleasedAt.Format(time.RFC3339)))
 
 		return s.convertToTaskSettings(), nil
 	}

@@ -382,7 +382,6 @@ func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 		Screenshots:  []string{td.String(), td.String()},
 		Websites:     []string{td.String(), td.String()},
 		IGDBRating:   td.Float64(),
-		IGDBID:       int64(td.Uint32()),
 	}
 
 	err = s.UpdateGame(ctx, id, up)
@@ -457,25 +456,26 @@ func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 	require.InDelta(t, want, got, 0.01, "rating should be in delta 0.01")
 }
 
-func getCreateGameData() model.CreateGame {
-	return model.CreateGame{
-		Name:          td.String(),
-		DevelopersIDs: []int32{td.Int32(), td.Int32()},
-		PublishersIDs: []int32{td.Int32(), td.Int32()},
-		ReleaseDate:   td.Date().Format("2006-01-02"),
-		GenresIDs:     []int32{td.Int32(), td.Int32()},
-		LogoURL:       td.String(),
-		Summary:       td.String(),
-		Slug:          td.String(),
-		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
-		Screenshots:   []string{td.String(), td.String()},
-		Websites:      []string{td.String(), td.String()},
-		IGDBRating:    td.Float64(),
-		IGDBID:        int64(td.Uint32()),
+func getCreateGameData() model.CreateGameData {
+	return model.CreateGameData{
+		Name:             td.String(),
+		DevelopersIDs:    []int32{td.Int32(), td.Int32()},
+		PublishersIDs:    []int32{td.Int32(), td.Int32()},
+		ReleaseDate:      td.Date().Format("2006-01-02"),
+		GenresIDs:        []int32{td.Int32(), td.Int32()},
+		LogoURL:          td.String(),
+		Summary:          td.String(),
+		Slug:             td.String(),
+		PlatformsIDs:     []int32{td.Int32(), td.Int32()},
+		Screenshots:      []string{td.String(), td.String()},
+		Websites:         []string{td.String(), td.String()},
+		IGDBRating:       td.Float64(),
+		IGDBID:           int64(td.Uint32()),
+		ModerationStatus: model.ModerationStatusReady,
 	}
 }
 
-func compareCreateGameAndGame(t *testing.T, want model.CreateGame, got model.Game) {
+func compareCreateGameAndGame(t *testing.T, want model.CreateGameData, got model.Game) {
 	t.Helper()
 
 	require.Equal(t, want.Name, got.Name, "name should be equal")
@@ -508,5 +508,4 @@ func compareUpdateGameAndGame(t *testing.T, want model.UpdateGameData, got model
 	require.Equal(t, want.Screenshots, got.Screenshots, "screenshots should be equal")
 	require.Equal(t, want.Websites, got.Websites, "websites should be equal")
 	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.01, "igdb rating should be almost equal")
-	require.Equal(t, want.IGDBID, got.IGDBID, "igdb id should be equal")
 }

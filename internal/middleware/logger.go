@@ -38,12 +38,12 @@ func Logger(logger *zap.Logger) func(http.Handler) http.Handler {
 
 			// warn on 401 or 403
 			if statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden {
-				logger.Info("Unauthorized access attempt", logFields...)
+				logger.Warn("Unauthorized access attempt", logFields...)
 				return
 			}
 
-			// info on other
-			logger.Info("HTTP Request",
+			// debug on other
+			logger.Debug("HTTP Request",
 				append(logFields,
 					zap.Int("bytes", ww.BytesWritten()),
 				)...)

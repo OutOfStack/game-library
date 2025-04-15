@@ -29,7 +29,7 @@ type Storage interface {
 	GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) (list []model.Game, err error)
 	GetGamesCount(ctx context.Context, filter model.GamesFilter) (count uint64, err error)
 	GetGameByID(ctx context.Context, id int32) (game model.Game, err error)
-	CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error)
+	CreateGame(ctx context.Context, cg model.CreateGameData) (id int32, err error)
 	UpdateGame(ctx context.Context, id int32, ug model.UpdateGameData) error
 	DeleteGame(ctx context.Context, id int32) error
 	UpdateGameRating(ctx context.Context, id int32) error

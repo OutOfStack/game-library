@@ -71,7 +71,7 @@ func (mr *MockStorageMockRecorder) CreateCompany(ctx, c any) *gomock.Call {
 }
 
 // CreateGame mocks base method.
-func (m *MockStorage) CreateGame(ctx context.Context, cg model.CreateGame) (int32, error) {
+func (m *MockStorage) CreateGame(ctx context.Context, cg model.CreateGameData) (int32, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGame", ctx, cg)
 	ret0, _ := ret[0].(int32)

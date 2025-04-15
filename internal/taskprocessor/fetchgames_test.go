@@ -97,20 +97,21 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		igdbapi.GetImageResp{FileName: screenshotFileName, ContentType: contentType}, nil)
 	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), contentType, map[string]string{"fileName": screenshotFileName, "game": igdbGame.Name}).
 		Return(s3.UploadResult{FileURL: screenshotURL}, nil)
-	s.storageMock.EXPECT().CreateGame(gomock.Any(), model.CreateGame{
-		Name:          igdbGame.Name,
-		DevelopersIDs: []int32{developerID},
-		PublishersIDs: []int32{publisherID},
-		ReleaseDate:   time.Unix(igdbGame.FirstReleaseDate, 0).Format("2006-01-02"),
-		GenresIDs:     []int32{genreID},
-		LogoURL:       logoURL,
-		Summary:       igdbGame.Summary,
-		Slug:          igdbGame.Slug,
-		PlatformsIDs:  []int32{platforms[0].ID},
-		Screenshots:   []string{screenshotURL},
-		Websites:      []string{igdbGame.Websites[0].URL},
-		IGDBRating:    igdbGame.TotalRating,
-		IGDBID:        igdbGame.ID,
+	s.storageMock.EXPECT().CreateGame(gomock.Any(), model.CreateGameData{
+		Name:             igdbGame.Name,
+		DevelopersIDs:    []int32{developerID},
+		PublishersIDs:    []int32{publisherID},
+		ReleaseDate:      time.Unix(igdbGame.FirstReleaseDate, 0).Format("2006-01-02"),
+		GenresIDs:        []int32{genreID},
+		LogoURL:          logoURL,
+		Summary:          igdbGame.Summary,
+		Slug:             igdbGame.Slug,
+		PlatformsIDs:     []int32{platforms[0].ID},
+		Screenshots:      []string{screenshotURL},
+		Websites:         []string{igdbGame.Websites[0].URL},
+		IGDBRating:       igdbGame.TotalRating,
+		IGDBID:           igdbGame.ID,
+		ModerationStatus: model.ModerationStatusReady,
 	}).Return(int32(1), nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)

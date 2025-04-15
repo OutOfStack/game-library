@@ -45,6 +45,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model
 		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id",
 		fmt.Sprintf("(extract(year FROM release_date)/%f + igdb_rating + rating/%f) weight", gameReleaseYearCoeff, gameRatingCoeff)).
 		From("games").
+		Where(sq.Eq{"moderation_status": model.ModerationStatusReady}).
 		Limit(uint64(pageSize)).
 		Offset(uint64((page - 1) * pageSize))
 
@@ -83,7 +84,8 @@ func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (
 	defer span.End()
 
 	query := psql.Select("COUNT(id)").
-		From("games")
+		From("games").
+		Where(sq.Eq{"moderation_status": model.ModerationStatusReady})
 
 	if filter.Name != "" {
 		query = query.Where(sq.Like{"LOWER(name)": "%" + strings.ToLower(filter.Name) + "%"})
@@ -154,20 +156,20 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 }
 
 // CreateGame creates new game
-func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error) {
+func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGameData) (id int32, err error) {
 	ctx, span := tracer.Start(ctx, "createGame")
 	defer span.End()
 
 	const q = `
 		INSERT INTO games
     		(name, developers, publishers, release_date, genres, logo_url, summary,
-    		 platforms, screenshots, websites, slug, igdb_rating, igdb_id, created_at)
+    		 platforms, screenshots, websites, slug, igdb_rating, igdb_id, moderation_status, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7,
-		        $8, $9, $10, $11::varchar(50), $12, $13, $14)
+		        $8, $9, $10, $11::varchar(50), $12, $13, $14, $15)
 		RETURNING id`
 
 	err = s.db.QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.GenresIDs, cg.LogoURL, cg.Summary,
-		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBID, time.Now()).
+		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBID, cg.ModerationStatus, time.Now()).
 		Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)
@@ -185,7 +187,7 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameD
 	const q = `
 		UPDATE games
 		SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8,
-		    platforms = $9, screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, igdb_id = $14, updated_at = $15
+		    platforms = $9, screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, moderation_status = $14, updated_at = $15
 		WHERE id = $1`
 
 	releaseDate, err := types.ParseDate(ug.ReleaseDate)
@@ -193,7 +195,7 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameD
 		return fmt.Errorf("invalid date %v: %v", releaseDate, err)
 	}
 	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.Developers, ug.Publishers, releaseDate.String(), ug.Genres, ug.LogoURL, ug.Summary,
-		ug.PlatformsIDs, ug.Screenshots, ug.Websites, ug.Slug, ug.IGDBRating, ug.IGDBID, time.Now())
+		ug.PlatformsIDs, ug.Screenshots, ug.Websites, ug.Slug, ug.IGDBRating, ug.ModerationStatus, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d: %v", id, err)
 	}

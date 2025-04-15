@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
@@ -16,7 +17,7 @@ import (
 )
 
 func (s *TestSuite) Test_CreateGame_Success() {
-	role, gameID, authToken := td.String(), td.Int32(), td.String()
+	role, gameID, authToken, publisher := td.String(), td.Int32(), td.String(), td.String()
 
 	requestData := api.CreateGameRequest{
 		Name:         td.String(),
@@ -29,13 +30,27 @@ func (s *TestSuite) Test_CreateGame_Success() {
 		Screenshots:  []string{s.getImageURL()},
 		Websites:     []string{s.getWebsiteURL()},
 	}
+	createGame := model.CreateGame{
+		Name:         requestData.Name,
+		ReleaseDate:  requestData.ReleaseDate,
+		GenresIDs:    requestData.GenresIDs,
+		LogoURL:      requestData.LogoURL,
+		Summary:      requestData.Summary,
+		Slug:         model.GetGameSlug(requestData.Name),
+		PlatformsIDs: requestData.PlatformsIDs,
+		Screenshots:  requestData.Screenshots,
+		Websites:     requestData.Websites,
+		Developer:    requestData.Developer,
+		Publisher:    publisher,
+	}
+
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
+	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
 	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
-	s.gameFacadeMock.EXPECT().CreateGame(mock.Any(), mock.Any()).Return(gameID, nil)
+	s.gameFacadeMock.EXPECT().CreateGame(mock.Any(), createGame).Return(gameID, nil)
 
 	authenticator := middleware.Authenticate(s.log, s.authClient)
 	authorizer := middleware.Authorize(s.log, s.authClient, role)

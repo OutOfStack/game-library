@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
@@ -19,14 +20,38 @@ import (
 func (s *TestSuite) Test_UpdateGame_Success() {
 	gameID, authToken, publisher, role := td.Int31(), td.String(), td.String(), td.String()
 
-	requestData := api.UpdateGameRequest{}
+	name, developer, releaseDate, summary, logoURL := td.String(), td.String(), td.Date().Format("2006-01-02"), td.String(), s.getImageURL()
+	genresIDs, platformsIDs, screenshots, websites := []int32{td.Int31()}, []int32{td.Int31()}, []string{s.getImageURL()}, []string{s.getWebsiteURL()}
+	requestData := api.UpdateGameRequest{
+		Name:         &name,
+		Developer:    &developer,
+		ReleaseDate:  &releaseDate,
+		GenresIDs:    &genresIDs,
+		LogoURL:      &logoURL,
+		Summary:      &summary,
+		PlatformsIDs: &platformsIDs,
+		Screenshots:  &screenshots,
+		Websites:     &websites,
+	}
+	updateGame := model.UpdateGame{
+		Name:         requestData.Name,
+		Developer:    requestData.Developer,
+		Publisher:    publisher,
+		ReleaseDate:  requestData.ReleaseDate,
+		GenresIDs:    requestData.GenresIDs,
+		LogoURL:      requestData.LogoURL,
+		Summary:      requestData.Summary,
+		PlatformsIDs: requestData.PlatformsIDs,
+		Screenshots:  requestData.Screenshots,
+		Websites:     requestData.Websites,
+	}
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
 	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
-	s.gameFacadeMock.EXPECT().UpdateGame(mock.Any(), gameID, publisher, mock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGame(mock.Any(), gameID, updateGame).Return(nil)
 
 	authenticator := middleware.Authenticate(s.log, s.authClient)
 	authorizer := middleware.Authorize(s.log, s.authClient, role)
@@ -77,7 +102,7 @@ func (s *TestSuite) Test_UpdateGame_FacadeError() {
 
 	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
 	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
-	s.gameFacadeMock.EXPECT().UpdateGame(mock.Any(), gameID, publisher, mock.Any()).Return(errors.New("new error"))
+	s.gameFacadeMock.EXPECT().UpdateGame(mock.Any(), gameID, mock.Any()).Return(errors.New("new error"))
 
 	authenticator := middleware.Authenticate(s.log, s.authClient)
 	authorizer := middleware.Authorize(s.log, s.authClient, role)

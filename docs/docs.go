@@ -177,6 +177,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/games/images": {
+            "post": {
+                "description": "uploads cover and screenshots images",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Upload game images",
+                "operationId": "upload-game-images",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Cover image file (.png, .jpg, .jpeg), maximum 1MB",
+                        "name": "cover",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "file"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Screenshot image files (.png, .jpg, .jpeg), up to 8 files, maximum 1MB each",
+                        "name": "screenshots",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.UploadImagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/games/{id}": {
             "get": {
                 "description": "returns game by ID",
@@ -751,6 +802,34 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "model.UploadImagesResponse": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UploadedFileInfo"
+                    }
+                }
+            }
+        },
+        "model.UploadedFileInfo": {
+            "type": "object",
+            "properties": {
+                "file_id": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },

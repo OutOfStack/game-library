@@ -31,12 +31,12 @@ func (s *TestSuite) Test_GetUserRatings_Success() {
 	req := httptest.NewRequest(http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().GetUserRatings(mock.Any(), userID).Return(ratings, nil)
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetUserRatings)))
 	r := chi.NewRouter()
 	r.Post("/user/ratings/", handler.ServeHTTP)
@@ -67,12 +67,12 @@ func (s *TestSuite) Test_GetUserRatings_FacadeError() {
 	req := httptest.NewRequest(http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().GetUserRatings(mock.Any(), userID).Return(nil, errors.New("new error"))
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetUserRatings)))
 	r := chi.NewRouter()
 	r.Post("/user/ratings/", handler.ServeHTTP)

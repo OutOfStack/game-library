@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"mime/multipart"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
@@ -20,6 +21,7 @@ type GameFacade interface {
 	DeleteGame(ctx context.Context, id int32, publisher string) error
 	RateGame(ctx context.Context, gameID int32, userID string, rating uint8) error
 	GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error)
+	UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader) ([]model.File, error)
 
 	GetGenres(ctx context.Context) ([]model.Genre, error)
 	GetGenresMap(ctx context.Context) (map[int32]model.Genre, error)

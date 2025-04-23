@@ -11,6 +11,7 @@ package api_mock
 
 import (
 	context "context"
+	multipart "mime/multipart"
 	reflect "reflect"
 
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -247,4 +248,19 @@ func (m *MockGameFacade) UpdateGame(ctx context.Context, id int32, upd model.Upd
 func (mr *MockGameFacadeMockRecorder) UpdateGame(ctx, id, upd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGame", reflect.TypeOf((*MockGameFacade)(nil).UpdateGame), ctx, id, upd)
+}
+
+// UploadGameImages mocks base method.
+func (m *MockGameFacade) UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader) ([]model.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UploadGameImages", ctx, coverFiles, screenshotFiles)
+	ret0, _ := ret[0].([]model.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UploadGameImages indicates an expected call of UploadGameImages.
+func (mr *MockGameFacadeMockRecorder) UploadGameImages(ctx, coverFiles, screenshotFiles any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadGameImages", reflect.TypeOf((*MockGameFacade)(nil).UploadGameImages), ctx, coverFiles, screenshotFiles)
 }

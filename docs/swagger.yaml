@@ -158,6 +158,24 @@ definitions:
           type: string
         type: array
     type: object
+  model.UploadImagesResponse:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/model.UploadedFileInfo'
+        type: array
+    type: object
+  model.UploadedFileInfo:
+    properties:
+      file_id:
+        type: string
+      file_name:
+        type: string
+      file_url:
+        type: string
+      type:
+        type: string
+    type: object
   web.ErrorResponse:
     properties:
       error:
@@ -430,6 +448,41 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Rate game
+  /games/images:
+    post:
+      consumes:
+      - multipart/form-data
+      description: uploads cover and screenshots images
+      operationId: upload-game-images
+      parameters:
+      - description: Cover image file (.png, .jpg, .jpeg), maximum 1MB
+        in: formData
+        name: cover
+        type: file
+      - collectionFormat: multi
+        description: Screenshot image files (.png, .jpg, .jpeg), up to 8 files, maximum
+          1MB each
+        in: formData
+        items:
+          type: file
+        name: screenshots
+        type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.UploadImagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Upload game images
   /genres:
     get:
       description: returns all genres

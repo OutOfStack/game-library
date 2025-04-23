@@ -87,6 +87,11 @@ func Service(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RoleRegisteredUser),
 		).Post("/{id}/rate", pr.RateGame)
+
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RolePublisher),
+		).Post("/images", pr.UploadGameImages)
 	})
 
 	// user

@@ -98,3 +98,13 @@ func Float64() float64 {
 func Bool() bool {
 	return random.Intn(2) == 0
 }
+
+// Bytesn returns slice of bytes with random values and specified size
+func Bytesn(size int) []byte {
+	return []byte(Stringn(size))
+}
+
+// Bytes returns slice of bytes with random values
+func Bytes() []byte {
+	return []byte(String())
+}

@@ -21,6 +21,7 @@ type TestSuite struct {
 	storageMock     *facademock.MockStorage
 	cacheStore      *cache.RedisStore
 	redisClientMock *cachemock.MockRedisClient
+	s3ClientMock    *facademock.MockS3Client
 	provider        *facade.Provider
 }
 
@@ -31,7 +32,8 @@ func (s *TestSuite) SetupTest() {
 	s.log = zap.NewNop()
 	s.redisClientMock = cachemock.NewMockRedisClient(s.ctrl)
 	s.cacheStore = cache.NewRedisStore(s.redisClientMock, s.log)
-	s.provider = facade.NewProvider(s.log, s.storageMock, s.cacheStore)
+	s.s3ClientMock = facademock.NewMockS3Client(s.ctrl)
+	s.provider = facade.NewProvider(s.log, s.storageMock, s.cacheStore, s.s3ClientMock)
 }
 
 func (s *TestSuite) TearDownTest() {

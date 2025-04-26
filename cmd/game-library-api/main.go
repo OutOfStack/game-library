@@ -109,7 +109,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	}
 
 	// create game facade
-	gameFacade := facade.NewProvider(logger, storage, rCache)
+	gameFacade := facade.NewProvider(logger, storage, rCache, s3Client)
 
 	// create api provider
 	apiProvider := api.NewProvider(logger, rCache, gameFacade)

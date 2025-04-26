@@ -19,12 +19,12 @@ func (s *TestSuite) Test_DeleteGame_Success() {
 	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().DeleteGame(mock.Any(), gameID, publisher).Return(nil)
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.DeleteGame)))
 	r := chi.NewRouter()
 	r.Delete("/games/{id}", handler.ServeHTTP)
@@ -66,12 +66,12 @@ func (s *TestSuite) Test_DeleteGame_FacadeError() {
 	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().DeleteGame(mock.Any(), gameID, publisher).Return(errors.New("new error"))
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.DeleteGame)))
 	r := chi.NewRouter()
 	r.Delete("/games/{id}", handler.ServeHTTP)

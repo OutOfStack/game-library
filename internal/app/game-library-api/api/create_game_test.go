@@ -48,12 +48,12 @@ func (s *TestSuite) Test_CreateGame_Success() {
 	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().CreateGame(mock.Any(), createGame).Return(gameID, nil)
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.CreateGame)))
 
 	handler.ServeHTTP(s.httpResponse, req)
@@ -108,12 +108,12 @@ func (s *TestSuite) Test_CreateGame_FacadeError() {
 	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().CreateGame(mock.Any(), mock.Any()).Return(int32(0), errors.New("db error"))
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.CreateGame)))
 
 	handler.ServeHTTP(s.httpResponse, req)

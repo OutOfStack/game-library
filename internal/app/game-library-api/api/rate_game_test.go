@@ -27,12 +27,12 @@ func (s *TestSuite) Test_RateGame_Success() {
 	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().RateGame(mock.Any(), gameID, userID, rating).Return(nil)
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.RateGame)))
 	r := chi.NewRouter()
 	r.Post("/{id}/rate", handler.ServeHTTP)
@@ -81,12 +81,12 @@ func (s *TestSuite) Test_RateGame_FacadeError() {
 	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().RateGame(mock.Any(), gameID, userID, rating).Return(errors.New("new error"))
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.RateGame)))
 	r := chi.NewRouter()
 	r.Post("/{id}/rate", handler.ServeHTTP)

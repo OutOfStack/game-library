@@ -6,6 +6,8 @@ metadata:
 data:
     APP_ADDRESS: "0.0.0.0:8000"
     DEBUG_ADDRESS: "0.0.0.0:6060"
+    APP_READTIMEOUT: "30s"
+    APP_WRITETIMEOUT: "15s"
     APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_,https://_UI_URL_"
     AUTH_VERIFYTOKENURL: "https://_K8S_URL_/_auth/token/verify"
     ZIPKIN_REPORTERURL: "http://zipkin-service.game-library.svc.cluster.local:9411/api/v2/spans"

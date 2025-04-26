@@ -22,7 +22,7 @@ type TestSuite struct {
 	log             *zap.Logger
 	cacheStore      *cache.RedisStore
 	redisClientMock *cachemock.MockRedisClient
-	authClient      *mwmock.MockAuthClient
+	authClientMock  *mwmock.MockAuthClient
 	httpResponse    *httptest.ResponseRecorder
 	httpRequest     *http.Request
 	provider        *api.Provider
@@ -34,7 +34,7 @@ func (s *TestSuite) SetupTest() {
 	s.log = zap.NewNop()
 	s.redisClientMock = cachemock.NewMockRedisClient(s.ctrl)
 	s.cacheStore = cache.NewRedisStore(s.redisClientMock, s.log)
-	s.authClient = mwmock.NewMockAuthClient(s.ctrl)
+	s.authClientMock = mwmock.NewMockAuthClient(s.ctrl)
 	s.httpResponse = httptest.NewRecorder()
 	s.httpRequest, _ = http.NewRequest(http.MethodGet, "/", nil)
 	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock)

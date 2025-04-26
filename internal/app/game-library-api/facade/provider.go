@@ -2,25 +2,29 @@ package facade
 
 import (
 	"context"
+	"io"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"go.uber.org/zap"
 )
 
 // Provider represents dependencies for facade layer
 type Provider struct {
-	log     *zap.Logger
-	storage Storage
-	cache   *cache.RedisStore
+	log      *zap.Logger
+	storage  Storage
+	cache    *cache.RedisStore
+	s3Client S3Client
 }
 
 // NewProvider returns nre provider
-func NewProvider(logger *zap.Logger, storage Storage, cache *cache.RedisStore) *Provider {
+func NewProvider(logger *zap.Logger, storage Storage, cache *cache.RedisStore, s3Client S3Client) *Provider {
 	return &Provider{
-		log:     logger,
-		storage: storage,
-		cache:   cache,
+		log:      logger,
+		storage:  storage,
+		cache:    cache,
+		s3Client: s3Client,
 	}
 }
 
@@ -51,4 +55,9 @@ type Storage interface {
 	AddRating(ctx context.Context, cr model.CreateRating) error
 	RemoveRating(ctx context.Context, rr model.RemoveRating) error
 	GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error)
+}
+
+// S3Client represents the interface for S3 client operations
+type S3Client interface {
+	Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (s3.UploadResult, error)
 }

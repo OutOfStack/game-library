@@ -11,9 +11,11 @@ package facade_mock
 
 import (
 	context "context"
+	io "io"
 	reflect "reflect"
 
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	s3 "github.com/OutOfStack/game-library/internal/client/s3"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -349,4 +351,43 @@ func (m *MockStorage) UpdateGameRating(ctx context.Context, id int32) error {
 func (mr *MockStorageMockRecorder) UpdateGameRating(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameRating", reflect.TypeOf((*MockStorage)(nil).UpdateGameRating), ctx, id)
+}
+
+// MockS3Client is a mock of S3Client interface.
+type MockS3Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockS3ClientMockRecorder
+	isgomock struct{}
+}
+
+// MockS3ClientMockRecorder is the mock recorder for MockS3Client.
+type MockS3ClientMockRecorder struct {
+	mock *MockS3Client
+}
+
+// NewMockS3Client creates a new mock instance.
+func NewMockS3Client(ctrl *gomock.Controller) *MockS3Client {
+	mock := &MockS3Client{ctrl: ctrl}
+	mock.recorder = &MockS3ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockS3Client) EXPECT() *MockS3ClientMockRecorder {
+	return m.recorder
+}
+
+// Upload mocks base method.
+func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (s3.UploadResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upload", ctx, data, contentType, md)
+	ret0, _ := ret[0].(s3.UploadResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Upload indicates an expected call of Upload.
+func (mr *MockS3ClientMockRecorder) Upload(ctx, data, contentType, md any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, contentType, md)
 }

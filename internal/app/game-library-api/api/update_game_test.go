@@ -49,12 +49,12 @@ func (s *TestSuite) Test_UpdateGame_Success() {
 	req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().UpdateGame(mock.Any(), gameID, updateGame).Return(nil)
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UpdateGame)))
 	r := chi.NewRouter()
 	r.Patch("/games/{id}", handler.ServeHTTP)
@@ -100,12 +100,12 @@ func (s *TestSuite) Test_UpdateGame_FacadeError() {
 	req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClient.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
-	s.authClient.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().UpdateGame(mock.Any(), gameID, mock.Any()).Return(errors.New("new error"))
 
-	authenticator := middleware.Authenticate(s.log, s.authClient)
-	authorizer := middleware.Authorize(s.log, s.authClient, role)
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
 	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UpdateGame)))
 	r := chi.NewRouter()
 	r.Patch("/games/{id}", handler.ServeHTTP)

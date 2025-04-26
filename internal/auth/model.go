@@ -21,5 +21,8 @@ type Claims struct {
 
 // UserID return user id from claims
 func (c *Claims) UserID() string {
-	return c.Subject
+	if c != nil {
+		return c.Subject
+	}
+	return ""
 }

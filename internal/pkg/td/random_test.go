@@ -132,3 +132,19 @@ func TestBool(t *testing.T) {
 	assert.NotZero(t, m[true])
 	assert.NotZero(t, m[false])
 }
+
+func TestBytesn(t *testing.T) {
+	for range n {
+		size := 5 + td.Intn(15)
+		val := td.Bytesn(size)
+		assert.Len(t, val, size)
+	}
+}
+
+func TestBytes(t *testing.T) {
+	for range n {
+		val := td.Bytes()
+		assert.GreaterOrEqual(t, len(val), 5)
+		assert.LessOrEqual(t, len(val), 20)
+	}
+}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/client/s3"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -37,7 +38,17 @@ var allowedImageTypes = map[string]bool{
 }
 
 // UploadGameImages handles the business logic for uploading game images
-func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader) ([]model.File, error) {
+func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader, publisherName string) ([]model.File, error) {
+	// check if publisher has reached the monthly limit
+	publisherID, err := p.storage.GetCompanyIDByName(ctx, publisherName)
+	if err != nil && !apperr.IsStatusCode(err, apperr.NotFound) {
+		return nil, fmt.Errorf("get company id by name %s: %w", publisherName, err)
+	}
+
+	if err := p.checkPublisherMonthlyLimit(ctx, publisherID); err != nil {
+		return nil, err
+	}
+
 	// validate cover file
 	if err := validateImage(coverFiles, ImageTypeCover); err != nil {
 		return nil, err
@@ -93,8 +104,7 @@ func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotF
 		})
 	}
 
-	err := eg.Wait()
-	if err != nil {
+	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
 

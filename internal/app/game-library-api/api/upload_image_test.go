@@ -18,7 +18,7 @@ import (
 )
 
 func (s *TestSuite) Test_UploadGameImages_Success() {
-	role, authToken := td.String(), td.String()
+	userName, role, authToken := td.String(), td.String(), td.String()
 
 	// create a multipart form buffer
 	var b bytes.Buffer
@@ -41,7 +41,6 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	// Expected response
 	expectedFiles := []model.File{
 		{
 			FileName: "cover.jpg",
@@ -57,9 +56,9 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 		},
 	}
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: userName, UserRole: role}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
-	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any()).Return(expectedFiles, nil)
+	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any(), userName).Return(expectedFiles, nil)
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
@@ -111,7 +110,7 @@ func (s *TestSuite) Test_UploadGameImages_MissingClaims() {
 }
 
 func (s *TestSuite) Test_UploadGameImages_FacadeError() {
-	role, authToken := td.String(), td.String()
+	userName, role, authToken := td.String(), td.String(), td.String()
 
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -127,9 +126,9 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: userName, UserRole: role}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
-	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any()).Return(nil, errors.New("upload error"))
+	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any(), userName).Return(nil, errors.New("upload error"))
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)

@@ -2,6 +2,7 @@ package repo_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
@@ -423,6 +424,62 @@ func TestDeleteGame_Valid_ShouldDelete(t *testing.T) {
 	g, err := s.GetGameByID(ctx, id)
 	require.ErrorIs(t, err, apperr.NewNotFoundError("game", id), "err should be NotFound")
 	require.Zero(t, g.ID, "id should be 0")
+}
+
+// TestGetPublisherGamesCount_NoGames_ShouldReturnZero tests case when there are no games in the date range
+func TestGetPublisherGamesCount_NoGames_ShouldReturnZero(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	publisherID := td.Int32()
+
+	// set date range to current month
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	endOfMonth := startOfMonth.AddDate(0, 1, 0)
+
+	count, err := s.GetPublisherGamesCount(ctx, publisherID, startOfMonth, endOfMonth)
+	require.NoError(t, err)
+	require.Equal(t, 0, count, "count should be 0")
+}
+
+// TestGetPublisherGamesCount_WithGames_ShouldReturnCount tests case when there are games in the date range
+func TestGetPublisherGamesCount_WithGames_ShouldReturnCount(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	publisherID := td.Int32()
+
+	// set date range to current month
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	endOfMonth := startOfMonth.AddDate(0, 1, 0)
+
+	// create games for the publisher
+	cg1 := getCreateGameData()
+	cg1.PublishersIDs = []int32{publisherID}
+
+	cg2 := getCreateGameData()
+	cg2.PublishersIDs = []int32{publisherID}
+
+	// create a game for a different publisher
+	cg3 := getCreateGameData()
+	cg3.PublishersIDs = []int32{td.Int32()}
+
+	_, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
+
+	_, err = s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
+
+	_, err = s.CreateGame(ctx, cg3)
+	require.NoError(t, err)
+
+	count, err := s.GetPublisherGamesCount(ctx, publisherID, startOfMonth, endOfMonth)
+	require.NoError(t, err)
+	require.Equal(t, 2, count, "count should be 2")
 }
 
 // TestUpdateRating_Valid_ShouldUpdateGameRating tests case when we update game rating

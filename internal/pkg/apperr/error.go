@@ -16,9 +16,10 @@ type StatusCode int
 
 // supported status codes
 const (
-	NotFound  StatusCode = http.StatusNotFound
-	Invalid   StatusCode = http.StatusBadRequest
-	Forbidden StatusCode = http.StatusForbidden
+	NotFound        StatusCode = http.StatusNotFound
+	Invalid         StatusCode = http.StatusBadRequest
+	Forbidden       StatusCode = http.StatusForbidden
+	TooManyRequests StatusCode = http.StatusTooManyRequests
 )
 
 // Error - custom error wrapper
@@ -64,6 +65,15 @@ func NewForbiddenError[T EntityIDType](entity string, id T) Error[T] {
 	}
 }
 
+// NewTooManyRequestsError - return new custom too many requests error
+func NewTooManyRequestsError(entity string, msg string) Error[int32] {
+	return Error[int32]{
+		Entity:   entity,
+		StatCode: TooManyRequests,
+		Msg:      msg,
+	}
+}
+
 // StatusCode returns status code
 func (e Error[T]) StatusCode() StatusCode {
 	return e.StatCode
@@ -87,6 +97,12 @@ func (e Error[T]) Error() string {
 		return msg
 	case Forbidden:
 		return fmt.Sprintf("forbidden access to %s with id %v", e.Entity, e.ID)
+	case TooManyRequests:
+		msg := "too many requests on" + e.Entity
+		if e.Msg != "" {
+			msg += ": " + e.Msg
+		}
+		return msg
 	}
 
 	return fmt.Sprintf("error %s with id %v: %s", e.Entity, e.ID, e.Msg)

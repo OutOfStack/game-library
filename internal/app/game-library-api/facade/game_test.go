@@ -2,9 +2,11 @@ package facade_test
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/facade"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
@@ -129,9 +131,14 @@ func (s *TestSuite) TestCreateGame_Success() {
 		ModerationStatus: model.ModerationStatusCheck,
 	}
 
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	endOfMonth := startOfMonth.AddDate(0, 1, 0)
+
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(int32(0), nil)
 	s.storageMock.EXPECT().CreateCompany(s.ctx, model.Company{Name: createGame.Developer}).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
+	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, startOfMonth, endOfMonth).Return(1, nil)
 	s.storageMock.EXPECT().CreateGame(s.ctx, createGameData).Return(gameID, nil)
 
 	s.redisClientMock.EXPECT().DeleteByMatch(mock.Any(), mock.Any()).Return(nil).AnyTimes()
@@ -159,11 +166,30 @@ func (s *TestSuite) TestCreateGame_Error() {
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
+	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, mock.Any(), mock.Any()).Return(1, nil)
 	s.storageMock.EXPECT().CreateGame(s.ctx, createGameData).Return(int32(0), errors.New("new error"))
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
 	s.Error(err)
+	s.Equal(int32(0), id)
+}
+
+func (s *TestSuite) TestCreateGame_MonthlyLimitReached() {
+	developerID, publisherID := td.Int32(), td.Int32()
+	createGame := model.CreateGame{
+		Developer: td.String(),
+		Publisher: td.String(),
+	}
+
+	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(developerID, nil)
+	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
+	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, mock.Any(), mock.Any()).Return(facade.MaxGamesPerPublisherPerMonth, nil)
+
+	id, err := s.provider.CreateGame(s.ctx, createGame)
+
+	s.Error(err)
+	s.Contains(err.Error(), fmt.Sprintf("publishing monthly limit of %d reached", facade.MaxGamesPerPublisherPerMonth))
 	s.Equal(int32(0), id)
 }
 

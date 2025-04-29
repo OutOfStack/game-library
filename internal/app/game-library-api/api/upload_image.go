@@ -53,7 +53,7 @@ func (p *Provider) UploadGameImages(w http.ResponseWriter, r *http.Request) {
 	screenshotFiles := r.MultipartForm.File["screenshots"]
 
 	// Use the facade to handle the business logic
-	uploadedFiles, err := p.gameFacade.UploadGameImages(ctx, coverFiles, screenshotFiles)
+	uploadedFiles, err := p.gameFacade.UploadGameImages(ctx, coverFiles, screenshotFiles, claims.Name)
 	if err != nil {
 		p.log.Error("upload game images", zap.Error(err))
 		web.RespondError(w, web.NewError(err, http.StatusBadRequest))

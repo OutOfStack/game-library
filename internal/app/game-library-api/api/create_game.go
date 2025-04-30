@@ -14,12 +14,14 @@ import (
 // CreateGame godoc
 // @Summary Create game
 // @Description creates new game
+// @Security BearerAuth
 // @ID create-game
 // @Accept  json
 // @Produce json
 // @Param   game body 	 api.CreateGameRequest true "create game"
 // @Success 201 {object} api.IDResponse
 // @Failure 400 {object} web.ErrorResponse
+// @Failure 429 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games [post]
 func (p *Provider) CreateGame(w http.ResponseWriter, r *http.Request) {

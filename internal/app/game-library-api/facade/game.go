@@ -273,7 +273,7 @@ func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) e
 func (p *Provider) checkPublisherMonthlyLimit(ctx context.Context, publisherID int32) error {
 	now := time.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	endOfMonth := startOfMonth.AddDate(0, 1, 0)
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Millisecond)
 
 	count, err := p.storage.GetPublisherGamesCount(ctx, publisherID, startOfMonth, endOfMonth)
 	if err != nil {

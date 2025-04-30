@@ -8,7 +8,7 @@
         "title": "Game library API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {},
-        "version": "0.3"
+        "version": "0.4"
     },
     "host": "localhost:8000",
     "basePath": "/api",
@@ -132,6 +132,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "creates new game",
                 "consumes": [
                     "application/json"
@@ -165,6 +170,12 @@
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
                     },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -176,6 +187,11 @@
         },
         "/games/images": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "uploads cover and screenshots images",
                 "consumes": [
                     "multipart/form-data"
@@ -212,6 +228,12 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
@@ -270,6 +292,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "deletes game by ID",
                 "consumes": [
                     "application/json"
@@ -319,6 +346,11 @@
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "updates game by ID",
                 "consumes": [
                     "application/json"
@@ -379,6 +411,11 @@
         },
         "/games/{id}/rate": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "rates game",
                 "consumes": [
                     "application/json"
@@ -854,6 +891,13 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

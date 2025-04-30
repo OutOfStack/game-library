@@ -33,7 +33,7 @@ import (
 )
 
 // @title Game library API
-// @version 0.3
+// @version 0.4
 // @description API for game library service
 // @termsOfService http://swagger.io/terms/
 
@@ -41,6 +41,11 @@ import (
 // @BasePath /api
 // @query.collection.format multi
 // @schemes http
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @security BearerAuth
 func main() {
 	// load config
 	var cfg appconf.Cfg

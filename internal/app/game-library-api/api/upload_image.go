@@ -7,6 +7,7 @@ import (
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/middleware"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -19,6 +20,7 @@ const (
 // UploadGameImages godoc
 // @Summary Upload game images
 // @Description uploads cover and screenshots images
+// @Security BearerAuth
 // @ID upload-game-images
 // @Accept  multipart/form-data
 // @Produce json
@@ -26,6 +28,7 @@ const (
 // @Param   screenshots formData []file false "Screenshot image files (.png, .jpg, .jpeg), up to 8 files, maximum 1MB each" collectionFormat(multi)
 // @Success 201 {object} api.UploadImagesResponse
 // @Failure 400 {object} web.ErrorResponse
+// @Failure 429 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/images [post]
 func (p *Provider) UploadGameImages(w http.ResponseWriter, r *http.Request) {
@@ -55,8 +58,12 @@ func (p *Provider) UploadGameImages(w http.ResponseWriter, r *http.Request) {
 	// Use the facade to handle the business logic
 	uploadedFiles, err := p.gameFacade.UploadGameImages(ctx, coverFiles, screenshotFiles, claims.Name)
 	if err != nil {
-		p.log.Error("upload game images", zap.Error(err))
-		web.RespondError(w, web.NewError(err, http.StatusBadRequest))
+		if appErr, ok := apperr.IsAppError(err); ok {
+			web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))
+			return
+		}
+		p.log.Error("upload game images", zap.Error(err), zap.String("publisher", claims.Name))
+		web.Respond500(w)
 		return
 	}
 

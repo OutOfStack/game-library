@@ -198,7 +198,7 @@ info:
   description: API for game library service
   termsOfService: http://swagger.io/terms/
   title: Game library API
-  version: "0.3"
+  version: "0.4"
 paths:
   /companies/top:
     get:
@@ -303,10 +303,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create game
   /games/{id}:
     delete:
@@ -341,6 +347,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete game
     get:
       description: returns game by ID
@@ -409,6 +417,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update game
   /games/{id}/rate:
     post:
@@ -447,6 +457,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Rate game
   /games/images:
     post:
@@ -478,10 +490,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Upload game images
   /genres:
     get:
@@ -568,4 +586,9 @@ paths:
       summary: Get user ratings for specified games
 schemes:
 - http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

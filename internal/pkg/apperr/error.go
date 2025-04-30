@@ -98,7 +98,7 @@ func (e Error[T]) Error() string {
 	case Forbidden:
 		return fmt.Sprintf("forbidden access to %s with id %v", e.Entity, e.ID)
 	case TooManyRequests:
-		msg := "too many requests on" + e.Entity
+		msg := "too many requests on " + e.Entity
 		if e.Msg != "" {
 			msg += ": " + e.Msg
 		}

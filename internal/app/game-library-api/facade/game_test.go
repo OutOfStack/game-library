@@ -133,7 +133,7 @@ func (s *TestSuite) TestCreateGame_Success() {
 
 	now := time.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	endOfMonth := startOfMonth.AddDate(0, 1, 0)
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Millisecond)
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(int32(0), nil)
 	s.storageMock.EXPECT().CreateCompany(s.ctx, model.Company{Name: createGame.Developer}).Return(developerID, nil)

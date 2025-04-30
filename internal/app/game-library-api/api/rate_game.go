@@ -14,6 +14,7 @@ import (
 // RateGame godoc
 // @Summary Rate game
 // @Description rates game
+// @Security BearerAuth
 // @ID rate-game
 // @Accept  json
 // @Produce json

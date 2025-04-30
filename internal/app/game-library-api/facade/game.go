@@ -100,29 +100,29 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+		cErr := cache.DeleteByStartsWith(bCtx, p.cache, key)
+		if cErr != nil {
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+		cErr = cache.DeleteByStartsWith(bCtx, p.cache, key)
+		if cErr != nil {
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
 		}
 		// cache game
 		key = getGameKey(id)
-		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
+		cErr = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
 			return p.storage.GetGameByID(bCtx, id)
 		}, 0)
-		if err != nil {
-			p.log.Error("cache game with id", zap.Int32("id", id), zap.Error(err))
+		if cErr != nil {
+			p.log.Error("cache game with id", zap.Int32("id", id), zap.Error(cErr))
 		}
 		// invalidate companies
 		key = getCompaniesKey()
-		err = cache.Delete(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(err))
+		cErr = cache.Delete(bCtx, p.cache, key)
+		if cErr != nil {
+			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
 		}
 	}()
 

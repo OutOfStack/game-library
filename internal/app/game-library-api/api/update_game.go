@@ -14,6 +14,7 @@ import (
 // UpdateGame godoc
 // @Summary Update game
 // @Description updates game by ID
+// @Security BearerAuth
 // @ID update-game
 // @Accept  json
 // @Produce json

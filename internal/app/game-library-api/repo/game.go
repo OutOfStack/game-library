@@ -241,3 +241,22 @@ func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
 	}
 	return checkRowsAffected(res, "game", id)
 }
+
+// GetPublisherGamesCount returns the number of games created by a publisher in the specified date range
+func (s *Storage) GetPublisherGamesCount(ctx context.Context, publisherID int32, startDate, endDate time.Time) (count int, err error) {
+	ctx, span := tracer.Start(ctx, "getPublisherGamesCount")
+	defer span.End()
+
+	const q = `
+		SELECT COUNT(id)
+		FROM games
+		WHERE $1 = ANY(publishers)
+		AND created_at >= $2
+		AND created_at <= $3`
+
+	if err = pgxscan.Get(ctx, s.db, &count, q, publisherID, startDate, endDate); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

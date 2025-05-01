@@ -13,6 +13,7 @@ import (
 	context "context"
 	io "io"
 	reflect "reflect"
+	time "time"
 
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	s3 "github.com/OutOfStack/game-library/internal/client/s3"
@@ -249,6 +250,21 @@ func (m *MockStorage) GetPlatforms(ctx context.Context) ([]model.Platform, error
 func (mr *MockStorageMockRecorder) GetPlatforms(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlatforms", reflect.TypeOf((*MockStorage)(nil).GetPlatforms), ctx)
+}
+
+// GetPublisherGamesCount mocks base method.
+func (m *MockStorage) GetPublisherGamesCount(ctx context.Context, publisherID int32, startDate, endDate time.Time) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublisherGamesCount", ctx, publisherID, startDate, endDate)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPublisherGamesCount indicates an expected call of GetPublisherGamesCount.
+func (mr *MockStorageMockRecorder) GetPublisherGamesCount(ctx, publisherID, startDate, endDate any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublisherGamesCount", reflect.TypeOf((*MockStorage)(nil).GetPublisherGamesCount), ctx, publisherID, startDate, endDate)
 }
 
 // GetTopDevelopers mocks base method.

@@ -17,3 +17,5 @@ bin
 # vendor/
 .vscode
 .idea
+.run
+.zencoder

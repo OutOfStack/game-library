@@ -251,16 +251,16 @@ func (mr *MockGameFacadeMockRecorder) UpdateGame(ctx, id, upd any) *gomock.Call 
 }
 
 // UploadGameImages mocks base method.
-func (m *MockGameFacade) UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader) ([]model.File, error) {
+func (m *MockGameFacade) UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader, publisherName string) ([]model.File, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadGameImages", ctx, coverFiles, screenshotFiles)
+	ret := m.ctrl.Call(m, "UploadGameImages", ctx, coverFiles, screenshotFiles, publisherName)
 	ret0, _ := ret[0].([]model.File)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UploadGameImages indicates an expected call of UploadGameImages.
-func (mr *MockGameFacadeMockRecorder) UploadGameImages(ctx, coverFiles, screenshotFiles any) *gomock.Call {
+func (mr *MockGameFacadeMockRecorder) UploadGameImages(ctx, coverFiles, screenshotFiles, publisherName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadGameImages", reflect.TypeOf((*MockGameFacade)(nil).UploadGameImages), ctx, coverFiles, screenshotFiles)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadGameImages", reflect.TypeOf((*MockGameFacade)(nil).UploadGameImages), ctx, coverFiles, screenshotFiles, publisherName)
 }

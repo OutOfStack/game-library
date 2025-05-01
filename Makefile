@@ -63,7 +63,7 @@ generate:
 	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
 	${MOCKGEN_BIN} -destination=internal/taskprocessor/mocks/tx.go -package=taskprocessor_mock github.com/jackc/pgx/v5 Tx
 
-LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.6
+LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \

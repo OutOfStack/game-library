@@ -2,7 +2,6 @@ package facade
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"mime/multipart"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/client/s3"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -37,14 +37,24 @@ var allowedImageTypes = map[string]bool{
 }
 
 // UploadGameImages handles the business logic for uploading game images
-func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader) ([]model.File, error) {
+func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotFiles []*multipart.FileHeader, publisherName string) ([]model.File, error) {
+	// check if publisher has reached the monthly limit
+	publisherID, err := p.storage.GetCompanyIDByName(ctx, publisherName)
+	if err != nil && !apperr.IsStatusCode(err, apperr.NotFound) {
+		return nil, fmt.Errorf("get company id by name %s: %w", publisherName, err)
+	}
+
+	if err = p.checkPublisherMonthlyLimit(ctx, publisherID); err != nil {
+		return nil, err
+	}
+
 	// validate cover file
-	if err := validateImage(coverFiles, ImageTypeCover); err != nil {
+	if err = validateImage(coverFiles, ImageTypeCover); err != nil {
 		return nil, err
 	}
 
 	// validate screenshot files
-	if err := validateImage(screenshotFiles, ImageTypeScreenshot); err != nil {
+	if err = validateImage(screenshotFiles, ImageTypeScreenshot); err != nil {
 		return nil, err
 	}
 
@@ -93,8 +103,7 @@ func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotF
 		})
 	}
 
-	err := eg.Wait()
-	if err != nil {
+	if err = eg.Wait(); err != nil {
 		return nil, err
 	}
 
@@ -108,11 +117,15 @@ func validateImage(files []*multipart.FileHeader, imageType string) error {
 		maxFiles = MaxScreenshots
 	}
 
+	validationErr := apperr.NewInvalidError("image", "", "")
+
 	if len(files) == 0 {
-		return errors.New("no files provided")
+		validationErr.Msg = "no files provided"
+		return validationErr
 	}
 	if len(files) > maxFiles {
-		return fmt.Errorf("too many files, maximum is %d", maxFiles)
+		validationErr.Msg = fmt.Sprintf("too many files, maximum is %d", maxFiles)
+		return validationErr
 	}
 
 	maxSizeBytes := MaxImageSizeKB * 1024
@@ -120,14 +133,17 @@ func validateImage(files []*multipart.FileHeader, imageType string) error {
 		// validate file extension
 		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 		if !allowedImageTypes[ext] {
-			return fmt.Errorf("unsupported file type %s, use .png, .jpg, or .jpeg", ext)
+			validationErr.Msg = fmt.Sprintf("unsupported file type %s, use .png, .jpg, or .jpeg", ext)
+			return validationErr
 		}
 
 		// validate file size
 		if fileHeader.Size > maxSizeBytes {
-			return fmt.Errorf("file size exceeds maximum of %d KB", MaxImageSizeKB)
+			validationErr.Msg = fmt.Sprintf("file size exceeds maximum of %d KB", MaxImageSizeKB)
+			return validationErr
 		}
 	}
+
 	return nil
 }
 

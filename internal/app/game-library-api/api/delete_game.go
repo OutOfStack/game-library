@@ -13,6 +13,7 @@ import (
 // DeleteGame godoc
 // @Summary Delete game
 // @Description deletes game by ID
+// @Security BearerAuth
 // @ID delete-game
 // @Accept  json
 // @Produce json

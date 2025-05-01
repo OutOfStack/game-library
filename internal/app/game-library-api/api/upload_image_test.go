@@ -13,12 +13,13 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	mock "go.uber.org/mock/gomock"
 )
 
 func (s *TestSuite) Test_UploadGameImages_Success() {
-	role, authToken := td.String(), td.String()
+	userName, role, authToken := td.String(), td.String(), td.String()
 
 	// create a multipart form buffer
 	var b bytes.Buffer
@@ -41,7 +42,6 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	// Expected response
 	expectedFiles := []model.File{
 		{
 			FileName: "cover.jpg",
@@ -57,9 +57,9 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 		},
 	}
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: userName, UserRole: role}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
-	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any()).Return(expectedFiles, nil)
+	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any(), userName).Return(expectedFiles, nil)
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
@@ -110,8 +110,8 @@ func (s *TestSuite) Test_UploadGameImages_MissingClaims() {
 	s.JSONEq(`{"error": "Internal Server Error"}`, s.httpResponse.Body.String())
 }
 
-func (s *TestSuite) Test_UploadGameImages_FacadeError() {
-	role, authToken := td.String(), td.String()
+func (s *TestSuite) Test_UploadGameImages_PublishingMonthlyLimitReached() {
+	userName, role, authToken := td.String(), td.String(), td.String()
 
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -127,9 +127,9 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: userName, UserRole: role}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
-	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any()).Return(nil, errors.New("upload error"))
+	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any(), userName).Return(nil, apperr.NewTooManyRequestsError("game", "publishing monthly limit reached"))
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
@@ -137,6 +137,37 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 
 	handler.ServeHTTP(s.httpResponse, req)
 
-	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
-	s.JSONEq(`{"error": "upload error"}`, s.httpResponse.Body.String())
+	s.Equal(http.StatusTooManyRequests, s.httpResponse.Code)
+	s.JSONEq(`{"error": "too many requests on game: publishing monthly limit reached"}`, s.httpResponse.Body.String())
+}
+
+func (s *TestSuite) Test_UploadGameImages_FacadeError() {
+	userName, role, authToken := td.String(), td.String(), td.String()
+
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	// add a test file
+	fileWriter, _ := w.CreateFormFile("cover", "test.jpg")
+	_, err := io.Copy(fileWriter, bytes.NewReader(td.Bytes()))
+	s.NoError(err)
+
+	w.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/games/images", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+authToken)
+
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: userName, UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+	s.gameFacadeMock.EXPECT().UploadGameImages(mock.Any(), mock.Any(), mock.Any(), userName).Return(nil, errors.New("upload error"))
+
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
+	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UploadGameImages)))
+
+	handler.ServeHTTP(s.httpResponse, req)
+
+	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
+	s.JSONEq(`{"error": "Internal Server Error"}`, s.httpResponse.Body.String())
 }

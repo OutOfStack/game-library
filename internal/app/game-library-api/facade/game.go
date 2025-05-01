@@ -11,6 +11,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	// MaxGamesPerPublisherPerMonth is the maximum number of games a publisher can create in a month
+	MaxGamesPerPublisherPerMonth = 2
+)
+
 // GetGames returns games and count with pagination
 func (p *Provider) GetGames(ctx context.Context, page, pageSize int, filter model.GamesFilter) (games []model.Game, count uint64, err error) {
 	err = cache.Get(ctx, p.cache, getGamesKey(int64(pageSize), int64(page), filter), &games, func() ([]model.Game, error) {
@@ -76,6 +81,11 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 		}
 	}
 
+	// check if publisher has reached the monthly limit
+	if err = p.checkPublisherMonthlyLimit(ctx, publisherID); err != nil {
+		return 0, err
+	}
+
 	create := cg.MapToCreateGameData(publisherID, developerID)
 
 	id, err = p.storage.CreateGame(ctx, create)
@@ -90,29 +100,29 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+		cErr := cache.DeleteByStartsWith(bCtx, p.cache, key)
+		if cErr != nil {
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+		cErr = cache.DeleteByStartsWith(bCtx, p.cache, key)
+		if cErr != nil {
+			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
 		}
 		// cache game
 		key = getGameKey(id)
-		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
+		cErr = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
 			return p.storage.GetGameByID(bCtx, id)
 		}, 0)
-		if err != nil {
-			p.log.Error("cache game with id", zap.Int32("id", id), zap.Error(err))
+		if cErr != nil {
+			p.log.Error("cache game with id", zap.Int32("id", id), zap.Error(cErr))
 		}
 		// invalidate companies
 		key = getCompaniesKey()
-		err = cache.Delete(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(err))
+		cErr = cache.Delete(bCtx, p.cache, key)
+		if cErr != nil {
+			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
 		}
 	}()
 
@@ -255,6 +265,24 @@ func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) e
 			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}
 	}()
+
+	return nil
+}
+
+// Checks if a publisher has reached the monthly limit for creating games
+func (p *Provider) checkPublisherMonthlyLimit(ctx context.Context, publisherID int32) error {
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Millisecond)
+
+	count, err := p.storage.GetPublisherGamesCount(ctx, publisherID, startOfMonth, endOfMonth)
+	if err != nil {
+		return fmt.Errorf("check publisher monthly limit: %v", err)
+	}
+
+	if count >= MaxGamesPerPublisherPerMonth {
+		return apperr.NewTooManyRequestsError("game", fmt.Sprintf("publishing monthly limit of %d reached", MaxGamesPerPublisherPerMonth))
+	}
 
 	return nil
 }

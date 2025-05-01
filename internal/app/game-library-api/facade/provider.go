@@ -3,6 +3,7 @@ package facade
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/client/s3"
@@ -37,6 +38,7 @@ type Storage interface {
 	UpdateGame(ctx context.Context, id int32, ug model.UpdateGameData) error
 	DeleteGame(ctx context.Context, id int32) error
 	UpdateGameRating(ctx context.Context, id int32) error
+	GetPublisherGamesCount(ctx context.Context, publisherID int32, startDate, endDate time.Time) (count int, err error)
 
 	CreateCompany(ctx context.Context, c model.Company) (id int32, err error)
 	GetCompanies(ctx context.Context) (companies []model.Company, err error)

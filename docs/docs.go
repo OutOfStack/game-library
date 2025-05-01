@@ -135,6 +135,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "creates new game",
                 "consumes": [
                     "application/json"
@@ -168,6 +173,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
                     },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -179,6 +190,11 @@ const docTemplate = `{
         },
         "/games/images": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "uploads cover and screenshots images",
                 "consumes": [
                     "multipart/form-data"
@@ -215,6 +231,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
@@ -273,6 +295,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "deletes game by ID",
                 "consumes": [
                     "application/json"
@@ -322,6 +349,11 @@ const docTemplate = `{
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "updates game by ID",
                 "consumes": [
                     "application/json"
@@ -382,6 +414,11 @@ const docTemplate = `{
         },
         "/games/{id}/rate": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "rates game",
                 "consumes": [
                     "application/json"
@@ -858,12 +895,19 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.3",
+	Version:          "0.4",
 	Host:             "localhost:8000",
 	BasePath:         "/api",
 	Schemes:          []string{"http"},

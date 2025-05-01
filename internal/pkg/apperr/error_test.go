@@ -51,6 +51,18 @@ func TestNewForbiddenError(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("forbidden access to %s with id %v", entity, id), err.Error())
 }
 
+func TestNewTooManyRequestsError(t *testing.T) {
+	entity := td.String()
+	msg := td.String()
+
+	err := apperr.NewTooManyRequestsError(entity, msg)
+
+	assert.Equal(t, entity, err.Entity)
+	assert.Equal(t, apperr.TooManyRequests, err.StatusCode())
+	assert.Equal(t, http.StatusTooManyRequests, err.HTTPStatusCode())
+	assert.Equal(t, fmt.Sprintf("too many requests on %s: %s", entity, msg), err.Error())
+}
+
 func TestError_Methods(t *testing.T) {
 	id := td.String()
 	entity := td.String()
@@ -130,7 +142,6 @@ func TestIsStatusCode(t *testing.T) {
 		},
 	}
 
-	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := apperr.IsStatusCode(tt.err, tt.statusCode)

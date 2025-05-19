@@ -15,7 +15,7 @@ test:
 cover:
 	go test -cover -coverpkg=./... -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
 
-dockerrunpg:
+drunpg:
 	docker compose up -d --no-recreate db
 
 migrate:
@@ -63,7 +63,7 @@ generate:
 	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
 	${MOCKGEN_BIN} -destination=internal/taskprocessor/mocks/tx.go -package=taskprocessor_mock github.com/jackc/pgx/v5 Tx
 
-LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \
@@ -78,24 +78,24 @@ lint:
   	fi
 	${LINT_BIN} run
 
-dockerbuildapi:
+dbuildapi:
 	docker build -t game-library:latest .
 
-dockerrunapi:
+drunapi:
 	docker compose up -d api
 
-dockerrunzipkin:
+drunzipkin:
 	docker compose up -d zipkin
 
-dockerrunredis:
+drunredis:
 	docker compose up -d redis
 
-dockerrunglog:
+drunglog:
 	docker compose up -d graylog
 
-dockerrunprom:
+drunprom:
 	docker compose up -d prometheus
 
-dockerbuildmng:
+dbuildmng:
 	docker build -f Dockerfile.mng -t game-library-mng:latest .
 

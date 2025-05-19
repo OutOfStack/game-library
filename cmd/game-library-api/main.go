@@ -55,11 +55,11 @@ func main() {
 
 	// init logger
 	logger := zaplog.New(cfg)
-	defer func(logger *zap.Logger) {
+	defer func() {
 		if err := logger.Sync(); err != nil {
 			log.Printf("can't sync logger: %v", err)
 		}
-	}(logger)
+	}()
 
 	// run
 	if err := run(logger, cfg); err != nil {
@@ -108,7 +108,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	storage := repo.New(db)
 
 	// create auth facade
-	authFacade, err := auth.New(logger, cfg.Auth.SigningAlgorithm, authAPIClient)
+	authFacade, err := auth.New(logger, authAPIClient)
 	if err != nil {
 		return fmt.Errorf("create Auth: %w", err)
 	}

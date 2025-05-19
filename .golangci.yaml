@@ -1,28 +1,8 @@
-# Options for analysis running.
-run:
-  # Timeout for analysis, e.g. 30s, 5m.
-  # Default: 1m
-  timeout: 3m
-
+version: "2"
 output:
   formats:
-    - format: colored-line-number
+    text:
       path: stdout
-
-# All available settings of specific linters.
-linters-settings:
-  govet:
-    enable:
-      - shadow
-  errcheck:
-    # List of functions to exclude from checking, where each entry is a single function to exclude.
-    # See https://github.com/kisielk/errcheck#excluding-functions for details.
-    exclude-functions:
-      - (*encoding/json.Decoder).Decode
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-
 linters:
   enable:
     - asasalint
@@ -35,32 +15,25 @@ linters:
     - dogsled
     - dupword
     - durationcheck
-    - errcheck
     - errname
     - exhaustive
     - fatcontext
     - forcetypeassert
-    - gci
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
     - goconst
     - gocritic
     - godox
-    - gofmt
     - goheader
-    - goimports
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - gosmopolitan
-    - govet
     - grouper
     - importas
     - inamedparam
-    - ineffassign
     - intrange
     - loggercheck
     - makezero
@@ -84,23 +57,54 @@ linters:
     - spancheck
     - sqlclosecheck
     - staticcheck
-    - stylecheck
     - testableexamples
     - testifylint
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
-    - unused
     - usestdlibvars
     - usetesting
     - wastedassign
     - whitespace
     - zerologlint
-
-issues:
-  exclude:
-    - G115 # Disable integer overflow conversion warnings
-  exclude-dirs:
-    - docs
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*encoding/json.Decoder).Decode
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    govet:
+      enable:
+        - shadow
+  exclusions:
+    generated: lax
+    rules:
+      - path: (.+)\.go$
+        text: G115 # integer overflow conversion warnings
+      - path: _test\.go
+        rules:
+          - G104  # errors not checked
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - wsl
+          - goconst
+      - linters:
+        - revive # disable "should have a package comment"
+        text: "package comment"
+    paths:
+      - docs
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - docs
+      - examples$

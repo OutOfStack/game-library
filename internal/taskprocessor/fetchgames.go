@@ -261,6 +261,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 
 				fetchGamesAddedTotal.Inc()
 				gamesAdded++
+
 				s.LastReleasedAt = time.Unix(g.FirstReleaseDate, 0)
 				settings = s.convertToTaskSettings()
 			}

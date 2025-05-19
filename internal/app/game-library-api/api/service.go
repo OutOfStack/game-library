@@ -39,6 +39,7 @@ func Service(
 	if err != nil {
 		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) //nolint:gosec
 	}
+
 	r := chi.NewRouter()
 	r.Use(mw.RequestID)
 	r.Use(middleware.Metrics)

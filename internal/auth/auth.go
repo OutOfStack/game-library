@@ -14,6 +14,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	// SigningAlgorithm specifies the default JWT signing algorithm (RS256)
+	SigningAlgorithm = "RS256"
+)
+
 var tracer = otel.Tracer("auth")
 
 var (
@@ -36,12 +41,8 @@ type Client struct {
 }
 
 // New constructs Auth instance
-func New(log *zap.Logger, algorithm string, authAPIClient APIClient) (*Client, error) {
-	if jwt.GetSigningMethod(algorithm) == nil {
-		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
-	}
-
-	parser := jwt.NewParser(jwt.WithValidMethods([]string{algorithm}))
+func New(log *zap.Logger, authAPIClient APIClient) (*Client, error) {
+	parser := jwt.NewParser(jwt.WithValidMethods([]string{SigningAlgorithm}))
 
 	return &Client{
 		log:           log,

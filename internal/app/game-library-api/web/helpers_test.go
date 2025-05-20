@@ -58,7 +58,9 @@ func TestGetIDParam(t *testing.T) {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
-				w.Write([]byte(string(id))) //nolint
+				if _, wErr := w.Write([]byte(string(id))); wErr != nil {
+					t.Log(wErr)
+				}
 			})
 
 			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, tt.url, nil)

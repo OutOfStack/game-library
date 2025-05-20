@@ -7,17 +7,16 @@ const ServiceName = "game-library-api"
 
 // Cfg - app configuration
 type Cfg struct {
-	DB         DB         `mapstructure:",squash"`
-	Web        Web        `mapstructure:",squash"`
-	Zipkin     Zipkin     `mapstructure:",squash"`
-	Auth       Auth       `mapstructure:",squash"`
-	IGDB       IGDB       `mapstructure:",squash"`
-	Scheduler  Scheduler  `mapstructure:",squash"`
-	Uploadcare Uploadcare `mapstructure:",squash"`
-	Redis      Redis      `mapstructure:",squash"`
-	Graylog    Graylog    `mapstructure:",squash"`
-	S3         S3         `mapstructure:",squash"`
-	Log        Log        `mapstructure:",squash"`
+	DB        DB        `mapstructure:",squash"`
+	Web       Web       `mapstructure:",squash"`
+	Zipkin    Zipkin    `mapstructure:",squash"`
+	Auth      Auth      `mapstructure:",squash"`
+	IGDB      IGDB      `mapstructure:",squash"`
+	Scheduler Scheduler `mapstructure:",squash"`
+	Redis     Redis     `mapstructure:",squash"`
+	Graylog   Graylog   `mapstructure:",squash"`
+	S3        S3        `mapstructure:",squash"`
+	Log       Log       `mapstructure:",squash"`
 }
 
 // DB represents settings for database
@@ -43,7 +42,6 @@ type Zipkin struct {
 // Auth represents settings for authentication and authorization
 type Auth struct {
 	VerifyTokenAPIURL string `mapstructure:"AUTH_VERIFYTOKENURL"`
-	SigningAlgorithm  string `mapstructure:"AUTH_SIGNINGALG"`
 }
 
 // IGDB represents settings for IGDB client
@@ -57,12 +55,6 @@ type IGDB struct {
 // Scheduler represents settings for task scheduler
 type Scheduler struct {
 	FetchIGDBGames string `mapstructure:"SCHED_FETCH_IGDB_GAMES"`
-}
-
-// Uploadcare represents settings for Uploadcare client
-type Uploadcare struct {
-	PublicKey string `mapstructure:"UPLOADCARE_PUBLIC_KEY"`
-	SecretKey string `mapstructure:"UPLOADCARE_SECRET_KEY"`
 }
 
 // Redis represents settings for Redis client

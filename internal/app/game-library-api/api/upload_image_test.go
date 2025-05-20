@@ -35,7 +35,9 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 	_, err = io.Copy(screenshotWriter, bytes.NewReader(screenshotContent))
 	s.NoError(err)
 
-	w.Close()
+	if cErr := w.Close(); cErr != nil {
+		s.T().Log(cErr)
+	}
 
 	// create request with multipart form data
 	req := httptest.NewRequest(http.MethodPost, "/games/images", &b)
@@ -121,7 +123,9 @@ func (s *TestSuite) Test_UploadGameImages_PublishingMonthlyLimitReached() {
 	_, err := io.Copy(fileWriter, bytes.NewReader(td.Bytes()))
 	s.NoError(err)
 
-	w.Close()
+	if cErr := w.Close(); cErr != nil {
+		s.T().Log(cErr)
+	}
 
 	req := httptest.NewRequest(http.MethodPost, "/games/images", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
@@ -152,7 +156,9 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 	_, err := io.Copy(fileWriter, bytes.NewReader(td.Bytes()))
 	s.NoError(err)
 
-	w.Close()
+	if cErr := w.Close(); cErr != nil {
+		s.T().Log(cErr)
+	}
 
 	req := httptest.NewRequest(http.MethodPost, "/games/images", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())

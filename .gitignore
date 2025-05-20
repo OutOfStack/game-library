@@ -7,6 +7,9 @@
 bin
 .DS_Store
 
+# config
+app.env
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -18,4 +21,3 @@ bin
 .vscode
 .idea
 .run
-.zencoder

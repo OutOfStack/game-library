@@ -856,16 +856,17 @@ const docTemplate = `{
         "model.UploadedFileInfo": {
             "type": "object",
             "properties": {
-                "file_id": {
+                "fileId": {
                     "type": "string"
                 },
-                "file_name": {
+                "fileName": {
                     "type": "string"
                 },
-                "file_url": {
+                "fileUrl": {
                     "type": "string"
                 },
                 "type": {
+                    "description": "\"cover\" / \"screenshot\"",
                     "type": "string"
                 }
             }

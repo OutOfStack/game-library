@@ -7,8 +7,8 @@ type UploadImagesResponse struct {
 
 // UploadedFileInfo represents information about an uploaded file
 type UploadedFileInfo struct {
-	FileName string `json:"file_name"`
-	FileID   string `json:"file_id"`
-	FileURL  string `json:"file_url"`
-	Type     string `json:"type"`
+	FileName string `json:"fileName"`
+	FileID   string `json:"fileId"`
+	FileURL  string `json:"fileUrl"`
+	Type     string `json:"type"` // "cover" / "screenshot"
 }

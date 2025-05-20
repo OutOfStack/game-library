@@ -2,7 +2,8 @@
 
 ## Introduction
 
-game-library is a web application for exploring and rating games written in Go and TypeScript. It consists of three services:
+game-library is a web application for exploring and rating games. 
+It consists of three services:
 - current service is responsible for fetching, storing games data and providing it to UI,
 - [auth service](https://github.com/OutOfStack/game-library-auth) is responsible for user authentication and authorization,
 - [ui service](https://github.com/OutOfStack/game-library-ui) is responsible for UI representation.
@@ -12,7 +13,7 @@ game-library is a web application for exploring and rating games written in Go a
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Features](#features)
+- [Tech Stack and Integrations](#tech-stack-and-integrations)
 - [Configuration](#configuration)
 - [Documentation](#documentation)
 - [Examples](#examples)
@@ -31,7 +32,7 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 
 2. Set up the database:
     ```bash
-    make dockerrunpg # runs postgres in docker container
+    make drunpg # runs postgres in docker container
     make createdb # creates db
     make migrate # applies migrations
     # optionally
@@ -40,10 +41,10 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 
 3. Install and run dependencies:
     ```bash
-    make dockerrunredis # [Optional] runs redis in docker container
-    make dockerrunzipkin # [Optional] runs zipkin in docker container
-    make dockerrunglog # [Optional] runs graylog in docker container
-    make dockerrunprom # [Optional] runs prometheus in docker container
+    make drunredis # [Optional] runs redis in docker container
+    make drunzipkin # [Optional] runs zipkin in docker container
+    make drunglog # [Optional] runs graylog in docker container
+    make drunprom # [Optional] runs prometheus in docker container
     ```
 
 4. _[Optional]_ Set up fetching games data:
@@ -52,7 +53,9 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 
 5. _[Optional]_ Install [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
-6. Build and run the service:
+6. Create the `app.env` file based on [./app.example.env](./app.example.env) and update it with your local configuration settings.
+
+7.  Build and run the service:
     ```bash
     make build
     make run
@@ -67,12 +70,12 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 After installation, you can use the following Make commands to develop the service:
 
 - `make test`: Runs tests.
-- `make generate`: Generates documentation for Swagger UI.
+- `make generate`: Generates documentation for Swagger UI and mocks for testing.
 - `make lint`: Runs golangci-lint for code analysis.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
 
-## Features
+## Tech Stack and Integrations
 
 - Data storage with PostgreSQL.
 - Caching with Redis.
@@ -85,14 +88,17 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 
 ## Configuration
 
-- The service can be configured using [app.env](./app.env) or environment variables, described in [settings.go](./internal/appconf/settings.go)
-- CI/CD configs are in _./.github/workflows/_
-- k8s deployment configs are in _./.k8s/_
+- The service can be configured using `app.env` or environment variables, described in [settings.go](./internal/appconf/settings.go)
+- CI/CD configs are in [./github/workflows/](./.github/workflows/)
+- k8s deployment configs are in [./k8s](./.k8s/)
 
 ## Documentation
 
-API documentation is available at [Swagger UI](http://localhost:8000/swagger/index.html).
-For regenerating documentation after swagger description change run `make generate`.
+API documentation is available via [Swagger UI](http://localhost:8000/swagger/index.html).
+For regenerating documentation after swagger description change run:
+```bash
+make generate
+```
 
 ## Examples
 
@@ -104,28 +110,32 @@ curl -X GET "http://localhost:8000/api/games?pageSize=3&page=1&orderBy=releaseDa
 To see other examples of API endpoints, refer to the [documentation](#documentation).
 
 ## List of Make commands:
-    build           builds app
-    build-mng       build manage app
-    run             runs app
-    test            runs tests for the whole project
-    generate        generates documentation for swagger UI and mocks
-    lint            runs golangci-lint
-    cover           outputs tests coverage
 
-    dockerrunpg     runs postgres server in docker container
-    createdb        creates database on postgres server started by 'dockerrunpg'
-    dropdb          drops database on postgres server created by 'dockerrunpg'
-    migrate         applies all migrations to database
-    rollback        rollbacks last migration on database
-    seed            seeds test data to database
+#### Main Commands
+    build         builds app
+    build-mng     build manage app
+    run           runs app
+    test          runs tests for the whole project
+    generate      generates docs for swagger UI and mocks for testing
+    lint          runs golangci-lint
+    cover         outputs tests coverage
 
-    dockerbuildapi  builds app docker image
-    dockerrunapi    runs app in docker container
-    dockerrunzipkin runs zipkin in docker container
-    dockerrunredis  runs redis in docker container
-    dockerrunglog   runs graylog in docker container
-    dockerrunprom   runs prometheus in docker container
-    dockerbuildmng  builds manage app docker image
+#### Database Commands
+    drunpg        runs postgres server in docker container
+    createdb      creates database on postgres server started by 'dockerrunpg'
+    dropdb        drops database on postgres server created by 'dockerrunpg'
+    migrate       applies all migrations to database
+    rollback      rollbacks last migration on database
+    seed          seeds test data to database
+
+#### Docker Commands
+    dbuildapi     builds app docker image
+    dbuildmng     builds manage app docker image
+    drunapi       runs app in docker container
+    drunzipkin    runs zipkin in docker container
+    drunredis     runs redis in docker container
+    drunglog      runs graylog in docker container
+    drunprom      runs prometheus in docker container
 
 ## License
 

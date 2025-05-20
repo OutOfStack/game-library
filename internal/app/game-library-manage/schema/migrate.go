@@ -22,7 +22,15 @@ func Migrate(dsn string, up bool) error {
 	if err != nil {
 		return fmt.Errorf("connect to db: %v", err)
 	}
-	defer m.Close()
+	defer func() {
+		sErr, dErr := m.Close()
+		if sErr != nil {
+			log.Printf("close migrate instance - source err: %v", sErr)
+		}
+		if dErr != nil {
+			log.Printf("close migrate instance - database err: %v", dErr)
+		}
+	}()
 
 	var mErr error
 	if up {

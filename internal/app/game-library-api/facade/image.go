@@ -155,7 +155,12 @@ func (p *Provider) processFile(ctx context.Context, fileHeader *multipart.FileHe
 	if err != nil {
 		return s3.UploadResult{}, fmt.Errorf("failed to open file: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		cErr := file.Close()
+		if cErr != nil {
+			p.log.Error("close file", zap.Error(cErr))
+		}
+	}()
 
 	// determine content type based on extension
 	contentType := "image/png"

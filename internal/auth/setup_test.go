@@ -6,7 +6,6 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/auth"
 	mock "github.com/OutOfStack/game-library/internal/auth/mocks"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -27,7 +26,7 @@ func (s *TestSuite) SetupTest() {
 	s.log = zap.NewNop()
 	s.authAPIClient = mock.NewMockAPIClient(s.ctrl)
 	var err error
-	s.auth, err = auth.New(s.log, jwt.SigningMethodHS256.Alg(), s.authAPIClient)
+	s.auth, err = auth.New(s.log, s.authAPIClient)
 	s.NoError(err)
 }
 

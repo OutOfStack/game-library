@@ -7,6 +7,8 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/api"
 	apimock "github.com/OutOfStack/game-library/internal/app/game-library-api/api/mocks"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/appconf"
 	mwmock "github.com/OutOfStack/game-library/internal/middleware/mocks"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	cachemock "github.com/OutOfStack/game-library/internal/pkg/cache/mocks"
@@ -37,7 +39,7 @@ func (s *TestSuite) SetupTest() {
 	s.authClientMock = mwmock.NewMockAuthClient(s.ctrl)
 	s.httpResponse = httptest.NewRecorder()
 	s.httpRequest, _ = http.NewRequest(http.MethodGet, "/", nil)
-	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock)
+	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock, web.NewDecoder(s.log, &appconf.Cfg{}))
 }
 
 func (s *TestSuite) TearDownTest() {

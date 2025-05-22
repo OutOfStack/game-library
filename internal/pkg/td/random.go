@@ -108,3 +108,8 @@ func Bytesn(size int) []byte {
 func Bytes() []byte {
 	return []byte(String())
 }
+
+// URL returns random url
+func URL() string {
+	return fmt.Sprintf("https://%s.com", String())
+}

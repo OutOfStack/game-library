@@ -9,8 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	apimodel "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/api/validation"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -22,13 +23,13 @@ type ReqBody struct {
 	Email string `json:"email"`
 }
 
-func (r *ReqBody) Validate() (bool, []web.FieldError) {
+func (r *ReqBody) ValidateWith(v *validation.Validator) (bool, []web.FieldError) {
 	var validationErrors []web.FieldError
 
 	if r.Name == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "name",
-			Error: apimodel.ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
 	}
 	if !strings.Contains(r.Email, "@") {
@@ -47,6 +48,7 @@ func (r *ReqBody) Sanitize() {
 }
 
 func TestDecodeChi_Success(t *testing.T) {
+	decoder := web.NewDecoder(zap.NewNop(), &appconf.Cfg{})
 	email := td.Email()
 	input := ReqBody{
 		Name:  td.String(),
@@ -58,7 +60,7 @@ func TestDecodeChi_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(zap.NewNop(), req, &decoded)
+	err := decoder.Decode(req, &decoded)
 
 	require.NoError(t, err)
 	require.Equal(t, input.Name, decoded.Name)
@@ -66,11 +68,12 @@ func TestDecodeChi_Success(t *testing.T) {
 }
 
 func TestDecodeChi_InvalidJSON(t *testing.T) {
+	decoder := web.NewDecoder(zap.NewNop(), &appconf.Cfg{})
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("{invalid_json}")))
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(zap.NewNop(), req, &decoded)
+	err := decoder.Decode(req, &decoded)
 
 	require.Error(t, err)
 	require.IsType(t, &web.Error{}, err)
@@ -78,6 +81,7 @@ func TestDecodeChi_InvalidJSON(t *testing.T) {
 }
 
 func TestDecodeChi_ValidationError(t *testing.T) {
+	decoder := web.NewDecoder(zap.NewNop(), &appconf.Cfg{})
 	input := ReqBody{
 		Name:  "",
 		Email: "invalid-email",
@@ -88,7 +92,7 @@ func TestDecodeChi_ValidationError(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(zap.NewNop(), req, &decoded)
+	err := decoder.Decode(req, &decoded)
 
 	require.Error(t, err)
 	require.IsType(t, &web.Error{}, err)
@@ -106,6 +110,7 @@ func TestDecodeChi_ValidationError(t *testing.T) {
 }
 
 func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
+	decoder := web.NewDecoder(zap.NewNop(), &appconf.Cfg{})
 	input := ReqBody{} // Empty struct triggers validation errors
 	body, _ := json.Marshal(input)
 
@@ -113,7 +118,7 @@ func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
-	err := web.Decode(zap.NewNop(), req, &decoded)
+	err := decoder.Decode(req, &decoded)
 
 	// Ensure the error is of type *Error
 	require.Error(t, err)

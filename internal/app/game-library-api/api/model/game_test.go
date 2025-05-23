@@ -5,13 +5,21 @@ import (
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/api/validation"
+	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestCreateGameRequestValidation(t *testing.T) {
-	validImageURL := "https://ucarecdn.com/" + td.String() + ".jpg"
+	cfg := getCfg()
+	cfg.S3.CDNBaseURL = td.URL()
+	log := zap.NewNop()
+	v := validation.NewValidator(log, cfg)
+
+	validImageURL := cfg.S3.CDNBaseURL + "/" + td.String() + ".jpg"
 	validWebsiteURL := "https://steampowered.com/game/" + td.String()
 
 	t.Run("Valid CreateGameRequest", func(t *testing.T) {
@@ -27,7 +35,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 			Websites:     []string{validWebsiteURL},
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.True(t, valid, "Expected valid request")
 		require.Empty(t, errors, "Expected no validation errors")
 	})
@@ -37,7 +45,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 			// All fields empty
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 		require.Len(t, errors, 8, "Expected 8 validation errors") // Name, Developer, ReleaseDate, GenresIDs, LogoURL, Summary, PlatformsIDs, Screenshots
 
@@ -46,9 +54,9 @@ func TestCreateGameRequestValidation(t *testing.T) {
 		for _, err := range errors {
 			fields[err.Field] = true
 			if err.Field == "logoURL" {
-				require.Equal(t, model.ErrInvalidImageURLMsg, err.Error)
+				require.Equal(t, v.ErrInvalidImageURLMsg(), err.Error)
 			} else {
-				require.Equal(t, model.ErrRequiredMsg, err.Error)
+				require.Equal(t, v.ErrRequiredMsg(), err.Error)
 			}
 		}
 
@@ -74,12 +82,12 @@ func TestCreateGameRequestValidation(t *testing.T) {
 			Screenshots:  []string{validImageURL},
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 
 		hasDateError := false
 		for _, err := range errors {
-			if err.Field == "releaseDate" && err.Error == model.ErrInvalidDateMsg {
+			if err.Field == "releaseDate" && err.Error == v.ErrInvalidDateMsg() {
 				hasDateError = true
 				break
 			}
@@ -99,12 +107,12 @@ func TestCreateGameRequestValidation(t *testing.T) {
 			Screenshots:  []string{validImageURL},
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 
 		hasGenreError := false
 		for _, err := range errors {
-			if err.Field == "genresIds" && err.Error == model.ErrNonPositiveValuesMsg {
+			if err.Field == "genresIds" && err.Error == v.ErrNonPositiveValuesMsg() {
 				hasGenreError = true
 				break
 			}
@@ -124,12 +132,12 @@ func TestCreateGameRequestValidation(t *testing.T) {
 			Screenshots:  []string{validImageURL},
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 
 		hasLogoError := false
 		for _, err := range errors {
-			if err.Field == "logoUrl" && err.Error == model.ErrInvalidImageURLMsg {
+			if err.Field == "logoUrl" && err.Error == v.ErrInvalidImageURLMsg() {
 				hasLogoError = true
 				break
 			}
@@ -149,12 +157,12 @@ func TestCreateGameRequestValidation(t *testing.T) {
 			Screenshots:  []string{validImageURL, "https://invalid-domain.com/image.jpg"}, // One invalid URL
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 
 		hasScreenshotError := false
 		for _, err := range errors {
-			if err.Field == "screenshots" && err.Error == model.ErrInvalidImageURLsMsg {
+			if err.Field == "screenshots" && err.Error == v.ErrInvalidImageURLsMsg() {
 				hasScreenshotError = true
 				break
 			}
@@ -175,12 +183,12 @@ func TestCreateGameRequestValidation(t *testing.T) {
 			Websites:     []string{"https://invalid-domain.com"}, // Invalid domain
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 
 		hasWebsiteError := false
 		for _, err := range errors {
-			if err.Field == "websites" && err.Error == model.ErrInvalidWebsitesURLMsg {
+			if err.Field == "websites" && err.Error == v.ErrInvalidWebsitesURLMsg() {
 				hasWebsiteError = true
 				break
 			}
@@ -284,7 +292,12 @@ func TestCreateGameRequestSanitize(t *testing.T) {
 }
 
 func TestUpdateGameRequestValidation(t *testing.T) {
-	validImageURL := "https://ucarecdn.com/" + td.String() + ".jpg"
+	cfg := getCfg()
+	cfg.S3.CDNBaseURL = td.URL()
+	log := zap.NewNop()
+	v := validation.NewValidator(log, cfg)
+
+	validImageURL := cfg.S3.CDNBaseURL + "/" + td.String() + ".jpg"
 	validWebsiteURL := "https://steampowered.com/game/" + td.String()
 
 	t.Run("Empty UpdateGameRequest is valid", func(t *testing.T) {
@@ -292,7 +305,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			// All fields nil (valid for update)
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.True(t, valid, "Expected valid request with all nil fields")
 		require.Empty(t, errors, "Expected no validation errors")
 	})
@@ -310,7 +323,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			Websites:     slicePtr([]string{validWebsiteURL}),
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.True(t, valid, "Expected valid request")
 		require.Empty(t, errors, "Expected no validation errors")
 	})
@@ -322,14 +335,14 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			Summary:   strPtr(""), // Empty string
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 		require.Len(t, errors, 3, "Expected 3 validation errors")
 
 		fields := make(map[string]bool)
 		for _, err := range errors {
 			fields[err.Field] = true
-			require.Equal(t, model.ErrRequiredMsg, err.Error)
+			require.Equal(t, v.ErrRequiredMsg(), err.Error)
 		}
 
 		require.True(t, fields["name"], "Expected error for empty name")
@@ -342,12 +355,12 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			ReleaseDate: strPtr("01/01/2023"), // Invalid format
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 
 		hasDateError := false
 		for _, err := range errors {
-			if err.Field == "releaseDate" && err.Error == model.ErrInvalidDateMsg {
+			if err.Field == "releaseDate" && err.Error == v.ErrInvalidDateMsg() {
 				hasDateError = true
 				break
 			}
@@ -362,14 +375,14 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			Screenshots:  slicePtr([]string{}), // Empty array
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 		require.Len(t, errors, 3, "Expected 3 validation errors")
 
 		fields := make(map[string]bool)
 		for _, err := range errors {
 			fields[err.Field] = true
-			require.Equal(t, model.ErrRequiredMsg, err.Error)
+			require.Equal(t, v.ErrRequiredMsg(), err.Error)
 		}
 
 		require.True(t, fields["genresIds"], "Expected error for empty genresIds")
@@ -383,14 +396,14 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			PlatformsIDs: slicePtr([]int32{0, 2}),     // Contains zero ID
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 		require.Len(t, errors, 2, "Expected 2 validation errors")
 
 		fields := make(map[string]bool)
 		for _, err := range errors {
 			fields[err.Field] = true
-			require.Equal(t, model.ErrNonPositiveValuesMsg, err.Error)
+			require.Equal(t, v.ErrNonPositiveValuesMsg(), err.Error)
 		}
 
 		require.True(t, fields["genresIds"], "Expected error for non-positive genres Ids")
@@ -404,7 +417,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			Websites:    slicePtr([]string{"https://invalid-domain.com"}),
 		}
 
-		valid, errors := request.Validate()
+		valid, errors := request.ValidateWith(v)
 		require.False(t, valid, "Expected invalid request")
 		require.Len(t, errors, 3, "Expected 3 validation errors")
 
@@ -413,9 +426,9 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 			fields[err.Field] = err.Error
 		}
 
-		require.Equal(t, model.ErrInvalidImageURLMsg, fields["logoUrl"], "Expected error for invalid logo URL")
-		require.Equal(t, model.ErrInvalidImageURLsMsg, fields["screenshots"], "Expected error for invalid screenshot URLs")
-		require.Equal(t, model.ErrInvalidWebsitesURLMsg, fields["websites"], "Expected error for invalid website URLs")
+		require.Equal(t, v.ErrInvalidImageURLMsg(), fields["logoUrl"], "Expected error for invalid logo URL")
+		require.Equal(t, v.ErrInvalidImageURLsMsg(), fields["screenshots"], "Expected error for invalid screenshot URLs")
+		require.Equal(t, v.ErrInvalidWebsitesURLMsg(), fields["websites"], "Expected error for invalid website URLs")
 	})
 }
 
@@ -595,4 +608,8 @@ func valueOrNil(ptr interface{}) interface{} {
 		return v.Elem().Interface()
 	}
 	return ptr
+}
+
+func getCfg() *appconf.Cfg {
+	return &appconf.Cfg{}
 }

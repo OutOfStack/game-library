@@ -3,6 +3,7 @@ package model
 import (
 	"strings"
 
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/api/validation"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -54,95 +55,95 @@ type CreateGameRequest struct {
 	Websites     []string `json:"websites"`
 }
 
-// Validate validates CreateGameRequest
-func (r *CreateGameRequest) Validate() (bool, []web.FieldError) {
+// ValidateWith validates CreateGameRequest
+func (r *CreateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.FieldError) {
 	var validationErrors []web.FieldError
 
 	if r.Name == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "name",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
 	}
 
 	if r.Developer == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "developer",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
 	}
 
 	if r.ReleaseDate == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "releaseDate",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
-	} else if !validateDate(r.ReleaseDate) {
+	} else if !v.ValidateDate(r.ReleaseDate) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "releaseDate",
-			Error: ErrInvalidDateMsg,
+			Error: v.ErrInvalidDateMsg(),
 		})
 	}
 
 	if len(r.GenresIDs) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "genresIds",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
-	} else if !validatePositive(r.GenresIDs) {
+	} else if !v.ValidatePositive(r.GenresIDs) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "genresIds",
-			Error: ErrNonPositiveValuesMsg,
+			Error: v.ErrNonPositiveValuesMsg(),
 		})
 	}
 
 	if r.LogoURL == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "logoUrl",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
-	} else if !validateImageURLs([]string{r.LogoURL}) {
+	} else if !v.ValidateImageURLs([]string{r.LogoURL}) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "logoUrl",
-			Error: ErrInvalidImageURLMsg,
+			Error: v.ErrInvalidImageURLMsg(),
 		})
 	}
 
 	if r.Summary == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "summary",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
 	}
 
 	if len(r.PlatformsIDs) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "platformsIds",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
-	} else if !validatePositive(r.PlatformsIDs) {
+	} else if !v.ValidatePositive(r.PlatformsIDs) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "platformsIds",
-			Error: ErrNonPositiveValuesMsg,
+			Error: v.ErrNonPositiveValuesMsg(),
 		})
 	}
 
 	if len(r.Screenshots) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "screenshots",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
-	} else if !validateImageURLs(r.Screenshots) {
+	} else if !v.ValidateImageURLs(r.Screenshots) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "screenshots",
-			Error: ErrInvalidImageURLsMsg,
+			Error: v.ErrInvalidImageURLsMsg(),
 		})
 	}
 
-	if !validateWebsiteURLs(r.Websites) {
+	if !v.ValidateWebsiteURLs(r.Websites) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "websites",
-			Error: ErrInvalidWebsitesURLMsg,
+			Error: v.ErrInvalidWebsitesURLMsg(),
 		})
 	}
 
@@ -159,8 +160,8 @@ func (r *CreateGameRequest) Sanitize() {
 	r.Summary = strings.TrimSpace(p.Sanitize(r.Summary))
 
 	// remove duplicates
-	r.GenresIDs = removeDuplicates(r.GenresIDs)
-	r.PlatformsIDs = removeDuplicates(r.PlatformsIDs)
+	r.GenresIDs = validation.RemoveDuplicates(r.GenresIDs)
+	r.PlatformsIDs = validation.RemoveDuplicates(r.PlatformsIDs)
 }
 
 // UpdateGameRequest - update game request. All fields are optional
@@ -176,21 +177,21 @@ type UpdateGameRequest struct {
 	Websites     *[]string `json:"websites"`
 }
 
-// Validate validates UpdateGameRequest
-func (r *UpdateGameRequest) Validate() (bool, []web.FieldError) {
+// ValidateWith validates UpdateGameRequest
+func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.FieldError) {
 	var validationErrors []web.FieldError
 
 	if r.Name != nil && *r.Name == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "name",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
 	}
 
 	if r.Developer != nil && *r.Developer == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "developer",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
 	}
 
@@ -198,12 +199,12 @@ func (r *UpdateGameRequest) Validate() (bool, []web.FieldError) {
 		if *r.ReleaseDate == "" {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "releaseDate",
-				Error: ErrRequiredMsg,
+				Error: v.ErrRequiredMsg(),
 			})
-		} else if !validateDate(*r.ReleaseDate) {
+		} else if !v.ValidateDate(*r.ReleaseDate) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "releaseDate",
-				Error: ErrInvalidDateMsg,
+				Error: v.ErrInvalidDateMsg(),
 			})
 		}
 	}
@@ -212,12 +213,12 @@ func (r *UpdateGameRequest) Validate() (bool, []web.FieldError) {
 		if len(*r.GenresIDs) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "genresIds",
-				Error: ErrRequiredMsg,
+				Error: v.ErrRequiredMsg(),
 			})
-		} else if !validatePositive(*r.GenresIDs) {
+		} else if !v.ValidatePositive(*r.GenresIDs) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "genresIds",
-				Error: ErrNonPositiveValuesMsg,
+				Error: v.ErrNonPositiveValuesMsg(),
 			})
 		}
 	}
@@ -226,12 +227,12 @@ func (r *UpdateGameRequest) Validate() (bool, []web.FieldError) {
 		if *r.LogoURL == "" {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "logoUrl",
-				Error: ErrRequiredMsg,
+				Error: v.ErrRequiredMsg(),
 			})
-		} else if !validateImageURLs([]string{*r.LogoURL}) {
+		} else if !v.ValidateImageURLs([]string{*r.LogoURL}) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "logoUrl",
-				Error: ErrInvalidImageURLMsg,
+				Error: v.ErrInvalidImageURLMsg(),
 			})
 		}
 	}
@@ -239,7 +240,7 @@ func (r *UpdateGameRequest) Validate() (bool, []web.FieldError) {
 	if r.Summary != nil && *r.Summary == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "summary",
-			Error: ErrRequiredMsg,
+			Error: v.ErrRequiredMsg(),
 		})
 	}
 
@@ -247,12 +248,12 @@ func (r *UpdateGameRequest) Validate() (bool, []web.FieldError) {
 		if len(*r.PlatformsIDs) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "platformsIds",
-				Error: ErrRequiredMsg,
+				Error: v.ErrRequiredMsg(),
 			})
-		} else if !validatePositive(*r.PlatformsIDs) {
+		} else if !v.ValidatePositive(*r.PlatformsIDs) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "platformsIds",
-				Error: ErrNonPositiveValuesMsg,
+				Error: v.ErrNonPositiveValuesMsg(),
 			})
 		}
 	}
@@ -261,20 +262,20 @@ func (r *UpdateGameRequest) Validate() (bool, []web.FieldError) {
 		if len(*r.Screenshots) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "screenshots",
-				Error: ErrRequiredMsg,
+				Error: v.ErrRequiredMsg(),
 			})
-		} else if !validateImageURLs(*r.Screenshots) {
+		} else if !v.ValidateImageURLs(*r.Screenshots) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: "screenshots",
-				Error: ErrInvalidImageURLsMsg,
+				Error: v.ErrInvalidImageURLsMsg(),
 			})
 		}
 	}
 
-	if r.Websites != nil && !validateWebsiteURLs(*r.Websites) {
+	if r.Websites != nil && !v.ValidateWebsiteURLs(*r.Websites) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "websites",
-			Error: ErrInvalidWebsitesURLMsg,
+			Error: v.ErrInvalidWebsitesURLMsg(),
 		})
 	}
 
@@ -298,9 +299,9 @@ func (r *UpdateGameRequest) Sanitize() {
 
 	// remove duplicates
 	if r.GenresIDs != nil {
-		*r.GenresIDs = removeDuplicates(*r.GenresIDs)
+		*r.GenresIDs = validation.RemoveDuplicates(*r.GenresIDs)
 	}
 	if r.PlatformsIDs != nil {
-		*r.PlatformsIDs = removeDuplicates(*r.PlatformsIDs)
+		*r.PlatformsIDs = validation.RemoveDuplicates(*r.PlatformsIDs)
 	}
 }

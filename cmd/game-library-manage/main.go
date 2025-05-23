@@ -8,22 +8,17 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-manage/schema"
 	"github.com/OutOfStack/game-library/internal/appconf"
-	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 )
 
 func main() {
-	type config struct {
-		DB appconf.DB `mapstructure:",squash"`
-	}
-
-	cfg := config{}
-	if err := conf.Load(".", "app", "env", &cfg); err != nil {
-		log.Fatalf("parse config: %v", err)
+	cfg, err := appconf.Get()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	ctx := context.Background()
-	db, err := database.New(ctx, cfg.DB.DSN)
+	db, err := database.New(ctx, cfg.GetDB().DSN)
 	if err != nil {
 		log.Fatal(err)
 	}

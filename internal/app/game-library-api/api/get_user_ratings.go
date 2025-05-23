@@ -25,7 +25,7 @@ func (p *Provider) GetUserRatings(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	var ur api.GetUserRatingsRequest
-	if err := web.Decode(p.log, r, &ur); err != nil {
+	if err := p.decoder.Decode(r, &ur); err != nil {
 		web.RespondError(w, err)
 		return
 	}

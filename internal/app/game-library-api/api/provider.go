@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"mime/multipart"
+	"net/http"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
@@ -34,18 +35,25 @@ type GameFacade interface {
 	GetTopCompanies(ctx context.Context, companyType string, limit int64) ([]model.Company, error)
 }
 
+// Decoder decodes request
+type Decoder interface {
+	Decode(r *http.Request, val interface{}) error
+}
+
 // Provider has all dependencies for handlers
 type Provider struct {
 	log        *zap.Logger
 	cache      *cache.RedisStore
 	gameFacade GameFacade
+	decoder    Decoder
 }
 
 // NewProvider creates new provider
-func NewProvider(log *zap.Logger, redisStore *cache.RedisStore, gameFacade GameFacade) *Provider {
+func NewProvider(log *zap.Logger, redisStore *cache.RedisStore, gameFacade GameFacade, decoder Decoder) *Provider {
 	return &Provider{
 		log:        log,
 		cache:      redisStore,
 		gameFacade: gameFacade,
+		decoder:    decoder,
 	}
 }

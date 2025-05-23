@@ -36,7 +36,7 @@ func (p *Provider) UpdateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var ugr api.UpdateGameRequest
-	if err = web.Decode(p.log, r, &ugr); err != nil {
+	if err = p.decoder.Decode(r, &ugr); err != nil {
 		web.RespondError(w, err)
 		return
 	}

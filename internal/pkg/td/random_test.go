@@ -148,3 +148,10 @@ func TestBytes(t *testing.T) {
 		assert.LessOrEqual(t, len(val), 20)
 	}
 }
+
+func TestURL(t *testing.T) {
+	for range n {
+		val := td.URL()
+		assert.Contains(t, val, "https")
+	}
+}

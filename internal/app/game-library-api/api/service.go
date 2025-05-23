@@ -33,9 +33,9 @@ func Service(
 	db *pgxpool.Pool,
 	au *auth.Client,
 	pr *Provider,
-	conf appconf.Cfg,
+	conf *appconf.Cfg,
 ) (http.Server, error) {
-	err := initTracer(log, conf.Zipkin.ReporterURL)
+	err := initTracer(log, conf.GetZipkin().ReporterURL)
 	if err != nil {
 		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) //nolint:gosec
 	}
@@ -50,7 +50,7 @@ func Service(
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
-		AllowedOrigins:   strings.Split(conf.Web.AllowedCORSOrigin, ","),
+		AllowedOrigins:   strings.Split(conf.GetWeb().AllowedCORSOrigin, ","),
 	}))
 
 	hc := tools.NewHealthCheck(db)
@@ -118,11 +118,11 @@ func Service(
 	r.Get("/swagger/*", swag.Handler())
 
 	return http.Server{
-		Addr:              conf.Web.Address,
+		Addr:              conf.GetWeb().Address,
 		Handler:           r,
-		ReadTimeout:       conf.Web.ReadTimeout,
+		ReadTimeout:       conf.GetWeb().ReadTimeout,
 		ReadHeaderTimeout: time.Second,
-		WriteTimeout:      conf.Web.WriteTimeout,
+		WriteTimeout:      conf.GetWeb().WriteTimeout,
 	}, nil
 }
 

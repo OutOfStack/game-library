@@ -15,6 +15,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/facade"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/authapi"
@@ -22,7 +23,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
-	conf "github.com/OutOfStack/game-library/internal/pkg/config"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	zaplog "github.com/OutOfStack/game-library/internal/pkg/log"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
@@ -48,55 +48,55 @@ import (
 // @security BearerAuth
 func main() {
 	// load config
-	var cfg appconf.Cfg
-	if err := conf.Load(".", "app", "env", &cfg); err != nil {
+	cfg, err := appconf.Get()
+	if err != nil {
 		log.Fatalf("can't parse config: %v", err)
 	}
 
 	// init logger
 	logger := zaplog.New(cfg)
 	defer func() {
-		if err := logger.Sync(); err != nil {
-			log.Printf("can't sync logger: %v", err)
+		if sErr := logger.Sync(); sErr != nil {
+			log.Printf("can't sync logger: %v", sErr)
 		}
 	}()
 
 	// run
-	if err := run(logger, cfg); err != nil {
+	if err = run(logger, cfg); err != nil {
 		logger.Fatal("can't run app", zap.Error(err))
 	}
 }
 
-func run(logger *zap.Logger, cfg appconf.Cfg) error {
+func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	ctx := context.Background()
 
 	// connect to database
-	db, err := database.New(ctx, cfg.DB.DSN)
+	db, err := database.New(ctx, cfg.GetDB().DSN)
 	if err != nil {
 		return fmt.Errorf("connect to db: %v", err)
 	}
 	defer db.Close()
 
 	// create IGDB client
-	igdbAPIClient, err := igdbapi.New(logger, cfg.IGDB)
+	igdbAPIClient, err := igdbapi.New(logger, cfg.GetIGDB())
 	if err != nil {
 		return fmt.Errorf("create IGDB client: %w", err)
 	}
 
 	// create auth api client
-	authAPIClient, err := authapi.New(logger, cfg.Auth.VerifyTokenAPIURL)
+	authAPIClient, err := authapi.New(logger, cfg.GetAuth().VerifyTokenAPIURL)
 	if err != nil {
 		return fmt.Errorf("create auth api client: %w", err)
 	}
 
 	// create redis client
-	redisClient, err := redis.New(cfg.Redis)
+	redisClient, err := redis.New(cfg.GetRedis())
 	if err != nil {
 		return fmt.Errorf("create redis client: %w", err)
 	}
 
 	// create s3 client
-	s3Client, err := s3.New(logger, cfg.S3)
+	s3Client, err := s3.New(logger, cfg.GetS3())
 	if err != nil {
 		return fmt.Errorf("create S3 client: %w", err)
 	}
@@ -116,14 +116,17 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 	// create game facade
 	gameFacade := facade.NewProvider(logger, storage, rCache, s3Client)
 
+	// create web decoder
+	decoder := web.NewDecoder(logger, cfg)
+
 	// create api provider
-	apiProvider := api.NewProvider(logger, rCache, gameFacade)
+	apiProvider := api.NewProvider(logger, rCache, gameFacade, decoder)
 
 	// run background tasks
 	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
-		taskprocessor.FetchIGDBGamesTaskName: {Schedule: cfg.Scheduler.FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
+		taskprocessor.FetchIGDBGamesTaskName: {Schedule: cfg.GetScheduler().FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
 	}
 	for name, task := range tasks {
 		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)
@@ -136,11 +139,11 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 
 	// start debug service
 	go func() {
-		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
+		logger.Info("Debug service started", zap.String("address", cfg.GetWeb().DebugAddress))
 		profilerRouter := chi.NewRouter()
 		profilerRouter.Mount("/debug", middleware.Profiler())
 		debugService := http.Server{
-			Addr:        cfg.Web.DebugAddress,
+			Addr:        cfg.GetWeb().DebugAddress,
 			Handler:     profilerRouter,
 			ReadTimeout: time.Second,
 		}
@@ -170,7 +173,7 @@ func run(logger *zap.Logger, cfg appconf.Cfg) error {
 		return fmt.Errorf("listening and serving: %w", err)
 	case <-shutdown:
 		logger.Info("Start shutdown")
-		timeout := cfg.Web.ShutdownTimeout
+		timeout := cfg.GetWeb().ShutdownTimeout
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 

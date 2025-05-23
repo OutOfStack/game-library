@@ -29,14 +29,9 @@ func New(cfg appconf.Redis) (*Client, error) {
 		DB:       0, // use default DB
 	})
 
-	ttl, err := time.ParseDuration(cfg.TTL)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Client{
 		rdb: rdb,
-		ttl: ttl,
+		ttl: cfg.TTL,
 	}, nil
 }
 
@@ -69,7 +64,7 @@ func (c *Client) GetStruct(ctx context.Context, key string, value interface{}) e
 }
 
 // SetStruct sets struct value for provided key with ttl. If ttl == 0, default ttl is used.
-// If value cannot be marshalled, InvalidTypeError returned
+// If value cannot be marshaled, InvalidTypeError returned
 func (c *Client) SetStruct(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	bytes, err := json.Marshal(value)
 	if err != nil {

@@ -44,11 +44,12 @@ jobs:
           
           # Direct prompt for automated review (no @claude mention needed)
           direct_prompt: |
-            Review this Go PR focusing on:
+            Review this PR focusing on:
             - Compilation errors and critical bugs
             - Security vulnerabilities
             - Performance issues
             - Code quality and Go best practices violations
+            - Correctness and optimal state of configuration files (i.e. yaml) if preesent
       
             Only provide actionable feedback that requires changes. Do not comment on what is done correctly or add praise. Be concise and specific. Provide code examples only when necessary.
 

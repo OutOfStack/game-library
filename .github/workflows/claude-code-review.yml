@@ -49,7 +49,7 @@ jobs:
             - Security vulnerabilities
             - Performance issues
             - Code quality and Go best practices violations
-            - Correctness and optimal state of configuration files (i.e. yaml) if preesent
+            - Correctness and optimal state of configuration files (i.e. yaml) if present
       
             Only provide actionable feedback that requires changes. Do not comment on what is done correctly or add praise. Be concise and specific. Provide code examples only when necessary.
 

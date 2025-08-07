@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	// FetchIGDBGamesTaskName ...
+	// FetchIGDBGamesTaskName task name for fetching games from igdb
 	FetchIGDBGamesTaskName = "fetch_igdb_games"
 
 	fetchGamesMinRating        = 50
@@ -227,14 +227,14 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					if sErr != nil {
 						return settings, fmt.Errorf("get screenshot by url %s: %v", scr.URL, sErr)
 					}
-					screnshotUploadData, sErr := tp.s3Client.Upload(ctx, scrData.Body, scrData.ContentType, map[string]string{
+					screenshotUploadData, sErr := tp.s3Client.Upload(ctx, scrData.Body, scrData.ContentType, map[string]string{
 						"fileName": scrData.FileName,
 						"game":     g.Name,
 					})
 					if sErr != nil {
 						return settings, fmt.Errorf("upload screenshot %s: %v", scr.URL, sErr)
 					}
-					screenshots = append(screenshots, screnshotUploadData.FileURL)
+					screenshots = append(screenshots, screenshotUploadData.FileURL)
 				}
 
 				cg := model.CreateGameData{
@@ -271,7 +271,10 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			}
 		}
 
-		tp.log.Info("task info", zap.String("name", FetchIGDBGamesTaskName), zap.Int("games_added", gamesAdded), zap.String("last_released_at", s.LastReleasedAt.Format(time.RFC3339)))
+		tp.log.Info("task info",
+			zap.String("name", FetchIGDBGamesTaskName),
+			zap.Int("games_added", gamesAdded),
+			zap.String("last_released_at", s.LastReleasedAt.Format(time.RFC3339)))
 
 		return s.convertToTaskSettings(), nil
 	}

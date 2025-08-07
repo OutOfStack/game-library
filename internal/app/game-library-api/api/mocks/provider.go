@@ -12,6 +12,7 @@ package api_mock
 import (
 	context "context"
 	multipart "mime/multipart"
+	http "net/http"
 	reflect "reflect"
 
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -263,4 +264,42 @@ func (m *MockGameFacade) UploadGameImages(ctx context.Context, coverFiles, scree
 func (mr *MockGameFacadeMockRecorder) UploadGameImages(ctx, coverFiles, screenshotFiles, publisherName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadGameImages", reflect.TypeOf((*MockGameFacade)(nil).UploadGameImages), ctx, coverFiles, screenshotFiles, publisherName)
+}
+
+// MockDecoder is a mock of Decoder interface.
+type MockDecoder struct {
+	ctrl     *gomock.Controller
+	recorder *MockDecoderMockRecorder
+	isgomock struct{}
+}
+
+// MockDecoderMockRecorder is the mock recorder for MockDecoder.
+type MockDecoderMockRecorder struct {
+	mock *MockDecoder
+}
+
+// NewMockDecoder creates a new mock instance.
+func NewMockDecoder(ctrl *gomock.Controller) *MockDecoder {
+	mock := &MockDecoder{ctrl: ctrl}
+	mock.recorder = &MockDecoderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDecoder) EXPECT() *MockDecoderMockRecorder {
+	return m.recorder
+}
+
+// Decode mocks base method.
+func (m *MockDecoder) Decode(r *http.Request, val any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Decode", r, val)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Decode indicates an expected call of Decode.
+func (mr *MockDecoderMockRecorder) Decode(r, val any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Decode", reflect.TypeOf((*MockDecoder)(nil).Decode), r, val)
 }

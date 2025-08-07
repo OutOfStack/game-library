@@ -6,6 +6,7 @@
 *.dylib
 bin
 .DS_Store
+requirements
 
 # config
 app.env
@@ -21,3 +22,6 @@ app.env
 .vscode
 .idea
 .run
+
+#ai
+CLAUDE.md

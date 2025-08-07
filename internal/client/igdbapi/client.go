@@ -65,7 +65,11 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 	}
 	platforms := strings.Join(platformsStr, ",")
 
-	reqURL, _ := url.JoinPath(c.conf.APIURL, gamesEndpoint)
+	reqURL, err := url.JoinPath(c.conf.APIURL, gamesEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("join url path: %v", err)
+	}
+
 	data := fmt.Sprintf(
 		`fields id, cover.url, first_release_date, genres.name, name, platforms, total_rating, total_rating_count,
 		slug, summary, screenshots.url, websites.category, websites.url,
@@ -80,7 +84,7 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 		return nil, fmt.Errorf("create get top rated games request: %v", err)
 	}
 
-	err = c.setAuthHeaders(ctx, &req.Header)
+	err = c.setAuthHeaders(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("set auth headers: %v", err)
 	}
@@ -164,13 +168,13 @@ func getImageURL(igdbImageURL string, imageType string) string {
 	return u.String()
 }
 
-func (c *Client) setAuthHeaders(ctx context.Context, header *http.Header) error {
+func (c *Client) setAuthHeaders(ctx context.Context, req *http.Request) error {
 	token, err := c.accessToken(ctx)
 	if err != nil {
 		return fmt.Errorf("getting igdb access token: %v", err)
 	}
-	header.Set("Client-ID", c.conf.ClientID)
-	header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Client-ID", c.conf.ClientID)
+	req.Header.Set("Authorization", "Bearer "+token)
 	return nil
 }
 

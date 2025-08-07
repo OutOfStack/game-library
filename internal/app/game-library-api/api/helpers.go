@@ -138,6 +138,8 @@ func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
 		filter.OrderBy = repo.OrderGamesByName
 	case "releaseDate":
 		filter.OrderBy = repo.OrderGamesByReleaseDate
+	case "rating":
+		filter.OrderBy = repo.OrderGamesByRating
 	default:
 		return model.GamesFilter{}, errors.New("invalid orderBy: should be one of [default, releaseDate, name]")
 	}

@@ -28,6 +28,7 @@ type Storage interface {
 	GetGenres(ctx context.Context) ([]model.Genre, error)
 	CreateCompany(ctx context.Context, c model.Company) (int32, error)
 	GetCompanies(ctx context.Context) ([]model.Company, error)
+	GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastProcessedID int32, batchSize int) ([]int32, error)
 }
 
 // IGDBAPIClient igdb api client interface
@@ -41,21 +42,28 @@ type S3Client interface {
 	Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (s3.UploadResult, error)
 }
 
+// GameFacade game facade interface
+type GameFacade interface {
+	UpdateGameTrendingIndex(ctx context.Context, gameID int32) error
+}
+
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
 	log           *zap.Logger
 	storage       Storage
 	igdbAPIClient IGDBAPIClient
 	s3Client      S3Client
+	gameFacade    GameFacade
 }
 
 // New creates new TaskProvider
-func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client) *TaskProvider {
+func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client, gameFacade GameFacade) *TaskProvider {
 	return &TaskProvider{
 		log:           log,
 		storage:       storage,
 		igdbAPIClient: igdbClient,
 		s3Client:      s3Client,
+		gameFacade:    gameFacade,
 	}
 }
 

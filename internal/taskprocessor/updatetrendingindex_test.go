@@ -25,7 +25,7 @@ func (s *TestSuite) TestStartUpdateTrendingIndex_Success() {
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
 	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), lastProcessedID, 500).Return(gameIDs, nil)
+	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), lastProcessedID, 300).Return(gameIDs, nil)
 	for _, gameID := range gameIDs {
 		s.gameFacadeMock.EXPECT().UpdateGameTrendingIndex(gomock.Any(), gameID).Return(nil)
 	}
@@ -50,7 +50,7 @@ func (s *TestSuite) TestStartUpdateTrendingIndex_NoGames() {
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
 	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), int32(100), 500).Return([]int32{}, nil)
+	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), int32(100), 300).Return([]int32{}, nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
 
@@ -72,7 +72,7 @@ func (s *TestSuite) TestStartUpdateTrendingIndex_GetGamesError() {
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
 	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), int32(100), 500).Return(nil, errors.New("database error"))
+	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), int32(100), 300).Return(nil, errors.New("database error"))
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
 
@@ -96,7 +96,7 @@ func (s *TestSuite) TestStartUpdateTrendingIndex_UpdateGameError() {
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
 	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), int32(100), 500).Return(gameIDs, nil)
+	s.storageMock.EXPECT().GetGamesIDsForTrendingIndexUpdate(gomock.Any(), int32(100), 300).Return(gameIDs, nil)
 
 	s.gameFacadeMock.EXPECT().UpdateGameTrendingIndex(gomock.Any(), gameIDs[0]).Return(errors.New("update error"))
 	s.gameFacadeMock.EXPECT().UpdateGameTrendingIndex(gomock.Any(), gameIDs[1]).Return(nil)

@@ -18,7 +18,7 @@ import (
 // @Produce json
 // @Param pageSize  query int32  false "page size"
 // @Param page      query int32  false "page"
-// @Param orderBy   query string false "order by"	Enums(default, name, releaseDate)
+// @Param orderBy   query string false "order by"	Enums(default, name, releaseDate, rating)
 // @Param name 	    query string false "name filter"
 // @Param genre     query int32  false "genre filter"
 // @Param developer query int32  false "developer id filter"

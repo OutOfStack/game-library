@@ -15,15 +15,10 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 )
 
-const (
-	gameReleaseYearCoeff = 2.5
-	gameRatingCoeff      = 2.0
-)
-
 // OrderGamesBy options
 var (
 	OrderGamesByDefault = model.OrderBy{
-		Field: "weight",
+		Field: "trending_index",
 		Order: model.DescendingSortOrder,
 	}
 	OrderGamesByReleaseDate = model.OrderBy{
@@ -34,6 +29,10 @@ var (
 		Field: "name",
 		Order: model.AscendingSortOrder,
 	}
+	OrderGamesByRating = model.OrderBy{
+		Field: "rating",
+		Order: model.DescendingSortOrder,
+	}
 )
 
 // GetGames returns list of games with specified pageSize at specified page
@@ -42,8 +41,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model
 	defer span.End()
 
 	query := psql.Select("id", "name", "release_date", "logo_url", "rating", "summary", "genres", "platforms",
-		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id",
-		fmt.Sprintf("(extract(year FROM release_date)/%f + igdb_rating + rating/%f) weight", gameReleaseYearCoeff, gameRatingCoeff)).
+		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id", "trending_index").
 		From("games").
 		Where(sq.Eq{"moderation_status": model.ModerationStatusReady}).
 		Limit(uint64(pageSize)).
@@ -120,7 +118,7 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, e
 
 	const q = `
 		SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
-       		screenshots, websites, slug, igdb_rating, igdb_id
+       		screenshots, websites, slug, igdb_rating, igdb_id, moderation_status, trending_index
 		FROM games
 		WHERE id = $1`
 
@@ -259,4 +257,67 @@ func (s *Storage) GetPublisherGamesCount(ctx context.Context, publisherID int32,
 	}
 
 	return count, nil
+}
+
+// UpdateGameTrendingIndex updates the trending index for a specific game
+func (s *Storage) UpdateGameTrendingIndex(ctx context.Context, gameID int32, trendingIndex float64) error {
+	ctx, span := tracer.Start(ctx, "updateGameTrendingIndex")
+	defer span.End()
+
+	const q = `
+		UPDATE games
+		SET trending_index = $2, updated_at = $3
+		WHERE id = $1`
+
+	res, err := s.db.Exec(ctx, q, gameID, trendingIndex, time.Now())
+	if err != nil {
+		return fmt.Errorf("updating trending index for game %d: %w", gameID, err)
+	}
+
+	return checkRowsAffected(res, "game", gameID)
+}
+
+// GetGameTrendingData retrieves data needed for trending index calculation
+func (s *Storage) GetGameTrendingData(ctx context.Context, gameID int32) (model.GameTrendingData, error) {
+	ctx, span := tracer.Start(ctx, "getGameTrendingData")
+	defer span.End()
+
+	const q = `
+		SELECT 
+			EXTRACT(year FROM release_date)::int as release_year,
+			EXTRACT(month FROM release_date)::int as release_month,
+			COALESCE(igdb_rating, 0) as igdb_rating,
+			COALESCE(rating, 0) as user_rating,
+			COALESCE((SELECT COUNT(*) FROM ratings WHERE game_id = $1), 0) as rating_count
+		FROM games
+		WHERE id = $1`
+
+	var data model.GameTrendingData
+	err := pgxscan.Get(ctx, s.db, &data, q, gameID)
+	if err != nil {
+		return model.GameTrendingData{}, fmt.Errorf("querying game trending data: %w", err)
+	}
+
+	return data, nil
+}
+
+// GetGamesIDsForTrendingIndexUpdate returns games ids for trending index batch update, ordered by ID
+func (s *Storage) GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastProcessedID int32, batchSize int) ([]int32, error) {
+	ctx, span := tracer.Start(ctx, "getGamesForTrendingIndexUpdate")
+	defer span.End()
+
+	const q = `
+		SELECT id
+		FROM games
+		WHERE id > $1
+		ORDER BY id
+		LIMIT $2`
+
+	var gamesIDs []int32
+	err := pgxscan.Select(ctx, s.db, &gamesIDs, q, lastProcessedID, batchSize)
+	if err != nil {
+		return nil, fmt.Errorf("querying games for trending index update: %w", err)
+	}
+
+	return gamesIDs, nil
 }

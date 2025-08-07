@@ -49,12 +49,12 @@ func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotF
 	}
 
 	// validate cover file
-	if err = validateImage(coverFiles, ImageTypeCover); err != nil {
+	if err = validateImages(coverFiles, ImageTypeCover); err != nil {
 		return nil, err
 	}
 
 	// validate screenshot files
-	if err = validateImage(screenshotFiles, ImageTypeScreenshot); err != nil {
+	if err = validateImages(screenshotFiles, ImageTypeScreenshot); err != nil {
 		return nil, err
 	}
 
@@ -110,8 +110,8 @@ func (p *Provider) UploadGameImages(ctx context.Context, coverFiles, screenshotF
 	return uploadedFiles, nil
 }
 
-// validateImage validates image files against constraints
-func validateImage(files []*multipart.FileHeader, imageType string) error {
+// validateImages validates images files against constraints
+func validateImages(files []*multipart.FileHeader, imageType string) error {
 	maxFiles := MaxCovers
 	if imageType == ImageTypeScreenshot {
 		maxFiles = MaxScreenshots

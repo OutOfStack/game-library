@@ -87,7 +87,8 @@ const docTemplate = `{
                         "enum": [
                             "default",
                             "name",
-                            "releaseDate"
+                            "releaseDate",
+                            "rating"
                         ],
                         "type": "string",
                         "description": "order by",

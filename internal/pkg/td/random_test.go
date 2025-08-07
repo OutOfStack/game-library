@@ -67,8 +67,8 @@ func TestUint8(t *testing.T) {
 func TestDate(t *testing.T) {
 	for range n {
 		val := td.Date()
-		assert.GreaterOrEqual(t, val.Year(), 1970)
-		assert.LessOrEqual(t, val.Year(), 2069)
+		assert.GreaterOrEqual(t, val.Year(), 1990)
+		assert.LessOrEqual(t, val.Year(), 2089)
 		assert.GreaterOrEqual(t, int(val.Month()), 1)
 		assert.LessOrEqual(t, int(val.Month()), 12)
 		assert.GreaterOrEqual(t, val.Day(), 1)

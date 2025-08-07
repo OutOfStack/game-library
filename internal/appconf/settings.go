@@ -58,7 +58,8 @@ type IGDB struct {
 
 // Scheduler represents settings for task scheduler
 type Scheduler struct {
-	FetchIGDBGames string `mapstructure:"SCHED_FETCH_IGDB_GAMES"`
+	FetchIGDBGames      string `mapstructure:"SCHED_FETCH_IGDB_GAMES"`
+	UpdateTrendingIndex string `mapstructure:"SCHED_UPDATE_TRENDING_INDEX"`
 }
 
 // Redis represents settings for Redis client
@@ -223,6 +224,9 @@ func (cfg *Cfg) Validate() error {
 	// scheduler
 	if cfg.Scheduler.FetchIGDBGames == "" {
 		return errors.New("SCHED_FETCH_IGDB_GAMES is required")
+	}
+	if cfg.Scheduler.UpdateTrendingIndex == "" {
+		return errors.New("SCHED_UPDATE_TRENDING_INDEX is required")
 	}
 
 	// redis

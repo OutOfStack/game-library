@@ -3,33 +3,45 @@ package facade
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
 	// MaxGamesPerPublisherPerMonth is the maximum number of games a publisher can create in a month
 	MaxGamesPerPublisherPerMonth = 2
+	// Trending index coefficients
+	releaseYearWeight  = 0.4
+	releaseMonthWeight = 0.1
+	igdbRatingWeight   = 0.25
+	userRatingWeight   = 0.2
+	ratingCountWeight  = 0.05
 )
 
 // GetGames returns games and count with pagination
 func (p *Provider) GetGames(ctx context.Context, page, pageSize int, filter model.GamesFilter) (games []model.Game, count uint64, err error) {
-	err = cache.Get(ctx, p.cache, getGamesKey(int64(pageSize), int64(page), filter), &games, func() ([]model.Game, error) {
-		return p.storage.GetGames(ctx, pageSize, page, filter)
-	}, 0)
-	if err != nil {
-		return nil, 0, fmt.Errorf("get games: %w", err)
-	}
+	var eg errgroup.Group
 
-	err = cache.Get(ctx, p.cache, getGamesCountKey(filter), &count, func() (uint64, error) {
-		return p.storage.GetGamesCount(ctx, filter)
-	}, 0)
-	if err != nil {
-		return nil, 0, fmt.Errorf("get games count: %w", err)
+	eg.Go(func() error {
+		return cache.Get(ctx, p.cache, getGamesKey(int64(pageSize), int64(page), filter), &games, func() ([]model.Game, error) {
+			return p.storage.GetGames(ctx, pageSize, page, filter)
+		}, 0)
+	})
+
+	eg.Go(func() error {
+		return cache.Get(ctx, p.cache, getGamesCountKey(filter), &count, func() (uint64, error) {
+			return p.storage.GetGamesCount(ctx, filter)
+		}, 0)
+	})
+
+	if err = eg.Wait(); err != nil {
+		return nil, 0, fmt.Errorf("get games: %w", err)
 	}
 
 	return games, count, nil
@@ -92,6 +104,17 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 	if err != nil {
 		return 0, fmt.Errorf("add new game: %w", err)
 	}
+
+	// update trending index
+	go func() {
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+		defer cancel()
+
+		uErr := p.UpdateGameTrendingIndex(bCtx, id)
+		if uErr != nil {
+			p.log.Error("update game trending index", zap.Int32("game_id", id), zap.Error(uErr))
+		}
+	}()
 
 	// invalidate cache
 	go func() {
@@ -285,4 +308,59 @@ func (p *Provider) checkPublisherMonthlyLimit(ctx context.Context, publisherID i
 	}
 
 	return nil
+}
+
+// UpdateGameTrendingIndex updates the trending index for a game
+func (p *Provider) UpdateGameTrendingIndex(ctx context.Context, gameID int32) error {
+	data, err := p.storage.GetGameTrendingData(ctx, gameID)
+	if err != nil {
+		p.log.Error("failed to get game trending data", zap.Int32("game_id", gameID), zap.Error(err))
+		return err
+	}
+
+	trendingIndex := p.calculateTrendingIndex(data)
+
+	err = p.storage.UpdateGameTrendingIndex(ctx, gameID, trendingIndex)
+	if err != nil {
+		p.log.Error("failed to update game trending index", zap.Int32("game_id", gameID), zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+// calculateTrendingIndex calculates the trending index for a game
+func (p *Provider) calculateTrendingIndex(data model.GameTrendingData) float64 {
+	currentYear := time.Now().Year()
+
+	// age-based scoring with exponential decay (games lose 10% score per year)
+	gameAge := float64(currentYear - data.Year)
+	if gameAge < 0 {
+		gameAge = 0
+	}
+	yearScore := math.Pow(0.9, gameAge) // 10% decay per year
+
+	// month normalized to 0-1
+	monthScore := float64(data.Month) / 12.0
+
+	// igdb rating normalized to 0-1
+	igdbScore := data.IGDBRating / 100.0
+
+	// user rating normalized to 0-1
+	userRatingScore := data.UserRating / 5.0
+
+	// rating count normalized to 0-1
+	ratingCountScore := math.Log10(float64(data.RatingCount)+1) / 3.0 // max score at 1000 ratings
+	if ratingCountScore > 1.0 {
+		ratingCountScore = 1.0
+	}
+
+	// calculate weighted trending index
+	trendingIndex := releaseYearWeight*yearScore +
+		releaseMonthWeight*monthScore +
+		igdbRatingWeight*igdbScore +
+		userRatingWeight*userRatingScore +
+		ratingCountWeight*ratingCountScore
+
+	return trendingIndex
 }

@@ -16,6 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	taskTimeout = 15 * time.Minute
+)
+
 // Storage db storage interface
 type Storage interface {
 	BeginTx(ctx context.Context) (pgx.Tx, error)
@@ -28,6 +32,7 @@ type Storage interface {
 	GetGenres(ctx context.Context) ([]model.Genre, error)
 	CreateCompany(ctx context.Context, c model.Company) (int32, error)
 	GetCompanies(ctx context.Context) ([]model.Company, error)
+	GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastProcessedID int32, batchSize int) ([]int32, error)
 }
 
 // IGDBAPIClient igdb api client interface
@@ -41,21 +46,28 @@ type S3Client interface {
 	Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (s3.UploadResult, error)
 }
 
+// GameFacade game facade interface
+type GameFacade interface {
+	UpdateGameTrendingIndex(ctx context.Context, gameID int32) error
+}
+
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
 	log           *zap.Logger
 	storage       Storage
 	igdbAPIClient IGDBAPIClient
 	s3Client      S3Client
+	gameFacade    GameFacade
 }
 
 // New creates new TaskProvider
-func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client) *TaskProvider {
+func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client, gameFacade GameFacade) *TaskProvider {
 	return &TaskProvider{
 		log:           log,
 		storage:       storage,
 		igdbAPIClient: igdbClient,
 		s3Client:      s3Client,
+		gameFacade:    gameFacade,
 	}
 }
 
@@ -63,7 +75,8 @@ func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3
 // name - name of a task to run.
 // taskFn - function to be run: it accepts settings and returns updates settings
 func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, settings model.TaskSettings) (newSettings model.TaskSettings, err error)) error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), taskTimeout)
+	defer cancel()
 
 	tx, err := tp.storage.BeginTx(ctx)
 	if err != nil {
@@ -105,6 +118,7 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 	}
 
 	tp.log.Info("task started", zap.String("name", name))
+
 	task.Settings, err = taskFn(ctx, settings)
 	if err != nil {
 		tp.log.Error("run task", zap.Error(err))
@@ -112,6 +126,7 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 	} else {
 		task.Status = model.IdleTaskStatus
 	}
+
 	tp.log.Info("task finished", zap.String("name", name), zap.Error(err))
 
 	return tp.storage.UpdateTask(ctx, nil, task)

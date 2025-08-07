@@ -250,6 +250,7 @@ paths:
         - default
         - name
         - releaseDate
+        - rating
         in: query
         name: orderBy
         type: string

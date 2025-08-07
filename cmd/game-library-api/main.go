@@ -57,7 +57,7 @@ func main() {
 	logger := zaplog.New(cfg)
 	defer func() {
 		if sErr := logger.Sync(); sErr != nil {
-			log.Printf("can't sync logger: %v", sErr)
+			logger.Error("can't sync logger: %v", zap.Error(sErr))
 		}
 	}()
 
@@ -123,10 +123,11 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	apiProvider := api.NewProvider(logger, rCache, gameFacade, decoder)
 
 	// run background tasks
-	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client)
+	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client, gameFacade)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
-		taskprocessor.FetchIGDBGamesTaskName: {Schedule: cfg.GetScheduler().FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
+		taskprocessor.FetchIGDBGamesTaskName:      {Schedule: cfg.GetScheduler().FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
+		taskprocessor.UpdateTrendingIndexTaskName: {Schedule: cfg.GetScheduler().UpdateTrendingIndex, Fn: taskProvider.StartUpdateTrendingIndex},
 	}
 	for name, task := range tasks {
 		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)

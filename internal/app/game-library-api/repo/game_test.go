@@ -23,7 +23,7 @@ func TestGetGames_NotExist_ShouldReturnEmpty(t *testing.T) {
 	require.Empty(t, games, "games should be empty")
 }
 
-// TestGetGames_DataExists_ShouldBeEqual tests case when we add one game, then fetch first game, and they should be equal
+// TestGetGames_DataExists_ShouldBeEqual tests case when we add one game, then fetch first game and they should be equal
 func TestGetGames_DataExists_ShouldBeEqual(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
@@ -59,10 +59,17 @@ func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
 	cg2.ReleaseDate = "2024-01-01"
 	cg2.IGDBRating = 95
 
-	_, err := s.CreateGame(ctx, cg1)
+	id1, err := s.CreateGame(ctx, cg1)
 	require.NoError(t, err)
 
-	_, err = s.CreateGame(ctx, cg2)
+	id2, err := s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
+
+	// Set trending index manually for test
+	err = s.UpdateGameTrendingIndex(ctx, id1, 0.5) // Lower index for older game
+	require.NoError(t, err)
+
+	err = s.UpdateGameTrendingIndex(ctx, id2, 0.8) // Higher index for newer game
 	require.NoError(t, err)
 
 	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
@@ -186,7 +193,7 @@ func TestGetGames_FilterByName_ShouldReturnMatched(t *testing.T) {
 	require.Len(t, matched, 3, "len should be 3")
 }
 
-// TestGetGames_Filte_ShouldReturnMatched tests case when we add multiple games, then filter games by developer, publisher and genre and we should get matches
+// TestGetGames_Filte_ShouldReturnMatched tests case when we add multiple games, then filter games by developer, publisher, and genre, and we should get matches
 func TestGetGames_Filter_ShouldReturnMatched(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
@@ -278,7 +285,7 @@ func TestGetGamesCount_FilterByName_ShouldReturnMatchedCount(t *testing.T) {
 	require.Equal(t, 3, int(count), "count should be 3")
 }
 
-// TestGetGamesCount_Filter_ShouldReturnMatched tests case when we add multiple games, get count by developer, publisher and genre and we should get count of matches
+// TestGetGamesCount_Filter_ShouldReturnMatched tests case when we add multiple games, get count by developer, publisher, and genre and we should get count of matches
 func TestGetGamesCount_Filter_ShouldReturnMatched(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
@@ -565,4 +572,171 @@ func compareUpdateGameAndGame(t *testing.T, want model.UpdateGameData, got model
 	require.Equal(t, want.Screenshots, got.Screenshots, "screenshots should be equal")
 	require.Equal(t, want.Websites, got.Websites, "websites should be equal")
 	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.01, "igdb rating should be almost equal")
+}
+
+// TestUpdateGameTrendingIndex_Valid_ShouldUpdateTrendingIndex tests updating trending index
+func TestUpdateGameTrendingIndex_Valid_ShouldUpdateTrendingIndex(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	cg := getCreateGameData()
+	id, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
+
+	trendingIndex := 0.75
+	err = s.UpdateGameTrendingIndex(ctx, id, trendingIndex)
+	require.NoError(t, err)
+
+	game, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
+
+	require.InDelta(t, trendingIndex, game.TrendingIndex, 0.01, "trending index should be equal")
+}
+
+// TestUpdateGameTrendingIndex_NotExist_ShouldReturnNotFoundError tests updating non-existing game trending index
+func TestUpdateGameTrendingIndex_NotExist_ShouldReturnNotFoundError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	id := int32(td.Uint32())
+	err := s.UpdateGameTrendingIndex(t.Context(), id, 0.5)
+	require.ErrorIs(t, err, apperr.NewNotFoundError("game", id), "err should be NotFound")
+}
+
+// TestGetGameTrendingData_Valid_ShouldReturnData tests getting trending data for a game
+func TestGetGameTrendingData_Valid_ShouldReturnData(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	// Create game with specific data
+	cg := getCreateGameData()
+	cg.ReleaseDate = "2023-06-15"
+	cg.IGDBRating = 85.5
+	id, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
+
+	// Add some ratings
+	err = s.AddRating(ctx, model.CreateRating{Rating: 4, UserID: td.String(), GameID: id})
+	require.NoError(t, err)
+	err = s.AddRating(ctx, model.CreateRating{Rating: 5, UserID: td.String(), GameID: id})
+	require.NoError(t, err)
+
+	// Update game rating
+	err = s.UpdateGameRating(ctx, id)
+	require.NoError(t, err)
+
+	data, err := s.GetGameTrendingData(ctx, id)
+	require.NoError(t, err)
+
+	require.Equal(t, 2023, data.Year, "year should be 2023")
+	require.Equal(t, 6, data.Month, "month should be 6")
+	require.InDelta(t, 85.5, data.IGDBRating, 0.01, "IGDB rating should match")
+	require.InDelta(t, 4.5, data.UserRating, 0.01, "user rating should be average of 4 and 5")
+	require.Equal(t, int32(2), data.RatingCount, "rating count should be 2")
+}
+
+// TestGetGameTrendingData_NotExist_ShouldReturnError tests getting trending data for non-existing game
+func TestGetGameTrendingData_NotExist_ShouldReturnError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	id := int32(td.Uint32())
+	_, err := s.GetGameTrendingData(t.Context(), id)
+	require.Error(t, err, "should return error for non-existing game")
+}
+
+// TestGetGamesIDsForTrendingIndexUpdate_NoGames_ShouldReturnEmpty tests getting games for trending update when none exist
+func TestGetGamesIDsForTrendingIndexUpdate_NoGames_ShouldReturnEmpty(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(t.Context(), 0, 10)
+	require.NoError(t, err)
+	require.Empty(t, gameIDs, "should return empty slice when no games exist")
+}
+
+// TestGetGamesIDsForTrendingIndexUpdate_WithGames_ShouldReturnOrdered tests getting games for trending update
+func TestGetGamesIDsForTrendingIndexUpdate_WithGames_ShouldReturnOrdered(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	// Create multiple games
+	cg1 := getCreateGameData()
+	cg2 := getCreateGameData()
+	cg3 := getCreateGameData()
+
+	id1, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
+	id2, err := s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
+	id3, err := s.CreateGame(ctx, cg3)
+	require.NoError(t, err)
+
+	// Get all games
+	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(ctx, 0, 10)
+	require.NoError(t, err)
+	require.Len(t, gameIDs, 3, "should return 3 game IDs")
+
+	// Should be ordered by ID ascending
+	expectedIDs := []int32{id1, id2, id3}
+	require.Equal(t, expectedIDs, gameIDs, "game IDs should be ordered by ID ascending")
+}
+
+// TestGetGamesIDsForTrendingIndexUpdate_WithOffset_ShouldReturnAfterOffset tests getting games with offset
+func TestGetGamesIDsForTrendingIndexUpdate_WithOffset_ShouldReturnAfterOffset(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	// Create multiple games
+	cg1 := getCreateGameData()
+	cg2 := getCreateGameData()
+	cg3 := getCreateGameData()
+
+	id1, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
+	id2, err := s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
+	id3, err := s.CreateGame(ctx, cg3)
+	require.NoError(t, err)
+
+	// Get games after id1
+	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(ctx, id1, 10)
+	require.NoError(t, err)
+	require.Len(t, gameIDs, 2, "should return 2 game IDs after offset")
+
+	expectedIDs := []int32{id2, id3}
+	require.Equal(t, expectedIDs, gameIDs, "should return games after the offset ID")
+}
+
+// TestGetGamesIDsForTrendingIndexUpdate_WithLimit_ShouldRespectLimit tests getting games with batch size limit
+func TestGetGamesIDsForTrendingIndexUpdate_WithLimit_ShouldRespectLimit(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	// Create multiple games
+	cg1 := getCreateGameData()
+	cg2 := getCreateGameData()
+	cg3 := getCreateGameData()
+
+	_, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, cg3)
+	require.NoError(t, err)
+
+	// Get only 2 games
+	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(ctx, 0, 2)
+	require.NoError(t, err)
+	require.Len(t, gameIDs, 2, "should respect batch size limit")
 }

@@ -39,6 +39,8 @@ type Storage interface {
 	DeleteGame(ctx context.Context, id int32) error
 	UpdateGameRating(ctx context.Context, id int32) error
 	GetPublisherGamesCount(ctx context.Context, publisherID int32, startDate, endDate time.Time) (count int, err error)
+	UpdateGameTrendingIndex(ctx context.Context, gameID int32, trendingIndex float64) error
+	GetGameTrendingData(ctx context.Context, gameID int32) (model.GameTrendingData, error)
 
 	CreateCompany(ctx context.Context, c model.Company) (id int32, err error)
 	GetCompanies(ctx context.Context) (companies []model.Company, err error)

@@ -33,7 +33,7 @@ type Game struct {
 	IGDBRating       float64    `db:"igdb_rating"`
 	IGDBID           int64      `db:"igdb_id"`
 	ModerationStatus string     `db:"moderation_status"`
-	Weight           float64    `db:"weight"` // Readonly field
+	TrendingIndex    float64    `db:"trending_index"`
 }
 
 // CreateGameData - data for creating game in db
@@ -107,6 +107,15 @@ type GamesFilter struct {
 	PublisherID int32
 	GenreID     int32
 	OrderBy     OrderBy
+}
+
+// GameTrendingData contains data needed for trending index calculation
+type GameTrendingData struct {
+	Year        int     `db:"release_year"`
+	Month       int     `db:"release_month"`
+	IGDBRating  float64 `db:"igdb_rating"`
+	UserRating  float64 `db:"user_rating"`
+	RatingCount int32   `db:"rating_count"`
 }
 
 // GetGameSlug - returns game slug by name

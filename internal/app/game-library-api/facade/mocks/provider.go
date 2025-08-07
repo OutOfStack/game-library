@@ -162,6 +162,21 @@ func (mr *MockStorageMockRecorder) GetGameByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameByID", reflect.TypeOf((*MockStorage)(nil).GetGameByID), ctx, id)
 }
 
+// GetGameTrendingData mocks base method.
+func (m *MockStorage) GetGameTrendingData(ctx context.Context, gameID int32) (model.GameTrendingData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameTrendingData", ctx, gameID)
+	ret0, _ := ret[0].(model.GameTrendingData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameTrendingData indicates an expected call of GetGameTrendingData.
+func (mr *MockStorageMockRecorder) GetGameTrendingData(ctx, gameID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameTrendingData", reflect.TypeOf((*MockStorage)(nil).GetGameTrendingData), ctx, gameID)
+}
+
 // GetGames mocks base method.
 func (m *MockStorage) GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) ([]model.Game, error) {
 	m.ctrl.T.Helper()
@@ -367,6 +382,20 @@ func (m *MockStorage) UpdateGameRating(ctx context.Context, id int32) error {
 func (mr *MockStorageMockRecorder) UpdateGameRating(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameRating", reflect.TypeOf((*MockStorage)(nil).UpdateGameRating), ctx, id)
+}
+
+// UpdateGameTrendingIndex mocks base method.
+func (m *MockStorage) UpdateGameTrendingIndex(ctx context.Context, gameID int32, trendingIndex float64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGameTrendingIndex", ctx, gameID, trendingIndex)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGameTrendingIndex indicates an expected call of UpdateGameTrendingIndex.
+func (mr *MockStorageMockRecorder) UpdateGameTrendingIndex(ctx, gameID, trendingIndex any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameTrendingIndex", reflect.TypeOf((*MockStorage)(nil).UpdateGameTrendingIndex), ctx, gameID, trendingIndex)
 }
 
 // MockS3Client is a mock of S3Client interface.

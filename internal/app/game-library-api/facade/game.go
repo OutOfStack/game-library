@@ -342,6 +342,16 @@ func (p *Provider) calculateTrendingIndex(data model.GameTrendingData) float64 {
 
 	// month normalized to 0-1
 	monthScore := float64(data.Month) / 12.0
+	// ensure month contribution never exceeds year contribution.
+	// cap the weighted month impact so that:
+	//   releaseMonthWeight * monthScore <= releaseYearWeight * yearScore
+	maxMonthScore := (releaseYearWeight / releaseMonthWeight) * yearScore
+	if monthScore > maxMonthScore {
+		monthScore = maxMonthScore
+	}
+	if monthScore < 0 {
+		monthScore = 0
+	}
 
 	// igdb rating normalized to 0-1
 	igdbScore := data.IGDBRating / 100.0

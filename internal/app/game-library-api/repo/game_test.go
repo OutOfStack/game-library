@@ -77,7 +77,6 @@ func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
 
 	require.Len(t, games, 2, "len of games should be 2")
 
-	// weight of game 2 is higher
 	want := cg2
 	got := games[0]
 	compareCreateGameAndGame(t, want, got)

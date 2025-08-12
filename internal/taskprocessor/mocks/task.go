@@ -136,6 +136,21 @@ func (mr *MockStorageMockRecorder) GetGameIDByIGDBID(ctx, igdbID any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameIDByIGDBID", reflect.TypeOf((*MockStorage)(nil).GetGameIDByIGDBID), ctx, igdbID)
 }
 
+// GetGamesIDsForTrendingIndexUpdate mocks base method.
+func (m *MockStorage) GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastProcessedID int32, batchSize int) ([]int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGamesIDsForTrendingIndexUpdate", ctx, lastProcessedID, batchSize)
+	ret0, _ := ret[0].([]int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGamesIDsForTrendingIndexUpdate indicates an expected call of GetGamesIDsForTrendingIndexUpdate.
+func (mr *MockStorageMockRecorder) GetGamesIDsForTrendingIndexUpdate(ctx, lastProcessedID, batchSize any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGamesIDsForTrendingIndexUpdate", reflect.TypeOf((*MockStorage)(nil).GetGamesIDsForTrendingIndexUpdate), ctx, lastProcessedID, batchSize)
+}
+
 // GetGenres mocks base method.
 func (m *MockStorage) GetGenres(ctx context.Context) ([]model.Genre, error) {
 	m.ctrl.T.Helper()
@@ -286,4 +301,42 @@ func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, contentTy
 func (mr *MockS3ClientMockRecorder) Upload(ctx, data, contentType, md any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, contentType, md)
+}
+
+// MockGameFacade is a mock of GameFacade interface.
+type MockGameFacade struct {
+	ctrl     *gomock.Controller
+	recorder *MockGameFacadeMockRecorder
+	isgomock struct{}
+}
+
+// MockGameFacadeMockRecorder is the mock recorder for MockGameFacade.
+type MockGameFacadeMockRecorder struct {
+	mock *MockGameFacade
+}
+
+// NewMockGameFacade creates a new mock instance.
+func NewMockGameFacade(ctrl *gomock.Controller) *MockGameFacade {
+	mock := &MockGameFacade{ctrl: ctrl}
+	mock.recorder = &MockGameFacadeMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGameFacade) EXPECT() *MockGameFacadeMockRecorder {
+	return m.recorder
+}
+
+// UpdateGameTrendingIndex mocks base method.
+func (m *MockGameFacade) UpdateGameTrendingIndex(ctx context.Context, gameID int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGameTrendingIndex", ctx, gameID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGameTrendingIndex indicates an expected call of UpdateGameTrendingIndex.
+func (mr *MockGameFacadeMockRecorder) UpdateGameTrendingIndex(ctx, gameID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameTrendingIndex", reflect.TypeOf((*MockGameFacade)(nil).UpdateGameTrendingIndex), ctx, gameID)
 }

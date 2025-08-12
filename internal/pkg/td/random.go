@@ -62,7 +62,7 @@ func Uint8() uint8 {
 
 // Date returns random date
 func Date() time.Time {
-	return time.Date(1970+random.Intn(100), time.Month(1+random.Intn(12)), 1+random.Intn(28), random.Intn(24),
+	return time.Date(1990+random.Intn(100), time.Month(1+random.Intn(12)), 1+random.Intn(28), random.Intn(24),
 		random.Intn(60), random.Intn(60), 0, time.UTC)
 }
 

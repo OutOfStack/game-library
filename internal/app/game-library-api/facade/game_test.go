@@ -51,7 +51,8 @@ func (s *TestSuite) TestGetGames_Success() {
 
 func (s *TestSuite) TestGetGames_Error() {
 	s.storageMock.EXPECT().GetGames(s.ctx, mock.Any(), mock.Any(), mock.Any()).Return(nil, errors.New("new error"))
-	s.redisClientMock.EXPECT().GetStruct(s.ctx, mock.Any(), mock.Any()).Return(goredis.Nil)
+	s.storageMock.EXPECT().GetGamesCount(s.ctx, mock.Any()).Return(uint64(0), errors.New("count error"))
+	s.redisClientMock.EXPECT().GetStruct(s.ctx, mock.Any(), mock.Any()).Return(goredis.Nil).Times(2)
 
 	res, cnt, err := s.provider.GetGames(s.ctx, 1, 10, model.GamesFilter{})
 
@@ -140,6 +141,8 @@ func (s *TestSuite) TestCreateGame_Success() {
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, startOfMonth, endOfMonth).Return(1, nil)
 	s.storageMock.EXPECT().CreateGame(s.ctx, createGameData).Return(gameID, nil)
+	s.storageMock.EXPECT().GetGameTrendingData(mock.Any(), gameID).Return(model.GameTrendingData{}, nil).AnyTimes()
+	s.storageMock.EXPECT().UpdateGameTrendingIndex(mock.Any(), gameID, mock.Any()).Return(nil).AnyTimes()
 
 	s.redisClientMock.EXPECT().DeleteByMatch(mock.Any(), mock.Any()).Return(nil).AnyTimes()
 	s.redisClientMock.EXPECT().GetStruct(mock.Any(), mock.Any(), mock.Any()).Return(nil).AnyTimes()
@@ -209,6 +212,8 @@ func (s *TestSuite) TestUpdateGame_Success() {
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(game.PublishersIDs[0], nil)
 	s.storageMock.EXPECT().UpdateGame(s.ctx, game.ID, updateGameData).Return(nil)
+	s.storageMock.EXPECT().GetGameTrendingData(mock.Any(), game.ID).Return(model.GameTrendingData{}, nil).AnyTimes()
+	s.storageMock.EXPECT().UpdateGameTrendingIndex(mock.Any(), game.ID, mock.Any()).Return(nil).AnyTimes()
 
 	s.redisClientMock.EXPECT().DeleteByMatch(mock.Any(), mock.Any()).Return(nil).AnyTimes()
 	s.redisClientMock.EXPECT().GetStruct(mock.Any(), mock.Any(), mock.Any()).Return(nil).AnyTimes()
@@ -297,4 +302,52 @@ func (s *TestSuite) TestDeleteGame_Error() {
 	err := s.provider.DeleteGame(s.ctx, game.ID, publisher)
 
 	s.Error(err)
+}
+
+func (s *TestSuite) TestUpdateGameTrendingIndex_Success() {
+	gameID := td.Int32()
+	trendingData := model.GameTrendingData{
+		Year:        2023,
+		Month:       6,
+		IGDBRating:  85.5,
+		UserRating:  4.5,
+		RatingCount: 100,
+	}
+
+	s.storageMock.EXPECT().GetGameTrendingData(s.ctx, gameID).Return(trendingData, nil)
+	s.storageMock.EXPECT().UpdateGameTrendingIndex(s.ctx, gameID, mock.Any()).Return(nil)
+
+	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
+
+	s.NoError(err)
+}
+
+func (s *TestSuite) TestUpdateGameTrendingIndex_GetDataError() {
+	gameID := td.Int32()
+
+	s.storageMock.EXPECT().GetGameTrendingData(s.ctx, gameID).Return(model.GameTrendingData{}, errors.New("get data error"))
+
+	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
+
+	s.Error(err)
+	s.Contains(err.Error(), "get data error")
+}
+
+func (s *TestSuite) TestUpdateGameTrendingIndex_UpdateError() {
+	gameID := td.Int32()
+	trendingData := model.GameTrendingData{
+		Year:        2023,
+		Month:       6,
+		IGDBRating:  85.5,
+		UserRating:  4.5,
+		RatingCount: 100,
+	}
+
+	s.storageMock.EXPECT().GetGameTrendingData(s.ctx, gameID).Return(trendingData, nil)
+	s.storageMock.EXPECT().UpdateGameTrendingIndex(s.ctx, gameID, mock.Any()).Return(errors.New("update error"))
+
+	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
+
+	s.Error(err)
+	s.Contains(err.Error(), "update error")
 }

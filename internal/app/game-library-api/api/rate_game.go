@@ -44,7 +44,7 @@ func (p *Provider) RateGame(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := middleware.GetClaims(ctx)
 	if err != nil {
-		p.log.Error("get cliams from ctx", zap.Error(err))
+		p.log.Error("get claims from ctx", zap.Error(err))
 		web.Respond500(w)
 		return
 	}

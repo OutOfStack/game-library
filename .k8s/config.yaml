@@ -12,6 +12,7 @@ data:
     AUTH_VERIFYTOKENURL: "https://_K8S_URL_/_auth/token/verify"
     ZIPKIN_REPORTERURL: "http://zipkin-service.game-library.svc.cluster.local:9411/api/v2/spans"
     SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
+    SCHED_UPDATE_TRENDING_INDEX: "0 2 * * *"
     REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
     REDIS_TTL: "2h"
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"

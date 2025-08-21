@@ -36,12 +36,12 @@ var (
 )
 
 // GetGames returns list of games with specified pageSize at specified page
-func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) (list []model.Game, err error) {
+func (s *Storage) GetGames(ctx context.Context, pageSize, page uint32, filter model.GamesFilter) (list []model.Game, err error) {
 	ctx, span := tracer.Start(ctx, "getGames")
 	defer span.End()
 
 	query := psql.Select("id", "name", "release_date", "logo_url", "rating", "summary", "genres", "platforms",
-		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_id", "trending_index").
+		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_rating_count", "igdb_id", "trending_index").
 		From("games").
 		Where(sq.Eq{"moderation_status": model.ModerationStatusReady}).
 		Limit(uint64(pageSize)).
@@ -118,7 +118,7 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, e
 
 	const q = `
 		SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
-       		screenshots, websites, slug, igdb_rating, igdb_id, moderation_status, trending_index
+       		screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status, trending_index
 		FROM games
 		WHERE id = $1`
 
@@ -161,13 +161,13 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGameData) (id i
 	const q = `
 		INSERT INTO games
     		(name, developers, publishers, release_date, genres, logo_url, summary,
-    		 platforms, screenshots, websites, slug, igdb_rating, igdb_id, moderation_status, created_at)
+    		 platforms, screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7,
-		        $8, $9, $10, $11::varchar(50), $12, $13, $14, $15)
+		        $8, $9, $10, $11::varchar(50), $12, $13, $14, $15, $16)
 		RETURNING id`
 
 	err = s.db.QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.GenresIDs, cg.LogoURL, cg.Summary,
-		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBID, cg.ModerationStatus, time.Now()).
+		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBRatingCount, cg.IGDBID, cg.ModerationStatus, time.Now()).
 		Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)
@@ -185,15 +185,15 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameD
 	const q = `
 		UPDATE games
 		SET name = $2, developers = $3, publishers = $4, release_date = $5, genres = $6, logo_url = $7, summary = $8,
-		    platforms = $9, screenshots = $10, websites = $11, slug = $12, igdb_rating = $13, moderation_status = $14, updated_at = $15
+		    platforms = $9, screenshots = $10, websites = $11, slug = $12, moderation_status = $13, updated_at = $14
 		WHERE id = $1`
 
 	releaseDate, err := types.ParseDate(ug.ReleaseDate)
 	if err != nil {
 		return fmt.Errorf("invalid date %v: %v", releaseDate, err)
 	}
-	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.Developers, ug.Publishers, releaseDate.String(), ug.Genres, ug.LogoURL, ug.Summary,
-		ug.PlatformsIDs, ug.Screenshots, ug.Websites, ug.Slug, ug.IGDBRating, ug.ModerationStatus, time.Now())
+	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.DevelopersIDs, ug.PublishersIDs, releaseDate.String(), ug.GenresIDs, ug.LogoURL, ug.Summary,
+		ug.PlatformsIDs, ug.Screenshots, ug.Websites, ug.Slug, ug.ModerationStatus, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d: %v", id, err)
 	}
@@ -219,6 +219,25 @@ func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 	res, err := s.db.Exec(ctx, q, id, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d rating: %v", id, err)
+	}
+
+	return checkRowsAffected(res, "game", id)
+}
+
+// UpdateGameIGDBInfo updates game igdb info
+// If game does not exist returns apperr.Error with NotFound status code
+func (s *Storage) UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.UpdateGameIGDBData) error {
+	ctx, span := tracer.Start(ctx, "updateGameIgdbInfo")
+	defer span.End()
+
+	const q = `
+		UPDATE games
+		SET name = $2, platforms = $3, websites = $4, igdb_rating = $5, igdb_rating_count = $6, updated_at = $7
+		WHERE id = $1`
+
+	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.PlatformsIDs, ug.Websites, ug.IGDBRating, ug.IGDBRatingCount, time.Now())
+	if err != nil {
+		return fmt.Errorf("updating game %d igdb info: %v", id, err)
 	}
 
 	return checkRowsAffected(res, "game", id)
@@ -286,8 +305,9 @@ func (s *Storage) GetGameTrendingData(ctx context.Context, gameID int32) (model.
 		SELECT 
 			EXTRACT(year FROM release_date)::int as release_year,
 			EXTRACT(month FROM release_date)::int as release_month,
-			COALESCE(igdb_rating, 0) as igdb_rating,
-			COALESCE(rating, 0) as user_rating,
+			igdb_rating,
+			igdb_rating_count,
+			rating,
 			COALESCE((SELECT COUNT(*) FROM ratings WHERE game_id = $1), 0) as rating_count
 		FROM games
 		WHERE id = $1`
@@ -301,8 +321,8 @@ func (s *Storage) GetGameTrendingData(ctx context.Context, gameID int32) (model.
 	return data, nil
 }
 
-// GetGamesIDsForTrendingIndexUpdate returns games ids for trending index batch update, ordered by ID
-func (s *Storage) GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastProcessedID int32, batchSize int) ([]int32, error) {
+// GetGamesIDsAfterID returns games ids after provided id
+func (s *Storage) GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSize int) ([]int32, error) {
 	ctx, span := tracer.Start(ctx, "getGamesForTrendingIndexUpdate")
 	defer span.End()
 
@@ -314,9 +334,9 @@ func (s *Storage) GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastPro
 		LIMIT $2`
 
 	var gamesIDs []int32
-	err := pgxscan.Select(ctx, s.db, &gamesIDs, q, lastProcessedID, batchSize)
+	err := pgxscan.Select(ctx, s.db, &gamesIDs, q, lastID, batchSize)
 	if err != nil {
-		return nil, fmt.Errorf("querying games for trending index update: %w", err)
+		return nil, fmt.Errorf("querying games ids after id %d: %w", lastID, err)
 	}
 
 	return gamesIDs, nil

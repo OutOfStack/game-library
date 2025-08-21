@@ -19,8 +19,8 @@ const (
 	platformsKey    = "platforms"
 )
 
-func getGamesKey(pageSize, page int64, filter model.GamesFilter) string {
-	return gamesKey + "|" + strconv.FormatInt(pageSize, 10) + "|" + strconv.FormatInt(page, 10) + "|" +
+func getGamesKey(pageSize, page uint32, filter model.GamesFilter) string {
+	return gamesKey + "|" + strconv.FormatUint(uint64(pageSize), 10) + "|" + strconv.FormatUint(uint64(page), 10) + "|" +
 		filter.OrderBy.Field + "|" + filter.Name + "|" + strconv.FormatInt(int64(filter.GenreID), 10) + "|" +
 		strconv.FormatInt(int64(filter.DeveloperID), 10) + "|" + strconv.FormatInt(int64(filter.PublisherID), 10)
 }

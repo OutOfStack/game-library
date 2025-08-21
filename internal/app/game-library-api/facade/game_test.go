@@ -24,13 +24,13 @@ func (s *TestSuite) TestGetGames_Success() {
 		ReleaseDate:   types.DateOf(td.Date()),
 		GenresIDs:     []int32{td.Int32(), td.Int32()},
 		LogoURL:       td.String(),
-		Rating:        td.Float64(),
+		Rating:        td.Float64n(5),
 		Summary:       td.String(),
 		Slug:          td.String(),
 		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
 		Screenshots:   []string{td.String(), td.String()},
 		Websites:      []string{td.String(), td.String()},
-		IGDBRating:    td.Float64(),
+		IGDBRating:    td.Float64n(100),
 		IGDBID:        td.Int64(),
 	}}
 	var count = td.Uint64()
@@ -70,13 +70,13 @@ func (s *TestSuite) TestGetGameByID_Success() {
 		ReleaseDate:   types.DateOf(td.Date()),
 		GenresIDs:     []int32{td.Int32(), td.Int32()},
 		LogoURL:       td.String(),
-		Rating:        td.Float64(),
+		Rating:        td.Float64n(5),
 		Summary:       td.String(),
 		Slug:          td.String(),
 		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
 		Screenshots:   []string{td.String(), td.String()},
 		Websites:      []string{td.String(), td.String()},
-		IGDBRating:    td.Float64(),
+		IGDBRating:    td.Float64n(100),
 		IGDBID:        td.Int64(),
 	}
 
@@ -205,7 +205,7 @@ func (s *TestSuite) TestUpdateGame_Success() {
 		Publisher: td.String(),
 	}
 	updateGameData := model.UpdateGameData{
-		Publishers:       game.PublishersIDs,
+		PublishersIDs:    game.PublishersIDs,
 		ModerationStatus: model.ModerationStatusRecheck,
 	}
 
@@ -307,11 +307,12 @@ func (s *TestSuite) TestDeleteGame_Error() {
 func (s *TestSuite) TestUpdateGameTrendingIndex_Success() {
 	gameID := td.Int32()
 	trendingData := model.GameTrendingData{
-		Year:        2023,
-		Month:       6,
-		IGDBRating:  85.5,
-		UserRating:  4.5,
-		RatingCount: 100,
+		Year:            2000 + td.Intn(25),
+		Month:           1 + td.Intn(12),
+		IGDBRating:      td.Float64n(100),
+		IGDBRatingCount: 100 + int32(td.Intn(100)),
+		Rating:          td.Float64n(5),
+		RatingCount:     td.Int31(),
 	}
 
 	s.storageMock.EXPECT().GetGameTrendingData(s.ctx, gameID).Return(trendingData, nil)
@@ -336,11 +337,12 @@ func (s *TestSuite) TestUpdateGameTrendingIndex_GetDataError() {
 func (s *TestSuite) TestUpdateGameTrendingIndex_UpdateError() {
 	gameID := td.Int32()
 	trendingData := model.GameTrendingData{
-		Year:        2023,
-		Month:       6,
-		IGDBRating:  85.5,
-		UserRating:  4.5,
-		RatingCount: 100,
+		Year:            2000 + td.Intn(25),
+		Month:           1 + td.Intn(12),
+		IGDBRating:      td.Float64n(100),
+		IGDBRatingCount: 100 + int32(td.Intn(100)),
+		Rating:          td.Float64n(5),
+		RatingCount:     td.Int31(),
 	}
 
 	s.storageMock.EXPECT().GetGameTrendingData(s.ctx, gameID).Return(trendingData, nil)

@@ -32,11 +32,11 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	publisherID, publisherIGDBID, publisherName := td.Int31(), td.Int64(), td.String()
 	genreID, genreIGDBID, genreName := td.Int31(), td.Int64(), td.String()
 
-	igdbGame := igdbapi.TopRatedGamesResp{
+	igdbGame := igdbapi.TopRatedGames{
 		ID:               td.Int64(),
 		Name:             td.String(),
-		TotalRating:      td.Float64(),
-		TotalRatingCount: td.Int64(),
+		TotalRating:      td.Float64n(100),
+		TotalRatingCount: td.Int32(),
 		Cover: igdbapi.URL{
 			URL: fmt.Sprintf("https://%s.com/cover.jpg", td.String()),
 		},
@@ -65,8 +65,8 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		Slug:    td.String(),
 		Summary: td.String(),
 		Websites: []igdbapi.Website{
-			{URL: td.String(), Category: int8(igdbapi.WebsiteCategorySteam)},
-			{URL: td.String(), Category: int8(-1)},
+			{URL: td.String(), Type: igdbapi.WebsiteTypeSteam},
+			{URL: td.String(), Type: int8(-1)},
 		},
 	}
 
@@ -80,7 +80,7 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return(nil, nil)
 
 	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, gomock.Cond(func(x time.Time) bool { return x.Sub(lastReleasedAt) < time.Second }), gomock.Any(), int64(50), gomock.Any()).
-		Return([]igdbapi.TopRatedGamesResp{igdbGame}, nil).Times(1)
+		Return([]igdbapi.TopRatedGames{igdbGame}, nil).Times(1)
 	// next iterations - return no games in order to stop
 	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(50), gomock.Any()).
 		Return(nil, nil).Times(4)
@@ -110,6 +110,7 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		Screenshots:      []string{screenshotURL},
 		Websites:         []string{igdbGame.Websites[0].URL},
 		IGDBRating:       igdbGame.TotalRating,
+		IGDBRatingCount:  igdbGame.TotalRatingCount,
 		IGDBID:           igdbGame.ID,
 		ModerationStatus: model.ModerationStatusReady,
 	}).Return(int32(1), nil)

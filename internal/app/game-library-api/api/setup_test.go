@@ -38,7 +38,7 @@ func (s *TestSuite) SetupTest() {
 	s.cacheStore = cache.NewRedisStore(s.redisClientMock, s.log)
 	s.authClientMock = mwmock.NewMockAuthClient(s.ctrl)
 	s.httpResponse = httptest.NewRecorder()
-	s.httpRequest, _ = http.NewRequest(http.MethodGet, "/", nil)
+	s.httpRequest, _ = http.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock, web.NewDecoder(s.log, &appconf.Cfg{}))
 }
 

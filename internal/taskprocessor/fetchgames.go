@@ -117,6 +117,11 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 		var gamesAdded int
 
 		for range fetchGamesRequestsCount {
+			// wait for igdb rate limit
+			if err = tp.igdbAPILimiter.Wait(ctx); err != nil {
+				return nil, fmt.Errorf("wait for rate limit in fetch games task: %w", err)
+			}
+
 			ratingsCount, limit := getMinRatingsCountAndLimit(s.LastReleasedAt)
 			igdbGames, gErr := tp.igdbAPIClient.GetTopRatedGames(ctx, allPlatformsIDs, s.LastReleasedAt, ratingsCount, fetchGamesMinRating, limit)
 			if gErr != nil {
@@ -198,7 +203,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				// get websites
 				var websites []string
 				for _, w := range g.Websites {
-					if _, ok := igdbapi.WebsiteCategoryNames[igdbapi.WebsiteCategory(w.Category)]; ok {
+					if _, ok := igdbapi.WebsiteTypeNames[w.Type]; ok {
 						websites = append(websites, w.URL)
 					}
 				}
@@ -250,6 +255,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					Screenshots:      screenshots,
 					Websites:         websites,
 					IGDBRating:       g.TotalRating,
+					IGDBRatingCount:  g.TotalRatingCount,
 					IGDBID:           g.ID,
 					ModerationStatus: model.ModerationStatusReady,
 				}

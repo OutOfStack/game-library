@@ -51,7 +51,7 @@ func (tp *TaskProvider) StartUpdateTrendingIndex() error {
 		}
 
 		// get games to update
-		gameIDs, err := tp.storage.GetGamesIDsForTrendingIndexUpdate(ctx, s.LastProcessedID, updateTrendingIndexBatchSize)
+		gameIDs, err := tp.storage.GetGamesIDsAfterID(ctx, s.LastProcessedID, updateTrendingIndexBatchSize)
 		if err != nil {
 			return settings, fmt.Errorf("get games for trending index update: %v", err)
 		}

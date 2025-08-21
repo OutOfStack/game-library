@@ -31,6 +31,7 @@ type Game struct {
 	Screenshots      []string   `db:"screenshots"`
 	Websites         []string   `db:"websites"`
 	IGDBRating       float64    `db:"igdb_rating"`
+	IGDBRatingCount  int32      `db:"igdb_rating_count"`
 	IGDBID           int64      `db:"igdb_id"`
 	ModerationStatus string     `db:"moderation_status"`
 	TrendingIndex    float64    `db:"trending_index"`
@@ -50,6 +51,7 @@ type CreateGameData struct {
 	Screenshots      []string
 	Websites         []string
 	IGDBRating       float64
+	IGDBRatingCount  int32
 	IGDBID           int64
 	ModerationStatus string
 }
@@ -72,10 +74,10 @@ type CreateGame struct {
 // UpdateGameData - data for updating game in db
 type UpdateGameData struct {
 	Name             string
-	Developers       []int32
-	Publishers       []int32
+	DevelopersIDs    []int32
+	PublishersIDs    []int32
 	ReleaseDate      string
-	Genres           []int32
+	GenresIDs        []int32
 	LogoURL          string
 	Summary          string
 	Slug             string
@@ -83,7 +85,15 @@ type UpdateGameData struct {
 	Screenshots      []string
 	Websites         []string
 	ModerationStatus string
-	IGDBRating       float64
+}
+
+// UpdateGameIGDBData - igdb data for updating game in db
+type UpdateGameIGDBData struct {
+	Name            string
+	PlatformsIDs    []int32
+	Websites        []string
+	IGDBRating      float64
+	IGDBRatingCount int32
 }
 
 // UpdateGame - update game fields
@@ -111,11 +121,12 @@ type GamesFilter struct {
 
 // GameTrendingData contains data needed for trending index calculation
 type GameTrendingData struct {
-	Year        int     `db:"release_year"`
-	Month       int     `db:"release_month"`
-	IGDBRating  float64 `db:"igdb_rating"`
-	UserRating  float64 `db:"user_rating"`
-	RatingCount int32   `db:"rating_count"`
+	Year            int     `db:"release_year"`
+	Month           int     `db:"release_month"`
+	IGDBRating      float64 `db:"igdb_rating"`
+	IGDBRatingCount int32   `db:"igdb_rating_count"`
+	Rating          float64 `db:"rating"`
+	RatingCount     int32   `db:"rating_count"`
 }
 
 // GetGameSlug - returns game slug by name
@@ -126,20 +137,20 @@ func GetGameSlug(name string) string {
 // MapToUpdateGameData maps UpdateGame and Game to UpdateGameData
 func (ug UpdateGame) MapToUpdateGameData(g Game, developersIDs []int32) UpdateGameData {
 	update := UpdateGameData{
-		Name:         g.Name,
-		Developers:   g.DevelopersIDs,
-		Publishers:   g.PublishersIDs,
-		ReleaseDate:  g.ReleaseDate.String(),
-		Genres:       g.GenresIDs,
-		LogoURL:      g.LogoURL,
-		Summary:      g.Summary,
-		Slug:         g.Slug,
-		PlatformsIDs: g.PlatformsIDs,
-		Screenshots:  g.Screenshots,
-		Websites:     g.Websites,
+		Name:          g.Name,
+		DevelopersIDs: g.DevelopersIDs,
+		PublishersIDs: g.PublishersIDs,
+		ReleaseDate:   g.ReleaseDate.String(),
+		GenresIDs:     g.GenresIDs,
+		LogoURL:       g.LogoURL,
+		Summary:       g.Summary,
+		Slug:          g.Slug,
+		PlatformsIDs:  g.PlatformsIDs,
+		Screenshots:   g.Screenshots,
+		Websites:      g.Websites,
 	}
 
-	update.Developers = developersIDs
+	update.DevelopersIDs = developersIDs
 	update.ModerationStatus = ModerationStatusRecheck
 
 	if ug.Name != nil {
@@ -150,7 +161,7 @@ func (ug UpdateGame) MapToUpdateGameData(g Game, developersIDs []int32) UpdateGa
 		update.ReleaseDate = *ug.ReleaseDate
 	}
 	if ug.GenresIDs != nil {
-		update.Genres = *ug.GenresIDs
+		update.GenresIDs = *ug.GenresIDs
 	}
 	if ug.LogoURL != nil && *ug.LogoURL != "" {
 		update.LogoURL = *ug.LogoURL

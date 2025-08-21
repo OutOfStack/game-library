@@ -32,15 +32,16 @@ func Int32() int32 {
 	if sign == 0 {
 		sign = -1
 	}
-	return random.Int31() * int32(sign)
+	return random.Int31() * int32(sign) //nolint:gosec
 }
 
-// Int31 returns random non-negative int32 value
+// Int31 returns a random non-negative int32 value
 func Int31() int32 {
 	return random.Int31()
 }
 
 // Intn returns random value in range [0, n)
+// n should be non-negative
 func Intn(n int) int {
 	return random.Intn(n)
 }
@@ -57,7 +58,7 @@ func Uint32() uint32 {
 
 // Uint8 returns random uint8 value
 func Uint8() uint8 {
-	return uint8(random.Intn(math.MaxUint8) + 1)
+	return uint8(random.Intn(math.MaxUint8) + 1) //nolint:gosec
 }
 
 // Date returns random date
@@ -89,9 +90,18 @@ func Stringn(n int) string {
 	return sb.String()
 }
 
-// Float64 returns random float64 value
+// Float64 returns random float64 value in interval [0.0,1.0)
 func Float64() float64 {
 	return random.Float64()
+}
+
+// Float64n returns random float64 value in interval [0.0,n).
+// n should be non-negative
+func Float64n(n int) float64 {
+	if n < 0 {
+		n = 0
+	}
+	return random.Float64() * float64(n)
 }
 
 // Bool returns random bool value

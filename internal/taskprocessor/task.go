@@ -14,10 +14,14 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 )
 
 const (
 	taskTimeout = 15 * time.Minute
+
+	// igdb api rate limit (rps)
+	igdbAPIRPSLimit = 4
 )
 
 // Storage db storage interface
@@ -25,20 +29,24 @@ type Storage interface {
 	BeginTx(ctx context.Context) (pgx.Tx, error)
 	GetTask(ctx context.Context, tx pgx.Tx, name string) (model.Task, error)
 	UpdateTask(ctx context.Context, tx pgx.Tx, task model.Task) error
+
 	CreateGame(ctx context.Context, cgd model.CreateGameData) (id int32, err error)
 	GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error)
+	GetGameByID(ctx context.Context, id int32) (game model.Game, err error)
+	UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.UpdateGameIGDBData) error
 	GetPlatforms(ctx context.Context) ([]model.Platform, error)
 	CreateGenre(ctx context.Context, g model.Genre) (int32, error)
 	GetGenres(ctx context.Context) ([]model.Genre, error)
 	CreateCompany(ctx context.Context, c model.Company) (int32, error)
 	GetCompanies(ctx context.Context) ([]model.Company, error)
-	GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastProcessedID int32, batchSize int) ([]int32, error)
+	GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSize int) ([]int32, error)
 }
 
 // IGDBAPIClient igdb api client interface
 type IGDBAPIClient interface {
-	GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdbapi.TopRatedGamesResp, error)
+	GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdbapi.TopRatedGames, error)
 	GetImageByURL(ctx context.Context, imageURL, imageType string) (igdbapi.GetImageResp, error)
+	GetGameInfoForUpdate(ctx context.Context, igdbID int64) (igdbapi.GameInfoForUpdate, error)
 }
 
 // S3Client s3 store client interface
@@ -53,21 +61,23 @@ type GameFacade interface {
 
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
-	log           *zap.Logger
-	storage       Storage
-	igdbAPIClient IGDBAPIClient
-	s3Client      S3Client
-	gameFacade    GameFacade
+	log            *zap.Logger
+	storage        Storage
+	igdbAPIClient  IGDBAPIClient
+	s3Client       S3Client
+	gameFacade     GameFacade
+	igdbAPILimiter *rate.Limiter
 }
 
 // New creates new TaskProvider
 func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client, gameFacade GameFacade) *TaskProvider {
 	return &TaskProvider{
-		log:           log,
-		storage:       storage,
-		igdbAPIClient: igdbClient,
-		s3Client:      s3Client,
-		gameFacade:    gameFacade,
+		log:            log,
+		storage:        storage,
+		igdbAPIClient:  igdbClient,
+		igdbAPILimiter: rate.NewLimiter(rate.Every(time.Second), igdbAPIRPSLimit),
+		s3Client:       s3Client,
+		gameFacade:     gameFacade,
 	}
 }
 

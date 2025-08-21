@@ -14,7 +14,7 @@ import (
 
 func (s *TestSuite) Test_GetGames_Success() {
 	page, pageSize, name, orderBy, genre, developer, publisher :=
-		td.Intn(100)+1, td.Intn(100)+1, td.String(), "name", td.String(), td.String(), td.String()
+		uint32(td.Uint8()+1), uint32(td.Uint8()+1), td.String(), "name", td.String(), td.String(), td.String()
 	genreID, developerID, publisherID, platformID, count := td.Int31(), td.Int31(), td.Int31(), td.Int31(), uint64(td.Uint32())
 
 	games := []model.Game{{
@@ -75,7 +75,7 @@ func (s *TestSuite) Test_GetGames_InvalidFilter() {
 }
 
 func (s *TestSuite) Test_GetGames_Error() {
-	page, pageSize := td.Intn(100)+1, td.Intn(100)+1
+	page, pageSize := uint32(td.Uint8()+1), uint32(td.Uint8()+1)
 
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/games/?page=%d&pageSize=%d", page, pageSize), nil)
 

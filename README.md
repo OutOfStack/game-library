@@ -124,9 +124,9 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     drunpg        runs postgres server in docker container
     createdb      creates database on postgres server started by 'dockerrunpg'
     dropdb        drops database on postgres server created by 'dockerrunpg'
-    migrate       applies all migrations to database
-    rollback      rollbacks last migration on database
-    seed          seeds test data to database
+    migrate       applies all migrations to database (reads from config file)
+    rollback      rollbacks last migration on database (reads from config file)
+    seed          seeds test data to database (reads from config file)
 
 #### Docker Commands
     dbuildapi     builds app docker image

@@ -16,8 +16,8 @@ import (
 // @Description returns paginated games
 // @ID get-games
 // @Produce json
-// @Param pageSize  query int32  false "page size"
-// @Param page      query int32  false "page"
+// @Param pageSize  query uint32 false "page size"
+// @Param page      query uint32 false "page"
 // @Param orderBy   query string false "order by"	Enums(default, name, releaseDate, rating)
 // @Param name 	    query string false "name filter"
 // @Param genre     query int32  false "genre filter"

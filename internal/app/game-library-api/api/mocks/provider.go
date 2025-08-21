@@ -103,7 +103,7 @@ func (mr *MockGameFacadeMockRecorder) GetGameByID(ctx, id any) *gomock.Call {
 }
 
 // GetGames mocks base method.
-func (m *MockGameFacade) GetGames(ctx context.Context, page, pageSize int, filter model.GamesFilter) ([]model.Game, uint64, error) {
+func (m *MockGameFacade) GetGames(ctx context.Context, page, pageSize uint32, filter model.GamesFilter) ([]model.Game, uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGames", ctx, page, pageSize, filter)
 	ret0, _ := ret[0].([]model.Game)

@@ -14,10 +14,14 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 )
 
 const (
 	taskTimeout = 15 * time.Minute
+
+	// igdb api rate limit (rps)
+	igdbAPIRPSLimit = 4
 )
 
 // Storage db storage interface
@@ -57,21 +61,23 @@ type GameFacade interface {
 
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
-	log           *zap.Logger
-	storage       Storage
-	igdbAPIClient IGDBAPIClient
-	s3Client      S3Client
-	gameFacade    GameFacade
+	log            *zap.Logger
+	storage        Storage
+	igdbAPIClient  IGDBAPIClient
+	s3Client       S3Client
+	gameFacade     GameFacade
+	igdbAPILimiter *rate.Limiter
 }
 
 // New creates new TaskProvider
 func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client, gameFacade GameFacade) *TaskProvider {
 	return &TaskProvider{
-		log:           log,
-		storage:       storage,
-		igdbAPIClient: igdbClient,
-		s3Client:      s3Client,
-		gameFacade:    gameFacade,
+		log:            log,
+		storage:        storage,
+		igdbAPIClient:  igdbClient,
+		igdbAPILimiter: rate.NewLimiter(rate.Every(time.Second), igdbAPIRPSLimit),
+		s3Client:       s3Client,
+		gameFacade:     gameFacade,
 	}
 }
 

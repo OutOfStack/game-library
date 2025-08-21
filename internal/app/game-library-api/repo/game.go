@@ -36,7 +36,7 @@ var (
 )
 
 // GetGames returns list of games with specified pageSize at specified page
-func (s *Storage) GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) (list []model.Game, err error) {
+func (s *Storage) GetGames(ctx context.Context, pageSize, page uint32, filter model.GamesFilter) (list []model.Game, err error) {
 	ctx, span := tracer.Start(ctx, "getGames")
 	defer span.End()
 

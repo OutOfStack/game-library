@@ -27,11 +27,11 @@ const (
 )
 
 // GetGames returns games and count with pagination
-func (p *Provider) GetGames(ctx context.Context, page, pageSize int, filter model.GamesFilter) (games []model.Game, count uint64, err error) {
+func (p *Provider) GetGames(ctx context.Context, page, pageSize uint32, filter model.GamesFilter) (games []model.Game, count uint64, err error) {
 	var eg errgroup.Group
 
 	eg.Go(func() error {
-		return cache.Get(ctx, p.cache, getGamesKey(int64(pageSize), int64(page), filter), &games, func() ([]model.Game, error) {
+		return cache.Get(ctx, p.cache, getGamesKey(pageSize, page, filter), &games, func() ([]model.Game, error) {
 			return p.storage.GetGames(ctx, pageSize, page, filter)
 		}, 0)
 	})

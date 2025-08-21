@@ -178,7 +178,7 @@ func (mr *MockStorageMockRecorder) GetGameTrendingData(ctx, gameID any) *gomock.
 }
 
 // GetGames mocks base method.
-func (m *MockStorage) GetGames(ctx context.Context, pageSize, page int, filter model.GamesFilter) ([]model.Game, error) {
+func (m *MockStorage) GetGames(ctx context.Context, pageSize, page uint32, filter model.GamesFilter) ([]model.Game, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGames", ctx, pageSize, page, filter)
 	ret0, _ := ret[0].([]model.Game)

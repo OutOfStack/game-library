@@ -15,7 +15,7 @@ var tracer = otel.Tracer("api")
 
 // GameFacade represents methods for working with games
 type GameFacade interface {
-	GetGames(ctx context.Context, page, pageSize int, filter model.GamesFilter) (games []model.Game, count uint64, err error)
+	GetGames(ctx context.Context, page, pageSize uint32, filter model.GamesFilter) (games []model.Game, count uint64, err error)
 	GetGameByID(ctx context.Context, id int32) (model.Game, error)
 	CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error)
 	UpdateGame(ctx context.Context, id int32, upd model.UpdateGame) error

@@ -2,7 +2,7 @@ package slice
 
 import "cmp"
 
-// SameValues - check if two slices have the same values
+// SameValues checks if two slices have the same values in any order
 func SameValues[T cmp.Ordered](a, b []T) bool {
 	if len(a) != len(b) {
 		return false

@@ -2,12 +2,14 @@ package taskprocessor_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
 	mock "github.com/OutOfStack/game-library/internal/taskprocessor/mocks"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 )
 
 type TestSuite struct {
@@ -20,6 +22,7 @@ type TestSuite struct {
 	gameFacadeMock *mock.MockGameFacade
 	tx             *mock.MockTx
 	provider       *taskprocessor.TaskProvider
+	igdbAPILimiter *rate.Limiter
 }
 
 func (s *TestSuite) SetupTest() {
@@ -31,6 +34,7 @@ func (s *TestSuite) SetupTest() {
 	s.gameFacadeMock = mock.NewMockGameFacade(s.ctrl)
 	s.tx = mock.NewMockTx(s.ctrl)
 	s.provider = taskprocessor.New(s.log, s.storageMock, s.igdbClientMock, s.s3ClientMock, s.gameFacadeMock)
+	s.igdbAPILimiter = rate.NewLimiter(rate.Every(time.Second), 100)
 }
 
 func (s *TestSuite) TearDownTest() {

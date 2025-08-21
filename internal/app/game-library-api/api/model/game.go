@@ -10,8 +10,8 @@ import (
 
 // GetGamesQueryParams - get games query params
 type GetGamesQueryParams struct {
-	PageSize    int    `form:"pageSize"`
-	Page        int    `form:"page"`
+	PageSize    uint32 `form:"pageSize"`
+	Page        uint32 `form:"page"`
 	OrderBy     string `form:"orderBy"`
 	Name        string `form:"name"`
 	GenreID     int32  `form:"genre"`

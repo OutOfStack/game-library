@@ -81,7 +81,7 @@ linters:
   exclusions:
     generated: lax
     rules:
-      - path: (.+)\.go$
+      - path: _test\.go
         text: G115 # integer overflow conversion warnings
       - path: _test\.go
         rules:
@@ -92,13 +92,13 @@ linters:
           - dupl
           - wsl
           - goconst
-      - linters:
-        - revive # disable "should have a package comment"
-        text: "package comment"
       - path: pkg/types/
         linters:
           - revive
         text: "var-naming"
+      - linters:
+          - revive # disable "should have a package comment"
+        text: "package comment"
     paths:
       - docs
       - examples$

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
@@ -55,7 +54,7 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 		// get games to update
 		gameIDs, err := tp.storage.GetGamesIDsAfterID(ctx, s.LastProcessedID, updateGameInfoBatchSize)
 		if err != nil {
-			return settings, fmt.Errorf("get games for info update: %v", err)
+			return settings, fmt.Errorf("get games in info update task: %v", err)
 		}
 
 		if len(gameIDs) == 0 {
@@ -66,7 +65,7 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 		// get stored platform
 		platforms, err := tp.storage.GetPlatforms(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("get platforms: %v", err)
+			return nil, fmt.Errorf("get platforms in update games info task: %v", err)
 		}
 		igdbIDPlatformMap := make(map[int64]model.Platform)
 		for _, p := range platforms {
@@ -75,6 +74,11 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 
 		var updatedCount int
 		for _, gameID := range gameIDs {
+			// wait for igdb rate limit
+			if err = tp.igdbAPILimiter.Wait(ctx); err != nil {
+				return nil, fmt.Errorf("wait for rate limit in update game info task: %w", err)
+			}
+
 			// get game
 			game, gErr := tp.storage.GetGameByID(ctx, gameID)
 			if gErr != nil {
@@ -104,9 +108,6 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 			updatedCount++
 			updateGameInfoUpdatedTotal.Inc()
 			s.LastProcessedID = gameID
-
-			// sleep to avoid igdb rate limit
-			time.Sleep(igdbAPIWaitTime)
 		}
 
 		updateGameInfoProcessedTotal.Add(float64(len(gameIDs)))
@@ -132,7 +133,6 @@ func mapGameToUpdateIGDBGameData(game model.Game, updateInfo igdbapi.GameInfoFor
 		name = updateInfo.Name
 	}
 
-	platformsIDs = platformsIDs[:0]
 	for _, ipID := range updateInfo.Platforms {
 		if p, ok := platformsMap[ipID]; ok {
 			platformsIDs = append(platformsIDs, p.ID)

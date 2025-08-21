@@ -32,7 +32,7 @@ func Int32() int32 {
 	if sign == 0 {
 		sign = -1
 	}
-	return random.Int31() * int32(sign)
+	return random.Int31() * int32(sign) //nolint:gosec
 }
 
 // Int31 returns a random non-negative int32 value
@@ -58,7 +58,7 @@ func Uint32() uint32 {
 
 // Uint8 returns random uint8 value
 func Uint8() uint8 {
-	return uint8(random.Intn(math.MaxUint8) + 1)
+	return uint8(random.Intn(math.MaxUint8) + 1) //nolint:gosec
 }
 
 // Date returns random date

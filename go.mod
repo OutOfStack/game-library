@@ -1,14 +1,14 @@
 module github.com/OutOfStack/game-library
 
-go 1.24
+go 1.25
 
 require (
-	cloud.google.com/go v0.121.4
+	cloud.google.com/go v0.121.6
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/aws/aws-sdk-go-v2 v1.37.2
-	github.com/aws/aws-sdk-go-v2/config v1.30.3
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.3
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.86.0
+	github.com/aws/aws-sdk-go-v2 v1.38.0
+	github.com/aws/aws-sdk-go-v2/config v1.31.1
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.5
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.0
 	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.2
@@ -21,7 +21,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/prometheus/client_golang v1.23.0
-	github.com/redis/go-redis/v9 v9.12.0
+	github.com/redis/go-redis/v9 v9.12.1
 	github.com/riandyrn/otelchi v0.12.1
 	github.com/snovichkov/zap-gelf v1.3.0
 	github.com/spf13/viper v1.20.1
@@ -32,7 +32,7 @@ require (
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/zipkin v1.37.0
 	go.opentelemetry.io/otel/sdk v1.37.0
-	go.uber.org/mock v0.5.2
+	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.16.0
 )
@@ -44,18 +44,18 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.2 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.8.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.27.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.32.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.36.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.8.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.28.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.33.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.37.1 // indirect
 	github.com/aws/smithy-go v1.22.5 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -70,6 +70,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/go-co-op/gocron/v2 v2.16.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
@@ -87,6 +88,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -122,13 +124,13 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/tools v0.33.0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/mod v0.27.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/tools v0.36.0 // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

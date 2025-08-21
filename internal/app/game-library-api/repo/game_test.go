@@ -377,18 +377,17 @@ func TestUpdateGame_Valid_ShouldRetrieveEqual(t *testing.T) {
 	require.NoError(t, err)
 
 	up := model.UpdateGameData{
-		Name:         td.String(),
-		Developers:   []int32{td.Int32(), td.Int32()},
-		Publishers:   []int32{td.Int32(), td.Int32()},
-		ReleaseDate:  types.DateOf(td.Date()).String(),
-		Genres:       []int32{td.Int32(), td.Int32()},
-		LogoURL:      td.String(),
-		Summary:      td.String(),
-		Slug:         td.String(),
-		PlatformsIDs: []int32{td.Int32(), td.Int32()},
-		Screenshots:  []string{td.String(), td.String()},
-		Websites:     []string{td.String(), td.String()},
-		IGDBRating:   td.Float64(),
+		Name:          td.String(),
+		DevelopersIDs: []int32{td.Int32(), td.Int32()},
+		PublishersIDs: []int32{td.Int32(), td.Int32()},
+		ReleaseDate:   types.DateOf(td.Date()).String(),
+		GenresIDs:     []int32{td.Int32(), td.Int32()},
+		LogoURL:       td.String(),
+		Summary:       td.String(),
+		Slug:          td.String(),
+		PlatformsIDs:  []int32{td.Int32(), td.Int32()},
+		Screenshots:   []string{td.String(), td.String()},
+		Websites:      []string{td.String(), td.String()},
 	}
 
 	err = s.UpdateGame(ctx, id, up)
@@ -488,6 +487,53 @@ func TestGetPublisherGamesCount_WithGames_ShouldReturnCount(t *testing.T) {
 	require.Equal(t, 2, count, "count should be 2")
 }
 
+// TestUpdateGameIGDBInfo_Valid_ShouldUpdateIGDBInfo tests case when we update game IGDB info
+func TestUpdateGameIGDBInfo_Valid_ShouldUpdateIGDBInfo(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	cr := getCreateGameData()
+	id, err := s.CreateGame(ctx, cr)
+	require.NoError(t, err)
+
+	igdbData := model.UpdateGameIGDBData{
+		Name:            td.String(),
+		PlatformsIDs:    []int32{td.Int32(), td.Int32()},
+		Websites:        []string{td.String(), td.String()},
+		IGDBRating:      td.Float64n(100),
+		IGDBRatingCount: int32(td.Intn(10000)),
+	}
+
+	err = s.UpdateGameIGDBInfo(ctx, id, igdbData)
+	require.NoError(t, err)
+
+	game, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
+
+	require.Equal(t, igdbData.Name, game.Name, "name should be equal")
+	require.Equal(t, igdbData.PlatformsIDs, game.PlatformsIDs, "platforms should be equal")
+	require.Equal(t, igdbData.Websites, game.Websites, "websites should be equal")
+	require.InDelta(t, igdbData.IGDBRating, game.IGDBRating, 0.01, "igdb rating should be equal")
+	require.Equal(t, igdbData.IGDBRatingCount, game.IGDBRatingCount, "igdb rating count should be equal")
+}
+
+// TestUpdateGameIGDBInfo_NotExist_ShouldReturnNotFoundError tests case when we update IGDB info of a non-existing game
+func TestUpdateGameIGDBInfo_NotExist_ShouldReturnNotFoundError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	id := int32(td.Uint32())
+	igdbData := model.UpdateGameIGDBData{
+		Name:            td.String(),
+		IGDBRating:      td.Float64n(100),
+		IGDBRatingCount: int32(td.Intn(10000)),
+	}
+	err := s.UpdateGameIGDBInfo(t.Context(), id, igdbData)
+	require.ErrorIs(t, err, apperr.NewNotFoundError("game", id), "err should be NotFound")
+}
+
 // TestUpdateRating_Valid_ShouldUpdateGameRating tests case when we update game rating
 func TestUpdateRating_Valid_ShouldUpdateGameRating(t *testing.T) {
 	s := setup(t)
@@ -532,7 +578,8 @@ func getCreateGameData() model.CreateGameData {
 		PlatformsIDs:     []int32{td.Int32(), td.Int32()},
 		Screenshots:      []string{td.String(), td.String()},
 		Websites:         []string{td.String(), td.String()},
-		IGDBRating:       td.Float64(),
+		IGDBRating:       td.Float64n(100),
+		IGDBRatingCount:  int32(td.Intn(10000)),
 		IGDBID:           int64(td.Uint32()),
 		ModerationStatus: model.ModerationStatusReady,
 	}
@@ -553,6 +600,7 @@ func compareCreateGameAndGame(t *testing.T, want model.CreateGameData, got model
 	require.Equal(t, want.Screenshots, got.Screenshots, "screenshots should be equal")
 	require.Equal(t, want.Websites, got.Websites, "websites should be equal")
 	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.01, "igdb rating should be almost equal")
+	require.Equal(t, want.IGDBRatingCount, got.IGDBRatingCount, "igdb rating count should be equal")
 	require.Equal(t, want.IGDBID, got.IGDBID, "igdb id should be equal")
 }
 
@@ -560,17 +608,16 @@ func compareUpdateGameAndGame(t *testing.T, want model.UpdateGameData, got model
 	t.Helper()
 
 	require.Equal(t, want.Name, got.Name, "name should be equal")
-	require.Equal(t, want.Developers, got.DevelopersIDs, "developers should be equal")
-	require.Equal(t, want.Publishers, got.PublishersIDs, "publisher should be equal")
+	require.Equal(t, want.DevelopersIDs, got.DevelopersIDs, "developers should be equal")
+	require.Equal(t, want.PublishersIDs, got.PublishersIDs, "publisher should be equal")
 	require.Equal(t, want.ReleaseDate, got.ReleaseDate.String(), "release date should be equal")
-	require.Equal(t, want.Genres, got.GenresIDs, "genres should be equal")
+	require.Equal(t, want.GenresIDs, got.GenresIDs, "genres should be equal")
 	require.Equal(t, want.LogoURL, got.LogoURL, "logo url should be equal")
 	require.Equal(t, want.Summary, got.Summary, "summary should be equal")
 	require.Equal(t, want.Slug, got.Slug, "slug should be equal")
 	require.Equal(t, want.PlatformsIDs, got.PlatformsIDs, "platforms should be equal")
 	require.Equal(t, want.Screenshots, got.Screenshots, "screenshots should be equal")
 	require.Equal(t, want.Websites, got.Websites, "websites should be equal")
-	require.InDeltaf(t, want.IGDBRating, got.IGDBRating, 0.01, "igdb rating should be almost equal")
 }
 
 // TestUpdateGameTrendingIndex_Valid_ShouldUpdateTrendingIndex tests updating trending index
@@ -615,6 +662,7 @@ func TestGetGameTrendingData_Valid_ShouldReturnData(t *testing.T) {
 	cg := getCreateGameData()
 	cg.ReleaseDate = "2023-06-15"
 	cg.IGDBRating = 85.5
+	cg.IGDBRatingCount = 999
 	id, err := s.CreateGame(ctx, cg)
 	require.NoError(t, err)
 
@@ -634,7 +682,8 @@ func TestGetGameTrendingData_Valid_ShouldReturnData(t *testing.T) {
 	require.Equal(t, 2023, data.Year, "year should be 2023")
 	require.Equal(t, 6, data.Month, "month should be 6")
 	require.InDelta(t, 85.5, data.IGDBRating, 0.01, "IGDB rating should match")
-	require.InDelta(t, 4.5, data.UserRating, 0.01, "user rating should be average of 4 and 5")
+	require.Equal(t, int32(999), data.IGDBRatingCount, "IGDB rating count should match")
+	require.InDelta(t, 4.5, data.Rating, 0.01, "user rating should be average of 4 and 5")
 	require.Equal(t, int32(2), data.RatingCount, "rating count should be 2")
 }
 
@@ -648,18 +697,18 @@ func TestGetGameTrendingData_NotExist_ShouldReturnError(t *testing.T) {
 	require.Error(t, err, "should return error for non-existing game")
 }
 
-// TestGetGamesIDsForTrendingIndexUpdate_NoGames_ShouldReturnEmpty tests getting games for trending update when none exist
-func TestGetGamesIDsForTrendingIndexUpdate_NoGames_ShouldReturnEmpty(t *testing.T) {
+// TestGetGamesIDsAfterID_NoGames_ShouldReturnEmpty tests getting games for trending update when none exist
+func TestGetGamesIDsAfterID_NoGames_ShouldReturnEmpty(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(t.Context(), 0, 10)
+	gameIDs, err := s.GetGamesIDsAfterID(t.Context(), 0, 10)
 	require.NoError(t, err)
 	require.Empty(t, gameIDs, "should return empty slice when no games exist")
 }
 
-// TestGetGamesIDsForTrendingIndexUpdate_WithGames_ShouldReturnOrdered tests getting games for trending update
-func TestGetGamesIDsForTrendingIndexUpdate_WithGames_ShouldReturnOrdered(t *testing.T) {
+// TestGetGamesIDsAfterID_WithGames_ShouldReturnOrdered tests getting games for trending update
+func TestGetGamesIDsAfterID_WithGames_ShouldReturnOrdered(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
@@ -678,7 +727,7 @@ func TestGetGamesIDsForTrendingIndexUpdate_WithGames_ShouldReturnOrdered(t *test
 	require.NoError(t, err)
 
 	// Get all games
-	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(ctx, 0, 10)
+	gameIDs, err := s.GetGamesIDsAfterID(ctx, 0, 10)
 	require.NoError(t, err)
 	require.Len(t, gameIDs, 3, "should return 3 game IDs")
 
@@ -687,8 +736,8 @@ func TestGetGamesIDsForTrendingIndexUpdate_WithGames_ShouldReturnOrdered(t *test
 	require.Equal(t, expectedIDs, gameIDs, "game IDs should be ordered by ID ascending")
 }
 
-// TestGetGamesIDsForTrendingIndexUpdate_WithOffset_ShouldReturnAfterOffset tests getting games with offset
-func TestGetGamesIDsForTrendingIndexUpdate_WithOffset_ShouldReturnAfterOffset(t *testing.T) {
+// TestGetGamesIDsAfterID_WithOffset_ShouldReturnAfterOffset tests getting games with offset
+func TestGetGamesIDsAfterID_WithOffset_ShouldReturnAfterOffset(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
@@ -707,7 +756,7 @@ func TestGetGamesIDsForTrendingIndexUpdate_WithOffset_ShouldReturnAfterOffset(t 
 	require.NoError(t, err)
 
 	// Get games after id1
-	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(ctx, id1, 10)
+	gameIDs, err := s.GetGamesIDsAfterID(ctx, id1, 10)
 	require.NoError(t, err)
 	require.Len(t, gameIDs, 2, "should return 2 game IDs after offset")
 
@@ -715,8 +764,8 @@ func TestGetGamesIDsForTrendingIndexUpdate_WithOffset_ShouldReturnAfterOffset(t 
 	require.Equal(t, expectedIDs, gameIDs, "should return games after the offset ID")
 }
 
-// TestGetGamesIDsForTrendingIndexUpdate_WithLimit_ShouldRespectLimit tests getting games with batch size limit
-func TestGetGamesIDsForTrendingIndexUpdate_WithLimit_ShouldRespectLimit(t *testing.T) {
+// TestGetGamesIDsAfterID_WithLimit_ShouldRespectLimit tests getting games with batch size limit
+func TestGetGamesIDsAfterID_WithLimit_ShouldRespectLimit(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
@@ -735,7 +784,7 @@ func TestGetGamesIDsForTrendingIndexUpdate_WithLimit_ShouldRespectLimit(t *testi
 	require.NoError(t, err)
 
 	// Get only 2 games
-	gameIDs, err := s.GetGamesIDsForTrendingIndexUpdate(ctx, 0, 2)
+	gameIDs, err := s.GetGamesIDsAfterID(ctx, 0, 2)
 	require.NoError(t, err)
 	require.Len(t, gameIDs, 2, "should respect batch size limit")
 }

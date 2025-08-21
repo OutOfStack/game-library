@@ -15,6 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const igdbAPIWaitTime = 200 * time.Millisecond
+
 const (
 	// FetchIGDBGamesTaskName task name for fetching games from igdb
 	FetchIGDBGamesTaskName = "fetch_igdb_games"
@@ -198,7 +200,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				// get websites
 				var websites []string
 				for _, w := range g.Websites {
-					if _, ok := igdbapi.WebsiteCategoryNames[igdbapi.WebsiteCategory(w.Category)]; ok {
+					if _, ok := igdbapi.WebsiteTypeNames[w.Type]; ok {
 						websites = append(websites, w.URL)
 					}
 				}
@@ -250,6 +252,7 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					Screenshots:      screenshots,
 					Websites:         websites,
 					IGDBRating:       g.TotalRating,
+					IGDBRatingCount:  g.TotalRatingCount,
 					IGDBID:           g.ID,
 					ModerationStatus: model.ModerationStatusReady,
 				}
@@ -269,6 +272,9 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			if s.LastReleasedAt.Before(startReleasedAtDate) {
 				s.LastReleasedAt = time.Now()
 			}
+
+			// wait to avoid igdb rate limit
+			time.Sleep(igdbAPIWaitTime)
 		}
 
 		tp.log.Info("task info",

@@ -95,6 +95,10 @@ linters:
       - linters:
         - revive # disable "should have a package comment"
         text: "package comment"
+      - path: pkg/types/
+        linters:
+          - revive
+        text: "var-naming"
     paths:
       - docs
       - examples$

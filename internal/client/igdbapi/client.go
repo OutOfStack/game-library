@@ -51,7 +51,7 @@ func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 }
 
 // GetTopRatedGames returns top-rated games
-func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedBefore time.Time, minRatingsCount, minRating, limit int64) ([]TopRatedGamesResp, error) {
+func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedBefore time.Time, minRatingsCount, minRating, limit int64) ([]TopRatedGames, error) {
 	ctx, span := tracer.Start(ctx, "getTopRatedGames")
 	defer span.End()
 
@@ -70,16 +70,16 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 		return nil, fmt.Errorf("join url path: %v", err)
 	}
 
-	data := fmt.Sprintf(
+	query := fmt.Sprintf(
 		`fields id, cover.url, first_release_date, genres.name, name, platforms, total_rating, total_rating_count,
-		slug, summary, screenshots.url, websites.category, websites.url,
+		slug, summary, screenshots.url, websites.type, websites.url,
 		involved_companies.company.name, involved_companies.developer, involved_companies.publisher;
 		sort first_release_date desc;
 		where total_rating != null & total_rating_count > %d & total_rating > %d & first_release_date < %d &
 		version_parent = null & parent_game = null & release_dates.platform = (%s);
 		limit %d;`,
 		minRatingsCount, minRating, releasedBefore.Unix(), platforms, limit)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
 	if err != nil {
 		return nil, fmt.Errorf("create get top rated games request: %v", err)
 	}
@@ -108,13 +108,69 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 		return nil, fmt.Errorf("%s", body)
 	}
 
-	var respBody []TopRatedGamesResp
+	var respBody []TopRatedGames
 	err = json.NewDecoder(resp.Body).Decode(&respBody)
 	if err != nil {
 		return nil, fmt.Errorf("decode response body: %v", err)
 	}
 
 	return respBody, nil
+}
+
+// GetGameInfoForUpdate returns game info for update
+func (c *Client) GetGameInfoForUpdate(ctx context.Context, igdbID int64) (GameInfoForUpdate, error) {
+	ctx, span := tracer.Start(ctx, "getGameInfoForUpdate")
+	defer span.End()
+
+	reqURL, err := url.JoinPath(c.conf.APIURL, gamesEndpoint)
+	if err != nil {
+		return GameInfoForUpdate{}, fmt.Errorf("join url path: %v", err)
+	}
+
+	query := fmt.Sprintf(
+		`fields id, name, platforms, total_rating, total_rating_count, websites.type, websites.url;
+		where id = %d;`,
+		igdbID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
+	if err != nil {
+		return GameInfoForUpdate{}, fmt.Errorf("create get game info for update request: %v", err)
+	}
+
+	err = c.setAuthHeaders(ctx, req)
+	if err != nil {
+		return GameInfoForUpdate{}, fmt.Errorf("set auth headers: %v", err)
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		c.log.Error("request igdb api", zap.String("url", reqURL), zap.Error(err))
+		return GameInfoForUpdate{}, fmt.Errorf("igdb api unavailable: %v", err)
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			c.log.Error("failed to close response body", zap.Error(err))
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, rErr := io.ReadAll(resp.Body)
+		if rErr != nil {
+			return GameInfoForUpdate{}, fmt.Errorf("read response body: %v", rErr)
+		}
+		return GameInfoForUpdate{}, fmt.Errorf("%s", body)
+	}
+
+	var respBody []GameInfoForUpdate
+	err = json.NewDecoder(resp.Body).Decode(&respBody)
+	if err != nil {
+		return GameInfoForUpdate{}, fmt.Errorf("decode response body: %v", err)
+	}
+
+	if len(respBody) == 0 {
+		return GameInfoForUpdate{}, fmt.Errorf("game with igdb id %d not found in igdb api", igdbID)
+	}
+
+	return respBody[0], nil
 }
 
 // GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name

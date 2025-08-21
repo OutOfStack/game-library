@@ -128,6 +128,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	tasks := map[string]model.TaskInfo{
 		taskprocessor.FetchIGDBGamesTaskName:      {Schedule: cfg.GetScheduler().FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
 		taskprocessor.UpdateTrendingIndexTaskName: {Schedule: cfg.GetScheduler().UpdateTrendingIndex, Fn: taskProvider.StartUpdateTrendingIndex},
+		taskprocessor.UpdateGameInfoTaskName:      {Schedule: cfg.GetScheduler().UpdateGameInfo, Fn: taskProvider.StartUpdateGameInfo},
 	}
 	for name, task := range tasks {
 		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)
@@ -175,13 +176,12 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	case <-shutdown:
 		logger.Info("Start shutdown")
 		timeout := cfg.GetWeb().ShutdownTimeout
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		bCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		if err = apiService.Shutdown(ctx); err != nil {
+		if err = apiService.Shutdown(bCtx); err != nil {
 			logger.Error("Shutdown did not complete", zap.Duration("timeout", timeout), zap.Error(err))
-			err = apiService.Close()
-			if err != nil {
+			if err = apiService.Close(); err != nil {
 				return fmt.Errorf("shutdown: %w", err)
 			}
 		}

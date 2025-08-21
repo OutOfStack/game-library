@@ -121,6 +121,21 @@ func (mr *MockStorageMockRecorder) GetCompanies(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompanies", reflect.TypeOf((*MockStorage)(nil).GetCompanies), ctx)
 }
 
+// GetGameByID mocks base method.
+func (m *MockStorage) GetGameByID(ctx context.Context, id int32) (model.Game, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameByID", ctx, id)
+	ret0, _ := ret[0].(model.Game)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameByID indicates an expected call of GetGameByID.
+func (mr *MockStorageMockRecorder) GetGameByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameByID", reflect.TypeOf((*MockStorage)(nil).GetGameByID), ctx, id)
+}
+
 // GetGameIDByIGDBID mocks base method.
 func (m *MockStorage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (int32, error) {
 	m.ctrl.T.Helper()
@@ -136,19 +151,19 @@ func (mr *MockStorageMockRecorder) GetGameIDByIGDBID(ctx, igdbID any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameIDByIGDBID", reflect.TypeOf((*MockStorage)(nil).GetGameIDByIGDBID), ctx, igdbID)
 }
 
-// GetGamesIDsForTrendingIndexUpdate mocks base method.
-func (m *MockStorage) GetGamesIDsForTrendingIndexUpdate(ctx context.Context, lastProcessedID int32, batchSize int) ([]int32, error) {
+// GetGamesIDsAfterID mocks base method.
+func (m *MockStorage) GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSize int) ([]int32, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGamesIDsForTrendingIndexUpdate", ctx, lastProcessedID, batchSize)
+	ret := m.ctrl.Call(m, "GetGamesIDsAfterID", ctx, lastID, batchSize)
 	ret0, _ := ret[0].([]int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetGamesIDsForTrendingIndexUpdate indicates an expected call of GetGamesIDsForTrendingIndexUpdate.
-func (mr *MockStorageMockRecorder) GetGamesIDsForTrendingIndexUpdate(ctx, lastProcessedID, batchSize any) *gomock.Call {
+// GetGamesIDsAfterID indicates an expected call of GetGamesIDsAfterID.
+func (mr *MockStorageMockRecorder) GetGamesIDsAfterID(ctx, lastID, batchSize any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGamesIDsForTrendingIndexUpdate", reflect.TypeOf((*MockStorage)(nil).GetGamesIDsForTrendingIndexUpdate), ctx, lastProcessedID, batchSize)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGamesIDsAfterID", reflect.TypeOf((*MockStorage)(nil).GetGamesIDsAfterID), ctx, lastID, batchSize)
 }
 
 // GetGenres mocks base method.
@@ -196,6 +211,20 @@ func (mr *MockStorageMockRecorder) GetTask(ctx, tx, name any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTask", reflect.TypeOf((*MockStorage)(nil).GetTask), ctx, tx, name)
 }
 
+// UpdateGameIGDBInfo mocks base method.
+func (m *MockStorage) UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.UpdateGameIGDBData) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGameIGDBInfo", ctx, id, ug)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGameIGDBInfo indicates an expected call of UpdateGameIGDBInfo.
+func (mr *MockStorageMockRecorder) UpdateGameIGDBInfo(ctx, id, ug any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameIGDBInfo", reflect.TypeOf((*MockStorage)(nil).UpdateGameIGDBInfo), ctx, id, ug)
+}
+
 // UpdateTask mocks base method.
 func (m *MockStorage) UpdateTask(ctx context.Context, tx pgx.Tx, task model.Task) error {
 	m.ctrl.T.Helper()
@@ -234,6 +263,21 @@ func (m *MockIGDBAPIClient) EXPECT() *MockIGDBAPIClientMockRecorder {
 	return m.recorder
 }
 
+// GetGameInfoForUpdate mocks base method.
+func (m *MockIGDBAPIClient) GetGameInfoForUpdate(ctx context.Context, igdbID int64) (igdbapi.GameInfoForUpdate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameInfoForUpdate", ctx, igdbID)
+	ret0, _ := ret[0].(igdbapi.GameInfoForUpdate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameInfoForUpdate indicates an expected call of GetGameInfoForUpdate.
+func (mr *MockIGDBAPIClientMockRecorder) GetGameInfoForUpdate(ctx, igdbID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameInfoForUpdate", reflect.TypeOf((*MockIGDBAPIClient)(nil).GetGameInfoForUpdate), ctx, igdbID)
+}
+
 // GetImageByURL mocks base method.
 func (m *MockIGDBAPIClient) GetImageByURL(ctx context.Context, imageURL, imageType string) (igdbapi.GetImageResp, error) {
 	m.ctrl.T.Helper()
@@ -250,10 +294,10 @@ func (mr *MockIGDBAPIClientMockRecorder) GetImageByURL(ctx, imageURL, imageType 
 }
 
 // GetTopRatedGames mocks base method.
-func (m *MockIGDBAPIClient) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdbapi.TopRatedGamesResp, error) {
+func (m *MockIGDBAPIClient) GetTopRatedGames(ctx context.Context, platformsIDs []int64, releasedAfter time.Time, minRatingsCount, minRating, limit int64) ([]igdbapi.TopRatedGames, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTopRatedGames", ctx, platformsIDs, releasedAfter, minRatingsCount, minRating, limit)
-	ret0, _ := ret[0].([]igdbapi.TopRatedGamesResp)
+	ret0, _ := ret[0].([]igdbapi.TopRatedGames)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

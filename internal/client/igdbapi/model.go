@@ -2,6 +2,13 @@ package igdbapi
 
 import "bytes"
 
+// Image types aliases
+const (
+	ImageTypeThumbAlias         = "thumb"
+	ImageTypeCoverBig2xAlias    = "cover_big_2x"
+	ImageTypeScreenshotBigAlias = "screenshot_big"
+)
+
 // TokenResp - access token response
 type TokenResp struct {
 	AccessToken string `json:"access_token"`
@@ -9,12 +16,12 @@ type TokenResp struct {
 	TokenType   string `json:"token_type"`
 }
 
-// TopRatedGamesResp - top-rated games response
-type TopRatedGamesResp struct {
+// TopRatedGames - top-rated games
+type TopRatedGames struct {
 	ID                int64     `json:"id"`
 	Name              string    `json:"name"`
 	TotalRating       float64   `json:"total_rating"`
-	TotalRatingCount  int64     `json:"total_rating_count"`
+	TotalRatingCount  int32     `json:"total_rating_count"`
 	Cover             URL       `json:"cover"`
 	FirstReleaseDate  int64     `json:"first_release_date"`
 	Genres            []IDName  `json:"genres"`
@@ -46,42 +53,34 @@ type Company struct {
 
 // Website - website
 type Website struct {
-	Category int8   `json:"category"`
-	URL      string `json:"url"`
+	URL  string `json:"url"`
+	Type int8   `json:"type"`
 }
 
-// WebsiteCategory - website category
-type WebsiteCategory int8
-
-// Website categories
+// Website types
 const (
-	WebsiteCategoryOfficial  WebsiteCategory = 1
-	WebsiteCategoryFacebook  WebsiteCategory = 4
-	WebsiteCategoryTwitter   WebsiteCategory = 5
-	WebsiteCategoryTwitch    WebsiteCategory = 6
-	WebsiteCategoryYoutube   WebsiteCategory = 9
-	WebsiteCategorySteam     WebsiteCategory = 13
-	WebsiteCategoryEpicGames WebsiteCategory = 16
-	WebsiteCategoryGOG       WebsiteCategory = 17
+	WebsiteTypeOfficial  int8 = 1
+	WebsiteTypeFacebook  int8 = 4
+	WebsiteTypeTwitter   int8 = 5
+	WebsiteTypeTwitch    int8 = 6
+	WebsiteTypeYoutube   int8 = 9
+	WebsiteTypeSteam     int8 = 13
+	WebsiteTypeEpicGames int8 = 16
+	WebsiteTypeGOG       int8 = 17
+	WebsiteTypeDiscord   int8 = 18
 )
 
-// Image types aliases
-const (
-	ImageTypeThumbAlias         = "thumb"
-	ImageTypeCoverBig2xAlias    = "cover_big_2x"
-	ImageTypeScreenshotBigAlias = "screenshot_big"
-)
-
-// WebsiteCategoryNames - mapping of website category to name
-var WebsiteCategoryNames = map[WebsiteCategory]string{
-	WebsiteCategoryOfficial:  "Official",
-	WebsiteCategoryFacebook:  "Facebook",
-	WebsiteCategoryTwitter:   "Twitter",
-	WebsiteCategoryTwitch:    "Twitch",
-	WebsiteCategoryYoutube:   "Youtube",
-	WebsiteCategorySteam:     "Steam",
-	WebsiteCategoryEpicGames: "EpicGames",
-	WebsiteCategoryGOG:       "GOG",
+// WebsiteTypeNames - mapping of a website type to name
+var WebsiteTypeNames = map[int8]string{
+	WebsiteTypeOfficial:  "Official",
+	WebsiteTypeFacebook:  "Facebook",
+	WebsiteTypeTwitter:   "Twitter",
+	WebsiteTypeTwitch:    "Twitch",
+	WebsiteTypeYoutube:   "Youtube",
+	WebsiteTypeSteam:     "Steam",
+	WebsiteTypeEpicGames: "EpicGames",
+	WebsiteTypeGOG:       "GOG",
+	WebsiteTypeDiscord:   "Discord",
 }
 
 // GetImageResp - get image response
@@ -89,4 +88,14 @@ type GetImageResp struct {
 	Body        *bytes.Reader
 	FileName    string
 	ContentType string
+}
+
+// GameInfoForUpdate - game info for update
+type GameInfoForUpdate struct {
+	ID               int64     `json:"id"`
+	Name             string    `json:"name"`
+	TotalRating      float64   `json:"total_rating"`
+	TotalRatingCount int32     `json:"total_rating_count"`
+	Platforms        []int64   `json:"platforms"`
+	Websites         []Website `json:"websites"`
 }

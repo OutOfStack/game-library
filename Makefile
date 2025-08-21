@@ -19,17 +19,17 @@ drunpg:
 	docker compose up -d --no-recreate db
 
 migrate:
-	go run ./cmd/game-library-manage/. migrate
+	go run ./cmd/game-library-manage/. -from-file migrate
 
 rollback:
-	go run ./cmd/game-library-manage/. rollback
+	go run ./cmd/game-library-manage/. -from-file rollback
 
 seed:
-	go run ./cmd/game-library-manage/. seed
+	go run ./cmd/game-library-manage/. -from-file seed
 
 SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.4
 SWAG_BIN := $(shell go env GOPATH)/bin/swag
-MOCKGEN_PKG := go.uber.org/mock/mockgen@v0.5.0
+MOCKGEN_PKG := go.uber.org/mock/mockgen@v0.6
 MOCKGEN_BIN := $(shell go env GOPATH)/bin/mockgen
 generate:
 	@if \[ ! -f ${SWAG_BIN} \]; then \
@@ -63,7 +63,7 @@ generate:
 	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
 	${MOCKGEN_BIN} -destination=internal/taskprocessor/mocks/tx.go -package=taskprocessor_mock github.com/jackc/pgx/v5 Tx
 
-LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1
+LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \

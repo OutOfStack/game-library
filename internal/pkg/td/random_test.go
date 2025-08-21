@@ -1,6 +1,7 @@
 package td_test
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"unicode"
@@ -118,6 +119,38 @@ func TestFloat64(t *testing.T) {
 		assert.IsType(t, float64(0), val)
 		assert.GreaterOrEqual(t, val, 0.0)
 		assert.Less(t, val, 1.0)
+	}
+}
+
+func TestFloat64n(t *testing.T) {
+	tests := []struct {
+		name string
+		n    int
+	}{
+		{"positive_small", 10},
+		{"positive_medium", 50},
+		{"boundary_one", 1},
+		{"large_input", math.MaxInt32},
+		{"zero_input", 0},
+		{"negative_input", -10},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for range n {
+				val := td.Float64n(tt.n)
+
+				switch {
+				case tt.n > 0:
+					assert.GreaterOrEqual(t, val, 0.0)
+					assert.Less(t, val, float64(tt.n))
+				case tt.n == 0:
+					assert.InDelta(t, 0.0, val, 0.01)
+				default:
+					assert.GreaterOrEqual(t, val, 0.0)
+				}
+			}
+		})
 	}
 }
 

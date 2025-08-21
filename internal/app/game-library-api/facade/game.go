@@ -16,12 +16,14 @@ import (
 const (
 	// MaxGamesPerPublisherPerMonth is the maximum number of games a publisher can create in a month
 	MaxGamesPerPublisherPerMonth = 2
+
 	// Trending index coefficients
-	releaseYearWeight  = 0.4
-	releaseMonthWeight = 0.1
-	igdbRatingWeight   = 0.25
-	userRatingWeight   = 0.2
-	ratingCountWeight  = 0.05
+	releaseYearWeight     = 0.4
+	releaseMonthWeight    = 0.1
+	ratingWeight          = 0.15
+	ratingCountWeight     = 0.05
+	igdbRatingWeight      = 0.2
+	igdbRatingCountWeight = 0.1
 )
 
 // GetGames returns games and count with pagination
@@ -353,11 +355,8 @@ func (p *Provider) calculateTrendingIndex(data model.GameTrendingData) float64 {
 		monthScore = 0
 	}
 
-	// igdb rating normalized to 0-1
-	igdbScore := data.IGDBRating / 100.0
-
-	// user rating normalized to 0-1
-	userRatingScore := data.UserRating / 5.0
+	// rating normalized to 0-1
+	ratingScore := data.Rating / 5.0
 
 	// rating count normalized to 0-1
 	ratingCountScore := math.Log10(float64(data.RatingCount)+1) / 3.0 // max score at 1000 ratings
@@ -365,12 +364,22 @@ func (p *Provider) calculateTrendingIndex(data model.GameTrendingData) float64 {
 		ratingCountScore = 1.0
 	}
 
+	// igdb rating normalized to 0-1
+	igdbRatingScore := data.IGDBRating / 100.0
+
+	// igdb rating count normalized to 0-1
+	igdbRatingCountScore := math.Log10(float64(data.IGDBRatingCount)+1) / 3.0 // max score at 1000 ratings
+	if igdbRatingCountScore > 1.0 {
+		igdbRatingCountScore = 1.0
+	}
+
 	// calculate weighted trending index
 	trendingIndex := releaseYearWeight*yearScore +
 		releaseMonthWeight*monthScore +
-		igdbRatingWeight*igdbScore +
-		userRatingWeight*userRatingScore +
-		ratingCountWeight*ratingCountScore
+		ratingWeight*ratingScore +
+		ratingCountWeight*ratingCountScore +
+		igdbRatingWeight*igdbRatingScore +
+		igdbRatingCountWeight*igdbRatingCountScore
 
 	return trendingIndex
 }

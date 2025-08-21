@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-manage/schema"
 	"github.com/OutOfStack/game-library/internal/appconf"
@@ -12,35 +13,50 @@ import (
 )
 
 func main() {
-	cfg, err := appconf.Get()
-	if err != nil {
-		log.Fatal(err)
+	var fromFile bool
+	flag.BoolVar(&fromFile, "from-file", false, "read dsn from config file instead of environment variable")
+	flag.Parse()
+
+	var dsn string
+	if fromFile {
+		cfg, err := appconf.Get()
+		if err != nil {
+			log.Fatal("read config file:", err)
+		}
+		dsn = cfg.GetDB().DSN
+		if dsn == "" {
+			log.Fatal("DB_DSN not found in config file")
+		}
+	} else {
+		dsn = os.Getenv("DB_DSN")
+		if dsn == "" {
+			log.Fatal("DB_DSN environment variable is required")
+		}
 	}
 
 	ctx := context.Background()
-	db, err := database.New(ctx, cfg.GetDB().DSN)
+	db, err := database.New(ctx, dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	flag.Parse()
 	switch flag.Arg(0) {
 	case "migrate":
-		if err = schema.Migrate(cfg.DB.DSN, true); err != nil {
+		if err = schema.Migrate(dsn, true); err != nil {
 			log.Printf("Apply migrations failed: %v", err)
 			return
 		}
 		log.Print("Migration complete")
 	case "rollback":
-		if err = schema.Migrate(cfg.DB.DSN, false); err != nil {
+		if err = schema.Migrate(dsn, false); err != nil {
 			log.Printf("Rollback last migration failed: %v", err)
 			return
 		}
 		log.Print("Migration rollback complete")
 	case "seed":
 		if err = schema.Seed(db); err != nil {
-			log.Printf("Aapply seeds failed: %v", err)
+			log.Printf("Apply seeds failed: %v", err)
 			return
 		}
 		log.Print("Seed data inserted")

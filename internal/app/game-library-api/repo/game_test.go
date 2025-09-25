@@ -788,3 +788,145 @@ func TestGetGamesIDsAfterID_WithLimit_ShouldRespectLimit(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, gameIDs, 2, "should respect batch size limit")
 }
+
+// TestGetGamesByPublisherID_NoGames_ShouldReturnEmpty tests case when publisher has no games
+func TestGetGamesByPublisherID_NoGames_ShouldReturnEmpty(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	publisherID := td.Int32()
+	games, err := s.GetGamesByPublisherID(t.Context(), publisherID)
+	require.NoError(t, err)
+	require.Empty(t, games, "games should be empty")
+}
+
+// TestGetGamesByPublisherID_WithGames_ShouldReturnMatches tests case when publisher has games
+func TestGetGamesByPublisherID_WithGames_ShouldReturnMatches(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	publisherID := td.Int32()
+
+	// Create games for the publisher
+	cg1 := getCreateGameData()
+	cg1.PublishersIDs = []int32{publisherID, td.Int32()}
+
+	cg2 := getCreateGameData()
+	cg2.PublishersIDs = []int32{td.Int32(), publisherID}
+
+	// Create game for different publisher
+	cg3 := getCreateGameData()
+	cg3.PublishersIDs = []int32{td.Int32()}
+
+	id1, err := s.CreateGame(ctx, cg1)
+	require.NoError(t, err)
+	id2, err := s.CreateGame(ctx, cg2)
+	require.NoError(t, err)
+	_, err = s.CreateGame(ctx, cg3)
+	require.NoError(t, err)
+
+	games, err := s.GetGamesByPublisherID(ctx, publisherID)
+	require.NoError(t, err)
+	require.Len(t, games, 2, "should return 2 games for publisher")
+
+	// Games should be ordered by ID descending
+	require.Equal(t, id2, games[0].ID, "first game should be the most recent")
+	require.Equal(t, id1, games[1].ID, "second game should be the older one")
+
+	// Verify publisher ID is in both games
+	require.Contains(t, games[0].PublishersIDs, publisherID, "first game should contain publisher ID")
+	require.Contains(t, games[1].PublishersIDs, publisherID, "second game should contain publisher ID")
+}
+
+// TestGetGameIDByIGDBID_GameExists_ShouldReturnID tests case when game with IGDB ID exists
+func TestGetGameIDByIGDBID_GameExists_ShouldReturnID(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	cg := getCreateGameData()
+	igdbID := int64(td.Uint32())
+	cg.IGDBID = igdbID
+
+	expectedID, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
+
+	actualID, err := s.GetGameIDByIGDBID(ctx, igdbID)
+	require.NoError(t, err)
+	require.Equal(t, expectedID, actualID, "returned ID should match created game ID")
+}
+
+// TestGetGameIDByIGDBID_GameNotExists_ShouldReturnNotFoundError tests case when game with IGDB ID does not exist
+func TestGetGameIDByIGDBID_GameNotExists_ShouldReturnNotFoundError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	igdbID := int64(td.Uint32())
+	id, err := s.GetGameIDByIGDBID(t.Context(), igdbID)
+	require.ErrorIs(t, err, apperr.NewNotFoundError("game", igdbID), "err should be NotFound")
+	require.Zero(t, id, "id should be 0")
+}
+
+// TestCreateGame_Valid_ShouldCreateAndReturnID tests case when creating a valid game
+func TestCreateGame_Valid_ShouldCreateAndReturnID(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	cg := getCreateGameData()
+
+	id, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
+	require.NotZero(t, id, "created game ID should not be zero")
+
+	// Verify the game was created correctly
+	game, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
+	compareCreateGameAndGame(t, cg, game)
+}
+
+// TestUpdateGameModerationID_Valid_ShouldUpdateModerationID tests updating game moderation ID
+func TestUpdateGameModerationID_Valid_ShouldUpdateModerationID(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	cg := getCreateGameData()
+	gameID, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
+
+	// Create a moderation record first (required by foreign key constraint)
+	createModeration := model.CreateModeration{
+		GameID: gameID,
+		Status: model.ModerationStatusCheck,
+		GameData: model.ModerationData{
+			Name:      cg.Name,
+			Publisher: "Test Publisher",
+		},
+	}
+	moderationID, err := s.CreateModerationRecord(ctx, createModeration)
+	require.NoError(t, err)
+
+	err = s.UpdateGameModerationID(ctx, gameID, moderationID)
+	require.NoError(t, err)
+
+	game, err := s.GetGameByID(ctx, gameID)
+	require.NoError(t, err)
+	require.True(t, game.ModerationID.Valid, "moderation ID should be valid")
+	require.Equal(t, moderationID, game.ModerationID.Int32, "moderation ID should be updated")
+}
+
+// TestUpdateGameModerationID_GameNotExists_ShouldReturnNotFoundError tests updating moderation ID for non-existing game
+func TestUpdateGameModerationID_GameNotExists_ShouldReturnNotFoundError(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	gameID := td.Int32()
+	moderationID := td.Int32()
+	err := s.UpdateGameModerationID(t.Context(), gameID, moderationID)
+	require.ErrorIs(t, err, apperr.NewNotFoundError("game", gameID), "err should be NotFound")
+}

@@ -22,6 +22,5 @@ app.env
 .vscode
 .idea
 .run
-
-#ai
 CLAUDE.md
+.claude

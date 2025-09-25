@@ -1,7 +1,7 @@
-CREATE TABLE Sales (
+CREATE TABLE sales (
 	id serial PRIMARY KEY,
 	name varchar NOT NULL,
-	game_id int NOT NULL references Games(id) ON DELETE CASCADE,
+	game_id int NOT NULL references games(id) ON DELETE CASCADE,
 	begin_date date NULL,
 	end_date date NULL,
 	discount_percent smallint NULL

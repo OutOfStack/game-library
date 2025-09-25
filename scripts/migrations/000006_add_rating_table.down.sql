@@ -1,3 +1,3 @@
 DROP INDEX ratings_user_id_idx;
 
-DROP TABLE IF EXISTS Ratings;
+DROP TABLE IF EXISTS ratings;

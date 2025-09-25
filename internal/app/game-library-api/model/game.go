@@ -1,40 +1,33 @@
 package model
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/OutOfStack/game-library/pkg/types"
 )
 
-const (
-	// ModerationStatusReady represents a game that is ready
-	ModerationStatusReady = "ready"
-	// ModerationStatusCheck represents a game that needs moderation
-	ModerationStatusCheck = "check"
-	// ModerationStatusRecheck represents a game that needs moderation after update
-	ModerationStatusRecheck = "recheck"
-)
-
 // Game - db game model
 type Game struct {
-	ID               int32      `db:"id"`
-	Name             string     `db:"name"`
-	DevelopersIDs    []int32    `db:"developers"`
-	PublishersIDs    []int32    `db:"publishers"`
-	ReleaseDate      types.Date `db:"release_date"`
-	GenresIDs        []int32    `db:"genres"`
-	LogoURL          string     `db:"logo_url"`
-	Rating           float64    `db:"rating"`
-	Summary          string     `db:"summary"`
-	Slug             string     `db:"slug"`
-	PlatformsIDs     []int32    `db:"platforms"`
-	Screenshots      []string   `db:"screenshots"`
-	Websites         []string   `db:"websites"`
-	IGDBRating       float64    `db:"igdb_rating"`
-	IGDBRatingCount  int32      `db:"igdb_rating_count"`
-	IGDBID           int64      `db:"igdb_id"`
-	ModerationStatus string     `db:"moderation_status"`
-	TrendingIndex    float64    `db:"trending_index"`
+	ID               int32            `db:"id"`
+	Name             string           `db:"name"`
+	DevelopersIDs    []int32          `db:"developers"`
+	PublishersIDs    []int32          `db:"publishers"`
+	ReleaseDate      types.Date       `db:"release_date"`
+	GenresIDs        []int32          `db:"genres"`
+	LogoURL          string           `db:"logo_url"`
+	Rating           float64          `db:"rating"`
+	Summary          string           `db:"summary"`
+	Slug             string           `db:"slug"`
+	PlatformsIDs     []int32          `db:"platforms"`
+	Screenshots      []string         `db:"screenshots"`
+	Websites         []string         `db:"websites"`
+	IGDBRating       float64          `db:"igdb_rating"`
+	IGDBRatingCount  int32            `db:"igdb_rating_count"`
+	IGDBID           int64            `db:"igdb_id"`
+	ModerationStatus ModerationStatus `db:"moderation_status"`
+	ModerationID     sql.NullInt32    `db:"moderation_id"`
+	TrendingIndex    float64          `db:"trending_index"`
 }
 
 // CreateGameData - data for creating game in db
@@ -53,7 +46,7 @@ type CreateGameData struct {
 	IGDBRating       float64
 	IGDBRatingCount  int32
 	IGDBID           int64
-	ModerationStatus string
+	ModerationStatus ModerationStatus
 }
 
 // CreateGame - create game data
@@ -84,7 +77,7 @@ type UpdateGameData struct {
 	PlatformsIDs     []int32
 	Screenshots      []string
 	Websites         []string
-	ModerationStatus string
+	ModerationStatus ModerationStatus
 }
 
 // UpdateGameIGDBData - igdb data for updating game in db

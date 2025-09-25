@@ -102,6 +102,21 @@ func (mr *MockGameFacadeMockRecorder) GetGameByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameByID", reflect.TypeOf((*MockGameFacade)(nil).GetGameByID), ctx, id)
 }
 
+// GetGameModerations mocks base method.
+func (m *MockGameFacade) GetGameModerations(ctx context.Context, gameID int32, publisher string) ([]model.Moderation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameModerations", ctx, gameID, publisher)
+	ret0, _ := ret[0].([]model.Moderation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameModerations indicates an expected call of GetGameModerations.
+func (mr *MockGameFacadeMockRecorder) GetGameModerations(ctx, gameID, publisher any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameModerations", reflect.TypeOf((*MockGameFacade)(nil).GetGameModerations), ctx, gameID, publisher)
+}
+
 // GetGames mocks base method.
 func (m *MockGameFacade) GetGames(ctx context.Context, page, pageSize uint32, filter model.GamesFilter) ([]model.Game, uint64, error) {
 	m.ctrl.T.Helper()
@@ -176,6 +191,21 @@ func (m *MockGameFacade) GetPlatformsMap(ctx context.Context) (map[int32]model.P
 func (mr *MockGameFacadeMockRecorder) GetPlatformsMap(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlatformsMap", reflect.TypeOf((*MockGameFacade)(nil).GetPlatformsMap), ctx)
+}
+
+// GetPublisherGames mocks base method.
+func (m *MockGameFacade) GetPublisherGames(ctx context.Context, publisher string) ([]model.Game, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublisherGames", ctx, publisher)
+	ret0, _ := ret[0].([]model.Game)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPublisherGames indicates an expected call of GetPublisherGames.
+func (mr *MockGameFacadeMockRecorder) GetPublisherGames(ctx, publisher any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublisherGames", reflect.TypeOf((*MockGameFacade)(nil).GetPublisherGames), ctx, publisher)
 }
 
 // GetTopCompanies mocks base method.

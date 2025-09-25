@@ -18,7 +18,6 @@ import (
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	igdbapi "github.com/OutOfStack/game-library/internal/client/igdbapi"
 	s3 "github.com/OutOfStack/game-library/internal/client/s3"
-	pgx "github.com/jackc/pgx/v5"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -44,21 +43,6 @@ func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
-}
-
-// BeginTx mocks base method.
-func (m *MockStorage) BeginTx(ctx context.Context) (pgx.Tx, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BeginTx", ctx)
-	ret0, _ := ret[0].(pgx.Tx)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// BeginTx indicates an expected call of BeginTx.
-func (mr *MockStorageMockRecorder) BeginTx(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTx", reflect.TypeOf((*MockStorage)(nil).BeginTx), ctx)
 }
 
 // CreateCompany mocks base method.
@@ -197,18 +181,32 @@ func (mr *MockStorageMockRecorder) GetPlatforms(ctx any) *gomock.Call {
 }
 
 // GetTask mocks base method.
-func (m *MockStorage) GetTask(ctx context.Context, tx pgx.Tx, name string) (model.Task, error) {
+func (m *MockStorage) GetTask(ctx context.Context, name string) (model.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTask", ctx, tx, name)
+	ret := m.ctrl.Call(m, "GetTask", ctx, name)
 	ret0, _ := ret[0].(model.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTask indicates an expected call of GetTask.
-func (mr *MockStorageMockRecorder) GetTask(ctx, tx, name any) *gomock.Call {
+func (mr *MockStorageMockRecorder) GetTask(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTask", reflect.TypeOf((*MockStorage)(nil).GetTask), ctx, tx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTask", reflect.TypeOf((*MockStorage)(nil).GetTask), ctx, name)
+}
+
+// RunWithTx mocks base method.
+func (m *MockStorage) RunWithTx(ctx context.Context, f func(context.Context) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunWithTx", ctx, f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunWithTx indicates an expected call of RunWithTx.
+func (mr *MockStorageMockRecorder) RunWithTx(ctx, f any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunWithTx", reflect.TypeOf((*MockStorage)(nil).RunWithTx), ctx, f)
 }
 
 // UpdateGameIGDBInfo mocks base method.
@@ -226,17 +224,17 @@ func (mr *MockStorageMockRecorder) UpdateGameIGDBInfo(ctx, id, ug any) *gomock.C
 }
 
 // UpdateTask mocks base method.
-func (m *MockStorage) UpdateTask(ctx context.Context, tx pgx.Tx, task model.Task) error {
+func (m *MockStorage) UpdateTask(ctx context.Context, task model.Task) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTask", ctx, tx, task)
+	ret := m.ctrl.Call(m, "UpdateTask", ctx, task)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateTask indicates an expected call of UpdateTask.
-func (mr *MockStorageMockRecorder) UpdateTask(ctx, tx, task any) *gomock.Call {
+func (mr *MockStorageMockRecorder) UpdateTask(ctx, task any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockStorage)(nil).UpdateTask), ctx, tx, task)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockStorage)(nil).UpdateTask), ctx, task)
 }
 
 // MockIGDBAPIClient is a mock of IGDBAPIClient interface.

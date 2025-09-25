@@ -67,44 +67,60 @@ func (p *Provider) GetGameByID(ctx context.Context, id int32) (model.Game, error
 
 // CreateGame creates new game
 func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error) {
-	// get developer id or create developer
-	developerID, err := p.storage.GetCompanyIDByName(ctx, cg.Developer)
-	if err != nil && !apperr.IsStatusCode(err, apperr.NotFound) {
-		return 0, fmt.Errorf("get company id with name %s: %w", cg.Developer, err)
-	}
-	if developerID == 0 {
-		developerID, err = p.storage.CreateCompany(ctx, model.Company{
-			Name: cg.Developer,
-		})
-		if err != nil {
-			return 0, fmt.Errorf("create company %s: %w", cg.Developer, err)
+	var developerID, publisherID int32
+	var create model.CreateGameData
+
+	txErr := p.storage.RunWithTx(ctx, func(ctx context.Context) error {
+		// get developer id or create developer
+		developerID, err = p.storage.GetCompanyIDByName(ctx, cg.Developer)
+		if err != nil && !apperr.IsStatusCode(err, apperr.NotFound) {
+			return fmt.Errorf("get company id with name %s: %w", cg.Developer, err)
 		}
-	}
-
-	// get publisher id or create publisher
-	publisherID, err := p.storage.GetCompanyIDByName(ctx, cg.Publisher)
-	if err != nil && !apperr.IsStatusCode(err, apperr.NotFound) {
-		return 0, fmt.Errorf("get company id by name %s: %w", cg.Publisher, err)
-	}
-	if publisherID == 0 {
-		publisherID, err = p.storage.CreateCompany(ctx, model.Company{
-			Name: cg.Publisher,
-		})
-		if err != nil {
-			return 0, fmt.Errorf("create company %s: %w", cg.Publisher, err)
+		if developerID == 0 {
+			developerID, err = p.storage.CreateCompany(ctx, model.Company{
+				Name: cg.Developer,
+			})
+			if err != nil {
+				return fmt.Errorf("create company %s: %w", cg.Developer, err)
+			}
 		}
-	}
 
-	// check if publisher has reached the monthly limit
-	if err = p.checkPublisherMonthlyLimit(ctx, publisherID); err != nil {
-		return 0, err
-	}
+		// get publisher id or create publisher
+		publisherID, err = p.storage.GetCompanyIDByName(ctx, cg.Publisher)
+		if err != nil && !apperr.IsStatusCode(err, apperr.NotFound) {
+			return fmt.Errorf("get company id by name %s: %w", cg.Publisher, err)
+		}
+		if publisherID == 0 {
+			publisherID, err = p.storage.CreateCompany(ctx, model.Company{
+				Name: cg.Publisher,
+			})
+			if err != nil {
+				return fmt.Errorf("create company %s: %w", cg.Publisher, err)
+			}
+		}
 
-	create := cg.MapToCreateGameData(publisherID, developerID)
+		// check if publisher has reached the monthly publishing limit
+		if err = p.checkPublisherMonthlyLimit(ctx, publisherID); err != nil {
+			return err
+		}
 
-	id, err = p.storage.CreateGame(ctx, create)
-	if err != nil {
-		return 0, fmt.Errorf("add new game: %w", err)
+		create = cg.MapToCreateGameData(publisherID, developerID)
+
+		id, err = p.storage.CreateGame(ctx, create)
+		if err != nil {
+			return fmt.Errorf("add new game: %w", err)
+		}
+
+		// create moderation record for game
+		_, err = p.CreateModerationRecord(ctx, id)
+		if err != nil {
+			return fmt.Errorf("create moderation record for game %d: %w", id, err)
+		}
+
+		return nil
+	})
+	if txErr != nil {
+		return 0, txErr
 	}
 
 	// update trending index
@@ -119,6 +135,8 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 	}()
 
 	// invalidate cache
+	//nolint:godox
+	//TODO: move it into successful moderation //
 	go func() {
 		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
@@ -129,12 +147,14 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 		if cErr != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
 		}
+
 		// invalidate games count cache
 		key = gamesCountKey
 		cErr = cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if cErr != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
 		}
+
 		// cache game
 		key = getGameKey(id)
 		cErr = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
@@ -143,6 +163,7 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 		if cErr != nil {
 			p.log.Error("cache game with id", zap.Int32("id", id), zap.Error(cErr))
 		}
+
 		// invalidate companies
 		key = getCompaniesKey()
 		cErr = cache.Delete(bCtx, p.cache, key)
@@ -156,52 +177,64 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 
 // UpdateGame updates game
 func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdateGame) error {
-	game, err := p.storage.GetGameByID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("get game by id %d: %w", id, err)
-	}
+	txErr := p.storage.RunWithTx(ctx, func(ctx context.Context) error {
+		game, err := p.storage.GetGameByID(ctx, id)
+		if err != nil {
+			return fmt.Errorf("get game by id %d: %w", id, err)
+		}
 
-	// check game ownership by publisher
-	publisherID, err := p.storage.GetCompanyIDByName(ctx, upd.Publisher)
-	if err != nil {
-		return fmt.Errorf("get company id by name %s: %w", upd.Publisher, err)
-	}
+		// check game ownership by publisher
+		publisherID, err := p.storage.GetCompanyIDByName(ctx, upd.Publisher)
+		if err != nil {
+			return fmt.Errorf("get company id by name %s: %w", upd.Publisher, err)
+		}
 
-	if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
-		return apperr.NewForbiddenError("game", id)
-	}
+		if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
+			return apperr.NewForbiddenError("game", id)
+		}
 
-	developer := upd.Developer
-	developersIDs := game.DevelopersIDs
-	if developer != nil {
-		if *developer == "" {
-			developersIDs = []int32{}
-		} else {
-			// get id or create developer
-			developerID, cErr := p.storage.GetCompanyIDByName(ctx, *developer)
-			if cErr != nil && !apperr.IsStatusCode(cErr, apperr.NotFound) {
-				return fmt.Errorf("get developer id by name %s: %v", *developer, cErr)
-			}
-			if developerID == 0 {
-				developerID, err = p.storage.CreateCompany(ctx, model.Company{
-					Name: *developer,
-				})
-				if err != nil {
-					return fmt.Errorf("create developer %s: %v", *developer, err)
+		developer := upd.Developer
+		developersIDs := game.DevelopersIDs
+		if developer != nil {
+			if *developer == "" {
+				developersIDs = []int32{}
+			} else {
+				// get id or create developer
+				developerID, cErr := p.storage.GetCompanyIDByName(ctx, *developer)
+				if cErr != nil && !apperr.IsStatusCode(cErr, apperr.NotFound) {
+					return fmt.Errorf("get developer id by name %s: %v", *developer, cErr)
 				}
+				if developerID == 0 {
+					developerID, err = p.storage.CreateCompany(ctx, model.Company{
+						Name: *developer,
+					})
+					if err != nil {
+						return fmt.Errorf("create developer %s: %v", *developer, err)
+					}
+				}
+				developersIDs = []int32{developerID}
 			}
-			developersIDs = []int32{developerID}
 		}
-	}
 
-	update := upd.MapToUpdateGameData(game, developersIDs)
+		update := upd.MapToUpdateGameData(game, developersIDs)
 
-	err = p.storage.UpdateGame(ctx, id, update)
-	if err != nil {
-		if apperr.IsStatusCode(err, apperr.NotFound) {
-			return err
+		err = p.storage.UpdateGame(ctx, id, update)
+		if err != nil {
+			if apperr.IsStatusCode(err, apperr.NotFound) {
+				return err
+			}
+			return fmt.Errorf("update game with id %v: %v", id, err)
 		}
-		return fmt.Errorf("update game with id %v: %v", id, err)
+
+		_, err = p.CreateModerationRecord(ctx, id)
+		if err != nil {
+			return fmt.Errorf("create moderation record for game %d: %w", id, err)
+		}
+
+		return nil
+	})
+	if txErr != nil {
+		return txErr
 	}
 
 	// invalidate cache
@@ -211,7 +244,7 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdateGam
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
+		err := cache.DeleteByStartsWith(bCtx, p.cache, key)
 		if err != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
@@ -329,6 +362,22 @@ func (p *Provider) UpdateGameTrendingIndex(ctx context.Context, gameID int32) er
 	}
 
 	return nil
+}
+
+// GetPublisherGames returns games created by the publisher
+func (p *Provider) GetPublisherGames(ctx context.Context, publisher string) ([]model.Game, error) {
+	publisherID, err := p.storage.GetCompanyIDByName(ctx, publisher)
+	if err != nil {
+		if apperr.IsStatusCode(err, apperr.NotFound) {
+			return []model.Game{}, nil
+		}
+		return nil, fmt.Errorf("get publisher company id by name %s: %w", publisher, err)
+	}
+	games, err := p.storage.GetGamesByPublisherID(ctx, publisherID)
+	if err != nil {
+		return nil, fmt.Errorf("get games by publisher id %d: %w", publisherID, err)
+	}
+	return games, nil
 }
 
 // calculateTrendingIndex calculates the trending index for a game

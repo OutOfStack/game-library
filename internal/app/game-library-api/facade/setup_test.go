@@ -26,7 +26,7 @@ type TestSuite struct {
 }
 
 func (s *TestSuite) SetupTest() {
-	s.ctx = context.Background()
+	s.ctx = s.T().Context()
 	s.ctrl = gomock.NewController(s.T())
 	s.storageMock = facademock.NewMockStorage(s.ctrl)
 	s.log = zap.NewNop()

@@ -15,7 +15,7 @@ COPY . .
 RUN go build -o ./out/game-library-api cmd/game-library-api/main.go
 
 # run
-FROM alpine:3.21
+FROM alpine:3.22
 
 WORKDIR /app
 

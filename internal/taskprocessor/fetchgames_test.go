@@ -1,6 +1,7 @@
 package taskprocessor_test
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -70,10 +71,11 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		},
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error {
+		return f(ctx)
+	})
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
 	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return(nil, nil)
@@ -115,7 +117,7 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		ModerationStatus: model.ModerationStatusReady,
 	}).Return(int32(1), nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartFetchIGDBGames()
 

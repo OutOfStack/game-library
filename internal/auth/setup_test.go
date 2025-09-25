@@ -22,7 +22,7 @@ type TestSuite struct {
 
 func (s *TestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
-	s.ctx = context.Background()
+	s.ctx = s.T().Context()
 	s.log = zap.NewNop()
 	s.authAPIClient = mock.NewMockAPIClient(s.ctrl)
 	var err error

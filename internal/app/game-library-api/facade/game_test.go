@@ -1,6 +1,7 @@
 package facade_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -136,11 +137,19 @@ func (s *TestSuite) TestCreateGame_Success() {
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Millisecond)
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(int32(0), nil)
 	s.storageMock.EXPECT().CreateCompany(s.ctx, model.Company{Name: createGame.Developer}).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, startOfMonth, endOfMonth).Return(1, nil)
 	s.storageMock.EXPECT().CreateGame(s.ctx, createGameData).Return(gameID, nil)
+	s.storageMock.EXPECT().GetGameByID(s.ctx, gameID).Return(model.Game{PublishersIDs: []int32{publisherID}}, nil)
+	moderationID := td.Int32()
+	s.storageMock.EXPECT().CreateModerationRecord(s.ctx, mock.Any()).Return(moderationID, nil)
+	s.storageMock.EXPECT().UpdateGameModerationID(s.ctx, gameID, moderationID).Return(nil)
 	s.storageMock.EXPECT().GetGameTrendingData(mock.Any(), gameID).Return(model.GameTrendingData{}, nil).AnyTimes()
 	s.storageMock.EXPECT().UpdateGameTrendingIndex(mock.Any(), gameID, mock.Any()).Return(nil).AnyTimes()
 
@@ -167,6 +176,10 @@ func (s *TestSuite) TestCreateGame_Error() {
 		ModerationStatus: model.ModerationStatusCheck,
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, mock.Any(), mock.Any()).Return(1, nil)
@@ -185,6 +198,10 @@ func (s *TestSuite) TestCreateGame_MonthlyLimitReached() {
 		Publisher: td.String(),
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, mock.Any(), mock.Any()).Return(facade.MaxGamesPerPublisherPerMonth, nil)
@@ -209,9 +226,16 @@ func (s *TestSuite) TestUpdateGame_Success() {
 		ModerationStatus: model.ModerationStatusRecheck,
 	}
 
-	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
+	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil).AnyTimes()
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(game.PublishersIDs[0], nil)
 	s.storageMock.EXPECT().UpdateGame(s.ctx, game.ID, updateGameData).Return(nil)
+	moderationID := td.Int32()
+	s.storageMock.EXPECT().CreateModerationRecord(s.ctx, mock.Any()).Return(moderationID, nil)
+	s.storageMock.EXPECT().UpdateGameModerationID(s.ctx, game.ID, moderationID).Return(nil)
 	s.storageMock.EXPECT().GetGameTrendingData(mock.Any(), game.ID).Return(model.GameTrendingData{}, nil).AnyTimes()
 	s.storageMock.EXPECT().UpdateGameTrendingIndex(mock.Any(), game.ID, mock.Any()).Return(nil).AnyTimes()
 
@@ -232,6 +256,10 @@ func (s *TestSuite) TestUpdateGame_Forbidden() {
 		Publisher: td.String(),
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(td.Int32(), nil)
 
@@ -247,6 +275,10 @@ func (s *TestSuite) TestUpdateGame_Error() {
 		Publisher: td.String(),
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetGameByID(s.ctx, gameID).Return(model.Game{}, errors.New("new error"))
 
 	err := s.provider.UpdateGame(s.ctx, gameID, updateGame)

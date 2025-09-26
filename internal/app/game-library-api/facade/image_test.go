@@ -30,9 +30,9 @@ func (s *TestSuite) TestUploadGameImages_Success() {
 	// create file headers
 	coverFileName, scrFileName := td.String()+jpg, td.String()+png
 	coverFile, err := s.createFileHeader(coverFormDataParam, coverFileName, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 	screenshotFile, err := s.createFileHeader(screenshotsFormDataParam, scrFileName, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	coverFileID, coverFileURL := td.String(), "https://"+td.String()+".com/"+coverFileName
 	scrFileID, scrFileURL := td.String(), "https://"+td.String()+".com/"+scrFileName
@@ -50,7 +50,7 @@ func (s *TestSuite) TestUploadGameImages_Success() {
 
 	res, err := s.provider.UploadGameImages(s.ctx, []*multipart.FileHeader{coverFile}, []*multipart.FileHeader{screenshotFile}, publisherName)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 2)
 
 	fileNames := []string{res[0].FileName, res[1].FileName}
@@ -69,16 +69,16 @@ func (s *TestSuite) TestUploadGameImages_InvalidCoverFile() {
 
 	// create invalid cover file (too large)
 	coverFile, err := s.createFileHeader(coverFormDataParam, td.String()+jpg, td.Bytesn(2*1024*1024)) // 2MB, exceeds max size
-	s.NoError(err)
+	s.Require().NoError(err)
 	screenshotFile, err := s.createFileHeader(screenshotsFormDataParam, td.String()+png, td.Bytesn(200*1024)) // 200KB
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisherName).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, gomock.Any(), gomock.Any()).Return(0, nil)
 
 	result, err := s.provider.UploadGameImages(s.ctx, []*multipart.FileHeader{coverFile}, []*multipart.FileHeader{screenshotFile}, publisherName)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "file size exceeds maximum")
 	s.Empty(result)
 }
@@ -92,7 +92,7 @@ func (s *TestSuite) TestUploadGameImages_PublisherMonthlyLimitReached() {
 
 	result, err := s.provider.UploadGameImages(s.ctx, nil, nil, publisherName)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), fmt.Sprintf("publishing monthly limit of %d reached", facade.MaxGamesPerPublisherPerMonth))
 	s.Empty(result)
 }
@@ -102,16 +102,16 @@ func (s *TestSuite) TestUploadGameImages_InvalidScreenshotFile() {
 
 	// create valid cover file but invalid screenshot file (unsupported type)
 	coverFile, err := s.createFileHeader(coverFormDataParam, td.String()+jpg, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 	screenshotFile, err := s.createFileHeader(screenshotsFormDataParam, td.String()+".bmp", td.Bytesn(contentLength)) // unsupported type
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisherName).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, gomock.Any(), gomock.Any()).Return(0, nil)
 
 	result, err := s.provider.UploadGameImages(s.ctx, []*multipart.FileHeader{coverFile}, []*multipart.FileHeader{screenshotFile}, publisherName)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "unsupported file type")
 	s.Empty(result)
 }
@@ -121,18 +121,18 @@ func (s *TestSuite) TestUploadGameImages_TooManyFiles() {
 
 	// create too many cover files
 	coverFile1, err := s.createFileHeader(coverFormDataParam, td.String()+jpg, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 	coverFile2, err := s.createFileHeader(coverFormDataParam, td.String()+jpg, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 	screenshotFile, err := s.createFileHeader(screenshotsFormDataParam, td.String()+png, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisherName).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, gomock.Any(), gomock.Any()).Return(0, nil)
 
 	result, err := s.provider.UploadGameImages(s.ctx, []*multipart.FileHeader{coverFile1, coverFile2}, []*multipart.FileHeader{screenshotFile}, publisherName)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "too many files")
 	s.Empty(result)
 }
@@ -141,9 +141,9 @@ func (s *TestSuite) TestUploadGameImages_S3UploadError() {
 	publisherName, publisherID := td.String(), td.Int31()
 
 	coverFile, err := s.createFileHeader(coverFormDataParam, td.String()+jpg, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 	screenshotFile, err := s.createFileHeader(screenshotsFormDataParam, td.String()+png, td.Bytesn(contentLength))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, publisherName).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, gomock.Any(), gomock.Any()).Return(0, nil)
@@ -153,7 +153,7 @@ func (s *TestSuite) TestUploadGameImages_S3UploadError() {
 		AnyTimes()
 
 	result, err := s.provider.UploadGameImages(s.ctx, []*multipart.FileHeader{coverFile}, []*multipart.FileHeader{screenshotFile}, publisherName)
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "failed to upload to S3")
 	s.Empty(result)
 }
@@ -166,7 +166,7 @@ func (s *TestSuite) TestUploadGameImages_NoFiles() {
 
 	result, err := s.provider.UploadGameImages(s.ctx, []*multipart.FileHeader{}, []*multipart.FileHeader{}, publisherName)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "no files provided")
 	s.Empty(result)
 }
@@ -199,7 +199,7 @@ func (s *TestSuite) createFileHeader(fieldName, fileName string, content []byte)
 	}
 	defer func() {
 		err = form.RemoveAll()
-		s.NoError(err)
+		s.Require().NoError(err)
 	}()
 
 	files := form.File[fieldName]

@@ -23,7 +23,7 @@ func (s *TestSuite) TestGetGenres_Success() {
 
 	res, err := s.provider.GetGenres(s.ctx)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(genres[0], res[0])
 }
@@ -34,8 +34,8 @@ func (s *TestSuite) TestGetGenres_Error() {
 
 	res, err := s.provider.GetGenres(s.ctx)
 
-	s.Error(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetGenresMap_Success() {
@@ -51,7 +51,7 @@ func (s *TestSuite) TestGetGenresMap_Success() {
 
 	res, err := s.provider.GetGenresMap(s.ctx)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(genres[0], res[genres[0].ID])
 }
@@ -62,8 +62,8 @@ func (s *TestSuite) TestGetGenresMap_Error() {
 
 	res, err := s.provider.GetGenresMap(s.ctx)
 
-	s.NotNil(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetTopGenres_Success() {
@@ -79,7 +79,7 @@ func (s *TestSuite) TestGetTopGenres_Success() {
 
 	res, err := s.provider.GetTopGenres(s.ctx, 5)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(genres[0], res[0])
 }
@@ -90,8 +90,8 @@ func (s *TestSuite) TestGetTopGenres_Error() {
 
 	res, err := s.provider.GetTopGenres(s.ctx, 5)
 
-	s.NotNil(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetGenreByID_Success() {
@@ -105,7 +105,7 @@ func (s *TestSuite) TestGetGenreByID_Success() {
 
 	res, err := s.provider.GetGenreByID(s.ctx, genre.ID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(genre, res)
 }
 
@@ -114,6 +114,6 @@ func (s *TestSuite) TestGetGenreByID_Error() {
 
 	res, err := s.provider.GetGenreByID(s.ctx, td.Int32())
 
-	s.NotNil(err)
+	s.Require().Error(err)
 	s.Equal(model.Genre{}, res)
 }

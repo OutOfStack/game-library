@@ -25,7 +25,7 @@ func (s *TestSuite) TestGetPlatforms_Success() {
 
 	res, err := s.provider.GetPlatforms(s.ctx)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(platforms[0], res[0])
 }
@@ -36,8 +36,8 @@ func (s *TestSuite) TestGetPlatforms_Error() {
 
 	res, err := s.provider.GetPlatforms(s.ctx)
 
-	s.Error(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetPlatformsMap_Success() {
@@ -54,7 +54,7 @@ func (s *TestSuite) TestGetPlatformsMap_Success() {
 
 	res, err := s.provider.GetPlatformsMap(s.ctx)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(platforms[0], res[platforms[0].ID])
 }
@@ -65,8 +65,8 @@ func (s *TestSuite) TestGetPlatformsMap_Error() {
 
 	res, err := s.provider.GetPlatformsMap(s.ctx)
 
-	s.Error(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetPlatformByID_Success() {
@@ -81,7 +81,7 @@ func (s *TestSuite) TestGetPlatformByID_Success() {
 
 	res, err := s.provider.GetPlatformByID(s.ctx, platform.ID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(platform.ID, res.ID)
 	s.Equal(platform.Name, res.Name)
 	s.Equal(platform.Abbreviation, res.Abbreviation)
@@ -95,7 +95,7 @@ func (s *TestSuite) TestGetPlatformByID_NotFound() {
 
 	_, err := s.provider.GetPlatformByID(s.ctx, platformID)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.True(apperr.IsStatusCode(err, apperr.NotFound))
 }
 

@@ -96,11 +96,11 @@ func TestDecodeChi_ValidationError(t *testing.T) {
 	err := decoder.Decode(req, &decoded)
 
 	require.Error(t, err)
-	require.IsType(t, &web.Error{}, err)
+	var webErr *web.Error
+	require.ErrorAs(t, err, &webErr)
 
 	var validationErr *web.Error
-	ok := errors.As(err, &validationErr)
-	require.True(t, ok)
+	require.ErrorAs(t, err, &validationErr)
 	require.Equal(t, http.StatusBadRequest, validationErr.StatusCode)
 	require.Len(t, validationErr.Fields, 2)
 
@@ -123,7 +123,8 @@ func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
 
 	// Ensure the error is of type *Error
 	require.Error(t, err)
-	require.IsType(t, &web.Error{}, err)
+	var webErr *web.Error
+	require.ErrorAs(t, err, &webErr)
 
 	var validationErr *web.Error
 	ok := errors.As(err, &validationErr)

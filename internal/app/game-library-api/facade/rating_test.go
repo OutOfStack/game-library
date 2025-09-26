@@ -26,7 +26,7 @@ func (s *TestSuite) TestRateGame_Success() {
 
 	err := s.provider.RateGame(s.ctx, gameID, userID, rating)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestRateGame_Delete_Success() {
@@ -44,7 +44,7 @@ func (s *TestSuite) TestRateGame_Delete_Success() {
 
 	err := s.provider.RateGame(s.ctx, gameID, userID, rating)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestRateGame_Error() {
@@ -67,7 +67,7 @@ func (s *TestSuite) TestGetUserRatings_Success() {
 
 	res, err := s.provider.GetUserRatings(s.ctx, userID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(m, res)
 }
 
@@ -79,6 +79,6 @@ func (s *TestSuite) TestGetUserRatings_Error() {
 
 	res, err := s.provider.GetUserRatings(s.ctx, userID)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Nil(res)
 }

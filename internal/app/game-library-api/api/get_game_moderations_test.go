@@ -66,7 +66,7 @@ func (s *TestSuite) Test_GetGameModerations_Success() {
 
 	var response []api.ModerationItem
 	err := json.Unmarshal(s.httpResponse.Body.Bytes(), &response)
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(expectedResponse, response)
 }
 

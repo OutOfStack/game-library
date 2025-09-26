@@ -44,7 +44,7 @@ func (s *TestSuite) TestGetGames_Success() {
 
 	res, cnt, err := s.provider.GetGames(s.ctx, 1, 10, model.GamesFilter{})
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(games[0], res[0])
 	s.Equal(count, cnt)
@@ -57,8 +57,8 @@ func (s *TestSuite) TestGetGames_Error() {
 
 	res, cnt, err := s.provider.GetGames(s.ctx, 1, 10, model.GamesFilter{})
 
-	s.Error(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 	s.Equal(uint64(0), cnt)
 }
 
@@ -87,7 +87,7 @@ func (s *TestSuite) TestGetGameByID_Success() {
 
 	res, err := s.provider.GetGameByID(s.ctx, game.ID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(game, res)
 }
 
@@ -97,7 +97,7 @@ func (s *TestSuite) TestGetGameByID_Error() {
 
 	res, err := s.provider.GetGameByID(s.ctx, td.Int32())
 
-	s.NotNil(err)
+	s.Require().Error(err)
 	s.Equal(model.Game{}, res)
 }
 
@@ -159,7 +159,7 @@ func (s *TestSuite) TestCreateGame_Success() {
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(gameID, id)
 }
 
@@ -187,7 +187,7 @@ func (s *TestSuite) TestCreateGame_Error() {
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Equal(int32(0), id)
 }
 
@@ -208,7 +208,7 @@ func (s *TestSuite) TestCreateGame_MonthlyLimitReached() {
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), fmt.Sprintf("publishing monthly limit of %d reached", facade.MaxGamesPerPublisherPerMonth))
 	s.Equal(int32(0), id)
 }
@@ -245,7 +245,7 @@ func (s *TestSuite) TestUpdateGame_Success() {
 
 	err := s.provider.UpdateGame(s.ctx, game.ID, updateGame)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestUpdateGame_Forbidden() {
@@ -265,7 +265,7 @@ func (s *TestSuite) TestUpdateGame_Forbidden() {
 
 	err := s.provider.UpdateGame(s.ctx, game.ID, updateGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.True(apperr.IsStatusCode(err, http.StatusForbidden))
 }
 
@@ -283,7 +283,7 @@ func (s *TestSuite) TestUpdateGame_Error() {
 
 	err := s.provider.UpdateGame(s.ctx, gameID, updateGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 }
 
 func (s *TestSuite) TestDeleteGame_Success() {
@@ -302,7 +302,7 @@ func (s *TestSuite) TestDeleteGame_Success() {
 
 	err := s.provider.DeleteGame(s.ctx, game.ID, publisher)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestDeleteGame_Forbidden() {
@@ -316,7 +316,7 @@ func (s *TestSuite) TestDeleteGame_Forbidden() {
 
 	err := s.provider.DeleteGame(s.ctx, game.ID, publisher)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.True(apperr.IsStatusCode(err, http.StatusForbidden))
 }
 
@@ -333,7 +333,7 @@ func (s *TestSuite) TestDeleteGame_Error() {
 
 	err := s.provider.DeleteGame(s.ctx, game.ID, publisher)
 
-	s.Error(err)
+	s.Require().Error(err)
 }
 
 func (s *TestSuite) TestUpdateGameTrendingIndex_Success() {
@@ -352,7 +352,7 @@ func (s *TestSuite) TestUpdateGameTrendingIndex_Success() {
 
 	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestUpdateGameTrendingIndex_GetDataError() {
@@ -362,7 +362,7 @@ func (s *TestSuite) TestUpdateGameTrendingIndex_GetDataError() {
 
 	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "get data error")
 }
 
@@ -382,6 +382,6 @@ func (s *TestSuite) TestUpdateGameTrendingIndex_UpdateError() {
 
 	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "update error")
 }

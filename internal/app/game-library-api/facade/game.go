@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"slices"
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -189,7 +190,7 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdateGam
 			return fmt.Errorf("get company id by name %s: %w", upd.Publisher, err)
 		}
 
-		if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
+		if !slices.Contains(game.PublishersIDs, publisherID) {
 			return apperr.NewForbiddenError("game", id)
 		}
 
@@ -287,7 +288,7 @@ func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) e
 		return fmt.Errorf("get game by id %d: %w", id, err)
 	}
 
-	if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
+	if !slices.Contains(game.PublishersIDs, publisherID) {
 		return apperr.NewForbiddenError("game", id)
 	}
 

@@ -1,6 +1,7 @@
 package facade_test
 
 import (
+	"context"
 	"errors"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -45,6 +46,9 @@ func (s *TestSuite) TestCreateModerationRecord_Success() {
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return([]model.Genre{
 		{ID: game.GenresIDs[0], Name: genres[game.GenresIDs[0]].Name},
 	}, nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+		return fn(ctx)
+	})
 	s.storageMock.EXPECT().CreateModerationRecord(gomock.Any(), gomock.Any()).Return(moderationID, nil)
 	s.storageMock.EXPECT().UpdateGameModerationID(gomock.Any(), gameID, moderationID).Return(nil)
 
@@ -118,6 +122,9 @@ func (s *TestSuite) TestCreateModerationRecord_CreateModerationError() {
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(game, nil)
 	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return([]model.Company{{ID: game.PublishersIDs[0], Name: td.String()}}, nil)
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return([]model.Genre{}, nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+		return fn(ctx)
+	})
 	s.storageMock.EXPECT().CreateModerationRecord(gomock.Any(), gomock.Any()).Return(int32(0), createModerationErr)
 
 	_, err := s.provider.CreateModerationRecord(s.T().Context(), gameID)
@@ -142,6 +149,9 @@ func (s *TestSuite) TestCreateModerationRecord_UpdateModerationIDError() {
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(game, nil)
 	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return([]model.Company{{ID: game.PublishersIDs[0], Name: td.String()}}, nil)
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return([]model.Genre{}, nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+		return fn(ctx)
+	})
 	s.storageMock.EXPECT().CreateModerationRecord(gomock.Any(), gomock.Any()).Return(moderationID, nil)
 	s.storageMock.EXPECT().UpdateGameModerationID(gomock.Any(), gameID, moderationID).Return(updateModerationIDErr)
 

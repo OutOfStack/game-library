@@ -121,7 +121,7 @@ func (s *TestSuite) Test_UploadGameImages_PublishingMonthlyLimitReached() {
 	// add a test file
 	fileWriter, _ := w.CreateFormFile("cover", "test.jpg")
 	_, err := io.Copy(fileWriter, bytes.NewReader(td.Bytes()))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	if cErr := w.Close(); cErr != nil {
 		s.T().Log(cErr)
@@ -154,7 +154,7 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 	// add a test file
 	fileWriter, _ := w.CreateFormFile("cover", "test.jpg")
 	_, err := io.Copy(fileWriter, bytes.NewReader(td.Bytes()))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	if cErr := w.Close(); cErr != nil {
 		s.T().Log(cErr)

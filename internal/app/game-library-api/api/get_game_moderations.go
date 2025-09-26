@@ -55,9 +55,9 @@ func (p *Provider) GetGameModerations(w http.ResponseWriter, r *http.Request) {
 	resp := make([]api.ModerationItem, 0, len(mods))
 	for _, m := range mods {
 		it := api.ModerationItem{
-			ID:           m.ID,
-			ResultStatus: m.ResultStatus,
-			Details:      m.Details,
+			ID:      m.ID,
+			Status:  m.Status,
+			Details: m.Details,
 		}
 		if m.CreatedAt.Valid {
 			it.CreatedAt = m.CreatedAt.Time.Format(time.RFC3339)

@@ -144,7 +144,7 @@ func (ug UpdateGame) MapToUpdateGameData(g Game, developersIDs []int32) UpdateGa
 	}
 
 	update.DevelopersIDs = developersIDs
-	update.ModerationStatus = ModerationStatusRecheck
+	update.ModerationStatus = ModerationStatusPending
 
 	if ug.Name != nil {
 		update.Name = *ug.Name
@@ -189,6 +189,6 @@ func (cg CreateGame) MapToCreateGameData(publisherID, developerID int32) CreateG
 		PlatformsIDs:     cg.PlatformsIDs,
 		Screenshots:      cg.Screenshots,
 		Websites:         cg.Websites,
-		ModerationStatus: ModerationStatusCheck,
+		ModerationStatus: ModerationStatusPending,
 	}
 }

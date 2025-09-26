@@ -18,7 +18,7 @@ func (s *Storage) CreateModerationRecord(ctx context.Context, m model.CreateMode
 	defer span.End()
 
 	const q = `
-        INSERT INTO game_moderation (game_id, game_data, result_status, created_at)
+        INSERT INTO game_moderation (game_id, game_data, status, created_at)
         VALUES ($1, $2, $3, $4)
         RETURNING id`
 
@@ -36,7 +36,7 @@ func (s *Storage) SetModerationRecordResult(ctx context.Context, id int32, res m
 
 	const q = `
         UPDATE game_moderation
-        SET result_status = $2, details = $3, error = $4, updated_at = $5
+        SET status = $2, details = $3, error = $4, updated_at = $5
         WHERE id = $1`
 
 	execRes, err := s.querier(ctx).Exec(ctx, q, id, res.ResultStatus, res.Details, res.Error, time.Now())
@@ -53,7 +53,7 @@ func (s *Storage) GetModerationRecordByID(ctx context.Context, id int32) (m mode
 	defer span.End()
 
 	const q = `
-        SELECT id, game_id, result_status, details, error, game_data, created_at, updated_at
+        SELECT id, game_id, status, details, error, game_data, created_at, updated_at
         FROM game_moderation
         WHERE id = $1`
 
@@ -72,7 +72,7 @@ func (s *Storage) GetModerationRecordsByGameID(ctx context.Context, gameID int32
 	defer span.End()
 
 	const q = `
-        SELECT id, game_id, result_status, details, error, game_data, created_at, updated_at
+        SELECT id, game_id, status, details, error, game_data, created_at, updated_at
         FROM game_moderation
         WHERE game_id = $1
         ORDER BY id DESC`

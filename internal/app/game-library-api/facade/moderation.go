@@ -3,6 +3,7 @@ package facade
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
@@ -20,19 +21,28 @@ func (p *Provider) CreateModerationRecord(ctx context.Context, gameID int32) (in
 	if err != nil {
 		return 0, fmt.Errorf("get game %d moderation data: %w", gameID, err)
 	}
-	// create moderation record
-	id, err := p.storage.CreateModerationRecord(ctx, model.NewCreateModeration(gameID, moderationData))
-	if err != nil {
-		return 0, fmt.Errorf("create moderation record for game %d: %w", gameID, err)
+
+	var moderationID int32
+	txErr := p.storage.RunWithTx(ctx, func(ctx context.Context) error {
+		// create moderation record
+		moderationID, err = p.storage.CreateModerationRecord(ctx, model.NewCreateModeration(gameID, moderationData))
+		if err != nil {
+			return fmt.Errorf("create moderation record for game %d: %w", gameID, err)
+		}
+
+		// set moderation id to game
+		err = p.storage.UpdateGameModerationID(ctx, gameID, moderationID)
+		if err != nil {
+			return fmt.Errorf("update game %d moderation id: %w", gameID, err)
+		}
+
+		return nil
+	})
+	if txErr != nil {
+		return 0, txErr
 	}
 
-	// set moderation id to game
-	err = p.storage.UpdateGameModerationID(ctx, gameID, id)
-	if err != nil {
-		return 0, fmt.Errorf("update game %d moderation id: %w", gameID, err)
-	}
-
-	return id, nil
+	return moderationID, nil
 }
 
 // GetGameModerations returns all moderations for a game, ensuring the caller is its publisher
@@ -45,7 +55,7 @@ func (p *Provider) GetGameModerations(ctx context.Context, gameID int32, publish
 	if err != nil {
 		return nil, fmt.Errorf("get publisher id by name %s: %w", publisher, err)
 	}
-	if len(game.PublishersIDs) != 1 || game.PublishersIDs[0] != publisherID {
+	if !slices.Contains(game.PublishersIDs, publisherID) {
 		return nil, apperr.NewForbiddenError("game", gameID)
 	}
 	list, err := p.storage.GetModerationRecordsByGameID(ctx, gameID)

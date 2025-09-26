@@ -76,8 +76,9 @@ func TestDecodeChi_InvalidJSON(t *testing.T) {
 	err := decoder.Decode(req, &decoded)
 
 	require.Error(t, err)
-	require.IsType(t, &web.Error{}, err)
-	require.Equal(t, http.StatusBadRequest, err.(*web.Error).StatusCode) //nolint
+	var webErr *web.Error
+	require.ErrorAs(t, err, &webErr)
+	require.Equal(t, http.StatusBadRequest, webErr.StatusCode)
 }
 
 func TestDecodeChi_ValidationError(t *testing.T) {

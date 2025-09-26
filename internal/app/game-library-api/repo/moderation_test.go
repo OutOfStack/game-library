@@ -32,7 +32,7 @@ func TestModeration_CreateAndGetByID_ShouldMatch(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, mid, got.ID)
 	require.Equal(t, gameID, got.GameID)
-	require.Empty(t, got.ResultStatus)
+	require.Empty(t, got.Status)
 	require.Empty(t, got.Details)
 	require.Equal(t, cg.Name, got.GameData.Name)
 	require.Equal(t, cg.Slug, got.GameData.Slug)
@@ -87,7 +87,7 @@ func TestModeration_SetResult_ShouldUpdateRecord(t *testing.T) {
 
 	got, err := s.GetModerationRecordByID(ctx, id)
 	require.NoError(t, err)
-	require.Equal(t, string(model.ModerationStatusDeclined), got.ResultStatus)
+	require.Equal(t, string(model.ModerationStatusDeclined), got.Status)
 	require.Equal(t, "invalid logo url", got.Details)
 	require.True(t, got.Error.Valid)
 	require.Equal(t, e, got.Error.String)
@@ -102,7 +102,7 @@ func TestModeration_SetResult_ShouldUpdateRecord(t *testing.T) {
 
 	got, err = s.GetModerationRecordByID(ctx, id)
 	require.NoError(t, err)
-	require.Equal(t, string(model.ModerationStatusReady), got.ResultStatus)
+	require.Equal(t, string(model.ModerationStatusReady), got.Status)
 	require.Empty(t, got.Details)
 }
 

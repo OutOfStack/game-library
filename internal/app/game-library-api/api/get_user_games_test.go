@@ -69,7 +69,7 @@ func (s *TestSuite) Test_GetUserGames_Success() {
 
 	var response []api.GameResponse
 	err := json.Unmarshal(s.httpResponse.Body.Bytes(), &response)
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(expectedResponse, response)
 }
 

@@ -130,7 +130,7 @@ func (s *TestSuite) TestCreateGame_Success() {
 		PlatformsIDs:     createGame.PlatformsIDs,
 		Screenshots:      createGame.Screenshots,
 		Websites:         createGame.Websites,
-		ModerationStatus: model.ModerationStatusCheck,
+		ModerationStatus: model.ModerationStatusPending,
 	}
 
 	now := time.Now()
@@ -140,7 +140,7 @@ func (s *TestSuite) TestCreateGame_Success() {
 	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
 		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
 			return txFunc(ctx)
-		})
+		}).Times(2)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(int32(0), nil)
 	s.storageMock.EXPECT().CreateCompany(s.ctx, model.Company{Name: createGame.Developer}).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
@@ -173,7 +173,7 @@ func (s *TestSuite) TestCreateGame_Error() {
 	createGameData := model.CreateGameData{
 		DevelopersIDs:    []int32{developerID},
 		PublishersIDs:    []int32{publisherID},
-		ModerationStatus: model.ModerationStatusCheck,
+		ModerationStatus: model.ModerationStatusPending,
 	}
 
 	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
@@ -223,13 +223,13 @@ func (s *TestSuite) TestUpdateGame_Success() {
 	}
 	updateGameData := model.UpdateGameData{
 		PublishersIDs:    game.PublishersIDs,
-		ModerationStatus: model.ModerationStatusRecheck,
+		ModerationStatus: model.ModerationStatusPending,
 	}
 
 	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
 		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
 			return txFunc(ctx)
-		})
+		}).Times(2)
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil).AnyTimes()
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(game.PublishersIDs[0], nil)
 	s.storageMock.EXPECT().UpdateGame(s.ctx, game.ID, updateGameData).Return(nil)

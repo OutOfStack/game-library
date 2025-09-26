@@ -11,28 +11,26 @@ import (
 type ModerationStatus string
 
 const (
-	// ModerationStatusCheck represents a game that needs moderation
-	ModerationStatusCheck ModerationStatus = "check"
+	// ModerationStatusPending represents a game that needs moderation
+	ModerationStatusPending ModerationStatus = "pending"
 	// ModerationStatusInProgress represents a game that is being moderated at the moment
 	ModerationStatusInProgress ModerationStatus = "in_progress"
 	// ModerationStatusReady represents a game that is ready
 	ModerationStatusReady ModerationStatus = "ready"
 	// ModerationStatusDeclined represents a game that is declined and requires fixing
 	ModerationStatusDeclined ModerationStatus = "declined"
-	// ModerationStatusRecheck represents a game that needs rechecking
-	ModerationStatusRecheck ModerationStatus = "recheck"
 )
 
 // Moderation represents stored moderation record
 type Moderation struct {
-	ID           int32          `db:"id"`
-	GameID       int32          `db:"game_id"`
-	ResultStatus string         `db:"result_status"`
-	Details      string         `db:"details"`
-	Error        sql.NullString `db:"error"`
-	GameData     ModerationData `db:"game_data"`
-	CreatedAt    sql.NullTime   `db:"created_at"`
-	UpdatedAt    sql.NullTime   `db:"updated_at"`
+	ID        int32          `db:"id"`
+	GameID    int32          `db:"game_id"`
+	Status    string         `db:"status"`
+	Details   string         `db:"details"`
+	Error     sql.NullString `db:"error"`
+	GameData  ModerationData `db:"game_data"`
+	CreatedAt sql.NullTime   `db:"created_at"`
+	UpdatedAt sql.NullTime   `db:"updated_at"`
 }
 
 // ModerationData represents game data for moderation
@@ -67,7 +65,7 @@ func NewCreateModeration(gameID int32, gameData ModerationData) CreateModeration
 	return CreateModeration{
 		GameID:   gameID,
 		GameData: gameData,
-		Status:   ModerationStatusCheck,
+		Status:   ModerationStatusPending,
 	}
 }
 

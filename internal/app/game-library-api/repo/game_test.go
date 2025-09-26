@@ -902,7 +902,7 @@ func TestUpdateGameModerationID_Valid_ShouldUpdateModerationID(t *testing.T) {
 	// Create a moderation record first (required by foreign key constraint)
 	createModeration := model.CreateModeration{
 		GameID: gameID,
-		Status: model.ModerationStatusCheck,
+		Status: model.ModerationStatusPending,
 		GameData: model.ModerationData{
 			Name:      cg.Name,
 			Publisher: "Test Publisher",

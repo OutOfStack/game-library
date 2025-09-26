@@ -29,21 +29,21 @@ func (s *TestSuite) Test_GetGameModerations_Success() {
 
 	moderations := []model.Moderation{
 		{
-			ID:           td.Int31(),
-			ResultStatus: "approved",
-			Details:      "Game approved",
-			CreatedAt:    sql.NullTime{Time: createdAt, Valid: true},
-			UpdatedAt:    sql.NullTime{Time: updatedAt, Valid: true},
+			ID:        td.Int31(),
+			Status:    "approved",
+			Details:   "Game approved",
+			CreatedAt: sql.NullTime{Time: createdAt, Valid: true},
+			UpdatedAt: sql.NullTime{Time: updatedAt, Valid: true},
 		},
 	}
 
 	expectedResponse := []api.ModerationItem{
 		{
-			ID:           moderations[0].ID,
-			ResultStatus: moderations[0].ResultStatus,
-			Details:      moderations[0].Details,
-			CreatedAt:    createdAt.Format(time.RFC3339),
-			UpdatedAt:    updatedAt.Format(time.RFC3339),
+			ID:        moderations[0].ID,
+			Status:    moderations[0].Status,
+			Details:   moderations[0].Details,
+			CreatedAt: createdAt.Format(time.RFC3339),
+			UpdatedAt: updatedAt.Format(time.RFC3339),
 		},
 	}
 

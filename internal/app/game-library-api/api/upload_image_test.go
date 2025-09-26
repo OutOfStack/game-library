@@ -28,12 +28,12 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 	coverWriter, _ := w.CreateFormFile("cover", "cover.jpg")
 	coverContent := td.Bytes()
 	_, err := io.Copy(coverWriter, bytes.NewReader(coverContent))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	screenshotWriter, _ := w.CreateFormFile("screenshots", "screenshot1.jpg")
 	screenshotContent := td.Bytes()
 	_, err = io.Copy(screenshotWriter, bytes.NewReader(screenshotContent))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	if cErr := w.Close(); cErr != nil {
 		s.T().Log(cErr)
@@ -73,7 +73,7 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 
 	var response api.UploadImagesResponse
 	err = json.NewDecoder(s.httpResponse.Body).Decode(&response)
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(response.Files, len(expectedFiles))
 	for i, file := range response.Files {
 		s.Equal(expectedFiles[i].FileName, file.FileName)
@@ -121,7 +121,7 @@ func (s *TestSuite) Test_UploadGameImages_PublishingMonthlyLimitReached() {
 	// add a test file
 	fileWriter, _ := w.CreateFormFile("cover", "test.jpg")
 	_, err := io.Copy(fileWriter, bytes.NewReader(td.Bytes()))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	if cErr := w.Close(); cErr != nil {
 		s.T().Log(cErr)
@@ -154,7 +154,7 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 	// add a test file
 	fileWriter, _ := w.CreateFormFile("cover", "test.jpg")
 	_, err := io.Copy(fileWriter, bytes.NewReader(td.Bytes()))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	if cErr := w.Close(); cErr != nil {
 		s.T().Log(cErr)

@@ -1,6 +1,7 @@
 package facade_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -43,7 +44,7 @@ func (s *TestSuite) TestGetGames_Success() {
 
 	res, cnt, err := s.provider.GetGames(s.ctx, 1, 10, model.GamesFilter{})
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(games[0], res[0])
 	s.Equal(count, cnt)
@@ -56,8 +57,8 @@ func (s *TestSuite) TestGetGames_Error() {
 
 	res, cnt, err := s.provider.GetGames(s.ctx, 1, 10, model.GamesFilter{})
 
-	s.Error(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 	s.Equal(uint64(0), cnt)
 }
 
@@ -86,7 +87,7 @@ func (s *TestSuite) TestGetGameByID_Success() {
 
 	res, err := s.provider.GetGameByID(s.ctx, game.ID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(game, res)
 }
 
@@ -96,7 +97,7 @@ func (s *TestSuite) TestGetGameByID_Error() {
 
 	res, err := s.provider.GetGameByID(s.ctx, td.Int32())
 
-	s.NotNil(err)
+	s.Require().Error(err)
 	s.Equal(model.Game{}, res)
 }
 
@@ -129,18 +130,26 @@ func (s *TestSuite) TestCreateGame_Success() {
 		PlatformsIDs:     createGame.PlatformsIDs,
 		Screenshots:      createGame.Screenshots,
 		Websites:         createGame.Websites,
-		ModerationStatus: model.ModerationStatusCheck,
+		ModerationStatus: model.ModerationStatusPending,
 	}
 
 	now := time.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Millisecond)
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		}).Times(2)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(int32(0), nil)
 	s.storageMock.EXPECT().CreateCompany(s.ctx, model.Company{Name: createGame.Developer}).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, startOfMonth, endOfMonth).Return(1, nil)
 	s.storageMock.EXPECT().CreateGame(s.ctx, createGameData).Return(gameID, nil)
+	s.storageMock.EXPECT().GetGameByID(s.ctx, gameID).Return(model.Game{PublishersIDs: []int32{publisherID}}, nil)
+	moderationID := td.Int32()
+	s.storageMock.EXPECT().CreateModerationRecord(s.ctx, mock.Any()).Return(moderationID, nil)
+	s.storageMock.EXPECT().UpdateGameModerationID(s.ctx, gameID, moderationID).Return(nil)
 	s.storageMock.EXPECT().GetGameTrendingData(mock.Any(), gameID).Return(model.GameTrendingData{}, nil).AnyTimes()
 	s.storageMock.EXPECT().UpdateGameTrendingIndex(mock.Any(), gameID, mock.Any()).Return(nil).AnyTimes()
 
@@ -150,7 +159,7 @@ func (s *TestSuite) TestCreateGame_Success() {
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(gameID, id)
 }
 
@@ -164,9 +173,13 @@ func (s *TestSuite) TestCreateGame_Error() {
 	createGameData := model.CreateGameData{
 		DevelopersIDs:    []int32{developerID},
 		PublishersIDs:    []int32{publisherID},
-		ModerationStatus: model.ModerationStatusCheck,
+		ModerationStatus: model.ModerationStatusPending,
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, mock.Any(), mock.Any()).Return(1, nil)
@@ -174,7 +187,7 @@ func (s *TestSuite) TestCreateGame_Error() {
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Equal(int32(0), id)
 }
 
@@ -185,13 +198,17 @@ func (s *TestSuite) TestCreateGame_MonthlyLimitReached() {
 		Publisher: td.String(),
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Developer).Return(developerID, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, createGame.Publisher).Return(publisherID, nil)
 	s.storageMock.EXPECT().GetPublisherGamesCount(s.ctx, publisherID, mock.Any(), mock.Any()).Return(facade.MaxGamesPerPublisherPerMonth, nil)
 
 	id, err := s.provider.CreateGame(s.ctx, createGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), fmt.Sprintf("publishing monthly limit of %d reached", facade.MaxGamesPerPublisherPerMonth))
 	s.Equal(int32(0), id)
 }
@@ -206,12 +223,19 @@ func (s *TestSuite) TestUpdateGame_Success() {
 	}
 	updateGameData := model.UpdateGameData{
 		PublishersIDs:    game.PublishersIDs,
-		ModerationStatus: model.ModerationStatusRecheck,
+		ModerationStatus: model.ModerationStatusPending,
 	}
 
-	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		}).Times(2)
+	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil).AnyTimes()
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(game.PublishersIDs[0], nil)
 	s.storageMock.EXPECT().UpdateGame(s.ctx, game.ID, updateGameData).Return(nil)
+	moderationID := td.Int32()
+	s.storageMock.EXPECT().CreateModerationRecord(s.ctx, mock.Any()).Return(moderationID, nil)
+	s.storageMock.EXPECT().UpdateGameModerationID(s.ctx, game.ID, moderationID).Return(nil)
 	s.storageMock.EXPECT().GetGameTrendingData(mock.Any(), game.ID).Return(model.GameTrendingData{}, nil).AnyTimes()
 	s.storageMock.EXPECT().UpdateGameTrendingIndex(mock.Any(), game.ID, mock.Any()).Return(nil).AnyTimes()
 
@@ -221,7 +245,7 @@ func (s *TestSuite) TestUpdateGame_Success() {
 
 	err := s.provider.UpdateGame(s.ctx, game.ID, updateGame)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestUpdateGame_Forbidden() {
@@ -232,12 +256,16 @@ func (s *TestSuite) TestUpdateGame_Forbidden() {
 		Publisher: td.String(),
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
 	s.storageMock.EXPECT().GetCompanyIDByName(s.ctx, updateGame.Publisher).Return(td.Int32(), nil)
 
 	err := s.provider.UpdateGame(s.ctx, game.ID, updateGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.True(apperr.IsStatusCode(err, http.StatusForbidden))
 }
 
@@ -247,11 +275,15 @@ func (s *TestSuite) TestUpdateGame_Error() {
 		Publisher: td.String(),
 	}
 
+	s.storageMock.EXPECT().RunWithTx(mock.Any(), mock.Any()).
+		DoAndReturn(func(ctx context.Context, txFunc func(ctx context.Context) error) error {
+			return txFunc(ctx)
+		})
 	s.storageMock.EXPECT().GetGameByID(s.ctx, gameID).Return(model.Game{}, errors.New("new error"))
 
 	err := s.provider.UpdateGame(s.ctx, gameID, updateGame)
 
-	s.Error(err)
+	s.Require().Error(err)
 }
 
 func (s *TestSuite) TestDeleteGame_Success() {
@@ -270,7 +302,7 @@ func (s *TestSuite) TestDeleteGame_Success() {
 
 	err := s.provider.DeleteGame(s.ctx, game.ID, publisher)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestDeleteGame_Forbidden() {
@@ -284,7 +316,7 @@ func (s *TestSuite) TestDeleteGame_Forbidden() {
 
 	err := s.provider.DeleteGame(s.ctx, game.ID, publisher)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.True(apperr.IsStatusCode(err, http.StatusForbidden))
 }
 
@@ -301,7 +333,7 @@ func (s *TestSuite) TestDeleteGame_Error() {
 
 	err := s.provider.DeleteGame(s.ctx, game.ID, publisher)
 
-	s.Error(err)
+	s.Require().Error(err)
 }
 
 func (s *TestSuite) TestUpdateGameTrendingIndex_Success() {
@@ -320,7 +352,7 @@ func (s *TestSuite) TestUpdateGameTrendingIndex_Success() {
 
 	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) TestUpdateGameTrendingIndex_GetDataError() {
@@ -330,7 +362,7 @@ func (s *TestSuite) TestUpdateGameTrendingIndex_GetDataError() {
 
 	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "get data error")
 }
 
@@ -350,6 +382,6 @@ func (s *TestSuite) TestUpdateGameTrendingIndex_UpdateError() {
 
 	err := s.provider.UpdateGameTrendingIndex(s.ctx, gameID)
 
-	s.Error(err)
+	s.Require().Error(err)
 	s.Contains(err.Error(), "update error")
 }

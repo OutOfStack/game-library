@@ -1,6 +1,7 @@
 package taskprocessor_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -58,10 +59,9 @@ func (s *TestSuite) TestStartUpdateGameInfo_Success() {
 		},
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
@@ -74,7 +74,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_Success() {
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
 	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -89,14 +89,13 @@ func (s *TestSuite) TestStartUpdateGameInfo_NoGames() {
 		Settings: []byte(`{"lastProcessedId":100}`),
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), int32(100), 200).Return([]int32{}, nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -111,14 +110,13 @@ func (s *TestSuite) TestStartUpdateGameInfo_GetGamesError() {
 		Settings: []byte(`{"lastProcessedId":100}`),
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), int32(100), 200).Return(nil, errors.New("database error"))
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -136,15 +134,14 @@ func (s *TestSuite) TestStartUpdateGameInfo_GetPlatformsError() {
 
 	gameIDs := []int32{td.Int31()}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(nil, errors.New("platforms error"))
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -182,10 +179,9 @@ func (s *TestSuite) TestStartUpdateGameInfo_GetGameError() {
 		},
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
@@ -195,7 +191,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_GetGameError() {
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
 	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -238,10 +234,9 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipGameWithZeroIGDBID() {
 		},
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
@@ -252,7 +247,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipGameWithZeroIGDBID() {
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
 	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -295,10 +290,9 @@ func (s *TestSuite) TestStartUpdateGameInfo_IGDBAPIError() {
 		},
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
@@ -310,7 +304,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_IGDBAPIError() {
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
 	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -364,10 +358,9 @@ func (s *TestSuite) TestStartUpdateGameInfo_UpdateGameIGDBInfoError() {
 		},
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
@@ -380,7 +373,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_UpdateGameIGDBInfoError() {
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
 	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 
@@ -395,15 +388,14 @@ func (s *TestSuite) TestStartUpdateGameInfo_EmptySettings() {
 		Settings: []byte("{}"), // Empty JSON settings instead of nil
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	// Should start from ID 0 when settings is empty, return no games to process
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), int32(0), 200).Return([]int32{}, nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.StartUpdateGameInfo()
 

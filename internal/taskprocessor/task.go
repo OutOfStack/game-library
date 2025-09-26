@@ -12,7 +12,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/client/s3"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
@@ -26,9 +25,10 @@ const (
 
 // Storage db storage interface
 type Storage interface {
-	BeginTx(ctx context.Context) (pgx.Tx, error)
-	GetTask(ctx context.Context, tx pgx.Tx, name string) (model.Task, error)
-	UpdateTask(ctx context.Context, tx pgx.Tx, task model.Task) error
+	RunWithTx(ctx context.Context, f func(context.Context) error) error
+
+	GetTask(ctx context.Context, name string) (model.Task, error)
+	UpdateTask(ctx context.Context, task model.Task) error
 
 	CreateGame(ctx context.Context, cgd model.CreateGameData) (id int32, err error)
 	GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error)
@@ -88,43 +88,41 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 	ctx, cancel := context.WithTimeout(context.Background(), taskTimeout)
 	defer cancel()
 
-	tx, err := tp.storage.BeginTx(ctx)
-	if err != nil {
-		return fmt.Errorf("begin transaction: %v", err)
-	}
+	var settings []byte
+	var task model.Task
+	var err error
 
-	task, err := tp.storage.GetTask(ctx, tx, name)
-	if err != nil {
-		if errors.Is(err, repo.ErrTransactionLocked) {
-			return tx.Rollback(ctx)
+	txErr := tp.storage.RunWithTx(ctx, func(ctx context.Context) error {
+		task, err = tp.storage.GetTask(ctx, name)
+		if err != nil {
+			tp.log.Error("get task", zap.String("name", name), zap.Error(err))
+			return err
 		}
-		return err
-	}
 
-	if task.Status == model.RunningTaskStatus {
-		return tx.Rollback(ctx)
-	}
-
-	task.Status = model.RunningTaskStatus
-	task.RunCount++
-	task.LastRun = sql.NullTime{Time: time.Now(), Valid: true}
-
-	settings := make([]byte, len(task.Settings))
-	copy(settings, task.Settings)
-
-	err = tp.storage.UpdateTask(ctx, tx, task)
-	if err != nil {
-		tp.log.Error("update task", zap.Error(err))
-		rErr := tx.Rollback(ctx)
-		if rErr != nil {
-			return rErr
+		if task.Status == model.RunningTaskStatus {
+			return fmt.Errorf("task %s is already running", name)
 		}
-		return err
-	}
 
-	err = tx.Commit(ctx)
-	if err != nil {
-		return err
+		task.Status = model.RunningTaskStatus
+		task.RunCount++
+		task.LastRun = sql.NullTime{Time: time.Now(), Valid: true}
+
+		settings = make([]byte, len(task.Settings))
+		copy(settings, task.Settings)
+
+		err = tp.storage.UpdateTask(ctx, task)
+		if err != nil {
+			tp.log.Error("update task", zap.String("name", name), zap.Error(err))
+			return err
+		}
+
+		return nil
+	})
+	if txErr != nil {
+		if errors.Is(txErr, repo.ErrTransactionLocked) {
+			return nil
+		}
+		return txErr
 	}
 
 	tp.log.Info("task started", zap.String("name", name))
@@ -139,5 +137,5 @@ func (tp *TaskProvider) DoTask(name string, taskFn func(ctx context.Context, set
 
 	tp.log.Info("task finished", zap.String("name", name), zap.Error(err))
 
-	return tp.storage.UpdateTask(ctx, nil, task)
+	return tp.storage.UpdateTask(ctx, task)
 }

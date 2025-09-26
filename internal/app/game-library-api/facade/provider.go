@@ -19,7 +19,7 @@ type Provider struct {
 	s3Client S3Client
 }
 
-// NewProvider returns nre provider
+// NewProvider returns new facade provider
 func NewProvider(logger *zap.Logger, storage Storage, cache *cache.RedisStore, s3Client S3Client) *Provider {
 	return &Provider{
 		log:      logger,
@@ -40,7 +40,9 @@ type Storage interface {
 	UpdateGameRating(ctx context.Context, id int32) error
 	GetPublisherGamesCount(ctx context.Context, publisherID int32, startDate, endDate time.Time) (count int, err error)
 	UpdateGameTrendingIndex(ctx context.Context, gameID int32, trendingIndex float64) error
+	UpdateGameModerationID(ctx context.Context, gameID, moderationID int32) error
 	GetGameTrendingData(ctx context.Context, gameID int32) (model.GameTrendingData, error)
+	GetGamesByPublisherID(ctx context.Context, publisherID int32) (list []model.Game, err error)
 
 	CreateCompany(ctx context.Context, c model.Company) (id int32, err error)
 	GetCompanies(ctx context.Context) (companies []model.Company, err error)
@@ -59,6 +61,13 @@ type Storage interface {
 	AddRating(ctx context.Context, cr model.CreateRating) error
 	RemoveRating(ctx context.Context, rr model.RemoveRating) error
 	GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error)
+
+	GetModerationRecordsByGameID(ctx context.Context, gameID int32) (list []model.Moderation, err error)
+	CreateModerationRecord(ctx context.Context, m model.CreateModeration) (id int32, err error)
+	SetModerationRecordResult(ctx context.Context, id int32, res model.UpdateModerationResult) error
+	GetModerationRecordByID(ctx context.Context, id int32) (m model.Moderation, err error)
+
+	RunWithTx(ctx context.Context, f func(context.Context) error) error
 }
 
 // S3Client represents the interface for S3 client operations

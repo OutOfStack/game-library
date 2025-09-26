@@ -6,6 +6,6 @@ ALTER TABLE games
 UPDATE games SET moderation_status = 'ready'
 WHERE igdb_id > 0;
 
--- Set 'check' status for games added by publishers
+-- Set 'check' status for games added by users-publishers
 UPDATE games SET moderation_status = 'check'
 WHERE igdb_id = 0;

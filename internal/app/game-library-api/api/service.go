@@ -93,13 +93,27 @@ func Service(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
 		).Post("/images", pr.UploadGameImages)
+
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RolePublisher),
+		).Get("/{id}/moderations", pr.GetGameModerations)
 	})
 
 	// user
-	r.With(
-		middleware.Authenticate(log, au),
-		middleware.Authorize(log, au, auth.RoleRegisteredUser),
-	).Post("/api/user/ratings", pr.GetUserRatings)
+	r.Route("/api/user", func(r chi.Router) {
+		// ratings
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RoleRegisteredUser),
+		).Post("/ratings", pr.GetUserRatings)
+
+		// published games
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RolePublisher),
+		).Get("/games", pr.GetUserGames)
+	})
 
 	// genres
 	r.Route("/api/genres", func(r chi.Router) {

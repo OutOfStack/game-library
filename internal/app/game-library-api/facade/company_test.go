@@ -27,7 +27,7 @@ func (s *TestSuite) TestGetCompanies_Success() {
 
 	res, err := s.provider.GetCompanies(s.ctx)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(companies[0], res[0])
 }
@@ -38,8 +38,8 @@ func (s *TestSuite) TestGetCompanies_Error() {
 
 	res, err := s.provider.GetCompanies(s.ctx)
 
-	s.NotNil(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetCompaniesMap_Success() {
@@ -58,7 +58,7 @@ func (s *TestSuite) TestGetCompaniesMap_Success() {
 
 	res, err := s.provider.GetCompaniesMap(s.ctx)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(companies[0], res[companies[0].ID])
 }
@@ -69,8 +69,8 @@ func (s *TestSuite) TestGetCompaniesMap_Error() {
 
 	res, err := s.provider.GetCompaniesMap(s.ctx)
 
-	s.NotNil(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetTopCompanies_Success() {
@@ -89,7 +89,7 @@ func (s *TestSuite) TestGetTopCompanies_Success() {
 
 	res, err := s.provider.GetTopCompanies(s.ctx, model.CompanyTypeDeveloper, 5)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Len(res, 1)
 	s.Equal(companies[0], res[0])
 }
@@ -100,8 +100,8 @@ func (s *TestSuite) TestGetTopCompanies_Error() {
 
 	res, err := s.provider.GetTopCompanies(s.ctx, model.CompanyTypePublisher, 5)
 
-	s.NotNil(err)
-	s.Len(res, 0)
+	s.Require().Error(err)
+	s.Empty(res)
 }
 
 func (s *TestSuite) TestGetCompanyByID_Success() {
@@ -114,7 +114,7 @@ func (s *TestSuite) TestGetCompanyByID_Success() {
 
 	res, err := s.provider.GetCompanyByID(s.ctx, company.ID)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(company, res)
 }
 
@@ -123,6 +123,6 @@ func (s *TestSuite) TestGetCompanyByID_Error() {
 
 	res, err := s.provider.GetCompanyByID(s.ctx, td.Int32())
 
-	s.NotNil(err)
+	s.Require().Error(err)
 	s.Equal(model.Company{}, res)
 }

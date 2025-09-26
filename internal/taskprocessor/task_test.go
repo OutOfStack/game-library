@@ -22,29 +22,30 @@ func (s *TestSuite) TestDoTask_Success() {
 		return []byte(`{"lastReleasedAt":"2025-01-02T00:00:00Z"}`), nil
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(nil)
-	s.tx.EXPECT().Commit(gomock.Any()).Return(nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), nil, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error {
+		return f(ctx)
+	})
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := s.provider.DoTask(task.Name, taskFn)
 
 	s.Require().NoError(err)
 }
 
-func (s *TestSuite) TestDoTask_ErrorOnBeginTx() {
+func (s *TestSuite) TestDoTask_ErrorOnRunWithTx() {
 	taskName := td.String()
 	taskFn := func(_ context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
 		return settings, nil
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(nil, errors.New("new error"))
+	runWithTxErr := errors.New("run with tx error")
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).Return(runWithTxErr)
 
 	err := s.provider.DoTask(taskName, taskFn)
 
-	s.Require().Error(err)
-	s.Contains(err.Error(), "begin transaction")
+	s.Require().ErrorIs(err, runWithTxErr)
 }
 
 func (s *TestSuite) TestDoTask_TransactionLocked() {
@@ -53,9 +54,10 @@ func (s *TestSuite) TestDoTask_TransactionLocked() {
 		return settings, nil
 	}
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, taskName).Return(model.Task{}, repo.ErrTransactionLocked)
-	s.tx.EXPECT().Rollback(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error {
+		return f(ctx)
+	})
+	s.storageMock.EXPECT().GetTask(gomock.Any(), taskName).Return(model.Task{}, repo.ErrTransactionLocked)
 
 	err := s.provider.DoTask(taskName, taskFn)
 
@@ -71,10 +73,11 @@ func (s *TestSuite) TestDoTask_ErrorOnUpdateTask() {
 	}
 	updateTaskErr := errors.New("update error")
 
-	s.storageMock.EXPECT().BeginTx(gomock.Any()).Return(s.tx, nil)
-	s.storageMock.EXPECT().GetTask(gomock.Any(), s.tx, task.Name).Return(task, nil)
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), s.tx, gomock.Any()).Return(updateTaskErr)
-	s.tx.EXPECT().Rollback(gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error {
+		return f(ctx)
+	})
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(updateTaskErr)
 
 	taskFn := func(_ context.Context, settings model.TaskSettings) (model.TaskSettings, error) {
 		return settings, nil

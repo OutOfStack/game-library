@@ -88,6 +88,21 @@ func (mr *MockStorageMockRecorder) CreateGame(ctx, cg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGame", reflect.TypeOf((*MockStorage)(nil).CreateGame), ctx, cg)
 }
 
+// CreateModerationRecord mocks base method.
+func (m_2 *MockStorage) CreateModerationRecord(ctx context.Context, m model.CreateModeration) (int32, error) {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "CreateModerationRecord", ctx, m)
+	ret0, _ := ret[0].(int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateModerationRecord indicates an expected call of CreateModerationRecord.
+func (mr *MockStorageMockRecorder) CreateModerationRecord(ctx, m any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateModerationRecord", reflect.TypeOf((*MockStorage)(nil).CreateModerationRecord), ctx, m)
+}
+
 // DeleteGame mocks base method.
 func (m *MockStorage) DeleteGame(ctx context.Context, id int32) error {
 	m.ctrl.T.Helper()
@@ -192,6 +207,21 @@ func (mr *MockStorageMockRecorder) GetGames(ctx, pageSize, page, filter any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGames", reflect.TypeOf((*MockStorage)(nil).GetGames), ctx, pageSize, page, filter)
 }
 
+// GetGamesByPublisherID mocks base method.
+func (m *MockStorage) GetGamesByPublisherID(ctx context.Context, publisherID int32) ([]model.Game, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGamesByPublisherID", ctx, publisherID)
+	ret0, _ := ret[0].([]model.Game)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGamesByPublisherID indicates an expected call of GetGamesByPublisherID.
+func (mr *MockStorageMockRecorder) GetGamesByPublisherID(ctx, publisherID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGamesByPublisherID", reflect.TypeOf((*MockStorage)(nil).GetGamesByPublisherID), ctx, publisherID)
+}
+
 // GetGamesCount mocks base method.
 func (m *MockStorage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (uint64, error) {
 	m.ctrl.T.Helper()
@@ -235,6 +265,36 @@ func (m *MockStorage) GetGenres(ctx context.Context) ([]model.Genre, error) {
 func (mr *MockStorageMockRecorder) GetGenres(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenres", reflect.TypeOf((*MockStorage)(nil).GetGenres), ctx)
+}
+
+// GetModerationRecordByID mocks base method.
+func (m *MockStorage) GetModerationRecordByID(ctx context.Context, id int32) (model.Moderation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetModerationRecordByID", ctx, id)
+	ret0, _ := ret[0].(model.Moderation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetModerationRecordByID indicates an expected call of GetModerationRecordByID.
+func (mr *MockStorageMockRecorder) GetModerationRecordByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetModerationRecordByID", reflect.TypeOf((*MockStorage)(nil).GetModerationRecordByID), ctx, id)
+}
+
+// GetModerationRecordsByGameID mocks base method.
+func (m *MockStorage) GetModerationRecordsByGameID(ctx context.Context, gameID int32) ([]model.Moderation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetModerationRecordsByGameID", ctx, gameID)
+	ret0, _ := ret[0].([]model.Moderation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetModerationRecordsByGameID indicates an expected call of GetModerationRecordsByGameID.
+func (mr *MockStorageMockRecorder) GetModerationRecordsByGameID(ctx, gameID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetModerationRecordsByGameID", reflect.TypeOf((*MockStorage)(nil).GetModerationRecordsByGameID), ctx, gameID)
 }
 
 // GetPlatformByID mocks base method.
@@ -356,6 +416,34 @@ func (mr *MockStorageMockRecorder) RemoveRating(ctx, rr any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRating", reflect.TypeOf((*MockStorage)(nil).RemoveRating), ctx, rr)
 }
 
+// RunWithTx mocks base method.
+func (m *MockStorage) RunWithTx(ctx context.Context, f func(context.Context) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunWithTx", ctx, f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunWithTx indicates an expected call of RunWithTx.
+func (mr *MockStorageMockRecorder) RunWithTx(ctx, f any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunWithTx", reflect.TypeOf((*MockStorage)(nil).RunWithTx), ctx, f)
+}
+
+// SetModerationRecordResult mocks base method.
+func (m *MockStorage) SetModerationRecordResult(ctx context.Context, id int32, res model.UpdateModerationResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetModerationRecordResult", ctx, id, res)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetModerationRecordResult indicates an expected call of SetModerationRecordResult.
+func (mr *MockStorageMockRecorder) SetModerationRecordResult(ctx, id, res any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordResult", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordResult), ctx, id, res)
+}
+
 // UpdateGame mocks base method.
 func (m *MockStorage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameData) error {
 	m.ctrl.T.Helper()
@@ -368,6 +456,20 @@ func (m *MockStorage) UpdateGame(ctx context.Context, id int32, ug model.UpdateG
 func (mr *MockStorageMockRecorder) UpdateGame(ctx, id, ug any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGame", reflect.TypeOf((*MockStorage)(nil).UpdateGame), ctx, id, ug)
+}
+
+// UpdateGameModerationID mocks base method.
+func (m *MockStorage) UpdateGameModerationID(ctx context.Context, gameID, moderationID int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGameModerationID", ctx, gameID, moderationID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGameModerationID indicates an expected call of UpdateGameModerationID.
+func (mr *MockStorageMockRecorder) UpdateGameModerationID(ctx, gameID, moderationID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameModerationID", reflect.TypeOf((*MockStorage)(nil).UpdateGameModerationID), ctx, gameID, moderationID)
 }
 
 // UpdateGameRating mocks base method.

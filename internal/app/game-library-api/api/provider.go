@@ -33,6 +33,9 @@ type GameFacade interface {
 
 	GetCompaniesMap(ctx context.Context) (map[int32]model.Company, error)
 	GetTopCompanies(ctx context.Context, companyType string, limit int64) ([]model.Company, error)
+
+	GetPublisherGames(ctx context.Context, publisher string) ([]model.Game, error)
+	GetGameModerations(ctx context.Context, gameID int32, publisher string) ([]model.Moderation, error)
 }
 
 // Decoder decodes request

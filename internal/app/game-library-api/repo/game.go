@@ -69,7 +69,7 @@ func (s *Storage) GetGames(ctx context.Context, pageSize, page uint32, filter mo
 		return nil, err
 	}
 
-	if err = pgxscan.Select(ctx, s.db, &list, q, args...); err != nil {
+	if err = pgxscan.Select(ctx, s.querier(ctx), &list, q, args...); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (
 		return 0, err
 	}
 
-	if err = pgxscan.Get(ctx, s.db, &count, q, args...); err != nil {
+	if err = pgxscan.Get(ctx, s.querier(ctx), &count, q, args...); err != nil {
 		return 0, err
 	}
 
@@ -113,16 +113,17 @@ func (s *Storage) GetGamesCount(ctx context.Context, filter model.GamesFilter) (
 // GetGameByID returns game by id.
 // If game does not exist returns apperr.Error with NotFound status code
 func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, err error) {
-	ctx, span := tracer.Start(ctx, "getGameByID")
+	ctx, span := tracer.Start(ctx, "getGameById")
 	defer span.End()
 
 	const q = `
 		SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
-       		screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status, trending_index
+       		screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status, moderation_id, trending_index
 		FROM games
-		WHERE id = $1`
+		WHERE id = $1
+		FOR UPDATE`
 
-	if err = pgxscan.Get(ctx, s.db, &game, q, id); err != nil {
+	if err = pgxscan.Get(ctx, s.querier(ctx), &game, q, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Game{}, apperr.NewNotFoundError("game", id)
 		}
@@ -143,7 +144,7 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 		FROM games
 		WHERE igdb_id = $1`
 
-	if err = pgxscan.Get(ctx, s.db, &id, q, igdbID); err != nil {
+	if err = pgxscan.Get(ctx, s.querier(ctx), &id, q, igdbID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, apperr.NewNotFoundError("game", igdbID)
 		}
@@ -166,7 +167,7 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGameData) (id i
 		        $8, $9, $10, $11::varchar(50), $12, $13, $14, $15, $16)
 		RETURNING id`
 
-	err = s.db.QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.GenresIDs, cg.LogoURL, cg.Summary,
+	err = s.querier(ctx).QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.GenresIDs, cg.LogoURL, cg.Summary,
 		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBRatingCount, cg.IGDBID, cg.ModerationStatus, time.Now()).
 		Scan(&id)
 	if err != nil {
@@ -192,7 +193,8 @@ func (s *Storage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameD
 	if err != nil {
 		return fmt.Errorf("invalid date %v: %v", releaseDate, err)
 	}
-	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.DevelopersIDs, ug.PublishersIDs, releaseDate.String(), ug.GenresIDs, ug.LogoURL, ug.Summary,
+	res, err := s.querier(ctx).Exec(ctx, q, id,
+		ug.Name, ug.DevelopersIDs, ug.PublishersIDs, releaseDate.String(), ug.GenresIDs, ug.LogoURL, ug.Summary,
 		ug.PlatformsIDs, ug.Screenshots, ug.Websites, ug.Slug, ug.ModerationStatus, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d: %v", id, err)
@@ -216,7 +218,7 @@ func (s *Storage) UpdateGameRating(ctx context.Context, id int32) error {
 			updated_at = $2
 		WHERE id = $1`
 
-	res, err := s.db.Exec(ctx, q, id, time.Now())
+	res, err := s.querier(ctx).Exec(ctx, q, id, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d rating: %v", id, err)
 	}
@@ -235,7 +237,7 @@ func (s *Storage) UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.Upd
 		SET name = $2, platforms = $3, websites = $4, igdb_rating = $5, igdb_rating_count = $6, updated_at = $7
 		WHERE id = $1`
 
-	res, err := s.db.Exec(ctx, q, id, ug.Name, ug.PlatformsIDs, ug.Websites, ug.IGDBRating, ug.IGDBRatingCount, time.Now())
+	res, err := s.querier(ctx).Exec(ctx, q, id, ug.Name, ug.PlatformsIDs, ug.Websites, ug.IGDBRating, ug.IGDBRatingCount, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d igdb info: %v", id, err)
 	}
@@ -252,7 +254,7 @@ func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
 	const q = `
 		DELETE FROM games
 		WHERE id = $1`
-	res, err := s.db.Exec(ctx, q, id)
+	res, err := s.querier(ctx).Exec(ctx, q, id)
 	if err != nil {
 		return fmt.Errorf("deleting game %d: %v", id, err)
 	}
@@ -271,7 +273,7 @@ func (s *Storage) GetPublisherGamesCount(ctx context.Context, publisherID int32,
 		AND created_at >= $2
 		AND created_at <= $3`
 
-	if err = pgxscan.Get(ctx, s.db, &count, q, publisherID, startDate, endDate); err != nil {
+	if err = pgxscan.Get(ctx, s.querier(ctx), &count, q, publisherID, startDate, endDate); err != nil {
 		return 0, err
 	}
 
@@ -288,9 +290,27 @@ func (s *Storage) UpdateGameTrendingIndex(ctx context.Context, gameID int32, tre
 		SET trending_index = $2, updated_at = $3
 		WHERE id = $1`
 
-	res, err := s.db.Exec(ctx, q, gameID, trendingIndex, time.Now())
+	res, err := s.querier(ctx).Exec(ctx, q, gameID, trendingIndex, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating trending index for game %d: %w", gameID, err)
+	}
+
+	return checkRowsAffected(res, "game", gameID)
+}
+
+// UpdateGameModerationID updates game moderation id
+func (s *Storage) UpdateGameModerationID(ctx context.Context, gameID, moderationID int32) error {
+	ctx, span := tracer.Start(ctx, "updateGameModerationId")
+	defer span.End()
+
+	const q = `
+		UPDATE games
+		SET moderation_id = $2
+		WHERE id = $1`
+
+	res, err := s.querier(ctx).Exec(ctx, q, gameID, moderationID)
+	if err != nil {
+		return fmt.Errorf("updating moderation id for game %d: %w", gameID, err)
 	}
 
 	return checkRowsAffected(res, "game", gameID)
@@ -313,7 +333,7 @@ func (s *Storage) GetGameTrendingData(ctx context.Context, gameID int32) (model.
 		WHERE id = $1`
 
 	var data model.GameTrendingData
-	err := pgxscan.Get(ctx, s.db, &data, q, gameID)
+	err := pgxscan.Get(ctx, s.querier(ctx), &data, q, gameID)
 	if err != nil {
 		return model.GameTrendingData{}, fmt.Errorf("querying game trending data: %w", err)
 	}
@@ -334,10 +354,29 @@ func (s *Storage) GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSiz
 		LIMIT $2`
 
 	var gamesIDs []int32
-	err := pgxscan.Select(ctx, s.db, &gamesIDs, q, lastID, batchSize)
+	err := pgxscan.Select(ctx, s.querier(ctx), &gamesIDs, q, lastID, batchSize)
 	if err != nil {
 		return nil, fmt.Errorf("querying games ids after id %d: %w", lastID, err)
 	}
 
 	return gamesIDs, nil
+}
+
+// GetGamesByPublisherID returns games created by a specific publisher company id
+func (s *Storage) GetGamesByPublisherID(ctx context.Context, publisherID int32) (list []model.Game, err error) {
+	ctx, span := tracer.Start(ctx, "getGamesByPublisherID")
+	defer span.End()
+
+	const q = `
+        SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
+               screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status
+        FROM games
+        WHERE $1 = ANY(publishers)
+        ORDER BY id DESC`
+
+	if err = pgxscan.Select(ctx, s.querier(ctx), &list, q, publisherID); err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }

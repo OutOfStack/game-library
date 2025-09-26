@@ -16,6 +16,8 @@
 - Test files should be in the same directory as the code being tested
 - If test already uses mock or requires updates or new mock, use `make generate` or add new line into `generate` command in `Makefile` file
 - DO NOT write comments in tests unless they explain something that is not self-evident
+- Use @internal/pkg/td/random.go to generate random data
+- Use t.Context() instead of context.Background() for context in tests
 
 ## Build and Quality Checks
 - Run validation commands before completing work:

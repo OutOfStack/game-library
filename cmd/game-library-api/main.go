@@ -105,7 +105,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	rCache := cache.NewRedisStore(redisClient, logger)
 
 	// create storage
-	storage := repo.New(db)
+	storage := repo.New(db, logger)
 
 	// create auth facade
 	authFacade, err := auth.New(logger, authAPIClient)

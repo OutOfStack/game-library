@@ -20,7 +20,6 @@ type TestSuite struct {
 	igdbClientMock *mock.MockIGDBAPIClient
 	s3ClientMock   *mock.MockS3Client
 	gameFacadeMock *mock.MockGameFacade
-	tx             *mock.MockTx
 	provider       *taskprocessor.TaskProvider
 	igdbAPILimiter *rate.Limiter
 }
@@ -32,7 +31,6 @@ func (s *TestSuite) SetupTest() {
 	s.igdbClientMock = mock.NewMockIGDBAPIClient(s.ctrl)
 	s.s3ClientMock = mock.NewMockS3Client(s.ctrl)
 	s.gameFacadeMock = mock.NewMockGameFacade(s.ctrl)
-	s.tx = mock.NewMockTx(s.ctrl)
 	s.provider = taskprocessor.New(s.log, s.storageMock, s.igdbClientMock, s.s3ClientMock, s.gameFacadeMock)
 	s.igdbAPILimiter = rate.NewLimiter(rate.Every(time.Second), 100)
 }

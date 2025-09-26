@@ -1,1 +1,1 @@
-CREATE INDEX games_lower_name_idx on Games(lower(name) varchar_pattern_ops); 
+CREATE INDEX games_lower_name_idx on games(lower(name) varchar_pattern_ops);

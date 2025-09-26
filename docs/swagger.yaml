@@ -113,6 +113,19 @@ definitions:
       id:
         type: integer
     type: object
+  model.ModerationItem:
+    properties:
+      createdAt:
+        type: string
+      details:
+        type: string
+      id:
+        type: integer
+      resultStatus:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   model.Platform:
     properties:
       abbreviation:
@@ -422,6 +435,44 @@ paths:
       security:
       - BearerAuth: []
       summary: Update game
+  /games/{id}/moderations:
+    get:
+      description: returns all moderation records for specified game id
+      operationId: get-game-moderations
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ModerationItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get game moderations
   /games/{id}/rate:
     post:
       consumes:
@@ -557,6 +608,26 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Get platforms
+  /user/games:
+    get:
+      description: returns all games for current user-publisher
+      operationId: get-user-games
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.GameResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user games
   /user/ratings:
     post:
       description: returns user ratings for specified games

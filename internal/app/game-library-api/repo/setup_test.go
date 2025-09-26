@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"go.uber.org/zap"
 )
 
 const (
@@ -27,7 +28,8 @@ const (
 	pg            = "postgres"
 )
 
-var dsn = fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", DatabaseUser, DatabasePwd, DatabasePort, DatabaseName)
+var dsn = fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable&default_query_exec_mode=simple_protocol",
+	DatabaseUser, DatabasePwd, DatabasePort, DatabaseName)
 
 var db *pgxpool.Pool
 
@@ -88,12 +90,12 @@ func TestMain(m *testing.M) {
 
 	log.Println("Repo tests: Database connection established")
 
-	// runs tests in current package
+	// run tests in current package
 	code := m.Run()
 
+	// can't defer because of os.Exit
 	db.Close()
 
-	// You can't defer this because os.Exit doesn't care for defer
 	if err = pool.Purge(resource); err != nil {
 		log.Fatalf("Repo tests: Could not purge resource: %s", err)
 	}
@@ -114,7 +116,7 @@ func setup(t *testing.T) *repo.Storage {
 	if err = m.Up(); err != nil {
 		t.Fatalf("error on applying migrations: %v", err)
 	}
-	return repo.New(db)
+	return repo.New(db, zap.NewNop())
 }
 
 func teardown(t *testing.T) {

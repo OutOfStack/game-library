@@ -29,9 +29,7 @@ seed:
 
 SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.4
 SWAG_BIN := $(shell go env GOPATH)/bin/swag
-MOCKGEN_PKG := go.uber.org/mock/mockgen@v0.6
-MOCKGEN_BIN := $(shell go env GOPATH)/bin/mockgen
-generate:
+generate-swag:
 	@if \[ ! -f ${SWAG_BIN} \]; then \
 		echo "Installing swag..."; \
     	go install ${SWAG_PKG}; \
@@ -45,6 +43,9 @@ generate:
 	${SWAG_BIN} init \
 	-d cmd/game-library-api,internal/app/game-library-api/api,internal/app/game-library-api/api/model,internal/app/game-library-api/web
 
+MOCKGEN_PKG := go.uber.org/mock/mockgen@v0.6
+MOCKGEN_BIN := $(shell go env GOPATH)/bin/mockgen
+generate-mocks:
 	@if \[ ! -f ${MOCKGEN_BIN} \]; then \
 		echo "Installing mockgen..."; \
 		go install ${MOCKGEN_PKG}; \
@@ -61,9 +62,11 @@ generate:
 	${MOCKGEN_BIN} -source=internal/auth/auth.go -destination=internal/auth/mocks/auth.go -package=auth_mock
 	${MOCKGEN_BIN} -source=internal/middleware/auth.go -destination=internal/middleware/mocks/auth.go -package=middleware_mock
 	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
-	${MOCKGEN_BIN} -destination=internal/taskprocessor/mocks/tx.go -package=taskprocessor_mock github.com/jackc/pgx/v5 Tx
+	${MOCKGEN_BIN} -destination=internal/app/game-library-api/repo/mocks/tx.go -package=repo_mock github.com/jackc/pgx/v5 Tx
 
-LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4
+generate: generate-swag generate-mocks
+
+LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.5
 LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
 lint:
 	@if \[ ! -f ${LINT_BIN} \]; then \

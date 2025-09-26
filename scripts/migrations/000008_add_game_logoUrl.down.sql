@@ -1,2 +1,2 @@
-ALTER TABLE Games 
+ALTER TABLE games
 DROP COLUMN logo_url;

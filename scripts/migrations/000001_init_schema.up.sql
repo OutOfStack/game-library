@@ -1,4 +1,4 @@
-CREATE TABLE Games (
+CREATE TABLE games (
 	id serial PRIMARY KEY,
 	name varchar NOT NULL,
 	developer varchar NOT NULL,

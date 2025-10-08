@@ -25,7 +25,7 @@ func (s *TestSuite) TestStartProcessModeration_Success() {
 		{ModerationID: td.Int31(), GameID: td.Int31()},
 	}
 
-	var moderationIDs []int32
+	moderationIDs := make([]int32, 0, len(records))
 	for _, r := range records {
 		moderationIDs = append(moderationIDs, r.ModerationID)
 	}
@@ -56,7 +56,7 @@ func (s *TestSuite) TestStartProcessModeration_Success() {
 		After(call3).
 		Return(nil)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, updatedTask model.Task) error {
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, updatedTask model.Task) error {
 		s.Require().Equal(model.IdleTaskStatus, updatedTask.Status)
 
 		var settings struct {
@@ -105,7 +105,7 @@ func (s *TestSuite) TestStartProcessModeration_NoPendingRecords() {
 	s.storageMock.EXPECT().SetModerationRecordStatus(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	s.moderationFacadeMock.EXPECT().ProcessModeration(gomock.Any(), gomock.Any()).Times(0)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, updatedTask model.Task) error {
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, updatedTask model.Task) error {
 		s.Require().Equal(model.IdleTaskStatus, updatedTask.Status)
 
 		var settings struct {
@@ -146,9 +146,9 @@ func (s *TestSuite) TestStartProcessModeration_GetPendingError() {
 	s.storageMock.EXPECT().SetModerationRecordStatus(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	s.moderationFacadeMock.EXPECT().ProcessModeration(gomock.Any(), gomock.Any()).Times(0)
 
-	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, updatedTask model.Task) error {
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, updatedTask model.Task) error {
 		s.Require().Equal(model.ErrorTaskStatus, updatedTask.Status)
-		s.Require().EqualValues(task.Settings, updatedTask.Settings)
+		s.Require().Equal(task.Settings, updatedTask.Settings)
 		return nil
 	}).After(firstUpdate)
 

@@ -29,22 +29,30 @@ func (s *Storage) CreateModerationRecord(ctx context.Context, m model.CreateMode
 	return id, nil
 }
 
-// SetModerationRecordResult sets moderation result for moderation record
-func (s *Storage) SetModerationRecordResult(ctx context.Context, id int32, res model.UpdateModerationResult) error {
-	ctx, span := tracer.Start(ctx, "setModerationRecordResult")
+// SetModerationRecordResultByGameID sets moderation result for moderation record by game id
+func (s *Storage) SetModerationRecordResultByGameID(ctx context.Context, gameID int32, result model.UpdateModerationResult) error {
+	ctx, span := tracer.Start(ctx, "setModerationRecordResultByGameID")
 	defer span.End()
 
 	const q = `
         UPDATE game_moderation
-        SET status = $2, details = $3, error = $4, updated_at = $5
-        WHERE id = $1`
+        SET status = $2, 
+            details = $3, 
+            attempts = CASE WHEN $2 != $4 THEN attempts + 1 ELSE attempts END, 
+            updated_at = $5
+        WHERE id = (
+        	SELECT moderation_id 
+        	FROM games 
+        	WHERE id = $1
+        	LIMIT 1
+        )`
 
-	execRes, err := s.querier(ctx).Exec(ctx, q, id, res.ResultStatus, res.Details, res.Error, time.Now())
+	res, err := s.querier(ctx).Exec(ctx, q, gameID, result.ResultStatus, result.Details, model.ModerationStatusReady, time.Now())
 	if err != nil {
-		return fmt.Errorf("setting moderation %d result: %w", id, err)
+		return fmt.Errorf("setting moderation result for game id %d: %w", gameID, err)
 	}
 
-	return checkRowsAffected(execRes, "moderation", id)
+	return checkRowsAffected(res, "moderation_by_game_id", gameID)
 }
 
 // GetModerationRecordByID returns moderation record by id
@@ -53,7 +61,7 @@ func (s *Storage) GetModerationRecordByID(ctx context.Context, id int32) (m mode
 	defer span.End()
 
 	const q = `
-        SELECT id, game_id, status, details, error, game_data, created_at, updated_at
+        SELECT id, game_id, status, details, attempts, game_data, created_at, updated_at
         FROM game_moderation
         WHERE id = $1`
 
@@ -66,13 +74,37 @@ func (s *Storage) GetModerationRecordByID(ctx context.Context, id int32) (m mode
 	return m, nil
 }
 
+// GetModerationRecordByGameID returns current moderation record by game id
+func (s *Storage) GetModerationRecordByGameID(ctx context.Context, gameID int32) (m model.Moderation, err error) {
+	ctx, span := tracer.Start(ctx, "getModerationRecordByGameID")
+	defer span.End()
+
+	const q = `
+        SELECT id, game_id, status, details, attempts, game_data, created_at, updated_at
+        FROM game_moderation
+        WHERE id = (
+        	SELECT moderation_id 
+        	FROM games 
+        	WHERE id = $1
+        	LIMIT 1
+        )`
+
+	if err = pgxscan.Get(ctx, s.querier(ctx), &m, q, gameID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return model.Moderation{}, apperr.NewNotFoundError("moderation_by_game_id", gameID)
+		}
+		return model.Moderation{}, err
+	}
+	return m, nil
+}
+
 // GetModerationRecordsByGameID returns moderation records for a game ordered by newest first
 func (s *Storage) GetModerationRecordsByGameID(ctx context.Context, gameID int32) (list []model.Moderation, err error) {
 	ctx, span := tracer.Start(ctx, "getModerationRecordsByGameID")
 	defer span.End()
 
 	const q = `
-        SELECT id, game_id, status, details, error, game_data, created_at, updated_at
+        SELECT id, game_id, status, details, attempts, game_data, created_at, updated_at
         FROM game_moderation
         WHERE game_id = $1
         ORDER BY id DESC`
@@ -81,4 +113,47 @@ func (s *Storage) GetModerationRecordsByGameID(ctx context.Context, gameID int32
 		return nil, err
 	}
 	return list, nil
+}
+
+// GetPendingModerationGameIDs returns game IDs that have pending moderation status
+func (s *Storage) GetPendingModerationGameIDs(ctx context.Context, limit int) ([]model.ModerationIDGameID, error) {
+	ctx, span := tracer.Start(ctx, "getPendingModerationGameIDs")
+	defer span.End()
+
+	const q = `
+        SELECT id, game_id
+        FROM game_moderation
+        WHERE status = $1
+        ORDER BY id
+        LIMIT $2
+        FOR NO KEY UPDATE`
+
+	var data []model.ModerationIDGameID
+	if err := pgxscan.Select(ctx, s.querier(ctx), &data, q, model.ModerationStatusPending, limit); err != nil {
+		return nil, fmt.Errorf("getting pending moderation game IDs: %w", err)
+	}
+	return data, nil
+}
+
+// SetModerationRecordStatus sets moderation status for games IDs
+func (s *Storage) SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error {
+	ctx, span := tracer.Start(ctx, "setModerationStatus")
+	defer span.End()
+
+	if len(gameIDs) == 0 {
+		return nil
+	}
+
+	const q = `
+        UPDATE game_moderation
+        SET status = $2,
+            attempts = CASE WHEN $2 = $3 THEN attempts + 1 ELSE attempts END,
+            updated_at = $4
+        WHERE id = ANY($1)`
+
+	_, err := s.querier(ctx).Exec(ctx, q, gameIDs, status, model.ModerationStatusPending, time.Now())
+	if err != nil {
+		return fmt.Errorf("set moderation status to %s: %w", status, err)
+	}
+	return nil
 }

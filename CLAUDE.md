@@ -18,6 +18,9 @@
 - DO NOT write comments in tests unless they explain something that is not self-evident
 - Use @internal/pkg/td/random.go to generate random data
 - Use t.Context() instead of context.Background() for context in tests
+- For local API tests refers to @docs/swagger.json. 
+Some endpoints require authorization, refers game-library-auth API in https://github.com/OutOfStack/game-library-auth/blob/main/docs/swagger.json. 
+Use `aiuser:aiuser__` creds for `user` with user role, and `aipublisher:aipublisher` creds for user with `publisher` role.
 
 ## Build and Quality Checks
 - Run validation commands before completing work:

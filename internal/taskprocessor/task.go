@@ -40,6 +40,9 @@ type Storage interface {
 	CreateCompany(ctx context.Context, c model.Company) (int32, error)
 	GetCompanies(ctx context.Context) ([]model.Company, error)
 	GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSize int) ([]int32, error)
+
+	GetPendingModerationGameIDs(ctx context.Context, limit int) ([]model.ModerationIDGameID, error)
+	SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error
 }
 
 // IGDBAPIClient igdb api client interface
@@ -59,25 +62,32 @@ type GameFacade interface {
 	UpdateGameTrendingIndex(ctx context.Context, gameID int32) error
 }
 
+// ModerationFacade moderation facade interface
+type ModerationFacade interface {
+	ProcessModeration(ctx context.Context, gameID int32) error
+}
+
 // TaskProvider contains dependencies for tasks
 type TaskProvider struct {
-	log            *zap.Logger
-	storage        Storage
-	igdbAPIClient  IGDBAPIClient
-	s3Client       S3Client
-	gameFacade     GameFacade
-	igdbAPILimiter *rate.Limiter
+	log              *zap.Logger
+	storage          Storage
+	igdbAPIClient    IGDBAPIClient
+	s3Client         S3Client
+	gameFacade       GameFacade
+	moderationFacade ModerationFacade
+	igdbAPILimiter   *rate.Limiter
 }
 
 // New creates new TaskProvider
-func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client, gameFacade GameFacade) *TaskProvider {
+func New(log *zap.Logger, storage Storage, igdbClient IGDBAPIClient, s3Client S3Client, gameFacade GameFacade, moderationFacade ModerationFacade) *TaskProvider {
 	return &TaskProvider{
-		log:            log,
-		storage:        storage,
-		igdbAPIClient:  igdbClient,
-		igdbAPILimiter: rate.NewLimiter(rate.Every(time.Second), igdbAPIRPSLimit),
-		s3Client:       s3Client,
-		gameFacade:     gameFacade,
+		log:              log,
+		storage:          storage,
+		igdbAPIClient:    igdbClient,
+		igdbAPILimiter:   rate.NewLimiter(rate.Every(time.Second), igdbAPIRPSLimit),
+		s3Client:         s3Client,
+		gameFacade:       gameFacade,
+		moderationFacade: moderationFacade,
 	}
 }
 

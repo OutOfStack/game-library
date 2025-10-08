@@ -16,6 +16,7 @@ import (
 	time "time"
 
 	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	openaiapi "github.com/OutOfStack/game-library/internal/client/openaiapi"
 	s3 "github.com/OutOfStack/game-library/internal/client/s3"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -267,6 +268,21 @@ func (mr *MockStorageMockRecorder) GetGenres(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenres", reflect.TypeOf((*MockStorage)(nil).GetGenres), ctx)
 }
 
+// GetModerationRecordByGameID mocks base method.
+func (m *MockStorage) GetModerationRecordByGameID(ctx context.Context, gameID int32) (model.Moderation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetModerationRecordByGameID", ctx, gameID)
+	ret0, _ := ret[0].(model.Moderation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetModerationRecordByGameID indicates an expected call of GetModerationRecordByGameID.
+func (mr *MockStorageMockRecorder) GetModerationRecordByGameID(ctx, gameID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetModerationRecordByGameID", reflect.TypeOf((*MockStorage)(nil).GetModerationRecordByGameID), ctx, gameID)
+}
+
 // GetModerationRecordByID mocks base method.
 func (m *MockStorage) GetModerationRecordByID(ctx context.Context, id int32) (model.Moderation, error) {
 	m.ctrl.T.Helper()
@@ -430,18 +446,18 @@ func (mr *MockStorageMockRecorder) RunWithTx(ctx, f any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunWithTx", reflect.TypeOf((*MockStorage)(nil).RunWithTx), ctx, f)
 }
 
-// SetModerationRecordResult mocks base method.
-func (m *MockStorage) SetModerationRecordResult(ctx context.Context, id int32, res model.UpdateModerationResult) error {
+// SetModerationRecordResultByGameID mocks base method.
+func (m *MockStorage) SetModerationRecordResultByGameID(ctx context.Context, gameID int32, res model.UpdateModerationResult) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetModerationRecordResult", ctx, id, res)
+	ret := m.ctrl.Call(m, "SetModerationRecordResultByGameID", ctx, gameID, res)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SetModerationRecordResult indicates an expected call of SetModerationRecordResult.
-func (mr *MockStorageMockRecorder) SetModerationRecordResult(ctx, id, res any) *gomock.Call {
+// SetModerationRecordResultByGameID indicates an expected call of SetModerationRecordResultByGameID.
+func (mr *MockStorageMockRecorder) SetModerationRecordResultByGameID(ctx, gameID, res any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordResult", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordResult), ctx, id, res)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordResultByGameID", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordResultByGameID), ctx, gameID, res)
 }
 
 // UpdateGame mocks base method.
@@ -537,4 +553,58 @@ func (m *MockS3Client) Upload(ctx context.Context, data io.ReadSeeker, contentTy
 func (mr *MockS3ClientMockRecorder) Upload(ctx, data, contentType, md any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockS3Client)(nil).Upload), ctx, data, contentType, md)
+}
+
+// MockOpenAIClient is a mock of OpenAIClient interface.
+type MockOpenAIClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockOpenAIClientMockRecorder
+	isgomock struct{}
+}
+
+// MockOpenAIClientMockRecorder is the mock recorder for MockOpenAIClient.
+type MockOpenAIClientMockRecorder struct {
+	mock *MockOpenAIClient
+}
+
+// NewMockOpenAIClient creates a new mock instance.
+func NewMockOpenAIClient(ctrl *gomock.Controller) *MockOpenAIClient {
+	mock := &MockOpenAIClient{ctrl: ctrl}
+	mock.recorder = &MockOpenAIClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockOpenAIClient) EXPECT() *MockOpenAIClientMockRecorder {
+	return m.recorder
+}
+
+// AnalyzeGameImages mocks base method.
+func (m *MockOpenAIClient) AnalyzeGameImages(ctx context.Context, gameData model.ModerationData) (*openaiapi.VisionAnalysisResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AnalyzeGameImages", ctx, gameData)
+	ret0, _ := ret[0].(*openaiapi.VisionAnalysisResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AnalyzeGameImages indicates an expected call of AnalyzeGameImages.
+func (mr *MockOpenAIClientMockRecorder) AnalyzeGameImages(ctx, gameData any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AnalyzeGameImages", reflect.TypeOf((*MockOpenAIClient)(nil).AnalyzeGameImages), ctx, gameData)
+}
+
+// ModerateText mocks base method.
+func (m *MockOpenAIClient) ModerateText(ctx context.Context, gameData model.ModerationData) (*openaiapi.ModerationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ModerateText", ctx, gameData)
+	ret0, _ := ret[0].(*openaiapi.ModerationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ModerateText indicates an expected call of ModerateText.
+func (mr *MockOpenAIClientMockRecorder) ModerateText(ctx, gameData any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ModerateText", reflect.TypeOf((*MockOpenAIClient)(nil).ModerateText), ctx, gameData)
 }

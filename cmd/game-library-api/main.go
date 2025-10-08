@@ -20,6 +20,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
+	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
@@ -101,8 +102,11 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		return fmt.Errorf("create S3 client: %w", err)
 	}
 
+	// create openai client
+	openAIClient := openaiapi.New(logger, cfg.GetOpenAI())
+
 	// create redis cache service
-	rCache := cache.NewRedisStore(redisClient, logger)
+	cacheStore := cache.NewRedisStore(redisClient, logger)
 
 	// create storage
 	storage := repo.New(db, logger)
@@ -114,21 +118,22 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}
 
 	// create game facade
-	gameFacade := facade.NewProvider(logger, storage, rCache, s3Client)
+	gameFacade := facade.NewProvider(logger, storage, cacheStore, s3Client, openAIClient)
 
 	// create web decoder
 	decoder := web.NewDecoder(logger, cfg)
 
 	// create api provider
-	apiProvider := api.NewProvider(logger, rCache, gameFacade, decoder)
+	apiProvider := api.NewProvider(logger, cacheStore, gameFacade, decoder)
 
 	// run background tasks
-	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client, gameFacade)
+	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client, gameFacade, gameFacade)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
 		taskprocessor.FetchIGDBGamesTaskName:      {Schedule: cfg.GetScheduler().FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
 		taskprocessor.UpdateTrendingIndexTaskName: {Schedule: cfg.GetScheduler().UpdateTrendingIndex, Fn: taskProvider.StartUpdateTrendingIndex},
 		taskprocessor.UpdateGameInfoTaskName:      {Schedule: cfg.GetScheduler().UpdateGameInfo, Fn: taskProvider.StartUpdateGameInfo},
+		taskprocessor.ProcessModerationTaskName:   {Schedule: cfg.GetScheduler().ProcessModeration, Fn: taskProvider.StartProcessModeration},
 	}
 	for name, task := range tasks {
 		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)

@@ -27,7 +27,7 @@ type Moderation struct {
 	GameID    int32          `db:"game_id"`
 	Status    string         `db:"status"`
 	Details   string         `db:"details"`
-	Error     sql.NullString `db:"error"`
+	Attempts  int32          `db:"attempts"`
 	GameData  ModerationData `db:"game_data"`
 	CreatedAt sql.NullTime   `db:"created_at"`
 	UpdatedAt sql.NullTime   `db:"updated_at"`
@@ -42,7 +42,6 @@ type ModerationData struct {
 	Genres      []string `json:"genres"`
 	LogoURL     string   `json:"logoUrl"`
 	Summary     string   `json:"summary"`
-	Slug        string   `json:"slug"`
 	Screenshots []string `json:"screenshots"`
 	Websites    []string `json:"websites"`
 }
@@ -51,6 +50,12 @@ type ModerationData struct {
 type GameModerationData struct {
 	Game        Game
 	Moderations []Moderation
+}
+
+// ModerationIDGameID represents moderation record id and game id
+type ModerationIDGameID struct {
+	ModerationID int32 `db:"id"`
+	GameID       int32 `db:"game_id"`
 }
 
 // CreateModeration represents data required to create moderation record
@@ -73,7 +78,6 @@ func NewCreateModeration(gameID int32, gameData ModerationData) CreateModeration
 type UpdateModerationResult struct {
 	ResultStatus ModerationStatus
 	Details      string
-	Error        sql.NullString
 }
 
 // Value implements driver.Valuer for ModerationData

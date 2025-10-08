@@ -14,14 +14,15 @@ import (
 
 type TestSuite struct {
 	suite.Suite
-	ctrl           *gomock.Controller
-	log            *zap.Logger
-	storageMock    *mock.MockStorage
-	igdbClientMock *mock.MockIGDBAPIClient
-	s3ClientMock   *mock.MockS3Client
-	gameFacadeMock *mock.MockGameFacade
-	provider       *taskprocessor.TaskProvider
-	igdbAPILimiter *rate.Limiter
+	ctrl                 *gomock.Controller
+	log                  *zap.Logger
+	storageMock          *mock.MockStorage
+	igdbClientMock       *mock.MockIGDBAPIClient
+	s3ClientMock         *mock.MockS3Client
+	gameFacadeMock       *mock.MockGameFacade
+	moderationFacadeMock *mock.MockModerationFacade
+	provider             *taskprocessor.TaskProvider
+	igdbAPILimiter       *rate.Limiter
 }
 
 func (s *TestSuite) SetupTest() {
@@ -31,7 +32,8 @@ func (s *TestSuite) SetupTest() {
 	s.igdbClientMock = mock.NewMockIGDBAPIClient(s.ctrl)
 	s.s3ClientMock = mock.NewMockS3Client(s.ctrl)
 	s.gameFacadeMock = mock.NewMockGameFacade(s.ctrl)
-	s.provider = taskprocessor.New(s.log, s.storageMock, s.igdbClientMock, s.s3ClientMock, s.gameFacadeMock)
+	s.moderationFacadeMock = mock.NewMockModerationFacade(s.ctrl)
+	s.provider = taskprocessor.New(s.log, s.storageMock, s.igdbClientMock, s.s3ClientMock, s.gameFacadeMock, s.moderationFacadeMock)
 	s.igdbAPILimiter = rate.NewLimiter(rate.Every(time.Second), 100)
 }
 

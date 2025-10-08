@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"go.uber.org/zap"
@@ -13,19 +14,21 @@ import (
 
 // Provider represents dependencies for facade layer
 type Provider struct {
-	log      *zap.Logger
-	storage  Storage
-	cache    *cache.RedisStore
-	s3Client S3Client
+	log          *zap.Logger
+	storage      Storage
+	cache        *cache.RedisStore
+	s3Client     S3Client
+	openAIClient OpenAIClient
 }
 
 // NewProvider returns new facade provider
-func NewProvider(logger *zap.Logger, storage Storage, cache *cache.RedisStore, s3Client S3Client) *Provider {
+func NewProvider(logger *zap.Logger, storage Storage, cache *cache.RedisStore, s3Client S3Client, openAIClient OpenAIClient) *Provider {
 	return &Provider{
-		log:      logger,
-		storage:  storage,
-		cache:    cache,
-		s3Client: s3Client,
+		log:          logger,
+		storage:      storage,
+		cache:        cache,
+		s3Client:     s3Client,
+		openAIClient: openAIClient,
 	}
 }
 
@@ -64,8 +67,9 @@ type Storage interface {
 
 	GetModerationRecordsByGameID(ctx context.Context, gameID int32) (list []model.Moderation, err error)
 	CreateModerationRecord(ctx context.Context, m model.CreateModeration) (id int32, err error)
-	SetModerationRecordResult(ctx context.Context, id int32, res model.UpdateModerationResult) error
+	SetModerationRecordResultByGameID(ctx context.Context, gameID int32, res model.UpdateModerationResult) error
 	GetModerationRecordByID(ctx context.Context, id int32) (m model.Moderation, err error)
+	GetModerationRecordByGameID(ctx context.Context, gameID int32) (m model.Moderation, err error)
 
 	RunWithTx(ctx context.Context, f func(context.Context) error) error
 }
@@ -73,4 +77,10 @@ type Storage interface {
 // S3Client represents the interface for S3 client operations
 type S3Client interface {
 	Upload(ctx context.Context, data io.ReadSeeker, contentType string, md map[string]string) (s3.UploadResult, error)
+}
+
+// OpenAIClient represents the interface for OpenAI client operations
+type OpenAIClient interface {
+	ModerateText(ctx context.Context, gameData model.ModerationData) (*openaiapi.ModerationResponse, error)
+	AnalyzeGameImages(ctx context.Context, gameData model.ModerationData) (*openaiapi.VisionAnalysisResult, error)
 }

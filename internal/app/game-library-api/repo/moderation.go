@@ -135,12 +135,12 @@ func (s *Storage) GetPendingModerationGameIDs(ctx context.Context, limit int) ([
 	return data, nil
 }
 
-// SetModerationRecordStatus sets moderation status for games IDs. Increments attempts only on setting `pending` status
-func (s *Storage) SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error {
-	ctx, span := tracer.Start(ctx, "setModerationStatus")
+// SetModerationRecordsStatus sets moderation status. Increments attempts only on setting `pending` status
+func (s *Storage) SetModerationRecordsStatus(ctx context.Context, ids []int32, status model.ModerationStatus) error {
+	ctx, span := tracer.Start(ctx, "setModerationRecordsStatus")
 	defer span.End()
 
-	if len(gameIDs) == 0 {
+	if len(ids) == 0 {
 		return nil
 	}
 
@@ -151,7 +151,7 @@ func (s *Storage) SetModerationRecordStatus(ctx context.Context, gameIDs []int32
             updated_at = $4
         WHERE id = ANY($1)`
 
-	_, err := s.querier(ctx).Exec(ctx, q, gameIDs, status, model.ModerationStatusPending, time.Now())
+	_, err := s.querier(ctx).Exec(ctx, q, ids, status, model.ModerationStatusPending, time.Now())
 	if err != nil {
 		return fmt.Errorf("set moderation status to %s: %w", status, err)
 	}

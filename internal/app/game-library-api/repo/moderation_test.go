@@ -262,7 +262,7 @@ func TestModeration_SetModerationRecordStatus_ShouldUpdateStatus(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = s.SetModerationRecordStatus(ctx, []int32{mid1, mid2}, model.ModerationStatusInProgress)
+	err = s.SetModerationRecordsStatus(ctx, []int32{mid1, mid2}, model.ModerationStatusInProgress)
 	require.NoError(t, err)
 
 	m1, err := s.GetModerationRecordByID(ctx, mid1)
@@ -291,7 +291,7 @@ func TestModeration_SetModerationRecordStatus_ShouldIncrementAttemptsWhenSetting
 	})
 	require.NoError(t, err)
 
-	err = s.SetModerationRecordStatus(ctx, []int32{mid}, model.ModerationStatusPending)
+	err = s.SetModerationRecordsStatus(ctx, []int32{mid}, model.ModerationStatusPending)
 	require.NoError(t, err)
 
 	got, err := s.GetModerationRecordByID(ctx, mid)
@@ -304,6 +304,6 @@ func TestModeration_SetModerationRecordStatus_WithEmptySlice_ShouldNotError(t *t
 	s := setup(t)
 	defer teardown(t)
 
-	err := s.SetModerationRecordStatus(t.Context(), []int32{}, model.ModerationStatusInProgress)
+	err := s.SetModerationRecordsStatus(t.Context(), []int32{}, model.ModerationStatusInProgress)
 	require.NoError(t, err)
 }

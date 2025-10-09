@@ -15,6 +15,10 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 )
 
+const (
+	igdbGameRatingMultiplier = 0.05
+)
+
 // OrderGamesBy options
 var (
 	OrderGamesByDefault = model.OrderBy{
@@ -35,12 +39,14 @@ var (
 	}
 )
 
-// GetGames returns list of games with specified pageSize at specified page
+// GetGames returns games list filtered and paginated
 func (s *Storage) GetGames(ctx context.Context, pageSize, page uint32, filter model.GamesFilter) (list []model.Game, err error) {
 	ctx, span := tracer.Start(ctx, "getGames")
 	defer span.End()
 
-	query := psql.Select("id", "name", "release_date", "logo_url", "rating", "summary", "genres", "platforms",
+	query := psql.Select("id", "name", "release_date", "logo_url",
+		fmt.Sprintf("COALESCE(NULLIF(rating, 0), igdb_rating * %f) AS rating", igdbGameRatingMultiplier),
+		"summary", "genres", "platforms",
 		"screenshots", "developers", "publishers", "websites", "slug", "igdb_rating", "igdb_rating_count", "igdb_id", "trending_index").
 		From("games").
 		Where(sq.Eq{"moderation_status": model.ModerationStatusReady}).

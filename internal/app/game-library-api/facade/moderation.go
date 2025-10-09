@@ -123,7 +123,7 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 	}
 	if moderation.Attempts >= maxModerationAttempts {
 		p.log.Error("exceeded maximum moderation attempts", zap.Int32("game_id", gameID))
-		return p.storage.SetModerationRecordStatus(ctx, []int32{gameID}, model.ModerationStatusFailed)
+		return p.storage.SetModerationRecordsStatus(ctx, []int32{moderation.ID}, model.ModerationStatusFailed)
 	}
 
 	// get game data for moderation
@@ -187,20 +187,8 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 		defer cancel()
 
-		// invalidate games
-		key := gamesKey
-		if err = cache.DeleteByStartsWith(bCtx, p.cache, key); err != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
-		}
-
-		// invalidate games count
-		key = gamesCountKey
-		if err = cache.DeleteByStartsWith(bCtx, p.cache, key); err != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
-		}
-
 		// invalidate game in case moderation happens after game update and original game data is still cached
-		key = getGameKey(gameID)
+		key := getGameKey(gameID)
 		err = cache.Delete(bCtx, p.cache, key)
 		if err != nil {
 			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))

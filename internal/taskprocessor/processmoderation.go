@@ -63,13 +63,13 @@ func (tp *TaskProvider) StartProcessModeration() error {
 				return nil
 			}
 
-			var moderationsIDs []int32
+			var moderationIDs []int32
 			for _, r := range modGameRecords {
-				moderationsIDs = append(moderationsIDs, r.ModerationID)
+				moderationIDs = append(moderationIDs, r.ModerationID)
 			}
 
 			// update status to in_progress to prevent other workers from processing
-			err = tp.storage.SetModerationRecordStatus(ctx, moderationsIDs, model.ModerationStatusInProgress)
+			err = tp.storage.SetModerationRecordsStatus(ctx, moderationIDs, model.ModerationStatusInProgress)
 			if err != nil {
 				return fmt.Errorf("update moderation status to in_progress: %v", err)
 			}
@@ -113,7 +113,7 @@ func (tp *TaskProvider) StartProcessModeration() error {
 		}
 
 		// set status to pending to failed moderation attempts
-		err := tp.storage.SetModerationRecordStatus(ctx, failedModerationIDs, model.ModerationStatusPending)
+		err := tp.storage.SetModerationRecordsStatus(ctx, failedModerationIDs, model.ModerationStatusPending)
 		if err != nil {
 			return nil, fmt.Errorf("update moderation status to pending: %v", err)
 		}

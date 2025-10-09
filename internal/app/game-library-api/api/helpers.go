@@ -12,8 +12,6 @@ import (
 
 const (
 	minLengthForSearch = 2
-
-	igdbGameRatingMultiplier = 20.0
 )
 
 // Mappings
@@ -35,17 +33,12 @@ func mapToCreateGame(cgr *api.CreateGameRequest, publisher string) model.CreateG
 }
 
 func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.GameResponse, error) {
-	rating := game.Rating
-	// if game has no user ratings yet, get rating from igdb rating
-	if rating == 0 && game.IGDBRating != 0 {
-		rating = game.IGDBRating / igdbGameRatingMultiplier
-	}
 	resp := api.GameResponse{
 		ID:          game.ID,
 		Name:        game.Name,
 		ReleaseDate: game.ReleaseDate.String(),
 		LogoURL:     game.LogoURL,
-		Rating:      rating,
+		Rating:      game.Rating,
 		Summary:     game.Summary,
 		Slug:        game.Slug,
 		Screenshots: game.Screenshots,

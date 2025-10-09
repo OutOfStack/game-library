@@ -68,7 +68,7 @@ type Storage interface {
 	GetModerationRecordsByGameID(ctx context.Context, gameID int32) (list []model.Moderation, err error)
 	CreateModerationRecord(ctx context.Context, m model.CreateModeration) (id int32, err error)
 	SetModerationRecordResultByGameID(ctx context.Context, gameID int32, res model.UpdateModerationResult) error
-	SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error
+	SetModerationRecordsStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error
 	GetModerationRecordByID(ctx context.Context, id int32) (m model.Moderation, err error)
 	GetModerationRecordByGameID(ctx context.Context, gameID int32) (m model.Moderation, err error)
 

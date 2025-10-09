@@ -42,7 +42,7 @@ type Storage interface {
 	GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSize int) ([]int32, error)
 
 	GetPendingModerationGameIDs(ctx context.Context, limit int) ([]model.ModerationIDGameID, error)
-	SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error
+	SetModerationRecordsStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error
 }
 
 // IGDBAPIClient igdb api client interface

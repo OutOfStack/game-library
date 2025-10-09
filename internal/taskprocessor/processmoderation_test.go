@@ -43,7 +43,7 @@ func (s *TestSuite) TestStartProcessModeration_Success() {
 	firstUpdate := s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetPendingModerationGameIDs(gomock.Any(), 10).Return(records, nil)
-	setInProgress := s.storageMock.EXPECT().SetModerationRecordStatus(gomock.Any(), moderationIDs, model.ModerationStatusInProgress).Return(nil)
+	setInProgress := s.storageMock.EXPECT().SetModerationRecordsStatus(gomock.Any(), moderationIDs, model.ModerationStatusInProgress).Return(nil)
 
 	call1 := s.moderationFacadeMock.EXPECT().ProcessModeration(gomock.Any(), records[0].GameID).After(setInProgress).Return(nil)
 	call2 := s.moderationFacadeMock.EXPECT().ProcessModeration(gomock.Any(), records[1].GameID).After(setInProgress).Return(processErr)
@@ -52,7 +52,7 @@ func (s *TestSuite) TestStartProcessModeration_Success() {
 
 	failedIDs := []int32{records[1].ModerationID}
 	s.storageMock.EXPECT().
-		SetModerationRecordStatus(gomock.Any(), failedIDs, model.ModerationStatusPending).
+		SetModerationRecordsStatus(gomock.Any(), failedIDs, model.ModerationStatusPending).
 		After(call3).
 		Return(nil)
 
@@ -102,7 +102,7 @@ func (s *TestSuite) TestStartProcessModeration_NoPendingRecords() {
 	firstUpdate := s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetPendingModerationGameIDs(gomock.Any(), 10).Return([]model.ModerationIDGameID{}, nil)
-	s.storageMock.EXPECT().SetModerationRecordStatus(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	s.storageMock.EXPECT().SetModerationRecordsStatus(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	s.moderationFacadeMock.EXPECT().ProcessModeration(gomock.Any(), gomock.Any()).Times(0)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, updatedTask model.Task) error {
@@ -143,7 +143,7 @@ func (s *TestSuite) TestStartProcessModeration_GetPendingError() {
 	firstUpdate := s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().GetPendingModerationGameIDs(gomock.Any(), 10).Return(nil, expectedErr)
-	s.storageMock.EXPECT().SetModerationRecordStatus(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	s.storageMock.EXPECT().SetModerationRecordsStatus(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	s.moderationFacadeMock.EXPECT().ProcessModeration(gomock.Any(), gomock.Any()).Times(0)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, updatedTask model.Task) error {

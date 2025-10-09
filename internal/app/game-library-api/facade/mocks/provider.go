@@ -460,18 +460,18 @@ func (mr *MockStorageMockRecorder) SetModerationRecordResultByGameID(ctx, gameID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordResultByGameID", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordResultByGameID), ctx, gameID, res)
 }
 
-// SetModerationRecordStatus mocks base method.
-func (m *MockStorage) SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error {
+// SetModerationRecordsStatus mocks base method.
+func (m *MockStorage) SetModerationRecordsStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetModerationRecordStatus", ctx, gameIDs, status)
+	ret := m.ctrl.Call(m, "SetModerationRecordsStatus", ctx, gameIDs, status)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SetModerationRecordStatus indicates an expected call of SetModerationRecordStatus.
-func (mr *MockStorageMockRecorder) SetModerationRecordStatus(ctx, gameIDs, status any) *gomock.Call {
+// SetModerationRecordsStatus indicates an expected call of SetModerationRecordsStatus.
+func (mr *MockStorageMockRecorder) SetModerationRecordsStatus(ctx, gameIDs, status any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordStatus", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordStatus), ctx, gameIDs, status)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordsStatus", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordsStatus), ctx, gameIDs, status)
 }
 
 // UpdateGame mocks base method.

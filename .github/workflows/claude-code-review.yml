@@ -25,12 +25,12 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      issues: read
+      issues: write
       id-token: write
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -47,6 +47,7 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
+            
             Review this PR focusing on:
             - Compilation errors and critical bugs
             - Security vulnerabilities
@@ -55,7 +56,7 @@ jobs:
             - Correctness and optimal state of configuration files (i.e. yaml) if present
 
             Only provide actionable feedback that requires changes. Do not comment on what is done correctly or add praise. Be concise and specific. Provide code examples only when necessary.
-            Don't make bold assumptions about newer versions of libs being non-existent, because you're not up-to-date.
+            DON'T TELL ME that some versions of libraries don't exist (especially Go versions), because they do exist and you just have outdated info.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true

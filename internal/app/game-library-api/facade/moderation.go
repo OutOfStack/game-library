@@ -122,7 +122,8 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 		return fmt.Errorf("get moderation record: %w", err)
 	}
 	if moderation.Attempts >= maxModerationAttempts {
-		return p.saveModerationResult(ctx, gameID, model.ModerationStatusDeclined, "Exceeded maximum moderation attempts", "", nil)
+		p.log.Error("exceeded maximum moderation attempts", zap.Int32("game_id", gameID))
+		return p.storage.SetModerationRecordStatus(ctx, []int32{gameID}, model.ModerationStatusFailed)
 	}
 
 	// get game data for moderation
@@ -205,7 +206,7 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}
 		// recache game
-		err = cache.Get(ctx, p.cache, key, new(model.Game), func() (model.Game, error) {
+		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
 			return p.storage.GetGameByID(bCtx, gameID)
 		}, 0)
 		if err != nil {

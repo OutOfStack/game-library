@@ -19,6 +19,8 @@ const (
 	ModerationStatusReady ModerationStatus = "ready"
 	// ModerationStatusDeclined represents a game that is declined and requires fixing
 	ModerationStatusDeclined ModerationStatus = "declined"
+	// ModerationStatusFailed represents a game with a failed moderation
+	ModerationStatusFailed ModerationStatus = "failed"
 )
 
 // Moderation represents stored moderation record

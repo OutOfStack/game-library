@@ -29,16 +29,16 @@ func (s *Storage) CreateModerationRecord(ctx context.Context, m model.CreateMode
 	return id, nil
 }
 
-// SetModerationRecordResultByGameID sets moderation result for moderation record by game id
+// SetModerationRecordResultByGameID sets moderation result for moderation record by game id. Increments attempts on setting all statuses except `ready`
 func (s *Storage) SetModerationRecordResultByGameID(ctx context.Context, gameID int32, result model.UpdateModerationResult) error {
 	ctx, span := tracer.Start(ctx, "setModerationRecordResultByGameID")
 	defer span.End()
 
 	const q = `
         UPDATE game_moderation
-        SET status = $2, 
-            details = $3, 
-            attempts = CASE WHEN $2 != $4 THEN attempts + 1 ELSE attempts END, 
+        SET status = $2,
+            attempts = CASE WHEN $2 != $3 THEN attempts + 1 ELSE attempts END, 
+            details = $4,
             updated_at = $5
         WHERE id = (
         	SELECT moderation_id 
@@ -47,7 +47,7 @@ func (s *Storage) SetModerationRecordResultByGameID(ctx context.Context, gameID 
         	LIMIT 1
         )`
 
-	res, err := s.querier(ctx).Exec(ctx, q, gameID, result.ResultStatus, result.Details, model.ModerationStatusReady, time.Now())
+	res, err := s.querier(ctx).Exec(ctx, q, gameID, result.ResultStatus, model.ModerationStatusReady, result.Details, time.Now())
 	if err != nil {
 		return fmt.Errorf("setting moderation result for game id %d: %w", gameID, err)
 	}
@@ -135,7 +135,7 @@ func (s *Storage) GetPendingModerationGameIDs(ctx context.Context, limit int) ([
 	return data, nil
 }
 
-// SetModerationRecordStatus sets moderation status for games IDs
+// SetModerationRecordStatus sets moderation status for games IDs. Increments attempts only on setting `pending` status
 func (s *Storage) SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error {
 	ctx, span := tracer.Start(ctx, "setModerationStatus")
 	defer span.End()

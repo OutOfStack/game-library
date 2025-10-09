@@ -460,6 +460,20 @@ func (mr *MockStorageMockRecorder) SetModerationRecordResultByGameID(ctx, gameID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordResultByGameID", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordResultByGameID), ctx, gameID, res)
 }
 
+// SetModerationRecordStatus mocks base method.
+func (m *MockStorage) SetModerationRecordStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetModerationRecordStatus", ctx, gameIDs, status)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetModerationRecordStatus indicates an expected call of SetModerationRecordStatus.
+func (mr *MockStorageMockRecorder) SetModerationRecordStatus(ctx, gameIDs, status any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordStatus", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordStatus), ctx, gameIDs, status)
+}
+
 // UpdateGame mocks base method.
 func (m *MockStorage) UpdateGame(ctx context.Context, id int32, ug model.UpdateGameData) error {
 	m.ctrl.T.Helper()

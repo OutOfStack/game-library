@@ -262,7 +262,23 @@ func (s *TestSuite) TestProcessModeration_ExceededMaxAttempts() {
 	}
 
 	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
-	s.storageMock.EXPECT().SetModerationRecordResultByGameID(gomock.Any(), gameID, gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().SetModerationRecordStatus(gomock.Any(), []int32{gameID}, model.ModerationStatusFailed).Return(nil)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().NoError(err)
+}
+
+func (s *TestSuite) TestProcessModeration_ExceededMaxAttempts_GreaterThan() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 6,
+	}
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().SetModerationRecordStatus(gomock.Any(), []int32{gameID}, model.ModerationStatusFailed).Return(nil)
 
 	err := s.provider.ProcessModeration(s.T().Context(), gameID)
 

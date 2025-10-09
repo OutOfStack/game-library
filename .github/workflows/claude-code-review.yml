@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
       issues: read
       id-token: write
     
@@ -45,9 +45,6 @@ jobs:
 
           # Prompt for automated review (mode is auto-detected when prompt is provided)
           prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
-          
             Review this PR focusing on:
             - Compilation errors and critical bugs
             - Security vulnerabilities
@@ -60,9 +57,6 @@ jobs:
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true
-
-          # Track progress with comments in automation mode
-          track_progress: true
 
           # Limit the number of turns to control costs
           # claude_args: --max-turns 10

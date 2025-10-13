@@ -383,10 +383,8 @@ func (s *TestSuite) TestProcessModeration_PolicyViolations() {
 	moderationResp := &openaiapi.ModerationResponse{
 		Results: []openaiapi.ModerationResult{
 			{
-				Flagged: true,
-				Categories: map[string]bool{
-					"violence": true,
-				},
+				Flagged:    true,
+				Categories: []string{"violence"},
 			},
 		},
 	}

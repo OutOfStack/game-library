@@ -2,6 +2,7 @@ package facade
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 )
@@ -56,4 +57,14 @@ func getTopGenresKey(limit int64) string {
 
 func getPlatformsKey() string {
 	return platformsKey
+}
+
+// getGameNamePrefix returns the first 2 characters of game name for cache invalidation,
+// ignoring "the" prefix
+func getGameNamePrefix(name string) string {
+	lowerTrimmedName := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(name)), "the ")
+	if len(lowerTrimmedName) >= 2 {
+		return lowerTrimmedName[:2]
+	}
+	return lowerTrimmedName
 }

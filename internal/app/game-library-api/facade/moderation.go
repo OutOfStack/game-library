@@ -147,16 +147,13 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 	// check if basic moderation flagged content
 	if hasViolations(moderationResp) {
 		details := getViolationDetails(moderationResp)
-		violationTypes := getViolationTypes(moderationResp)
 
-		p.log.Info("game moderation declined - policy violations",
-			zap.Int32("game_id", gameID),
-			zap.Strings("violations", violationTypes))
+		p.log.Info("game moderation declined - policy violations", zap.Int32("game_id", gameID))
 
-		return p.saveModerationResult(ctx, gameID, model.ModerationStatusDeclined, "Content violates safety policies", details, violationTypes)
+		return p.saveModerationResult(ctx, gameID, model.ModerationStatusDeclined, "Content violates safety policies", details)
 	}
 
-	// phase 2: Gaming-specific image analysis
+	// phase 2: gaming-specific image analysis
 	if len(moderationData.Screenshots) > 0 || moderationData.LogoURL != "" {
 		visionResult, vErr := p.openAIClient.AnalyzeGameImages(ctx, moderationData)
 		if vErr != nil {
@@ -170,14 +167,14 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 				zap.Int32("game_id", gameID),
 				zap.String("reason", visionResult.Reason))
 
-			return p.saveModerationResult(ctx, gameID, model.ModerationStatusDeclined, visionResult.Reason, details, nil)
+			return p.saveModerationResult(ctx, gameID, model.ModerationStatusDeclined, visionResult.Reason, details)
 		}
 	}
 
 	// all checks passed - approve
 	p.log.Info("game moderation approved", zap.Int32("game_id", gameID))
 
-	err = p.saveModerationResult(ctx, gameID, model.ModerationStatusReady, "Content approved", "All moderation checks passed", nil)
+	err = p.saveModerationResult(ctx, gameID, model.ModerationStatusReady, "Content approved", "All moderation checks passed")
 	if err != nil {
 		return fmt.Errorf("save moderation result for game %d: %w", gameID, err)
 	}
@@ -193,12 +190,29 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 		if err != nil {
 			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}
-		// recache game
 		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
 			return p.storage.GetGameByID(bCtx, gameID)
 		}, 0)
 		if err != nil {
 			p.log.Error("cache game with id", zap.Int32("id", gameID), zap.Error(err))
+		}
+
+		// invalidate games lists filtered by game's name
+		namePrefix := getGameNamePrefix(moderationData.Name)
+		if namePrefix != "" {
+			// invalidate games lists: pattern games|*|*|*|<prefix>*|*|*|*
+			key = gamesKey + "|*|*|*|" + namePrefix
+			err = cache.DeleteByStartsWith(bCtx, p.cache, key)
+			if err != nil {
+				p.log.Error("remove games list cache by name prefix", zap.String("key", key), zap.Error(err))
+			}
+
+			// invalidate corresponding count caches: pattern games-count|<prefix>*|*|*|*
+			key = gamesCountKey + "|" + namePrefix
+			err = cache.DeleteByStartsWith(bCtx, p.cache, key)
+			if err != nil {
+				p.log.Error("remove games count cache by name prefix", zap.String("key", key), zap.Error(err))
+			}
 		}
 	}()
 
@@ -206,22 +220,11 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 }
 
 // saveModerationResult saves moderation result to database
-func (p *Provider) saveModerationResult(ctx context.Context, gameID int32, status model.ModerationStatus,
-	reason, details string, violationTypes []string) error {
-	resultDetails := fmt.Sprintf("%s. %s", reason, details)
-	if len(violationTypes) > 0 {
-		resultDetails += " Violations: " + strings.Join(violationTypes, ", ")
-	}
-
-	err := p.storage.SetModerationRecordResultByGameID(ctx, gameID, model.UpdateModerationResult{
+func (p *Provider) saveModerationResult(ctx context.Context, gameID int32, status model.ModerationStatus, reason, details string) error {
+	return p.storage.SetModerationRecordResultByGameID(ctx, gameID, model.UpdateModerationResult{
 		ResultStatus: status,
-		Details:      resultDetails,
+		Details:      fmt.Sprintf("%s. %s", reason, details),
 	})
-	if err != nil {
-		return fmt.Errorf("update moderation result for game %d: %w", gameID, err)
-	}
-
-	return nil
 }
 
 // hasViolations checks if moderation response has any flagged content
@@ -246,34 +249,8 @@ func getViolationDetails(resp *openaiapi.ModerationResponse) string {
 				inputType = inputTypes[i]
 			}
 
-			var categories []string
-			for category, flagged := range result.Categories {
-				if flagged {
-					categories = append(categories, category)
-				}
-			}
-			violations = append(violations, fmt.Sprintf("%s: %s", inputType, strings.Join(categories, ", ")))
+			violations = append(violations, fmt.Sprintf("%s: %s\n", inputType, strings.Join(result.Categories, ", ")))
 		}
 	}
 	return strings.Join(violations, "; ")
-}
-
-// getViolationTypes returns array of violation types
-func getViolationTypes(resp *openaiapi.ModerationResponse) []string {
-	types := make(map[string]bool)
-	for _, result := range resp.Results {
-		if result.Flagged {
-			for category, flagged := range result.Categories {
-				if flagged {
-					types[category] = true
-				}
-			}
-		}
-	}
-
-	result := make([]string, 0, len(types))
-	for category := range types {
-		result = append(result, category)
-	}
-	return result
 }

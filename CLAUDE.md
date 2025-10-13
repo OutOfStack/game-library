@@ -5,6 +5,7 @@
 
 ## Code Documentation
 - Write comments for all exported functions and structs
+- Start comments that are inside funcs with lowercase
 - Do NOT use periods (`.`) at the end of comments
 
 # Code practices:

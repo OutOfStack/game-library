@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -134,10 +135,10 @@ func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
 	case "rating":
 		filter.OrderBy = repo.OrderGamesByRating
 	default:
-		return model.GamesFilter{}, errors.New("invalid orderBy: should be one of [default, releaseDate, name]")
+		return model.GamesFilter{}, errors.New("invalid orderBy: should be one of [default, releaseDate, name, rating]")
 	}
 	if len(p.Name) >= minLengthForSearch {
-		filter.Name = p.Name
+		filter.Name = strings.ToLower(p.Name)
 	}
 	if p.GenreID != 0 {
 		filter.GenreID = p.GenreID

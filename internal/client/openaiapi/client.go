@@ -1,61 +1,47 @@
 package openaiapi
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"strings"
-	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/appconf"
-	"github.com/OutOfStack/game-library/internal/pkg/observability"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/shared"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 const (
-	// ai-related processing is longer that other generic apis
-	defaultTimeout = 30 * time.Second
-
 	gameSummaryMaxLen = 2000
-
-	moderationEndpoint = "moderations"
-	visionEndpoint     = "/chat/completions"
-
-	maxVisionTokens = 500
+	maxVisionTokens   = 1000
 )
 
-var tracer = otel.Tracer("openai")
+var tracer = otel.Tracer("openaiapi")
 
 // Client represents OpenAI API client
 type Client struct {
 	log             *zap.Logger
-	httpClient      *http.Client
-	apiKey          string
-	apiURL          string
+	client          *openai.Client
 	moderationModel string
 	visionModel     string
 }
 
 // New creates new OpenAI client
 func New(log *zap.Logger, cfg appconf.OpenAI) *Client {
-	httpClient := &http.Client{
-		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "openai"),
-		Timeout:   defaultTimeout,
-	}
+	client := openai.NewClient(
+		option.WithAPIKey(cfg.APIKey),
+		option.WithBaseURL(cfg.APIURL),
+	)
 
 	return &Client{
-		httpClient:      httpClient,
-		apiKey:          cfg.APIKey,
-		apiURL:          cfg.APIURL,
+		client:          &client,
 		moderationModel: cfg.ModerationModel,
 		visionModel:     cfg.VisionModel,
 		log:             log,
@@ -64,174 +50,86 @@ func New(log *zap.Logger, cfg appconf.OpenAI) *Client {
 
 // ModerateText performs basic text and image moderation using OpenAI moderation API
 func (c *Client) ModerateText(ctx context.Context, gameData model.ModerationData) (*ModerationResponse, error) {
-	ctx, span := tracer.Start(ctx, "ModerateText")
+	ctx, span := tracer.Start(ctx, "ModerateText", trace.WithAttributes(
+		attribute.String("game.name", gameData.Name),
+		attribute.String("openai.model", c.moderationModel)))
 	defer span.End()
 
-	req := c.getModerationRequest(gameData)
-
-	span.SetAttributes(
-		attribute.String("game.name", gameData.Name),
-		attribute.String("openai.model", req.Model),
-		attribute.Int("openai.input_count", len(req.Input)))
-
-	reqURL, err := url.JoinPath(c.apiURL, moderationEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("join url path: %v", err)
+	// add text inputs
+	inputs := []openai.ModerationMultiModalInputUnionParam{
+		openai.ModerationMultiModalInputParamOfText(gameData.Name),
+		openai.ModerationMultiModalInputParamOfText(truncateText(gameData.Summary, gameSummaryMaxLen)),
+		openai.ModerationMultiModalInputParamOfText(strings.Join(gameData.Developers, ", ")),
+		openai.ModerationMultiModalInputParamOfText(gameData.Publisher),
+		openai.ModerationMultiModalInputParamOfText(strings.Join(gameData.Websites, ", ")),
 	}
 
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("marshal request: %w", err)
+	// add logo image if available (moderation API has limit of 1 image per request)
+	if gameData.LogoURL != "" {
+		inputs = append(inputs, openai.ModerationMultiModalInputParamOfImageURL(
+			openai.ModerationImageURLInputImageURLParam{
+				URL: gameData.LogoURL,
+			},
+		))
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewReader(reqBody))
-	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("http request: %w", err)
-	}
-	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			c.log.Error("failed to close response body", zap.String("url", reqURL), zap.Error(err))
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
+	resp, err := c.client.Moderations.New(ctx, openai.ModerationNewParams{
+		Model: c.moderationModel,
+		Input: openai.ModerationNewParamsInputUnion{
+			OfModerationMultiModalArray: inputs,
+		},
+	})
+	if err != nil || resp == nil {
+		return nil, fmt.Errorf("moderation API call: %w", err)
 	}
 
-	var moderationResp ModerationResponse
-	if err = json.NewDecoder(resp.Body).Decode(&moderationResp); err != nil {
-		return nil, fmt.Errorf("invalid response: %w", err)
-	}
-
-	return &moderationResp, nil
+	return convertModerationResponse(resp), nil
 }
 
 // AnalyzeGameImages analyzes images for gaming-specific content appropriateness using vision model
 func (c *Client) AnalyzeGameImages(ctx context.Context, gameData model.ModerationData) (*VisionAnalysisResult, error) {
-	ctx, span := tracer.Start(ctx, "AnalyzeGameImages")
+	ctx, span := tracer.Start(ctx, "AnalyzeGameImages", trace.WithAttributes(
+		attribute.String("game.name", gameData.Name),
+		attribute.String("openai.model", c.visionModel),
+		attribute.Int("openai.max_completion_tokens", maxVisionTokens)))
 	defer span.End()
 
-	req := c.getVisionRequest(gameData)
-
-	span.SetAttributes(
-		attribute.String("game.name", gameData.Name),
-		attribute.String("openai.model", req.Model),
-		attribute.Int("openai.max_tokens", req.MaxTokens))
-
-	reqURL, err := url.JoinPath(c.apiURL, visionEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("join url path: %v", err)
-	}
-
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("marshal request: %w", err)
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewReader(reqBody))
-	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
-
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("http request: %w", err)
-	}
-	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			c.log.Error("failed to close response body", zap.String("url", reqURL), zap.Error(err))
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
-	}
-
-	var visionResp VisionResponse
-	if err = json.NewDecoder(resp.Body).Decode(&visionResp); err != nil {
-		return nil, fmt.Errorf("decode response: %w", err)
-	}
-
-	return parseVisionResponse(&visionResp)
-}
-
-func (c *Client) getModerationRequest(gameData model.ModerationData) ModerationRequest {
-	// text inputs
-	inputs := []ModerationInputItem{
-		{Type: textType, Text: gameData.Name},
-		{Type: textType, Text: truncateText(gameData.Summary, gameSummaryMaxLen)},
-		{Type: textType, Text: strings.Join(gameData.Developers, ", ")},
-		{Type: textType, Text: gameData.Publisher},
-		{Type: textType, Text: strings.Join(gameData.Websites, ", ")},
-	}
-
-	// image inputs
-	if gameData.LogoURL != "" {
-		inputs = append(inputs, ModerationInputItem{
-			Type:     imageURLType,
-			ImageURL: gameData.LogoURL,
-		})
-	}
-
-	for _, scr := range gameData.Screenshots {
-		inputs = append(inputs, ModerationInputItem{
-			Type:     imageURLType,
-			ImageURL: scr,
-		})
-	}
-
-	return ModerationRequest{
-		Model: c.moderationModel,
-		Input: inputs,
-	}
-}
-
-func (c *Client) getVisionRequest(gameData model.ModerationData) VisionRequest {
 	// prompt
 	prompt := buildGamingModerationPrompt(gameData)
+	contentParts := []openai.ChatCompletionContentPartUnionParam{
+		openai.TextContentPart(prompt),
+	}
 
 	// images
-	images := make([]string, 0, 1+len(gameData.Screenshots))
 	if gameData.LogoURL != "" {
-		images = append(images, gameData.LogoURL)
+		contentParts = append(contentParts, openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
+			URL: gameData.LogoURL,
+		}))
 	}
 
-	images = append(images, gameData.Screenshots...)
-
-	// vision request
-	content := []VisionContent{
-		{Type: textType, Text: prompt},
+	for _, screenshotURL := range gameData.Screenshots {
+		contentParts = append(contentParts, openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
+			URL: screenshotURL,
+		}))
 	}
 
-	for _, imageURL := range images {
-		content = append(content, VisionContent{
-			Type:     imageType,
-			ImageURL: &VisionImageURL{URL: imageURL},
-		})
-	}
+	responseFormat := shared.NewResponseFormatJSONObjectParam()
 
-	return VisionRequest{
-		Model:     c.visionModel,
-		MaxTokens: maxVisionTokens,
-		Messages: []VisionMessage{
-			{
-				Role:    "user",
-				Content: content,
-			},
+	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Model: c.visionModel,
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.UserMessage(contentParts),
 		},
-		ResponseFormat: map[string]string{"type": "json_object"},
+		MaxCompletionTokens: openai.Int(int64(maxVisionTokens)),
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONObject: &responseFormat,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("vision API call: %w", err)
 	}
+
+	return parseVisionResponse(resp)
 }
 
 // buildGamingModerationPrompt creates a gaming-specific moderation prompt
@@ -265,7 +163,7 @@ Respond ONLY with JSON:
 }
 
 // parseVisionResponse extracts moderation result from vision API response
-func parseVisionResponse(resp *VisionResponse) (*VisionAnalysisResult, error) {
+func parseVisionResponse(resp *openai.ChatCompletion) (*VisionAnalysisResult, error) {
 	if len(resp.Choices) == 0 {
 		return nil, errors.New("no choices in response")
 	}
@@ -276,8 +174,7 @@ func parseVisionResponse(resp *VisionResponse) (*VisionAnalysisResult, error) {
 	}
 
 	var result VisionAnalysisResult
-	text := content[0].Text
-	if err := json.Unmarshal([]byte(text), &result); err != nil {
+	if err := json.Unmarshal([]byte(content), &result); err != nil {
 		return nil, fmt.Errorf("parse JSON response: %w", err)
 	}
 
@@ -290,4 +187,51 @@ func truncateText(s string, maxLen int) string {
 		return s
 	}
 	return string(runes[:maxLen])
+}
+
+func getCategoriesFromResult(r *openai.Moderation) []string {
+	if r == nil {
+		return nil
+	}
+
+	var categories []string
+	if r.Categories.Harassment || r.Categories.HarassmentThreatening {
+		categories = append(categories, "harassment")
+	}
+	if r.Categories.Hate || r.Categories.HateThreatening {
+		categories = append(categories, "hate")
+	}
+	if r.Categories.Illicit || r.Categories.IllicitViolent {
+		categories = append(categories, "illicit")
+	}
+	if r.Categories.SelfHarm || r.Categories.SelfHarmInstructions || r.Categories.SelfHarmIntent {
+		categories = append(categories, "self-harm")
+	}
+	if r.Categories.Sexual || r.Categories.SexualMinors {
+		categories = append(categories, "sexual")
+	}
+	if r.Categories.Violence || r.Categories.ViolenceGraphic {
+		categories = append(categories, "violence")
+	}
+
+	return categories
+}
+
+func convertModerationResponse(resp *openai.ModerationNewResponse) *ModerationResponse {
+	if resp == nil {
+		return &ModerationResponse{}
+	}
+
+	res := make([]ModerationResult, len(resp.Results))
+	for i, result := range resp.Results {
+		res[i] = ModerationResult{
+			Flagged:    result.Flagged,
+			Categories: getCategoriesFromResult(&result),
+		}
+	}
+
+	return &ModerationResponse{
+		ID:      resp.ID,
+		Results: res,
+	}
 }

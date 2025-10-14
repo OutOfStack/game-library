@@ -21,6 +21,10 @@ import (
 )
 
 const (
+	defaultTimeout = 10 * time.Second
+)
+
+const (
 	gamesEndpoint = "games"
 
 	maxLimit = 500
@@ -30,23 +34,24 @@ var tracer = otel.Tracer("igdbapi")
 
 // Client represents dependencies for igdb client
 type Client struct {
-	log    *zap.Logger
-	conf   appconf.IGDB
-	token  *tokenInfo
-	client *http.Client
+	log        *zap.Logger
+	conf       appconf.IGDB
+	token      *tokenInfo
+	httpClient *http.Client
 }
 
 // New constructs Client instance
 func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 	client := &http.Client{
 		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "igdb"),
+		Timeout:   defaultTimeout,
 	}
 
 	return &Client{
-		log:    log,
-		token:  &tokenInfo{},
-		conf:   conf,
-		client: client,
+		log:        log,
+		token:      &tokenInfo{},
+		conf:       conf,
+		httpClient: client,
 	}, nil
 }
 
@@ -79,17 +84,17 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 		version_parent = null & parent_game = null & release_dates.platform = (%s);
 		limit %d;`,
 		minRatingsCount, minRating, releasedBefore.Unix(), platforms, limit)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
 	if err != nil {
 		return nil, fmt.Errorf("create get top rated games request: %v", err)
 	}
 
-	err = c.setAuthHeaders(ctx, req)
+	err = c.setAuthHeaders(ctx, httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("set auth headers: %v", err)
 	}
 
-	resp, err := c.client.Do(req)
+	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
 		c.log.Error("request igdb api", zap.String("url", reqURL), zap.Error(err))
 		return nil, fmt.Errorf("igdb api unavailable: %v", err)
@@ -141,7 +146,7 @@ func (c *Client) GetGameInfoForUpdate(ctx context.Context, igdbID int64) (GameIn
 		return GameInfoForUpdate{}, fmt.Errorf("set auth headers: %v", err)
 	}
 
-	resp, err := c.client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("request igdb api", zap.String("url", reqURL), zap.Error(err))
 		return GameInfoForUpdate{}, fmt.Errorf("igdb api unavailable: %v", err)
@@ -185,7 +190,7 @@ func (c *Client) GetImageByURL(ctx context.Context, imageURL, imageType string) 
 		return GetImageResp{}, fmt.Errorf("creating get image by url request: %v", err)
 	}
 
-	resp, err := c.client.Do(request)
+	resp, err := c.httpClient.Do(request)
 	if err != nil {
 		return GetImageResp{}, fmt.Errorf("get image by url: %v", err)
 	}
@@ -256,7 +261,7 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	q.Add("client_secret", c.conf.ClientSecret)
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := c.client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("calling token api", zap.String("url", c.conf.TokenURL), zap.Error(err))
 		return "", fmt.Errorf("token api unavailable: %v", err)

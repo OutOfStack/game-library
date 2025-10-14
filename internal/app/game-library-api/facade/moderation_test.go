@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	goredis "github.com/redis/go-redis/v9"
@@ -250,4 +251,235 @@ func (s *TestSuite) TestGetGameModerations_GetModerationsError() {
 
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "get moderations by game")
+}
+
+func (s *TestSuite) TestProcessModeration_ExceededMaxAttempts() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 5,
+	}
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().SetModerationRecordsStatus(gomock.Any(), []int32{moderation.ID}, model.ModerationStatusFailed).Return(nil)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().NoError(err)
+}
+
+func (s *TestSuite) TestProcessModeration_ExceededMaxAttempts_GreaterThan() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 6,
+	}
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().SetModerationRecordsStatus(gomock.Any(), []int32{moderation.ID}, model.ModerationStatusFailed).Return(nil)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().NoError(err)
+}
+
+func (s *TestSuite) TestProcessModeration_GetModerationRecordError() {
+	gameID := td.Int31()
+	getModerationErr := errors.New("get moderation error")
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(model.Moderation{}, getModerationErr)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "get moderation record")
+}
+
+func (s *TestSuite) TestProcessModeration_GetGameError() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 0,
+	}
+	getGameErr := errors.New("get game error")
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(model.Game{}, getGameErr)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "get game")
+}
+
+func (s *TestSuite) TestProcessModeration_MapGameToModerationDataError() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 0,
+	}
+	game := model.Game{
+		ID:            gameID,
+		PublishersIDs: []int32{td.Int31()},
+	}
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(game, nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "companies", gomock.Any()).Return(goredis.Nil)
+	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return(nil, errors.New("companies error"))
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "map game")
+}
+
+func (s *TestSuite) TestProcessModeration_ModerationAPIError() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 0,
+	}
+	game := model.Game{
+		ID:            gameID,
+		Name:          td.String(),
+		PublishersIDs: []int32{td.Int31()},
+	}
+	moderationErr := errors.New("moderation api error")
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(game, nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "companies", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "companies", gomock.Any(), gomock.Any()).Return(nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "genres", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "genres", gomock.Any(), gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return([]model.Company{{ID: game.PublishersIDs[0], Name: td.String()}}, nil)
+	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return([]model.Genre{}, nil)
+	s.openAIClientMock.EXPECT().ModerateText(gomock.Any(), gomock.Any()).Return(nil, moderationErr)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "moderation api")
+}
+
+func (s *TestSuite) TestProcessModeration_PolicyViolations() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 0,
+	}
+	game := model.Game{
+		ID:            gameID,
+		Name:          td.String(),
+		PublishersIDs: []int32{td.Int31()},
+	}
+	moderationResp := &openaiapi.ModerationResponse{
+		Results: []openaiapi.ModerationResult{
+			{
+				Flagged:    true,
+				Categories: []string{"violence"},
+			},
+		},
+	}
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(game, nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "companies", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "companies", gomock.Any(), gomock.Any()).Return(nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "genres", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "genres", gomock.Any(), gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return([]model.Company{{ID: game.PublishersIDs[0], Name: td.String()}}, nil)
+	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return([]model.Genre{}, nil)
+	s.openAIClientMock.EXPECT().ModerateText(gomock.Any(), gomock.Any()).Return(moderationResp, nil)
+	s.storageMock.EXPECT().SetModerationRecordResultByGameID(gomock.Any(), gameID, gomock.Any()).Return(nil)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().NoError(err)
+}
+
+func (s *TestSuite) TestProcessModeration_ImageAnalysisError() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 0,
+	}
+	game := model.Game{
+		ID:            gameID,
+		Name:          td.String(),
+		PublishersIDs: []int32{td.Int31()},
+		Screenshots:   []string{td.URL()},
+	}
+	moderationResp := &openaiapi.ModerationResponse{
+		Results: []openaiapi.ModerationResult{
+			{Flagged: false},
+		},
+	}
+	imageAnalysisErr := errors.New("image analysis error")
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(game, nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "companies", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "companies", gomock.Any(), gomock.Any()).Return(nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "genres", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "genres", gomock.Any(), gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return([]model.Company{{ID: game.PublishersIDs[0], Name: td.String()}}, nil)
+	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return([]model.Genre{}, nil)
+	s.openAIClientMock.EXPECT().ModerateText(gomock.Any(), gomock.Any()).Return(moderationResp, nil)
+	s.openAIClientMock.EXPECT().AnalyzeGameImages(gomock.Any(), gomock.Any()).Return(nil, imageAnalysisErr)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "image analysis failed")
+}
+
+func (s *TestSuite) TestProcessModeration_ImageAnalysisDeclined() {
+	gameID := td.Int31()
+	moderation := model.Moderation{
+		ID:       td.Int31(),
+		GameID:   gameID,
+		Attempts: 0,
+	}
+	game := model.Game{
+		ID:            gameID,
+		Name:          td.String(),
+		PublishersIDs: []int32{td.Int31()},
+		LogoURL:       td.URL(),
+	}
+	moderationResp := &openaiapi.ModerationResponse{
+		Results: []openaiapi.ModerationResult{
+			{Flagged: false},
+		},
+	}
+	visionResult := &openaiapi.VisionAnalysisResult{
+		Approved:          false,
+		Reason:            "Not gaming appropriate",
+		GamingAppropriate: false,
+		ContentRelevant:   true,
+	}
+
+	s.storageMock.EXPECT().GetModerationRecordByGameID(gomock.Any(), gameID).Return(moderation, nil)
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameID).Return(game, nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "companies", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "companies", gomock.Any(), gomock.Any()).Return(nil)
+	s.redisClientMock.EXPECT().GetStruct(gomock.Any(), "genres", gomock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(gomock.Any(), "genres", gomock.Any(), gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return([]model.Company{{ID: game.PublishersIDs[0], Name: td.String()}}, nil)
+	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return([]model.Genre{}, nil)
+	s.openAIClientMock.EXPECT().ModerateText(gomock.Any(), gomock.Any()).Return(moderationResp, nil)
+	s.openAIClientMock.EXPECT().AnalyzeGameImages(gomock.Any(), gomock.Any()).Return(visionResult, nil)
+	s.storageMock.EXPECT().SetModerationRecordResultByGameID(gomock.Any(), gameID, gomock.Any()).Return(nil)
+
+	err := s.provider.ProcessModeration(s.T().Context(), gameID)
+
+	s.Require().NoError(err)
 }

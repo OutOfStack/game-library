@@ -7,6 +7,26 @@ import (
 	"github.com/OutOfStack/game-library/pkg/types"
 )
 
+// OrderGamesBy options
+var (
+	OrderGamesByDefault = OrderBy{
+		Field: "trending_index",
+		Order: DescendingSortOrder,
+	}
+	OrderGamesByReleaseDate = OrderBy{
+		Field: "release_date",
+		Order: DescendingSortOrder,
+	}
+	OrderGamesByName = OrderBy{
+		Field: "name",
+		Order: AscendingSortOrder,
+	}
+	OrderGamesByRating = OrderBy{
+		Field: "rating",
+		Order: DescendingSortOrder,
+	}
+)
+
 // Game - db game model
 type Game struct {
 	ID               int32            `db:"id"`

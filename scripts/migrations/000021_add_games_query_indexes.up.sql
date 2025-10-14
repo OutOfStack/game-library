@@ -21,7 +21,7 @@ ALTER TABLE games
     ALTER COLUMN moderation_status SET DEFAULT 'pending';
 
 UPDATE games
-SET moderation_status = 'pending' WHERE moderation_status = 'check';
+    SET moderation_status = 'pending' WHERE moderation_status = 'check';
 
 ALTER TABLE companies
     ADD CONSTRAINT unique_name UNIQUE (name);

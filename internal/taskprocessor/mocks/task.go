@@ -165,6 +165,21 @@ func (mr *MockStorageMockRecorder) GetGenres(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenres", reflect.TypeOf((*MockStorage)(nil).GetGenres), ctx)
 }
 
+// GetPendingModerationGameIDs mocks base method.
+func (m *MockStorage) GetPendingModerationGameIDs(ctx context.Context, limit int) ([]model.ModerationIDGameID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingModerationGameIDs", ctx, limit)
+	ret0, _ := ret[0].([]model.ModerationIDGameID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingModerationGameIDs indicates an expected call of GetPendingModerationGameIDs.
+func (mr *MockStorageMockRecorder) GetPendingModerationGameIDs(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingModerationGameIDs", reflect.TypeOf((*MockStorage)(nil).GetPendingModerationGameIDs), ctx, limit)
+}
+
 // GetPlatforms mocks base method.
 func (m *MockStorage) GetPlatforms(ctx context.Context) ([]model.Platform, error) {
 	m.ctrl.T.Helper()
@@ -207,6 +222,20 @@ func (m *MockStorage) RunWithTx(ctx context.Context, f func(context.Context) err
 func (mr *MockStorageMockRecorder) RunWithTx(ctx, f any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunWithTx", reflect.TypeOf((*MockStorage)(nil).RunWithTx), ctx, f)
+}
+
+// SetModerationRecordsStatus mocks base method.
+func (m *MockStorage) SetModerationRecordsStatus(ctx context.Context, gameIDs []int32, status model.ModerationStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetModerationRecordsStatus", ctx, gameIDs, status)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetModerationRecordsStatus indicates an expected call of SetModerationRecordsStatus.
+func (mr *MockStorageMockRecorder) SetModerationRecordsStatus(ctx, gameIDs, status any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordsStatus", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordsStatus), ctx, gameIDs, status)
 }
 
 // UpdateGameIGDBInfo mocks base method.
@@ -381,4 +410,42 @@ func (m *MockGameFacade) UpdateGameTrendingIndex(ctx context.Context, gameID int
 func (mr *MockGameFacadeMockRecorder) UpdateGameTrendingIndex(ctx, gameID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameTrendingIndex", reflect.TypeOf((*MockGameFacade)(nil).UpdateGameTrendingIndex), ctx, gameID)
+}
+
+// MockModerationFacade is a mock of ModerationFacade interface.
+type MockModerationFacade struct {
+	ctrl     *gomock.Controller
+	recorder *MockModerationFacadeMockRecorder
+	isgomock struct{}
+}
+
+// MockModerationFacadeMockRecorder is the mock recorder for MockModerationFacade.
+type MockModerationFacadeMockRecorder struct {
+	mock *MockModerationFacade
+}
+
+// NewMockModerationFacade creates a new mock instance.
+func NewMockModerationFacade(ctrl *gomock.Controller) *MockModerationFacade {
+	mock := &MockModerationFacade{ctrl: ctrl}
+	mock.recorder = &MockModerationFacadeMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockModerationFacade) EXPECT() *MockModerationFacadeMockRecorder {
+	return m.recorder
+}
+
+// ProcessModeration mocks base method.
+func (m *MockModerationFacade) ProcessModeration(ctx context.Context, gameID int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessModeration", ctx, gameID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProcessModeration indicates an expected call of ProcessModeration.
+func (mr *MockModerationFacadeMockRecorder) ProcessModeration(ctx, gameID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessModeration", reflect.TypeOf((*MockModerationFacade)(nil).ProcessModeration), ctx, gameID)
 }

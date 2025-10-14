@@ -4,9 +4,18 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
+	"github.com/OutOfStack/game-library/internal/pkg/cache"
+	"go.uber.org/zap"
+)
+
+const (
+	maxModerationAttempts = 5
 )
 
 // CreateModerationRecord creates a moderation record for a game
@@ -97,8 +106,151 @@ func (p *Provider) mapGameToModerationData(ctx context.Context, g *model.Game) (
 		Genres:      genres,
 		LogoURL:     g.LogoURL,
 		Summary:     g.Summary,
-		Slug:        g.Slug,
 		Screenshots: g.Screenshots,
 		Websites:    g.Websites,
 	}, nil
+}
+
+// ProcessModeration processes moderation for a game using a two-phase approach:
+// 1. Basic moderation: Uses OpenAI moderation API to check for policy violations in text and images
+// 2. Gaming-specific analysis: Uses vision model to analyze images for gaming appropriateness and relevance
+func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
+	p.log.Info("processing moderation for game", zap.Int32("game_id", gameID))
+
+	moderation, err := p.storage.GetModerationRecordByGameID(ctx, gameID)
+	if err != nil {
+		return fmt.Errorf("get moderation record: %w", err)
+	}
+	if moderation.Attempts >= maxModerationAttempts {
+		p.log.Error("exceeded maximum moderation attempts", zap.Int32("game_id", gameID))
+		return p.storage.SetModerationRecordsStatus(ctx, []int32{moderation.ID}, model.ModerationStatusFailed)
+	}
+
+	// get game data for moderation
+	game, err := p.storage.GetGameByID(ctx, gameID)
+	if err != nil {
+		return fmt.Errorf("get game %d: %w", gameID, err)
+	}
+
+	moderationData, err := p.mapGameToModerationData(ctx, &game)
+	if err != nil {
+		return fmt.Errorf("map game %d to moderation data: %w", gameID, err)
+	}
+
+	// phase 1: Basic moderation with OpenAI moderation API
+	moderationResp, err := p.openAIClient.ModerateText(ctx, moderationData)
+	if err != nil {
+		p.log.Error("openai moderation api error", zap.Error(err), zap.Int32("game_id", gameID))
+		return fmt.Errorf("moderation api: %w", err)
+	}
+
+	// check if basic moderation flagged content
+	if hasViolations(moderationResp) {
+		details := getViolationDetails(moderationResp)
+
+		p.log.Info("game moderation declined - policy violations", zap.Int32("game_id", gameID))
+
+		return p.saveModerationResult(ctx, gameID, model.ModerationStatusDeclined, "Content violates safety policies", details)
+	}
+
+	// phase 2: gaming-specific image analysis
+	if len(moderationData.Screenshots) > 0 || moderationData.LogoURL != "" {
+		visionResult, vErr := p.openAIClient.AnalyzeGameImages(ctx, moderationData)
+		if vErr != nil {
+			return fmt.Errorf("image analysis failed for game %d: %w", gameID, vErr)
+		}
+		if !visionResult.Approved || !visionResult.GamingAppropriate || !visionResult.ContentRelevant {
+			details := fmt.Sprintf("Gaming appropriate: %t, Content relevant: %t",
+				visionResult.GamingAppropriate, visionResult.ContentRelevant)
+
+			p.log.Info("game moderation declined - image analysis",
+				zap.Int32("game_id", gameID),
+				zap.String("reason", visionResult.Reason))
+
+			return p.saveModerationResult(ctx, gameID, model.ModerationStatusDeclined, visionResult.Reason, details)
+		}
+	}
+
+	// all checks passed - approve
+	p.log.Info("game moderation approved", zap.Int32("game_id", gameID))
+
+	err = p.saveModerationResult(ctx, gameID, model.ModerationStatusReady, "Content approved", "All moderation checks passed")
+	if err != nil {
+		return fmt.Errorf("save moderation result for game %d: %w", gameID, err)
+	}
+
+	// invalidate cache on successful moderation
+	go func() {
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+		defer cancel()
+
+		// invalidate game in case moderation happens after game update and original game data is still cached
+		key := getGameKey(gameID)
+		err = cache.Delete(bCtx, p.cache, key)
+		if err != nil {
+			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
+		}
+		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
+			return p.storage.GetGameByID(bCtx, gameID)
+		}, 0)
+		if err != nil {
+			p.log.Error("cache game with id", zap.Int32("id", gameID), zap.Error(err))
+		}
+
+		// invalidate games lists filtered by game's name
+		namePrefix := getGameNamePrefix(moderationData.Name)
+		if namePrefix != "" {
+			// invalidate games lists: pattern games|*|*|*|<prefix>*|*|*|*
+			key = gamesKey + "|*|*|*|" + namePrefix
+			err = cache.DeleteByStartsWith(bCtx, p.cache, key)
+			if err != nil {
+				p.log.Error("remove games list cache by name prefix", zap.String("key", key), zap.Error(err))
+			}
+
+			// invalidate corresponding count caches: pattern games-count|<prefix>*|*|*|*
+			key = gamesCountKey + "|" + namePrefix
+			err = cache.DeleteByStartsWith(bCtx, p.cache, key)
+			if err != nil {
+				p.log.Error("remove games count cache by name prefix", zap.String("key", key), zap.Error(err))
+			}
+		}
+	}()
+
+	return nil
+}
+
+// saveModerationResult saves moderation result to database
+func (p *Provider) saveModerationResult(ctx context.Context, gameID int32, status model.ModerationStatus, reason, details string) error {
+	return p.storage.SetModerationRecordResultByGameID(ctx, gameID, model.UpdateModerationResult{
+		ResultStatus: status,
+		Details:      fmt.Sprintf("%s. %s", reason, details),
+	})
+}
+
+// hasViolations checks if moderation response has any flagged content
+func hasViolations(resp *openaiapi.ModerationResponse) bool {
+	for _, result := range resp.Results {
+		if result.Flagged {
+			return true
+		}
+	}
+	return false
+}
+
+// getViolationDetails returns details about violations
+func getViolationDetails(resp *openaiapi.ModerationResponse) string {
+	var violations []string
+	inputTypes := []string{"name", "summary", "developers", "publisher", "websites", "logo", "screenshot"}
+
+	for i, result := range resp.Results {
+		if result.Flagged {
+			inputType := "content"
+			if i < len(inputTypes) {
+				inputType = inputTypes[i]
+			}
+
+			violations = append(violations, fmt.Sprintf("%s: %s\n", inputType, strings.Join(result.Categories, ", ")))
+		}
+	}
+	return strings.Join(violations, "; ")
 }

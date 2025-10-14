@@ -21,6 +21,7 @@ type Cfg struct {
 	Redis     Redis     `mapstructure:",squash"`
 	Graylog   Graylog   `mapstructure:",squash"`
 	S3        S3        `mapstructure:",squash"`
+	OpenAI    OpenAI    `mapstructure:",squash"`
 }
 
 // DB represents settings for database
@@ -61,6 +62,7 @@ type Scheduler struct {
 	FetchIGDBGames      string `mapstructure:"SCHED_FETCH_IGDB_GAMES"`
 	UpdateTrendingIndex string `mapstructure:"SCHED_UPDATE_TRENDING_INDEX"`
 	UpdateGameInfo      string `mapstructure:"SCHED_UPDATE_GAME_INFO"`
+	ProcessModeration   string `mapstructure:"SCHED_PROCESS_MODERATION"`
 }
 
 // Redis represents settings for Redis client
@@ -83,6 +85,14 @@ type S3 struct {
 	Endpoint        string `mapstructure:"S3_ENDPOINT"`
 	BucketName      string `mapstructure:"S3_BUCKET_NAME"`
 	CDNBaseURL      string `mapstructure:"S3_CDN_BASE_URL"`
+}
+
+// OpenAI represents settings for OpenAI client
+type OpenAI struct {
+	APIKey          string `mapstructure:"OPENAI_API_KEY"`
+	APIURL          string `mapstructure:"OPENAI_API_URL"`
+	ModerationModel string `mapstructure:"OPENAI_MODERATION_MODEL"`
+	VisionModel     string `mapstructure:"OPENAI_VISION_MODEL"`
 }
 
 // Log represents settings for logging
@@ -162,6 +172,14 @@ func (cfg *Cfg) GetGraylog() Graylog {
 	return cfg.Graylog
 }
 
+// GetOpenAI returns OpenAI settings
+func (cfg *Cfg) GetOpenAI() OpenAI {
+	if cfg == nil {
+		return OpenAI{}
+	}
+	return cfg.OpenAI
+}
+
 // GetLog returns Log settings
 func (cfg *Cfg) GetLog() Log {
 	if cfg == nil {
@@ -232,6 +250,9 @@ func (cfg *Cfg) Validate() error {
 	if cfg.Scheduler.UpdateGameInfo == "" {
 		return errors.New("SCHED_UPDATE_GAME_INFO is required")
 	}
+	if cfg.Scheduler.ProcessModeration == "" {
+		return errors.New("SCHED_PROCESS_MODERATION is required")
+	}
 
 	// redis
 	if cfg.Redis.Address == "" {
@@ -267,6 +288,20 @@ func (cfg *Cfg) Validate() error {
 	}
 	if _, err := url.Parse(cfg.S3.CDNBaseURL); err != nil {
 		return errors.New("S3_CDN_BASE_URL is invalid")
+	}
+
+	// openai
+	if cfg.OpenAI.APIKey == "" {
+		return errors.New("OPENAI_API_KEY is required")
+	}
+	if cfg.OpenAI.APIURL == "" {
+		return errors.New("OPENAI_API_URL is required")
+	}
+	if cfg.OpenAI.ModerationModel == "" {
+		return errors.New("OPENAI_MODERATION_MODEL is required")
+	}
+	if cfg.OpenAI.VisionModel == "" {
+		return errors.New("OPENAI_VISION_MODEL is required")
 	}
 
 	// log

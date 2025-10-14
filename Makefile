@@ -67,18 +67,14 @@ generate-mocks:
 generate: generate-swag generate-mocks
 
 LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.5
-LINT_BIN := $(shell go env GOPATH)/bin/golangci-lint
+LINT_BIN := $(shell command -v golangci-lint 2>/dev/null || echo $(shell go env GOPATH)/bin/golangci-lint)
 lint:
-	@if \[ ! -f ${LINT_BIN} \]; then \
+	@if [ ! -f ${LINT_BIN} ]; then \
 		echo "Installing golangci-lint..."; \
     	go install ${LINT_PKG}; \
+		LINT_BIN=$(shell go env GOPATH)/bin/golangci-lint; \
   	fi
-	@if \[ -f ${LINT_BIN} \]; then \
-  		echo "Found golangci-lint at '$(LINT_BIN)', running..."; \
-	else \
-    	echo "golangci-lint not found or the file does not exist"; \
-    	exit 1; \
-  	fi
+	@echo "Found golangci-lint at '$(LINT_BIN)', running..."; \
 	${LINT_BIN} run
 
 dbuildapi:

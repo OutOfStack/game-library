@@ -48,10 +48,11 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
     ```
 
 4. _[Optional]_ Set up fetching games data:
-    - Get credentials from [IGDB API](https://api-docs.igdb.com/#account-creation) to run background task that fetches games
+    - Get credentials from [IGDB API](https://api-docs.igdb.com/#account-creation) to run background tasks that fetch and update games
     - Get S3 compatible storage, for example [AWS S3](https://aws.amazon.com/s3/) or [Cloudflare R2](https://www.cloudflare.com/en-gb/developer-platform/products/r2/) for uploading game images
+    - Get an API key from [OpenAI](https://platform.openai.com/api-keys) for automatic game moderation functionality
 
-5. _[Optional]_ Install [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
+5. _[Optional]_ Launch [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
 6. Create the `app.env` file based on [./app.example.env](./app.example.env) and update it with your local configuration settings.
 
@@ -81,8 +82,9 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 - Caching with Redis.
 - Tracing with Zipkin.
 - Log management with Graylog.
-- Background fetching of game data from [IGDB](https://api-docs.igdb.com/).
-- Reuploading game images to Cloudflare R2 storage.
+- Background tasks for game data management with local scheduler.
+- Game image upload and storage with S3-compatible services (Cloudflare R2).
+- Automatic game moderation using OpenAI API.
 - Code analysis with golangci-lint.
 - CI/CD with GitHub Actions and deploy to Kubernetes (microk8s) cluster.
 

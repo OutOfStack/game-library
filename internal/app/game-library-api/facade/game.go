@@ -124,52 +124,29 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 		return 0, txErr
 	}
 
+	// invalidate cache
+	go func() {
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
+		defer cancel()
+
+		// invalidate companies as new developer and publisher might have been created
+		key := getCompaniesKey()
+		if cErr := cache.Delete(bCtx, p.cache, key); cErr != nil {
+			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
+		}
+		// recache companies
+		if _, cErr := p.GetCompanies(bCtx); cErr != nil {
+			p.log.Error("recache companies", zap.Error(cErr))
+		}
+	}()
+
 	// update trending index
 	go func() {
 		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 		defer cancel()
 
-		uErr := p.UpdateGameTrendingIndex(bCtx, id)
-		if uErr != nil {
+		if uErr := p.UpdateGameTrendingIndex(bCtx, id); uErr != nil {
 			p.log.Error("update game trending index", zap.Int32("game_id", id), zap.Error(uErr))
-		}
-	}()
-
-	// invalidate cache
-	//nolint:godox
-	//TODO: move it into successful moderation //
-	go func() {
-		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
-		defer cancel()
-
-		// invalidate games cache
-		key := gamesKey
-		cErr := cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if cErr != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
-		}
-
-		// invalidate games count cache
-		key = gamesCountKey
-		cErr = cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if cErr != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(cErr))
-		}
-
-		// cache game
-		key = getGameKey(id)
-		cErr = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
-			return p.storage.GetGameByID(bCtx, id)
-		}, 0)
-		if cErr != nil {
-			p.log.Error("cache game with id", zap.Int32("id", id), zap.Error(cErr))
-		}
-
-		// invalidate companies
-		key = getCompaniesKey()
-		cErr = cache.Delete(bCtx, p.cache, key)
-		if cErr != nil {
-			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
 		}
 	}()
 
@@ -238,37 +215,19 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdateGam
 		return txErr
 	}
 
-	// invalidate cache
+	// invalidate cache, but keep game in cache for seamless update on moderation success
 	go func() {
 		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
 
-		// invalidate games cache
-		key := gamesKey
-		err := cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
+		// invalidate companies as new developer might have been created
+		key := getCompaniesKey()
+		if cErr := cache.Delete(bCtx, p.cache, key); cErr != nil {
+			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
 		}
-
-		// invalidate game cache
-		key = getGameKey(id)
-		err = cache.Delete(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove cache by key", zap.String("key", key), zap.Error(err))
-		}
-		// recache game
-		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
-			return p.storage.GetGameByID(bCtx, id)
-		}, 0)
-		if err != nil {
-			p.log.Error("recache game with id", zap.Int32("id", id), zap.Error(err))
-		}
-
-		// invalidate companies
-		key = getCompaniesKey()
-		err = cache.Delete(bCtx, p.cache, key)
-		if err != nil {
-			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(err))
+		// recache companies
+		if _, cErr := p.GetCompanies(bCtx); cErr != nil {
+			p.log.Error("recache companies", zap.Error(cErr))
 		}
 	}()
 
@@ -307,20 +266,17 @@ func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) e
 
 		// invalidate games cache
 		key := gamesKey
-		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if err != nil {
+		if err = cache.DeleteByStartsWith(bCtx, p.cache, key); err != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		err = cache.DeleteByStartsWith(bCtx, p.cache, key)
-		if err != nil {
+		if err = cache.DeleteByStartsWith(bCtx, p.cache, key); err != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate game cache
 		key = getGameKey(id)
-		err = cache.Delete(bCtx, p.cache, key)
-		if err != nil {
+		if err = cache.Delete(bCtx, p.cache, key); err != nil {
 			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}
 	}()

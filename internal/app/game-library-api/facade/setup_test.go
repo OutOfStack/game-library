@@ -15,14 +15,15 @@ import (
 
 type TestSuite struct {
 	suite.Suite
-	ctx             context.Context
-	ctrl            *gomock.Controller
-	log             *zap.Logger
-	storageMock     *facademock.MockStorage
-	cacheStore      *cache.RedisStore
-	redisClientMock *cachemock.MockRedisClient
-	s3ClientMock    *facademock.MockS3Client
-	provider        *facade.Provider
+	ctx              context.Context
+	ctrl             *gomock.Controller
+	log              *zap.Logger
+	storageMock      *facademock.MockStorage
+	cacheStore       *cache.RedisStore
+	redisClientMock  *cachemock.MockRedisClient
+	s3ClientMock     *facademock.MockS3Client
+	openAIClientMock *facademock.MockOpenAIClient
+	provider         *facade.Provider
 }
 
 func (s *TestSuite) SetupTest() {
@@ -33,7 +34,8 @@ func (s *TestSuite) SetupTest() {
 	s.redisClientMock = cachemock.NewMockRedisClient(s.ctrl)
 	s.cacheStore = cache.NewRedisStore(s.redisClientMock, s.log)
 	s.s3ClientMock = facademock.NewMockS3Client(s.ctrl)
-	s.provider = facade.NewProvider(s.log, s.storageMock, s.cacheStore, s.s3ClientMock)
+	s.openAIClientMock = facademock.NewMockOpenAIClient(s.ctrl)
+	s.provider = facade.NewProvider(s.log, s.storageMock, s.cacheStore, s.s3ClientMock, s.openAIClientMock)
 }
 
 func (s *TestSuite) TearDownTest() {

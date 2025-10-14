@@ -23,7 +23,7 @@ func (s *Storage) CreateModerationRecord(ctx context.Context, m model.CreateMode
         RETURNING id`
 
 	if err = s.querier(ctx).QueryRow(ctx, q, m.GameID, m.GameData, m.Status, time.Now()).Scan(&id); err != nil {
-		return 0, fmt.Errorf("creating moderation for game %d: %w", m.GameID, err)
+		return 0, fmt.Errorf("create moderation for game %d: %w", m.GameID, err)
 	}
 
 	return id, nil
@@ -49,7 +49,7 @@ func (s *Storage) SetModerationRecordResultByGameID(ctx context.Context, gameID 
 
 	res, err := s.querier(ctx).Exec(ctx, q, gameID, result.ResultStatus, model.ModerationStatusReady, result.Details, time.Now())
 	if err != nil {
-		return fmt.Errorf("setting moderation result for game id %d: %w", gameID, err)
+		return fmt.Errorf("set moderation result for game id %d: %w", gameID, err)
 	}
 
 	return checkRowsAffected(res, "moderation_by_game_id", gameID)
@@ -130,7 +130,7 @@ func (s *Storage) GetPendingModerationGameIDs(ctx context.Context, limit int) ([
 
 	var data []model.ModerationIDGameID
 	if err := pgxscan.Select(ctx, s.querier(ctx), &data, q, model.ModerationStatusPending, limit); err != nil {
-		return nil, fmt.Errorf("getting pending moderation game IDs: %w", err)
+		return nil, fmt.Errorf("get pending moderation game ids: %w", err)
 	}
 	return data, nil
 }

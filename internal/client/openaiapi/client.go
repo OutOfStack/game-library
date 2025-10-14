@@ -79,8 +79,11 @@ func (c *Client) ModerateText(ctx context.Context, gameData model.ModerationData
 			OfModerationMultiModalArray: inputs,
 		},
 	})
-	if err != nil || resp == nil {
+	if err != nil {
 		return nil, fmt.Errorf("moderation API call: %w", err)
+	}
+	if resp == nil {
+		return nil, errors.New("moderation API returned nil response")
 	}
 
 	return convertModerationResponse(resp), nil

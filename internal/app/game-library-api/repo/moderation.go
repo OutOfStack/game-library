@@ -126,7 +126,7 @@ func (s *Storage) GetPendingModerationGameIDs(ctx context.Context, limit int) ([
         WHERE status = $1
         ORDER BY id
         LIMIT $2
-        FOR NO KEY UPDATE`
+        FOR NO KEY UPDATE SKIP LOCKED`
 
 	var data []model.ModerationIDGameID
 	if err := pgxscan.Select(ctx, s.querier(ctx), &data, q, model.ModerationStatusPending, limit); err != nil {

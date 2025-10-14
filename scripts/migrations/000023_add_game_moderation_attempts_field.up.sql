@@ -7,3 +7,5 @@ ALTER TABLE game_moderation
     DROP COLUMN error;
 
 CREATE INDEX IF NOT EXISTS idx_game_moderation_status_id ON game_moderation(status, id);
+
+CREATE INDEX IF NOT EXISTS idx_games_moderation_id ON games(moderation_id);

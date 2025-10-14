@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/OutOfStack/game-library/pkg/types"
@@ -17,7 +16,7 @@ func TestGetGames_NotExist_ShouldReturnEmpty(t *testing.T) {
 	s := setup(t)
 	defer teardown(t)
 
-	games, err := s.GetGames(t.Context(), 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
+	games, err := s.GetGames(t.Context(), 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByDefault})
 	require.NoError(t, err)
 
 	require.Empty(t, games, "games should be empty")
@@ -35,7 +34,7 @@ func TestGetGames_DataExists_ShouldBeEqual(t *testing.T) {
 	_, err := s.CreateGame(ctx, cg)
 	require.NoError(t, err)
 
-	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
+	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByDefault})
 	require.NoError(t, err)
 
 	require.Len(t, games, 1, "len of games should be 1")
@@ -72,7 +71,7 @@ func TestGetGames_OrderByDefault_ShouldReturnOrdered(t *testing.T) {
 	err = s.UpdateGameTrendingIndex(ctx, id2, 0.8) // Higher index for newer game
 	require.NoError(t, err)
 
-	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault})
+	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByDefault})
 	require.NoError(t, err)
 
 	require.Len(t, games, 2, "len of games should be 2")
@@ -100,7 +99,7 @@ func TestGetGames_OrderByName_ShouldReturnOrdered(t *testing.T) {
 	_, err = s.CreateGame(ctx, cg2)
 	require.NoError(t, err)
 
-	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByName})
+	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByName})
 	require.NoError(t, err)
 
 	require.Len(t, games, 2, "len of games should be 2")
@@ -128,7 +127,7 @@ func TestGetGames_OrderByReleaseDate_ShouldReturnOrdered(t *testing.T) {
 	_, err = s.CreateGame(ctx, cg2)
 	require.NoError(t, err)
 
-	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByReleaseDate})
+	games, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByReleaseDate})
 	require.NoError(t, err)
 
 	require.Len(t, games, 2, "len of games should be 2")
@@ -150,7 +149,7 @@ func TestGetGames_FilterByName_ShouldReturnEqual(t *testing.T) {
 	_, err := s.CreateGame(ctx, cg)
 	require.NoError(t, err)
 
-	matched, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault, Name: cg.Name})
+	matched, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByDefault, Name: cg.Name})
 	require.NoError(t, err)
 
 	require.Len(t, matched, 1, "len of matched should be 1")
@@ -185,7 +184,7 @@ func TestGetGames_FilterByName_ShouldReturnMatched(t *testing.T) {
 	_, err = s.CreateGame(ctx, ng4)
 	require.NoError(t, err)
 
-	matched, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault, Name: "test"})
+	matched, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByDefault, Name: "test"})
 	require.NoError(t, err)
 
 	// ng1, ng2, ng4
@@ -223,7 +222,7 @@ func TestGetGames_Filter_ShouldReturnMatched(t *testing.T) {
 	_, err = s.CreateGame(ctx, ng3)
 	require.NoError(t, err)
 
-	matched, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: repo.OrderGamesByDefault, DeveloperID: developer2, PublisherID: publisher2, GenreID: genre2})
+	matched, err := s.GetGames(ctx, 20, 1, model.GamesFilter{OrderBy: model.OrderGamesByDefault, DeveloperID: developer2, PublisherID: publisher2, GenreID: genre2})
 	require.NoError(t, err)
 
 	// ng2
@@ -315,7 +314,7 @@ func TestGetGamesCount_Filter_ShouldReturnMatched(t *testing.T) {
 	_, err = s.CreateGame(ctx, ng3)
 	require.NoError(t, err)
 
-	count, err := s.GetGamesCount(ctx, model.GamesFilter{OrderBy: repo.OrderGamesByDefault, DeveloperID: developer1, PublisherID: publisher1, GenreID: genre1})
+	count, err := s.GetGamesCount(ctx, model.GamesFilter{OrderBy: model.OrderGamesByDefault, DeveloperID: developer1, PublisherID: publisher1, GenreID: genre1})
 	require.NoError(t, err)
 
 	// ng1, ng3

@@ -8,7 +8,6 @@ import (
 
 	api "github.com/OutOfStack/game-library/internal/app/game-library-api/api/model"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 )
 
 const (
@@ -127,13 +126,13 @@ func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
 	var filter model.GamesFilter
 	switch p.OrderBy {
 	case "", "default":
-		filter.OrderBy = repo.OrderGamesByDefault
+		filter.OrderBy = model.OrderGamesByDefault
 	case "name":
-		filter.OrderBy = repo.OrderGamesByName
+		filter.OrderBy = model.OrderGamesByName
 	case "releaseDate":
-		filter.OrderBy = repo.OrderGamesByReleaseDate
+		filter.OrderBy = model.OrderGamesByReleaseDate
 	case "rating":
-		filter.OrderBy = repo.OrderGamesByRating
+		filter.OrderBy = model.OrderGamesByRating
 	default:
 		return model.GamesFilter{}, errors.New("invalid orderBy: should be one of [default, releaseDate, name, rating]")
 	}

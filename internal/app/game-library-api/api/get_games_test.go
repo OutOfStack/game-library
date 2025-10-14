@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	mock "go.uber.org/mock/gomock"
 )
@@ -51,7 +50,7 @@ func (s *TestSuite) Test_GetGames_Success() {
 		DeveloperID: developerID,
 		PublisherID: publisherID,
 		GenreID:     genreID,
-		OrderBy:     repo.OrderGamesByName,
+		OrderBy:     model.OrderGamesByName,
 	}).Return(games, count, nil)
 	s.gameFacadeMock.EXPECT().GetGenresMap(mock.Any()).Return(genresMap, nil)
 	s.gameFacadeMock.EXPECT().GetPlatformsMap(mock.Any()).Return(platformsMap, nil)

@@ -142,35 +142,29 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 				// get developers, publishers ids
 				var developersIDs, publishersIDs []int32
 				for _, ic := range g.InvolvedCompanies {
-					if ic.Developer {
-						if c, ok := igdbCompanies[ic.Company.ID]; ok {
+					if c, ok := igdbCompanies[ic.Company.ID]; ok {
+						if ic.Developer {
 							developersIDs = append(developersIDs, c.ID)
 						} else {
-							c.Name = ic.Company.Name
-							c.IGDBID = sql.NullInt64{Int64: ic.Company.ID, Valid: true}
-							id, cErr := tp.storage.CreateCompany(ctx, c)
-							if cErr != nil {
-								return settings, fmt.Errorf("create company %v: %v", c, cErr)
-							}
-							c.ID = id
-							developersIDs = append(developersIDs, id)
-							igdbCompanies[c.IGDBID.Int64] = c
-						}
-					}
-					if ic.Publisher {
-						if c, ok := igdbCompanies[ic.Company.ID]; ok {
 							publishersIDs = append(publishersIDs, c.ID)
-						} else {
-							c.Name = ic.Company.Name
-							c.IGDBID = sql.NullInt64{Int64: ic.Company.ID, Valid: true}
-							id, cErr := tp.storage.CreateCompany(ctx, c)
-							if cErr != nil {
-								return settings, fmt.Errorf("create company %v: %v", c, cErr)
-							}
-							c.ID = id
-							publishersIDs = append(publishersIDs, id)
-							igdbCompanies[c.IGDBID.Int64] = c
 						}
+						continue
+					}
+
+					c := model.Company{
+						Name:   ic.Company.Name,
+						IGDBID: sql.NullInt64{Int64: ic.Company.ID, Valid: true},
+					}
+					id, cErr := tp.gameFacade.CreateCompany(ctx, c)
+					if cErr != nil {
+						return settings, fmt.Errorf("create company %v: %v", c, cErr)
+					}
+					c.ID = id
+					igdbCompanies[c.IGDBID.Int64] = c
+					if ic.Developer {
+						developersIDs = append(developersIDs, id)
+					} else {
+						publishersIDs = append(publishersIDs, id)
 					}
 				}
 

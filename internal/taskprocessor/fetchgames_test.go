@@ -87,9 +87,9 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(50), gomock.Any()).
 		Return(nil, nil).Times(4)
 	s.storageMock.EXPECT().GetGameIDByIGDBID(gomock.Any(), igdbGame.ID).Return(int32(0), apperr.NewNotFoundError("game", igdbGame.ID))
-	s.storageMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: developerName, IGDBID: sql.NullInt64{Valid: true, Int64: developerIGDBID}}).
+	s.gameFacadeMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: developerName, IGDBID: sql.NullInt64{Valid: true, Int64: developerIGDBID}}).
 		Return(developerID, nil)
-	s.storageMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: publisherName, IGDBID: sql.NullInt64{Valid: true, Int64: publisherIGDBID}}).Return(publisherID, nil)
+	s.gameFacadeMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: publisherName, IGDBID: sql.NullInt64{Valid: true, Int64: publisherIGDBID}}).Return(publisherID, nil)
 	s.storageMock.EXPECT().CreateGenre(gomock.Any(), model.Genre{Name: genreName, IGDBID: genreIGDBID}).Return(genreID, nil)
 	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), igdbGame.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias).Return(
 		igdbapi.GetImageResp{FileName: logoFileName, ContentType: contentType}, nil)

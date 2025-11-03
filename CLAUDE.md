@@ -7,6 +7,7 @@
 - Write comments for all exported functions and structs
 - Start comments that are inside funcs with lowercase
 - Do NOT use periods (`.`) at the end of comments
+- Write proper openapi-style specs for handlers.
 
 # Code practices:
 - DO NOT use env variables unless it is specified, for dynamic configuring refer to previously read README.md to find out how configuration works

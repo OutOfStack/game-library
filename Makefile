@@ -27,7 +27,7 @@ rollback:
 seed:
 	go run ./cmd/game-library-manage/. -from-file seed
 
-SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.4
+SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.6
 SWAG_BIN := $(shell go env GOPATH)/bin/swag
 generate-swag:
 	@if \[ ! -f ${SWAG_BIN} \]; then \
@@ -66,7 +66,7 @@ generate-mocks:
 
 generate: generate-swag generate-mocks
 
-LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.5
+LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6
 LINT_BIN := $(shell command -v golangci-lint 2>/dev/null || echo $(shell go env GOPATH)/bin/golangci-lint)
 lint:
 	@if [ ! -f ${LINT_BIN} ]; then \

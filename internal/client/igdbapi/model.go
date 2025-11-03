@@ -99,3 +99,9 @@ type GameInfoForUpdate struct {
 	Platforms        []int64   `json:"platforms"`
 	Websites         []Website `json:"websites"`
 }
+
+// CompanyInfo - company information from IGDB
+type CompanyInfo struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}

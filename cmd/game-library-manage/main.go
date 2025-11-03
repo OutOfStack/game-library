@@ -23,7 +23,7 @@ func main() {
 		if err != nil {
 			log.Fatal("read config file:", err)
 		}
-		dsn = cfg.GetDB().DSN
+		dsn = cfg.DB.DSN
 		if dsn == "" {
 			log.Fatal("DB_DSN not found in config file")
 		}

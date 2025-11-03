@@ -145,7 +145,8 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					if c, ok := igdbCompanies[ic.Company.ID]; ok {
 						if ic.Developer {
 							developersIDs = append(developersIDs, c.ID)
-						} else {
+						}
+						if ic.Publisher {
 							publishersIDs = append(publishersIDs, c.ID)
 						}
 						continue
@@ -163,7 +164,8 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					igdbCompanies[c.IGDBID.Int64] = c
 					if ic.Developer {
 						developersIDs = append(developersIDs, id)
-					} else {
+					}
+					if ic.Publisher {
 						publishersIDs = append(publishersIDs, id)
 					}
 				}

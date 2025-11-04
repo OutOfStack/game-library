@@ -45,21 +45,6 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
 }
 
-// CreateCompany mocks base method.
-func (m *MockStorage) CreateCompany(ctx context.Context, c model.Company) (int32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCompany", ctx, c)
-	ret0, _ := ret[0].(int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateCompany indicates an expected call of CreateCompany.
-func (mr *MockStorageMockRecorder) CreateCompany(ctx, c any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCompany", reflect.TypeOf((*MockStorage)(nil).CreateCompany), ctx, c)
-}
-
 // CreateGame mocks base method.
 func (m *MockStorage) CreateGame(ctx context.Context, cgd model.CreateGameData) (int32, error) {
 	m.ctrl.T.Helper()
@@ -396,6 +381,21 @@ func NewMockGameFacade(ctrl *gomock.Controller) *MockGameFacade {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGameFacade) EXPECT() *MockGameFacadeMockRecorder {
 	return m.recorder
+}
+
+// CreateCompany mocks base method.
+func (m *MockGameFacade) CreateCompany(ctx context.Context, company model.Company) (int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCompany", ctx, company)
+	ret0, _ := ret[0].(int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateCompany indicates an expected call of CreateCompany.
+func (mr *MockGameFacadeMockRecorder) CreateCompany(ctx, company any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCompany", reflect.TypeOf((*MockGameFacade)(nil).CreateCompany), ctx, company)
 }
 
 // UpdateGameTrendingIndex mocks base method.

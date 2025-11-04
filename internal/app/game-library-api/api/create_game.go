@@ -42,6 +42,11 @@ func (p *Provider) CreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if claims.VerificationRequired {
+		web.RespondError(w, web.NewErrorFromMessage("Email verification is required for adding games", http.StatusBadRequest))
+		return
+	}
+
 	publisher := claims.Name
 
 	create := mapToCreateGame(&cg, publisher)

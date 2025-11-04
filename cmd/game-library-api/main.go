@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// init logger
-	logger := zaplog.New(cfg)
+	logger := zaplog.New(cfg.Log.Level, cfg.Graylog.Address)
 	defer func() {
 		if sErr := logger.Sync(); sErr != nil {
 			logger.Error("can't sync logger: %v", zap.Error(sErr))
@@ -72,38 +72,38 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	ctx := context.Background()
 
 	// connect to database
-	db, err := database.New(ctx, cfg.GetDB().DSN)
+	db, err := database.New(ctx, cfg.DB.DSN)
 	if err != nil {
 		return fmt.Errorf("connect to db: %v", err)
 	}
 	defer db.Close()
 
 	// create IGDB client
-	igdbAPIClient, err := igdbapi.New(logger, cfg.GetIGDB())
+	igdbAPIClient, err := igdbapi.New(logger, cfg.IGDB)
 	if err != nil {
 		return fmt.Errorf("create IGDB client: %w", err)
 	}
 
 	// create auth api client
-	authAPIClient, err := authapi.New(logger, cfg.GetAuth().VerifyTokenAPIURL)
+	authAPIClient, err := authapi.New(logger, cfg.Auth.VerifyTokenAPIURL)
 	if err != nil {
 		return fmt.Errorf("create auth api client: %w", err)
 	}
 
 	// create redis client
-	redisClient, err := redis.New(cfg.GetRedis())
+	redisClient, err := redis.New(cfg.Redis)
 	if err != nil {
 		return fmt.Errorf("create redis client: %w", err)
 	}
 
 	// create s3 client
-	s3Client, err := s3.New(logger, cfg.GetS3())
+	s3Client, err := s3.New(logger, cfg.S3)
 	if err != nil {
 		return fmt.Errorf("create S3 client: %w", err)
 	}
 
 	// create openai client
-	openAIClient := openaiapi.New(logger, cfg.GetOpenAI())
+	openAIClient := openaiapi.New(logger, cfg.OpenAI)
 
 	// create redis cache service
 	cacheStore := cache.NewRedisStore(redisClient, logger)
@@ -130,10 +130,10 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client, gameFacade, gameFacade)
 	scheduler := gocron.NewScheduler(time.UTC)
 	tasks := map[string]model.TaskInfo{
-		taskprocessor.FetchIGDBGamesTaskName:      {Schedule: cfg.GetScheduler().FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
-		taskprocessor.UpdateTrendingIndexTaskName: {Schedule: cfg.GetScheduler().UpdateTrendingIndex, Fn: taskProvider.StartUpdateTrendingIndex},
-		taskprocessor.UpdateGameInfoTaskName:      {Schedule: cfg.GetScheduler().UpdateGameInfo, Fn: taskProvider.StartUpdateGameInfo},
-		taskprocessor.ProcessModerationTaskName:   {Schedule: cfg.GetScheduler().ProcessModeration, Fn: taskProvider.StartProcessModeration},
+		taskprocessor.FetchIGDBGamesTaskName:      {Schedule: cfg.Scheduler.FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
+		taskprocessor.UpdateTrendingIndexTaskName: {Schedule: cfg.Scheduler.UpdateTrendingIndex, Fn: taskProvider.StartUpdateTrendingIndex},
+		taskprocessor.UpdateGameInfoTaskName:      {Schedule: cfg.Scheduler.UpdateGameInfo, Fn: taskProvider.StartUpdateGameInfo},
+		taskprocessor.ProcessModerationTaskName:   {Schedule: cfg.Scheduler.ProcessModeration, Fn: taskProvider.StartProcessModeration},
 	}
 	for name, task := range tasks {
 		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)
@@ -146,11 +146,11 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 
 	// start debug service
 	go func() {
-		logger.Info("Debug service started", zap.String("address", cfg.GetWeb().DebugAddress))
+		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
 		profilerRouter := chi.NewRouter()
 		profilerRouter.Mount("/debug", middleware.Profiler())
 		debugService := http.Server{
-			Addr:        cfg.GetWeb().DebugAddress,
+			Addr:        cfg.Web.DebugAddress,
 			Handler:     profilerRouter,
 			ReadTimeout: time.Second,
 		}
@@ -180,7 +180,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		return fmt.Errorf("listening and serving: %w", err)
 	case <-shutdown:
 		logger.Info("Start shutdown")
-		timeout := cfg.GetWeb().ShutdownTimeout
+		timeout := cfg.Web.ShutdownTimeout
 		bCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 

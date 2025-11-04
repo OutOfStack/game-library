@@ -25,7 +25,8 @@ const (
 )
 
 const (
-	gamesEndpoint = "games"
+	gamesEndpoint     = "games"
+	companiesEndpoint = "companies"
 
 	maxLimit = 500
 )
@@ -176,6 +177,68 @@ func (c *Client) GetGameInfoForUpdate(ctx context.Context, igdbID int64) (GameIn
 	}
 
 	return respBody[0], nil
+}
+
+// CompanyExists checks if a company with the given name exists in IGDB (case-insensitive)
+func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, error) {
+	ctx, span := tracer.Start(ctx, "companyExists")
+	defer span.End()
+
+	if companyName == "" {
+		return false, nil
+	}
+
+	reqURL, err := url.JoinPath(c.conf.APIURL, companiesEndpoint)
+	if err != nil {
+		return false, fmt.Errorf("join url path: %v", err)
+	}
+
+	query := fmt.Sprintf(
+		`fields id, name;
+		where name ~ *"%s"*;`,
+		strings.ReplaceAll(companyName, `"`, `\"`))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
+	if err != nil {
+		return false, fmt.Errorf("create company exists request: %v", err)
+	}
+
+	err = c.setAuthHeaders(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("set auth headers: %v", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		c.log.Error("request igdb api", zap.String("url", reqURL), zap.Error(err))
+		return false, fmt.Errorf("igdb api unavailable: %v", err)
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			c.log.Error("failed to close response body", zap.Error(err))
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, rErr := io.ReadAll(resp.Body)
+		if rErr != nil {
+			return false, fmt.Errorf("read response body: %v", rErr)
+		}
+		return false, fmt.Errorf("%s", body)
+	}
+
+	var respBody []CompanyInfo
+	err = json.NewDecoder(resp.Body).Decode(&respBody)
+	if err != nil {
+		return false, fmt.Errorf("decode response body: %v", err)
+	}
+
+	for _, company := range respBody {
+		if strings.EqualFold(company.Name, companyName) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name

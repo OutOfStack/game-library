@@ -8,7 +8,7 @@ import (
 )
 
 func TestValidateDate(t *testing.T) {
-	v := NewValidator(nil, nil) // nil logger and config for test
+	v := NewValidator(nil, &appconf.Cfg{})
 	tests := []struct {
 		name     string
 		date     string
@@ -55,7 +55,7 @@ func TestValidateImageURLs(t *testing.T) {
 }
 
 func TestValidateWebsiteURLs(t *testing.T) {
-	v := NewValidator(nil, nil)
+	v := NewValidator(nil, &appconf.Cfg{})
 	tests := []struct {
 		name     string
 		urls     []string
@@ -75,7 +75,7 @@ func TestValidateWebsiteURLs(t *testing.T) {
 }
 
 func TestValidatePositive(t *testing.T) {
-	v := NewValidator(nil, nil)
+	v := NewValidator(nil, &appconf.Cfg{})
 	tests := []struct {
 		name     string
 		slice    []int32

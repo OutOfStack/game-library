@@ -82,7 +82,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 - Caching with Redis.
 - Tracing with Zipkin.
 - Log management with Graylog.
-- Background tasks for game data management with local scheduler.
+- Background task for fetching and updating games data using IGDB API.
 - Game image upload and storage with S3-compatible services (Cloudflare R2).
 - Automatic game moderation using OpenAI API.
 - Code analysis with golangci-lint.

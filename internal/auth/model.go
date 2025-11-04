@@ -14,9 +14,10 @@ const (
 // Claims represents jwt claims
 type Claims struct {
 	jwt.RegisteredClaims
-	UserRole string `json:"user_role,omitempty"`
-	Username string `json:"username,omitempty"`
-	Name     string `json:"name,omitempty"`
+	UserRole             string `json:"user_role,omitempty"`
+	Username             string `json:"username,omitempty"`
+	Name                 string `json:"name,omitempty"`
+	VerificationRequired bool   `json:"vrf_required"`
 }
 
 // UserID return user id from claims

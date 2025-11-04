@@ -35,7 +35,7 @@ func Service(
 	pr *Provider,
 	conf *appconf.Cfg,
 ) (http.Server, error) {
-	err := initTracer(log, conf.GetZipkin().ReporterURL)
+	err := initTracer(log, conf.Zipkin.ReporterURL)
 	if err != nil {
 		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) //nolint:gosec
 	}
@@ -50,7 +50,7 @@ func Service(
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
-		AllowedOrigins:   strings.Split(conf.GetWeb().AllowedCORSOrigin, ","),
+		AllowedOrigins:   strings.Split(conf.Web.AllowedCORSOrigin, ","),
 	}))
 
 	hc := tools.NewHealthCheck(db)
@@ -132,11 +132,11 @@ func Service(
 	r.Get("/swagger/*", swag.Handler())
 
 	return http.Server{
-		Addr:              conf.GetWeb().Address,
+		Addr:              conf.Web.Address,
 		Handler:           r,
-		ReadTimeout:       conf.GetWeb().ReadTimeout,
+		ReadTimeout:       conf.Web.ReadTimeout,
 		ReadHeaderTimeout: time.Second,
-		WriteTimeout:      conf.GetWeb().WriteTimeout,
+		WriteTimeout:      conf.Web.WriteTimeout,
 	}, nil
 }
 

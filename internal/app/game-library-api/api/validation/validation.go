@@ -25,11 +25,11 @@ type Validator struct {
 // NewValidator creates new validator
 func NewValidator(log *zap.Logger, cfg *appconf.Cfg) *Validator {
 	var allowedImageDomain string
-	u, err := url.Parse(cfg.GetS3().CDNBaseURL)
+	u, err := url.Parse(cfg.S3.CDNBaseURL)
 	if err != nil {
 		// url is validated on config file/env read
 		// if we still failed to provide correct domain, allow any
-		log.Error("can't parse CDN base URL, allow any in validation", zap.String("url", cfg.GetS3().CDNBaseURL), zap.Error(err))
+		log.Error("can't parse CDN base URL, allow any in validation", zap.String("url", cfg.S3.CDNBaseURL), zap.Error(err))
 	} else {
 		allowedImageDomain = u.Host
 	}

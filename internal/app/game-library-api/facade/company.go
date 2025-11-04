@@ -3,11 +3,39 @@ package facade
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
+	"go.uber.org/zap"
 )
+
+// CreateCompany creates a new company
+func (p *Provider) CreateCompany(ctx context.Context, company model.Company) (int32, error) {
+	id, err := p.storage.CreateCompany(ctx, company)
+	if err != nil {
+		return 0, err
+	}
+
+	go func() {
+		bCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
+		defer cancel()
+
+		// invalidate companies as new developer or publisher is created
+		key := getCompaniesKey()
+		if cErr := cache.Delete(bCtx, p.cache, key); cErr != nil {
+			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
+		}
+
+		// recache companies
+		if _, cErr := p.GetCompanies(bCtx); cErr != nil {
+			p.log.Error("recache companies", zap.Error(cErr))
+		}
+	}()
+
+	return id, nil
+}
 
 // GetCompanies returns companies
 func (p *Provider) GetCompanies(ctx context.Context) ([]model.Company, error) {

@@ -90,6 +90,37 @@ func (s *TestSuite) Test_CreateGame_MissingClaims() {
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }
 
+func (s *TestSuite) Test_CreateGame_VerificationRequired() {
+	role, authToken := td.String(), td.String()
+
+	requestData := api.CreateGameRequest{
+		Name:         td.String(),
+		Developer:    td.String(),
+		ReleaseDate:  td.Date().Format("2006-01-02"),
+		GenresIDs:    []int32{td.Int31()},
+		LogoURL:      s.getImageURL(),
+		Summary:      td.String(),
+		PlatformsIDs: []int32{td.Int31()},
+		Screenshots:  []string{s.getImageURL()},
+		Websites:     []string{s.getWebsiteURL()},
+	}
+	requestBody, _ := json.Marshal(requestData)
+	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
+	req.Header.Set("Authorization", "Bearer "+authToken)
+
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role, VerificationRequired: true}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
+	handler := authenticator(authorizer(http.HandlerFunc(s.provider.CreateGame)))
+
+	handler.ServeHTTP(s.httpResponse, req)
+
+	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.Contains(s.httpResponse.Body.String(), "Email verification is required for adding games")
+}
+
 func (s *TestSuite) Test_CreateGame_FacadeError() {
 	role, authToken := td.String(), td.String()
 

@@ -37,7 +37,6 @@ type Storage interface {
 	GetPlatforms(ctx context.Context) ([]model.Platform, error)
 	CreateGenre(ctx context.Context, g model.Genre) (int32, error)
 	GetGenres(ctx context.Context) ([]model.Genre, error)
-	CreateCompany(ctx context.Context, c model.Company) (int32, error)
 	GetCompanies(ctx context.Context) ([]model.Company, error)
 	GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSize int) ([]int32, error)
 
@@ -59,6 +58,7 @@ type S3Client interface {
 
 // GameFacade game facade interface
 type GameFacade interface {
+	CreateCompany(ctx context.Context, company model.Company) (int32, error)
 	UpdateGameTrendingIndex(ctx context.Context, gameID int32) error
 }
 

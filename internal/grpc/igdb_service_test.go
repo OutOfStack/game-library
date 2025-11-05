@@ -77,6 +77,20 @@ func TestIGDBService_CompanyExists(t *testing.T) {
 		require.False(t, resp.Exists)
 	})
 
+	t.Run("whitespace_only_company_name_returns_false", func(t *testing.T) {
+		ctx := t.Context()
+
+		req := &pb.CompanyExistsRequest{
+			CompanyName: "   \t\n  ",
+		}
+
+		resp, err := service.CompanyExists(ctx, req)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.False(t, resp.Exists)
+	})
+
 	t.Run("internal_error", func(t *testing.T) {
 		ctx := t.Context()
 		companyName := td.String()

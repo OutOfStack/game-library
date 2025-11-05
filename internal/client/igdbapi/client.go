@@ -184,19 +184,25 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 	ctx, span := tracer.Start(ctx, "companyExists")
 	defer span.End()
 
+	companyName = strings.TrimSpace(companyName)
 	if companyName == "" {
 		return false, nil
 	}
+
+	// sanitize company name to prevent query injection
+	// escape special IGDB query operators
+	companyName = sanitizeIGDBQueryString(companyName)
 
 	reqURL, err := url.JoinPath(c.conf.APIURL, companiesEndpoint)
 	if err != nil {
 		return false, fmt.Errorf("join url path: %v", err)
 	}
 
+	// use exact match operator (=) instead of fuzzy search
 	query := fmt.Sprintf(
 		`fields id, name;
-		where name ~ *"%s"*;`,
-		strings.ReplaceAll(companyName, `"`, `\"`))
+		where name = "%s";`,
+		companyName)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
 	if err != nil {
 		return false, fmt.Errorf("create company exists request: %v", err)
@@ -232,13 +238,28 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 		return false, fmt.Errorf("decode response body: %v", err)
 	}
 
-	for _, company := range respBody {
-		if strings.EqualFold(company.Name, companyName) {
-			return true, nil
-		}
-	}
+	// exact match already performed by IGDB, just check if we got results
+	return len(respBody) > 0, nil
+}
 
-	return false, nil
+// sanitizeIGDBQueryString escapes special characters in IGDB query language to prevent injection
+func sanitizeIGDBQueryString(s string) string {
+	// escape IGDB query operators: * | & ( ) [ ] { } ~ ! "
+	replacer := strings.NewReplacer(
+		`"`, `\"`,
+		`*`, `\*`,
+		`|`, `\|`,
+		`&`, `\&`,
+		`(`, `\(`,
+		`)`, `\)`,
+		`[`, `\[`,
+		`]`, `\]`,
+		`{`, `\{`,
+		`}`, `\}`,
+		`~`, `\~`,
+		`!`, `\!`,
+	)
+	return replacer.Replace(s)
 }
 
 // GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name

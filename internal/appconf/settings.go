@@ -14,6 +14,7 @@ type Cfg struct {
 	Log       Log       `mapstructure:",squash"`
 	DB        DB        `mapstructure:",squash"`
 	Web       Web       `mapstructure:",squash"`
+	GRPC      GRPC      `mapstructure:",squash"`
 	Auth      Auth      `mapstructure:",squash"`
 	Zipkin    Zipkin    `mapstructure:",squash"`
 	IGDB      IGDB      `mapstructure:",squash"`
@@ -37,6 +38,11 @@ type Web struct {
 	WriteTimeout      time.Duration `mapstructure:"APP_WRITETIMEOUT"`
 	ShutdownTimeout   time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
 	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
+}
+
+// GRPC represents settings for gRPC server
+type GRPC struct {
+	Address string `mapstructure:"GRPC_ADDRESS"`
 }
 
 // Zipkin represents settings for Zipkin trace storage
@@ -126,6 +132,11 @@ func (cfg *Cfg) Validate() error {
 	}
 	if cfg.Web.ShutdownTimeout <= 0 {
 		return errors.New("APP_SHUTDOWNTIMEOUT must be greater than 0")
+	}
+
+	// grpc
+	if cfg.GRPC.Address == "" {
+		return errors.New("GRPC_ADDRESS is required")
 	}
 
 	// zipkin

@@ -11,6 +11,10 @@ requirements
 # config
 app.env
 
+# generated protobuf files
+*.pb.go
+*_grpc.pb.go
+
 # Test binary, built with `go test -c`
 *.test
 

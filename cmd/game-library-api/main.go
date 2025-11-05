@@ -5,12 +5,14 @@ import (
 	_ "expvar"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	pb "github.com/OutOfStack/game-library/api/proto/igdb"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/api"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/facade"
 	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
@@ -23,6 +25,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/s3"
+	grpcservice "github.com/OutOfStack/game-library/internal/grpc"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	zaplog "github.com/OutOfStack/game-library/internal/pkg/log"
@@ -31,6 +34,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 // @title Game library API
@@ -172,6 +177,24 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		serverErrors <- apiService.ListenAndServe()
 	}()
 
+	// start gRPC service
+	grpcServer := grpc.NewServer()
+	igdbService := grpcservice.NewIGDBService(logger, igdbAPIClient)
+	pb.RegisterIGDBServiceServer(grpcServer, igdbService)
+
+	// register reflection service for grpcurl and other tools
+	reflection.Register(grpcServer)
+
+	listener, err := net.Listen("tcp", cfg.GRPC.Address)
+	if err != nil {
+		return fmt.Errorf("failed to create gRPC listener: %w", err)
+	}
+
+	go func() {
+		logger.Info("gRPC service started", zap.String("address", cfg.GRPC.Address))
+		serverErrors <- grpcServer.Serve(listener)
+	}()
+
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
@@ -180,6 +203,11 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		return fmt.Errorf("listening and serving: %w", err)
 	case <-shutdown:
 		logger.Info("Start shutdown")
+
+		// shutdown gRPC server
+		grpcServer.GracefulStop()
+
+		// shutdown HTTP server
 		timeout := cfg.Web.ShutdownTimeout
 		bCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()

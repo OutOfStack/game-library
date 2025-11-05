@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package igdb;
+
+option go_package = "github.com/OutOfStack/game-library/api/proto/igdb";
+
+// IGDBService provides methods for retrieving game information from IGDB
+service IGDBService {
+  // GetGameInfoForUpdate retrieves game info needed for updates from IGDB API
+  rpc GetGameInfoForUpdate(GetGameInfoForUpdateRequest) returns (GetGameInfoForUpdateResponse);
+}
+
+// GetGameInfoForUpdateRequest contains the IGDB game ID
+message GetGameInfoForUpdateRequest {
+  int64 igdb_id = 1;
+}
+
+// GetGameInfoForUpdateResponse contains game information for update
+message GetGameInfoForUpdateResponse {
+  int64 id = 1;
+  string name = 2;
+  double total_rating = 3;
+  int32 total_rating_count = 4;
+  repeated int64 platforms = 5;
+  repeated Website websites = 6;
+}
+
+// Website represents a game website
+message Website {
+  string url = 1;
+  int32 type = 2;
+}

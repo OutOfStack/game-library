@@ -85,6 +85,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 - Background task for fetching and updating games data using IGDB API.
 - Game image upload and storage with S3-compatible services (Cloudflare R2).
 - Automatic game moderation using OpenAI API.
+- gRPC service for internal service-to-service communication.
 - Code analysis with golangci-lint.
 - CI/CD with GitHub Actions and deploy to Kubernetes (microk8s) cluster.
 
@@ -102,6 +103,30 @@ For regenerating documentation after swagger description change run:
 make generate
 ```
 
+### gRPC Service
+
+The service exposes a gRPC endpoint for internal service-to-service communication (primarily for game-library-auth service).
+
+**Endpoint:** `localhost:9000` (configurable via `GRPC_ADDRESS` environment variable)
+
+**Available Methods:**
+- `GetGameInfoForUpdate` - Retrieves game information from IGDB for update purposes
+
+**Testing with grpcurl:**
+```bash
+# list services
+grpcurl -plaintext localhost:9000 list
+
+# describe service
+grpcurl -plaintext localhost:9000 describe igdb.IGDBService
+
+# call method
+grpcurl -plaintext -d '{"igdb_id": 12345}' localhost:9000 igdb.IGDBService/GetGameInfoForUpdate
+```
+
+**Protobuf Definition:**
+The protobuf schema is located in `api/proto/igdb_service.proto`
+
 ## Examples
 
 Endpoint that returns 3 games ordered by release date:
@@ -118,7 +143,8 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     build-mng     build manage app
     run           runs app
     test          runs tests for the whole project
-    generate      generates docs for swagger UI and mocks for testing
+    generate      generates proto files, docs for swagger UI and mocks for testing
+    generate-proto generates Go code from protobuf definitions
     lint          runs golangci-lint
     cover         outputs tests coverage
 

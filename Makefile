@@ -62,9 +62,40 @@ generate-mocks:
 	${MOCKGEN_BIN} -source=internal/auth/auth.go -destination=internal/auth/mocks/auth.go -package=auth_mock
 	${MOCKGEN_BIN} -source=internal/middleware/auth.go -destination=internal/middleware/mocks/auth.go -package=middleware_mock
 	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
+	${MOCKGEN_BIN} -source=internal/grpc/igdb_service.go -destination=internal/grpc/mocks/igdb_service.go -package=grpc_mock
 	${MOCKGEN_BIN} -destination=internal/app/game-library-api/repo/mocks/tx.go -package=repo_mock github.com/jackc/pgx/v5 Tx
 
-generate: generate-swag generate-mocks
+PROTOC_VERSION := 29.3
+PROTOC_ZIP := protoc-$(PROTOC_VERSION)-linux-x86_64.zip
+PROTOC_BIN := $(shell go env GOPATH)/bin/protoc
+PROTOC_GEN_GO_PKG := google.golang.org/protobuf/cmd/protoc-gen-go@v1.36
+PROTOC_GEN_GO_GRPC_PKG := google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5
+PROTOC_GEN_GO_BIN := $(shell go env GOPATH)/bin/protoc-gen-go
+PROTOC_GEN_GO_GRPC_BIN := $(shell go env GOPATH)/bin/protoc-gen-go-grpc
+
+generate-proto:
+	@if [ ! -f ${PROTOC_BIN} ]; then \
+		echo "Installing protoc..."; \
+		cd /tmp && \
+		curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/$(PROTOC_ZIP) && \
+		unzip -o $(PROTOC_ZIP) -d protoc && \
+		cp protoc/bin/protoc $(shell go env GOPATH)/bin/ && \
+		rm -rf protoc $(PROTOC_ZIP); \
+	fi
+	@if [ ! -f ${PROTOC_GEN_GO_BIN} ]; then \
+		echo "Installing protoc-gen-go..."; \
+		go install ${PROTOC_GEN_GO_PKG}; \
+	fi
+	@if [ ! -f ${PROTOC_GEN_GO_GRPC_BIN} ]; then \
+		echo "Installing protoc-gen-go-grpc..."; \
+		go install ${PROTOC_GEN_GO_GRPC_PKG}; \
+	fi
+	@echo "Generating protobuf code..."; \
+	${PROTOC_BIN} --go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		api/proto/*.proto
+
+generate: generate-proto generate-swag generate-mocks
 
 LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6
 LINT_BIN := $(shell command -v golangci-lint 2>/dev/null || echo $(shell go env GOPATH)/bin/golangci-lint)

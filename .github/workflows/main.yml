@@ -18,6 +18,9 @@ jobs:
     - name: Verify dependencies
       run: go mod verify
 
+    - name: Generate protobuf files
+      run: make generate-proto
+
     - name: Build
       run: go build -v ./...
 

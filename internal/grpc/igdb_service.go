@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	pb "github.com/OutOfStack/game-library/api/proto/igdb"
-	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -16,7 +15,7 @@ var tracer = otel.Tracer("grpc-igdb-service")
 
 // IGDBAPIClient defines methods for interacting with IGDB API
 type IGDBAPIClient interface {
-	GetGameInfoForUpdate(ctx context.Context, igdbID int64) (igdbapi.GameInfoForUpdate, error)
+	CompanyExists(ctx context.Context, companyName string) (bool, error)
 }
 
 // IGDBService implements the gRPC IGDBService
@@ -34,38 +33,22 @@ func NewIGDBService(log *zap.Logger, igdbAPIClient IGDBAPIClient) *IGDBService {
 	}
 }
 
-// GetGameInfoForUpdate retrieves game info needed for updates from IGDB API
-func (s *IGDBService) GetGameInfoForUpdate(ctx context.Context, req *pb.GetGameInfoForUpdateRequest) (*pb.GetGameInfoForUpdateResponse, error) {
-	ctx, span := tracer.Start(ctx, "GetGameInfoForUpdate")
+// CompanyExists checks if a company with the given name exists in IGDB (case-insensitive)
+func (s *IGDBService) CompanyExists(ctx context.Context, req *pb.CompanyExistsRequest) (*pb.CompanyExistsResponse, error) {
+	ctx, span := tracer.Start(ctx, "CompanyExists")
 	defer span.End()
 
-	if req.IgdbId <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "igdb_id must be greater than 0")
+	if req.CompanyName == "" {
+		return &pb.CompanyExistsResponse{Exists: false}, nil
 	}
 
-	gameInfo, err := s.igdbAPIClient.GetGameInfoForUpdate(ctx, req.IgdbId)
+	exists, err := s.igdbAPIClient.CompanyExists(ctx, req.CompanyName)
 	if err != nil {
-		s.log.Error("failed to get game info for update",
-			zap.Int64("igdb_id", req.IgdbId),
+		s.log.Error("failed to check company existence",
+			zap.String("company_name", req.CompanyName),
 			zap.Error(err))
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to get game info: %v", err))
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to check company existence: %v", err))
 	}
 
-	// convert websites
-	websites := make([]*pb.Website, 0, len(gameInfo.Websites))
-	for _, w := range gameInfo.Websites {
-		websites = append(websites, &pb.Website{
-			Url:  w.URL,
-			Type: int32(w.Type),
-		})
-	}
-
-	return &pb.GetGameInfoForUpdateResponse{
-		Id:               gameInfo.ID,
-		Name:             gameInfo.Name,
-		TotalRating:      gameInfo.TotalRating,
-		TotalRatingCount: gameInfo.TotalRatingCount,
-		Platforms:        gameInfo.Platforms,
-		Websites:         websites,
-	}, nil
+	return &pb.CompanyExistsResponse{Exists: exists}, nil
 }

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	pb "github.com/OutOfStack/game-library/api/proto/igdb"
-	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -17,7 +16,7 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -source=igdb_service.go -destination=mocks/igdb_service.go -package=grpc_mock
 
-func TestIGDBService_GetGameInfoForUpdate(t *testing.T) {
+func TestIGDBService_CompanyExists(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -26,94 +25,71 @@ func TestIGDBService_GetGameInfoForUpdate(t *testing.T) {
 
 	service := NewIGDBService(logger, mockClient)
 
-	t.Run("success", func(t *testing.T) {
-		ctx := context.Background()
-		igdbID := td.Int64()
-		if igdbID <= 0 {
-			igdbID = 12345
-		}
-
-		gameInfo := igdbapi.GameInfoForUpdate{
-			ID:               igdbID,
-			Name:             td.String(),
-			TotalRating:      td.Float64n(100),
-			TotalRatingCount: td.Int32(),
-			Platforms:        []int64{td.Int64(), td.Int64()},
-			Websites: []igdbapi.Website{
-				{URL: td.URL(), Type: int8(td.Intn(20))},
-				{URL: td.URL(), Type: int8(td.Intn(20))},
-			},
-		}
+	t.Run("company_exists", func(t *testing.T) {
+		ctx := t.Context()
+		companyName := td.String()
 
 		mockClient.EXPECT().
-			GetGameInfoForUpdate(gomock.Any(), igdbID).
-			Return(gameInfo, nil)
+			CompanyExists(gomock.Any(), companyName).
+			Return(true, nil)
 
-		req := &pb.GetGameInfoForUpdateRequest{
-			IgdbId: igdbID,
+		req := &pb.CompanyExistsRequest{
+			CompanyName: companyName,
 		}
 
-		resp, err := service.GetGameInfoForUpdate(ctx, req)
+		resp, err := service.CompanyExists(ctx, req)
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, gameInfo.ID, resp.Id)
-		require.Equal(t, gameInfo.Name, resp.Name)
-		require.Equal(t, gameInfo.TotalRating, resp.TotalRating)
-		require.Equal(t, gameInfo.TotalRatingCount, resp.TotalRatingCount)
-		require.Equal(t, gameInfo.Platforms, resp.Platforms)
-		require.Len(t, resp.Websites, len(gameInfo.Websites))
-		for i, w := range gameInfo.Websites {
-			require.Equal(t, w.URL, resp.Websites[i].Url)
-			require.Equal(t, int32(w.Type), resp.Websites[i].Type)
-		}
+		require.True(t, resp.Exists)
 	})
 
-	t.Run("invalid_argument_zero_id", func(t *testing.T) {
-		ctx := context.Background()
+	t.Run("company_does_not_exist", func(t *testing.T) {
+		ctx := t.Context()
+		companyName := td.String()
 
-		req := &pb.GetGameInfoForUpdateRequest{
-			IgdbId: 0,
+		mockClient.EXPECT().
+			CompanyExists(gomock.Any(), companyName).
+			Return(false, nil)
+
+		req := &pb.CompanyExistsRequest{
+			CompanyName: companyName,
 		}
 
-		resp, err := service.GetGameInfoForUpdate(ctx, req)
+		resp, err := service.CompanyExists(ctx, req)
 
-		require.Error(t, err)
-		require.Nil(t, resp)
-		st, ok := status.FromError(err)
-		require.True(t, ok)
-		require.Equal(t, codes.InvalidArgument, st.Code())
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.False(t, resp.Exists)
 	})
 
-	t.Run("invalid_argument_negative_id", func(t *testing.T) {
-		ctx := context.Background()
+	t.Run("empty_company_name_returns_false", func(t *testing.T) {
+		ctx := t.Context()
 
-		req := &pb.GetGameInfoForUpdateRequest{
-			IgdbId: -1,
+		req := &pb.CompanyExistsRequest{
+			CompanyName: "",
 		}
 
-		resp, err := service.GetGameInfoForUpdate(ctx, req)
+		resp, err := service.CompanyExists(ctx, req)
 
-		require.Error(t, err)
-		require.Nil(t, resp)
-		st, ok := status.FromError(err)
-		require.True(t, ok)
-		require.Equal(t, codes.InvalidArgument, st.Code())
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.False(t, resp.Exists)
 	})
 
 	t.Run("internal_error", func(t *testing.T) {
-		ctx := context.Background()
-		igdbID := int64(12345)
+		ctx := t.Context()
+		companyName := td.String()
 
 		mockClient.EXPECT().
-			GetGameInfoForUpdate(gomock.Any(), igdbID).
-			Return(igdbapi.GameInfoForUpdate{}, errors.New("api error"))
+			CompanyExists(gomock.Any(), companyName).
+			Return(false, errors.New("api error"))
 
-		req := &pb.GetGameInfoForUpdateRequest{
-			IgdbId: igdbID,
+		req := &pb.CompanyExistsRequest{
+			CompanyName: companyName,
 		}
 
-		resp, err := service.GetGameInfoForUpdate(ctx, req)
+		resp, err := service.CompanyExists(ctx, req)
 
 		require.Error(t, err)
 		require.Nil(t, resp)

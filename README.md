@@ -110,7 +110,7 @@ The service exposes a gRPC endpoint for internal service-to-service communicatio
 **Endpoint:** `localhost:9000` (configurable via `GRPC_ADDRESS` environment variable)
 
 **Available Methods:**
-- `GetGameInfoForUpdate` - Retrieves game information from IGDB for update purposes
+- `CompanyExists` - Checks if a company with the given name exists in IGDB (case-insensitive)
 
 **Testing with grpcurl:**
 ```bash
@@ -121,7 +121,7 @@ grpcurl -plaintext localhost:9000 list
 grpcurl -plaintext localhost:9000 describe igdb.IGDBService
 
 # call method
-grpcurl -plaintext -d '{"igdb_id": 12345}' localhost:9000 igdb.IGDBService/GetGameInfoForUpdate
+grpcurl -plaintext -d '{"company_name": "Nintendo"}' localhost:9000 igdb.IGDBService/CompanyExists
 ```
 
 **Protobuf Definition:**

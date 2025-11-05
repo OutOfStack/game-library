@@ -74,12 +74,15 @@ PROTOC_GEN_GO_BIN := $(shell go env GOPATH)/bin/protoc-gen-go
 PROTOC_GEN_GO_GRPC_BIN := $(shell go env GOPATH)/bin/protoc-gen-go-grpc
 
 generate-proto:
+	@mkdir -p $(shell go env GOPATH)/bin
+	@mkdir -p api/proto/igdb
 	@if [ ! -f ${PROTOC_BIN} ]; then \
 		echo "Installing protoc..."; \
 		cd /tmp && \
 		curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/$(PROTOC_ZIP) && \
 		unzip -o $(PROTOC_ZIP) -d protoc && \
 		cp protoc/bin/protoc $(shell go env GOPATH)/bin/ && \
+		chmod +x $(shell go env GOPATH)/bin/protoc && \
 		rm -rf protoc $(PROTOC_ZIP); \
 	fi
 	@if [ ! -f ${PROTOC_GEN_GO_BIN} ]; then \

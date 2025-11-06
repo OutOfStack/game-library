@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
-	"github.com/gogo/protobuf/proto"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -13,7 +12,7 @@ import (
 func (s *TestSuite) Test_CompanyExists_Success_Found() {
 	companyName := "Sony"
 	req := pb.CompanyExistsRequest_builder{
-		CompanyName: proto.String(companyName),
+		CompanyName: &companyName,
 	}.Build()
 
 	s.gameFacadeMock.EXPECT().
@@ -30,7 +29,7 @@ func (s *TestSuite) Test_CompanyExists_Success_Found() {
 func (s *TestSuite) Test_CompanyExists_Success_NotFound() {
 	companyName := "NonExistentCompany"
 	req := pb.CompanyExistsRequest_builder{
-		CompanyName: proto.String(companyName),
+		CompanyName: &companyName,
 	}.Build()
 
 	s.gameFacadeMock.EXPECT().
@@ -45,8 +44,9 @@ func (s *TestSuite) Test_CompanyExists_Success_NotFound() {
 }
 
 func (s *TestSuite) Test_CompanyExists_EmptyCompanyName() {
+	var companyName string
 	req := pb.CompanyExistsRequest_builder{
-		CompanyName: proto.String(""),
+		CompanyName: &companyName,
 	}.Build()
 
 	resp, err := s.service.CompanyExists(s.T().Context(), req)
@@ -60,8 +60,9 @@ func (s *TestSuite) Test_CompanyExists_EmptyCompanyName() {
 }
 
 func (s *TestSuite) Test_CompanyExists_WhitespaceOnlyCompanyName() {
+	companyName := "   \t\n  "
 	req := pb.CompanyExistsRequest_builder{
-		CompanyName: proto.String("   \t\n  "),
+		CompanyName: &companyName,
 	}.Build()
 
 	resp, err := s.service.CompanyExists(s.T().Context(), req)
@@ -77,7 +78,7 @@ func (s *TestSuite) Test_CompanyExists_WhitespaceOnlyCompanyName() {
 func (s *TestSuite) Test_CompanyExists_FacadeError() {
 	companyName := "SomeCompany"
 	req := pb.CompanyExistsRequest_builder{
-		CompanyName: proto.String(companyName),
+		CompanyName: &companyName,
 	}.Build()
 	facadeErr := errors.New("database error")
 
@@ -98,7 +99,7 @@ func (s *TestSuite) Test_CompanyExists_FacadeError() {
 func (s *TestSuite) Test_CompanyExists_CaseInsensitive() {
 	companyName := "NINTENDO"
 	req := pb.CompanyExistsRequest_builder{
-		CompanyName: proto.String(companyName),
+		CompanyName: &companyName,
 	}.Build()
 
 	s.gameFacadeMock.EXPECT().
@@ -115,7 +116,7 @@ func (s *TestSuite) Test_CompanyExists_CaseInsensitive() {
 func (s *TestSuite) Test_CompanyExists_CompanyNameWithSpaces() {
 	companyName := "  Ubisoft  "
 	req := pb.CompanyExistsRequest_builder{
-		CompanyName: proto.String(companyName),
+		CompanyName: &companyName,
 	}.Build()
 
 	s.gameFacadeMock.EXPECT().

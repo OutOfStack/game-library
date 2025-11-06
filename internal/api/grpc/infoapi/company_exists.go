@@ -1,12 +1,11 @@
 package infoapi
 
 import (
+	"context"
 	"strings"
 
 	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
-	"github.com/gogo/protobuf/proto"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,21 +15,22 @@ func (s *InfoService) CompanyExists(ctx context.Context, req *pb.CompanyExistsRe
 	ctx, span := tracer.Start(ctx, "CompanyExists")
 	defer span.End()
 
+	companyName := req.GetCompanyName()
 	// empty or whitespace-only company names return false
-	if strings.TrimSpace(req.GetCompanyName()) == "" {
+	if strings.TrimSpace(companyName) == "" {
 		return nil, status.Error(codes.InvalidArgument, "empty company name")
 	}
 
-	exists, err := s.gameFacade.CompanyExistsInIGDB(ctx, req.GetCompanyName())
+	exists, err := s.gameFacade.CompanyExistsInIGDB(ctx, companyName)
 	if err != nil {
 		// log detailed error but return generic message to client
 		s.log.Error("failed to check company existence",
-			zap.String("company_name", req.GetCompanyName()),
+			zap.String("company_name", companyName),
 			zap.Error(err))
 		return nil, status.Error(codes.Internal, "failed to check company existence")
 	}
 
 	return pb.CompanyExistsResponse_builder{
-		Exists: proto.Bool(exists),
+		Exists: &exists,
 	}.Build(), nil
 }

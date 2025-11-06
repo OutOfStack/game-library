@@ -184,10 +184,6 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 	ctx, span := tracer.Start(ctx, "companyExists")
 	defer span.End()
 
-	if companyName == "" {
-		return false, nil
-	}
-
 	reqURL, err := url.JoinPath(c.conf.APIURL, companiesEndpoint)
 	if err != nil {
 		return false, fmt.Errorf("join url path: %v", err)

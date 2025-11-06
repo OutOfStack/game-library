@@ -3,7 +3,7 @@ package infoapi
 import (
 	"context"
 
-	pb "github.com/OutOfStack/game-library/pkg/infoapi"
+	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
@@ -17,7 +17,7 @@ type GameFacade interface {
 
 // InfoService implements the gRPC InfoService
 type InfoService struct {
-	pb.UnimplementedInfoApiServiceServer
+	infopb.UnimplementedInfoApiServiceServer
 	log        *zap.Logger
 	gameFacade GameFacade
 }

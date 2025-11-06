@@ -102,8 +102,7 @@ func (p *Provider) GetCompanyByID(ctx context.Context, id int32) (model.Company,
 
 // CompanyExistsInIGDB check if company name exists in igdb
 func (p *Provider) CompanyExistsInIGDB(ctx context.Context, companyName string) (bool, error) {
-	sanitizer := bluemonday.UGCPolicy()
-	companyName = sanitizer.Sanitize(strings.TrimSpace(companyName))
+	companyName = bluemonday.StrictPolicy().Sanitize(strings.TrimSpace(companyName))
 	if companyName == "" {
 		return false, errors.New("empty company name")
 	}

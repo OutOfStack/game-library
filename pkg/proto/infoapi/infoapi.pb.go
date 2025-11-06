@@ -9,8 +9,8 @@ package infoapi
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	_ "google.golang.org/protobuf/types/gofeaturespb"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -22,10 +22,12 @@ const (
 )
 
 type CompanyExistsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CompanyName   string                 `protobuf:"bytes,1,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CompanyName *string                `protobuf:"bytes,1,opt,name=company_name,json=companyName"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *CompanyExistsRequest) Reset() {
@@ -53,23 +55,57 @@ func (x *CompanyExistsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CompanyExistsRequest.ProtoReflect.Descriptor instead.
-func (*CompanyExistsRequest) Descriptor() ([]byte, []int) {
-	return file_infoapi_proto_rawDescGZIP(), []int{0}
-}
-
 func (x *CompanyExistsRequest) GetCompanyName() string {
 	if x != nil {
-		return x.CompanyName
+		if x.xxx_hidden_CompanyName != nil {
+			return *x.xxx_hidden_CompanyName
+		}
+		return ""
 	}
 	return ""
 }
 
+func (x *CompanyExistsRequest) SetCompanyName(v string) {
+	x.xxx_hidden_CompanyName = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *CompanyExistsRequest) HasCompanyName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *CompanyExistsRequest) ClearCompanyName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_CompanyName = nil
+}
+
+type CompanyExistsRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	CompanyName *string
+}
+
+func (b0 CompanyExistsRequest_builder) Build() *CompanyExistsRequest {
+	m0 := &CompanyExistsRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.CompanyName != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_CompanyName = b.CompanyName
+	}
+	return m0
+}
+
 type CompanyExistsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Exists        bool                   `protobuf:"varint,1,opt,name=exists,proto3" json:"exists,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Exists      bool                   `protobuf:"varint,1,opt,name=exists"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *CompanyExistsResponse) Reset() {
@@ -97,41 +133,58 @@ func (x *CompanyExistsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CompanyExistsResponse.ProtoReflect.Descriptor instead.
-func (*CompanyExistsResponse) Descriptor() ([]byte, []int) {
-	return file_infoapi_proto_rawDescGZIP(), []int{1}
-}
-
 func (x *CompanyExistsResponse) GetExists() bool {
 	if x != nil {
-		return x.Exists
+		return x.xxx_hidden_Exists
 	}
 	return false
+}
+
+func (x *CompanyExistsResponse) SetExists(v bool) {
+	x.xxx_hidden_Exists = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *CompanyExistsResponse) HasExists() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *CompanyExistsResponse) ClearExists() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Exists = false
+}
+
+type CompanyExistsResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Exists *bool
+}
+
+func (b0 CompanyExistsResponse_builder) Build() *CompanyExistsResponse {
+	m0 := &CompanyExistsResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Exists != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Exists = *b.Exists
+	}
+	return m0
 }
 
 var File_infoapi_proto protoreflect.FileDescriptor
 
 const file_infoapi_proto_rawDesc = "" +
 	"\n" +
-	"\rinfoapi.proto\x12\ainfoapi\"9\n" +
+	"\rinfoapi.proto\x12\ainfoapi\x1a!google/protobuf/go_features.proto\"9\n" +
 	"\x14CompanyExistsRequest\x12!\n" +
 	"\fcompany_name\x18\x01 \x01(\tR\vcompanyName\"/\n" +
 	"\x15CompanyExistsResponse\x12\x16\n" +
 	"\x06exists\x18\x01 \x01(\bR\x06exists2`\n" +
 	"\x0eInfoApiService\x12N\n" +
-	"\rCompanyExists\x12\x1d.infoapi.CompanyExistsRequest\x1a\x1e.infoapi.CompanyExistsResponseB8Z6github.com/OutOfStack/game-library/pkg/infoapi;infoapib\x06proto3"
-
-var (
-	file_infoapi_proto_rawDescOnce sync.Once
-	file_infoapi_proto_rawDescData []byte
-)
-
-func file_infoapi_proto_rawDescGZIP() []byte {
-	file_infoapi_proto_rawDescOnce.Do(func() {
-		file_infoapi_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_infoapi_proto_rawDesc), len(file_infoapi_proto_rawDesc)))
-	})
-	return file_infoapi_proto_rawDescData
-}
+	"\rCompanyExists\x12\x1d.infoapi.CompanyExistsRequest\x1a\x1e.infoapi.CompanyExistsResponseBFZ<github.com/OutOfStack/game-library/pkg/proto/infoapi;infoapi\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_infoapi_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_infoapi_proto_goTypes = []any{

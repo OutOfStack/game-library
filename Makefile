@@ -50,11 +50,11 @@ generate-mocks:
 	mockgen -source=internal/api/grpc/infoapi/service.go -destination=internal/api/grpc/infoapi/mocks/service.go -package=infoapi_mock
 
 BUF_VERSION := v1.59
-PROTOC_GEN_GO_VERSION := v1.36
-PROTOC_GEN_GO_GRPC_VERSION := v1.5
+PROTOC_GEN_GO_VERSION := v1.36.10
+PROTOC_GEN_GO_GRPC_VERSION := v1.5.1
 BUF_PKG := github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
 PROTOC_GEN_GO_PKG := google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}
-PROTOC_GEN_GO_GRPC_PKG := google.golang.org/grpc/cmd/protoc-gen-go-grpc@{PROTOC_GEN_GO_GRPC_VERSION}
+PROTOC_GEN_GO_GRPC_PKG := google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}
 generate-proto:
 	@buf --version >/dev/null 2>&1 || { echo "Installing buf..."; go install ${BUF_PKG}; }
 	@protoc-gen-go --version >/dev/null 2>&1 || { echo "Installing protoc-gen-go..."; go install ${PROTOC_GEN_GO_PKG}; }

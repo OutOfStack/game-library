@@ -3,7 +3,8 @@ package infoapi
 import (
 	"strings"
 
-	pb "github.com/OutOfStack/game-library/pkg/infoapi"
+	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
+	"github.com/gogo/protobuf/proto"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -29,5 +30,7 @@ func (s *InfoService) CompanyExists(ctx context.Context, req *pb.CompanyExistsRe
 		return nil, status.Error(codes.Internal, "failed to check company existence")
 	}
 
-	return &pb.CompanyExistsResponse{Exists: exists}, nil
+	return pb.CompanyExistsResponse_builder{
+		Exists: proto.Bool(exists),
+	}.Build(), nil
 }

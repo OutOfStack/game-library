@@ -29,7 +29,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/repo"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
 	"github.com/OutOfStack/game-library/internal/web"
-	infopb "github.com/OutOfStack/game-library/pkg/infoapi"
+	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"

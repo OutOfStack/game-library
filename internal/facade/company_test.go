@@ -165,11 +165,9 @@ func (s *TestSuite) TestCompanyExistsInIGDB_Error() {
 func (s *TestSuite) TestCompanyExistsInIGDB_EmptyCompanyName() {
 	companyName := ""
 
-	s.igdbAPIClientMock.EXPECT().CompanyExists(s.ctx, companyName).Return(false, nil)
-
 	exists, err := s.provider.CompanyExistsInIGDB(s.ctx, companyName)
 
-	s.Require().NoError(err)
+	s.Require().Error(err)
 	s.False(exists)
 }
 

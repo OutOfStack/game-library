@@ -1,8 +1,11 @@
-syntax = "proto3";
+edition = "2023";
 
 package infoapi;
 
-option go_package = "github.com/OutOfStack/game-library/pkg/infoapi;infoapi";
+option go_package = "github.com/OutOfStack/game-library/pkg/proto/infoapi;infoapi";
+
+import "google/protobuf/go_features.proto";
+option features.(pb.go).api_level = API_OPAQUE;
 
 service InfoApiService {
   // CompanyExists checks if a company with the given name exists in IGDB (case-insensitive)

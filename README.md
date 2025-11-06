@@ -55,7 +55,7 @@ To set up the service, follow these steps:
 
 5. _[Optional]_ Launch [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
-6. Create the `app.env` file based on [./app.example.env](./app.example.env) and update it with your local configuration settings.
+6. Create the `app.env` file based on [`./app.example.env`](./app.example.env) and update it with your local configuration settings.
 
 7.  Build and run the service:
     ```bash
@@ -72,7 +72,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 After installation, you can use the following Make commands to develop the service:
 
 - `make test`: Runs tests.
-- `make generate`: Generates documentation for Swagger UI, mocks for testing and protobuf endpoints/clients.
+- `make generate`: Generates proto files, documentation for Swagger UI and mocks for testing.
 - `make lint`: Runs golangci-lint for code analysis.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
@@ -92,9 +92,9 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 
 ## Configuration
 
-- The service can be configured using `app.env` or environment variables, described in [settings.go](./internal/appconf/settings.go)
-- CI/CD configs are in [./github/workflows/](./.github/workflows/)
-- k8s deployment configs are in [./k8s](./.k8s/)
+- The service can be configured using `app.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go)
+- CI/CD configs are in [`./github/workflows/`](./.github/workflows/)
+- k8s deployment configs are in [`./k8s`](./.k8s/)
 
 ## Documentation
 
@@ -108,10 +108,7 @@ make generate
 
 The service exposes a gRPC endpoint for internal service-to-service communication.
 
-**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [app.example.env](./app.example.env))
-
-**Available Methods:**
-- `CompanyExists` - Checks if a company with the given name exists in IGDB (case-insensitive, returns boolean)
+**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`app.example.env`](./app.example.env))
 
 **Testing with grpcurl:**
 ```bash
@@ -126,7 +123,7 @@ grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:90
 ```
 
 **Protobuf Definition:**
-The protobuf schema is located in `api/proto/infoapi.proto`
+The protobuf schema is located in [`api/proto/infoapi.proto`](./api/proto/infoapi.proto)
 
 ## Examples
 

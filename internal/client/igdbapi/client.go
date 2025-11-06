@@ -223,7 +223,7 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 		if rErr != nil {
 			return false, fmt.Errorf("read response body: %v", rErr)
 		}
-		return false, fmt.Errorf("%s", body)
+		return false, fmt.Errorf("igdb api error: %s", body)
 	}
 
 	var respBody []CompanyInfo
@@ -232,13 +232,7 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 		return false, fmt.Errorf("decode response body: %v", err)
 	}
 
-	for _, company := range respBody {
-		if strings.EqualFold(company.Name, companyName) {
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return len(respBody) > 0, nil
 }
 
 // GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name

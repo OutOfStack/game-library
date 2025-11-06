@@ -3,7 +3,8 @@ package infoapi_test
 import (
 	"errors"
 
-	pb "github.com/OutOfStack/game-library/pkg/infoapi"
+	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
+	"github.com/gogo/protobuf/proto"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,7 +12,9 @@ import (
 
 func (s *TestSuite) Test_CompanyExists_Success_Found() {
 	companyName := "Sony"
-	req := &pb.CompanyExistsRequest{CompanyName: companyName}
+	req := pb.CompanyExistsRequest_builder{
+		CompanyName: proto.String(companyName),
+	}.Build()
 
 	s.gameFacadeMock.EXPECT().
 		CompanyExistsInIGDB(gomock.Any(), companyName).
@@ -26,7 +29,9 @@ func (s *TestSuite) Test_CompanyExists_Success_Found() {
 
 func (s *TestSuite) Test_CompanyExists_Success_NotFound() {
 	companyName := "NonExistentCompany"
-	req := &pb.CompanyExistsRequest{CompanyName: companyName}
+	req := pb.CompanyExistsRequest_builder{
+		CompanyName: proto.String(companyName),
+	}.Build()
 
 	s.gameFacadeMock.EXPECT().
 		CompanyExistsInIGDB(gomock.Any(), companyName).
@@ -40,7 +45,9 @@ func (s *TestSuite) Test_CompanyExists_Success_NotFound() {
 }
 
 func (s *TestSuite) Test_CompanyExists_EmptyCompanyName() {
-	req := &pb.CompanyExistsRequest{CompanyName: ""}
+	req := pb.CompanyExistsRequest_builder{
+		CompanyName: proto.String(""),
+	}.Build()
 
 	resp, err := s.service.CompanyExists(s.T().Context(), req)
 
@@ -53,7 +60,9 @@ func (s *TestSuite) Test_CompanyExists_EmptyCompanyName() {
 }
 
 func (s *TestSuite) Test_CompanyExists_WhitespaceOnlyCompanyName() {
-	req := &pb.CompanyExistsRequest{CompanyName: "   \t\n  "}
+	req := pb.CompanyExistsRequest_builder{
+		CompanyName: proto.String("   \t\n  "),
+	}.Build()
 
 	resp, err := s.service.CompanyExists(s.T().Context(), req)
 
@@ -67,7 +76,9 @@ func (s *TestSuite) Test_CompanyExists_WhitespaceOnlyCompanyName() {
 
 func (s *TestSuite) Test_CompanyExists_FacadeError() {
 	companyName := "SomeCompany"
-	req := &pb.CompanyExistsRequest{CompanyName: companyName}
+	req := pb.CompanyExistsRequest_builder{
+		CompanyName: proto.String(companyName),
+	}.Build()
 	facadeErr := errors.New("database error")
 
 	s.gameFacadeMock.EXPECT().
@@ -86,7 +97,9 @@ func (s *TestSuite) Test_CompanyExists_FacadeError() {
 
 func (s *TestSuite) Test_CompanyExists_CaseInsensitive() {
 	companyName := "NINTENDO"
-	req := &pb.CompanyExistsRequest{CompanyName: companyName}
+	req := pb.CompanyExistsRequest_builder{
+		CompanyName: proto.String(companyName),
+	}.Build()
 
 	s.gameFacadeMock.EXPECT().
 		CompanyExistsInIGDB(gomock.Any(), companyName).
@@ -101,7 +114,9 @@ func (s *TestSuite) Test_CompanyExists_CaseInsensitive() {
 
 func (s *TestSuite) Test_CompanyExists_CompanyNameWithSpaces() {
 	companyName := "  Ubisoft  "
-	req := &pb.CompanyExistsRequest{CompanyName: companyName}
+	req := pb.CompanyExistsRequest_builder{
+		CompanyName: proto.String(companyName),
+	}.Build()
 
 	s.gameFacadeMock.EXPECT().
 		CompanyExistsInIGDB(gomock.Any(), companyName).

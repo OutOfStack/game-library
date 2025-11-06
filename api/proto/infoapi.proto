@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package infoapi;
+
+option go_package = "github.com/OutOfStack/game-library/pkg/infoapi;infoapi";
+
+service InfoApiService {
+  // CompanyExists checks if a company with the given name exists in IGDB (case-insensitive)
+  rpc CompanyExists(CompanyExistsRequest) returns (CompanyExistsResponse);
+}
+
+message CompanyExistsRequest {
+  string company_name = 1;
+}
+
+message CompanyExistsResponse {
+  bool exists = 1;
+}

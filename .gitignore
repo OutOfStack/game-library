@@ -11,12 +11,9 @@ requirements
 # config
 app.env
 
-# generated protobuf files
-*.pb.go
-*_grpc.pb.go
-
 # Test binary, built with `go test -c`
 *.test
+test-data/*
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out

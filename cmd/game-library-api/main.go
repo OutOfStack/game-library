@@ -12,12 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	pb "github.com/OutOfStack/game-library/api/proto/igdb"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/api"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/facade"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
+	"github.com/OutOfStack/game-library/internal/api"
+	"github.com/OutOfStack/game-library/internal/api/grpc/infoapi"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/authapi"
@@ -25,17 +21,21 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/s3"
-	grpcservice "github.com/OutOfStack/game-library/internal/grpc"
+	"github.com/OutOfStack/game-library/internal/facade"
+	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	zaplog "github.com/OutOfStack/game-library/internal/pkg/log"
+	"github.com/OutOfStack/game-library/internal/repo"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
+	"github.com/OutOfStack/game-library/internal/web"
+	infopb "github.com/OutOfStack/game-library/pkg/infoapi"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	grpcrefl "google.golang.org/grpc/reflection"
 )
 
 // @title Game library API
@@ -83,18 +83,6 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}
 	defer db.Close()
 
-	// create IGDB client
-	igdbAPIClient, err := igdbapi.New(logger, cfg.IGDB)
-	if err != nil {
-		return fmt.Errorf("create IGDB client: %w", err)
-	}
-
-	// create auth api client
-	authAPIClient, err := authapi.New(logger, cfg.Auth.VerifyTokenAPIURL)
-	if err != nil {
-		return fmt.Errorf("create auth api client: %w", err)
-	}
-
 	// create redis client
 	redisClient, err := redis.New(cfg.Redis)
 	if err != nil {
@@ -105,6 +93,18 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	s3Client, err := s3.New(logger, cfg.S3)
 	if err != nil {
 		return fmt.Errorf("create S3 client: %w", err)
+	}
+
+	// create IGDB client
+	igdbAPIClient, err := igdbapi.New(logger, cfg.IGDB)
+	if err != nil {
+		return fmt.Errorf("create IGDB client: %w", err)
+	}
+
+	// create auth api client
+	authAPIClient, err := authapi.New(logger, cfg.Auth.VerifyTokenAPIURL)
+	if err != nil {
+		return fmt.Errorf("create auth api client: %w", err)
 	}
 
 	// create openai client
@@ -123,7 +123,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}
 
 	// create game facade
-	gameFacade := facade.NewProvider(logger, storage, cacheStore, s3Client, openAIClient)
+	gameFacade := facade.NewProvider(logger, storage, cacheStore, s3Client, openAIClient, igdbAPIClient)
 
 	// create web decoder
 	decoder := web.NewDecoder(logger, cfg)
@@ -165,7 +165,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		}
 	}()
 
-	// start API service
+	// start http API service
 	apiService, err := api.Service(logger, db, authFacade, apiProvider, cfg)
 	if err != nil {
 		return fmt.Errorf("can't create service api: %w", err)
@@ -179,19 +179,20 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 
 	// start gRPC service
 	grpcServer := grpc.NewServer()
-	igdbService := grpcservice.NewIGDBService(logger, igdbAPIClient)
-	pb.RegisterIGDBServiceServer(grpcServer, igdbService)
+	igdbService := infoapi.NewInfoService(logger, gameFacade)
+	infopb.RegisterInfoApiServiceServer(grpcServer, igdbService)
 
 	// register reflection service for grpcurl and other tools
-	reflection.Register(grpcServer)
+	grpcrefl.Register(grpcServer)
 
-	listener, err := net.Listen("tcp", cfg.GRPC.Address)
+	grpcListenConfig := net.ListenConfig{}
+	listener, err := grpcListenConfig.Listen(ctx, "tcp", cfg.Web.GRPCAddress)
 	if err != nil {
 		return fmt.Errorf("failed to create gRPC listener: %w", err)
 	}
 
 	go func() {
-		logger.Info("gRPC service started", zap.String("address", cfg.GRPC.Address))
+		logger.Info("gRPC service started", zap.String("address", cfg.Web.GRPCAddress))
 		serverErrors <- grpcServer.Serve(listener)
 	}()
 

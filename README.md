@@ -22,7 +22,9 @@ It consists of three services:
 
 ## Installation
 
-Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps:
+Prerequisites: [`go`](https://go.dev/doc/install), [`Docker`](https://docs.docker.com/desktop/), [`Make`](https://www.gnu.org/software/make/)
+
+To set up the service, follow these steps:
 
 1. Clone the repository:
     ```bash
@@ -33,7 +35,6 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 2. Set up the database:
     ```bash
     make drunpg # runs postgres in docker container
-    make createdb # creates db
     make migrate # applies migrations
     # optionally
     make seed # applies test data
@@ -71,7 +72,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 After installation, you can use the following Make commands to develop the service:
 
 - `make test`: Runs tests.
-- `make generate`: Generates documentation for Swagger UI and mocks for testing.
+- `make generate`: Generates documentation for Swagger UI, mocks for testing and protobuf endpoints/clients.
 - `make lint`: Runs golangci-lint for code analysis.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
@@ -105,12 +106,12 @@ make generate
 
 ### gRPC Service
 
-The service exposes a gRPC endpoint for internal service-to-service communication (primarily for game-library-auth service).
+The service exposes a gRPC endpoint for internal service-to-service communication.
 
-**Endpoint:** `localhost:9000` (configurable via `GRPC_ADDRESS` environment variable)
+**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [app.example.env](./app.example.env))
 
 **Available Methods:**
-- `CompanyExists` - Checks if a company with the given name exists in IGDB (case-insensitive)
+- `CompanyExists` - Checks if a company with the given name exists in IGDB (case-insensitive, returns boolean)
 
 **Testing with grpcurl:**
 ```bash
@@ -118,14 +119,14 @@ The service exposes a gRPC endpoint for internal service-to-service communicatio
 grpcurl -plaintext localhost:9000 list
 
 # describe service
-grpcurl -plaintext localhost:9000 describe igdb.IGDBService
+grpcurl -plaintext localhost:9000 describe infoapi.InfoApiService
 
 # call method
-grpcurl -plaintext -d '{"company_name": "Nintendo"}' localhost:9000 igdb.IGDBService/CompanyExists
+grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:9000 infoapi.InfoApiService/CompanyExists
 ```
 
 **Protobuf Definition:**
-The protobuf schema is located in `api/proto/igdb_service.proto`
+The protobuf schema is located in `api/proto/infoapi.proto`
 
 ## Examples
 
@@ -144,14 +145,11 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     run           runs app
     test          runs tests for the whole project
     generate      generates proto files, docs for swagger UI and mocks for testing
-    generate-proto generates Go code from protobuf definitions
     lint          runs golangci-lint
     cover         outputs tests coverage
 
 #### Database Commands
     drunpg        runs postgres server in docker container
-    createdb      creates database on postgres server started by 'dockerrunpg'
-    dropdb        drops database on postgres server created by 'dockerrunpg'
     migrate       applies all migrations to database (reads from config file)
     rollback      rollbacks last migration on database (reads from config file)
     seed          seeds test data to database (reads from config file)

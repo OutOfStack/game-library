@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
+	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"go.uber.org/mock/gomock"
 )

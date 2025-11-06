@@ -44,7 +44,6 @@ Use `aiuser:aiuser__` creds for `user` with user role, and `aipublisher:aipublis
   - `docs/**` - documentation files
   - `**/mocks/**` - generated mock files
   - `vendor/**` - external dependencies
-  - `api/proto/igdb/**` - generated protobuf files (except .proto source files)
 - DO NOT review or analyze files matching these patterns:
   - `**/*_mock.go` - mock files
   - `**/*.gen.go` - generated files

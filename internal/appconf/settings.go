@@ -14,7 +14,6 @@ type Cfg struct {
 	Log       Log       `mapstructure:",squash"`
 	DB        DB        `mapstructure:",squash"`
 	Web       Web       `mapstructure:",squash"`
-	GRPC      GRPC      `mapstructure:",squash"`
 	Auth      Auth      `mapstructure:",squash"`
 	Zipkin    Zipkin    `mapstructure:",squash"`
 	IGDB      IGDB      `mapstructure:",squash"`
@@ -32,17 +31,13 @@ type DB struct {
 
 // Web represents settings for to web server
 type Web struct {
-	Address           string        `mapstructure:"APP_ADDRESS"`
-	DebugAddress      string        `mapstructure:"DEBUG_ADDRESS"`
+	HTTPAddress       string        `mapstructure:"APP_HTTP_ADDRESS"`
+	GRPCAddress       string        `mapstructure:"APP_GRPC_ADDRESS"`
+	DebugAddress      string        `mapstructure:"APP_DEBUG_ADDRESS"`
 	ReadTimeout       time.Duration `mapstructure:"APP_READTIMEOUT"`
 	WriteTimeout      time.Duration `mapstructure:"APP_WRITETIMEOUT"`
 	ShutdownTimeout   time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
 	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
-}
-
-// GRPC represents settings for gRPC server
-type GRPC struct {
-	Address string `mapstructure:"GRPC_ADDRESS"`
 }
 
 // Zipkin represents settings for Zipkin trace storage
@@ -118,11 +113,14 @@ func (cfg *Cfg) Validate() error {
 	}
 
 	// web
-	if cfg.Web.Address == "" {
-		return errors.New("APP_ADDRESS is required")
+	if cfg.Web.HTTPAddress == "" {
+		return errors.New("APP_HTTP_ADDRESS is required")
 	}
 	if cfg.Web.DebugAddress == "" {
-		return errors.New("DEBUG_ADDRESS is required")
+		return errors.New("APP_DEBUG_ADDRESS is required")
+	}
+	if cfg.Web.GRPCAddress == "" {
+		return errors.New("APP_GRPC_ADDRESS is required")
 	}
 	if cfg.Web.ReadTimeout <= 0 {
 		return errors.New("APP_READTIMEOUT must be greater than 0")
@@ -132,11 +130,6 @@ func (cfg *Cfg) Validate() error {
 	}
 	if cfg.Web.ShutdownTimeout <= 0 {
 		return errors.New("APP_SHUTDOWNTIMEOUT must be greater than 0")
-	}
-
-	// grpc
-	if cfg.GRPC.Address == "" {
-		return errors.New("GRPC_ADDRESS is required")
 	}
 
 	// zipkin

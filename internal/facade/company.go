@@ -78,7 +78,7 @@ func (p *Provider) GetTopCompanies(ctx context.Context, companyType string, limi
 		case model.CompanyTypePublisher:
 			return p.storage.GetTopPublishers(ctx, limit)
 		}
-		return nil, fmt.Errorf("unsopported company type: %s", companyType)
+		return nil, fmt.Errorf("unsupported company type: %s", companyType)
 	}, 0)
 	if err != nil {
 		return nil, fmt.Errorf("get top companies: %v", err)

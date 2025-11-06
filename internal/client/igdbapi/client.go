@@ -192,7 +192,7 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 	query := fmt.Sprintf(
 		`fields id, name;
 		where name ~ "%s";`,
-		companyName)
+		strings.ReplaceAll(companyName, `"`, `\"`))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
 	if err != nil {
 		return false, fmt.Errorf("create company exists request: %v", err)

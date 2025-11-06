@@ -2,6 +2,7 @@ package facade
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -103,7 +104,7 @@ func (p *Provider) GetCompanyByID(ctx context.Context, id int32) (model.Company,
 func (p *Provider) CompanyExistsInIGDB(ctx context.Context, companyName string) (bool, error) {
 	companyName = bluemonday.StrictPolicy().Sanitize(strings.TrimSpace(companyName))
 	if companyName == "" {
-		return false, fmt.Errorf("company name is required")
+		return false, errors.New("company name is required")
 	}
 
 	return p.igdbAPIClient.CompanyExists(ctx, companyName)

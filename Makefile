@@ -27,55 +27,49 @@ rollback:
 seed:
 	go run ./cmd/game-library-manage/. -from-file seed
 
-SWAG_PKG := github.com/swaggo/swag/cmd/swag@v1.16.6
-SWAG_BIN := $(shell go env GOPATH)/bin/swag
+SWAG_VERSION := v1.16
+SWAG_PKG := github.com/swaggo/swag/cmd/swag@$(SWAG_VERSION)
 generate-swag:
-	@if \[ ! -f ${SWAG_BIN} \]; then \
-		echo "Installing swag..."; \
-    	go install ${SWAG_PKG}; \
-  	fi
-	@if \[ -f ${SWAG_BIN} \]; then \
-  		echo "Found swag at '$(SWAG_BIN)', generating documentation..."; \
-	else \
-    	echo "swag not found or the file does not exist"; \
-    	exit 1; \
-  	fi
-	${SWAG_BIN} init \
-	-d cmd/game-library-api,internal/app/game-library-api/api,internal/app/game-library-api/api/model,internal/app/game-library-api/web
+	@swag --version >/dev/null 2>&1 || { echo "Installing swag..."; go install ${SWAG_PKG}; }
+	@echo "Found swag, generating documentation..."
+	swag init \
+	-d cmd/game-library-api,internal/api,internal/api/model,internal/web
 
-MOCKGEN_PKG := go.uber.org/mock/mockgen@v0.6
-MOCKGEN_BIN := $(shell go env GOPATH)/bin/mockgen
+MOCKGEN_VERSION := v0.6
+MOCKGEN_PKG := go.uber.org/mock/mockgen@$(MOCKGEN_VERSION)
 generate-mocks:
-	@if \[ ! -f ${MOCKGEN_BIN} \]; then \
-		echo "Installing mockgen..."; \
-		go install ${MOCKGEN_PKG}; \
-	fi
-	@if \[ -f ${MOCKGEN_BIN} \]; then \
-		echo "Found mockgen at '$(MOCKGEN_BIN)', generating mocks..."; \
-	else \
-		echo "mockgen not found or the file does not exist"; \
-		exit 1; \
-  	fi
-	${MOCKGEN_BIN} -source=internal/app/game-library-api/api/provider.go -destination=internal/app/game-library-api/api/mocks/provider.go -package=api_mock
-	${MOCKGEN_BIN} -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/mocks/redis.go -package=cache_mock
-	${MOCKGEN_BIN} -source=internal/app/game-library-api/facade/provider.go -destination=internal/app/game-library-api/facade/mocks/provider.go -package=facade_mock
-	${MOCKGEN_BIN} -source=internal/auth/auth.go -destination=internal/auth/mocks/auth.go -package=auth_mock
-	${MOCKGEN_BIN} -source=internal/middleware/auth.go -destination=internal/middleware/mocks/auth.go -package=middleware_mock
-	${MOCKGEN_BIN} -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
-	${MOCKGEN_BIN} -destination=internal/app/game-library-api/repo/mocks/tx.go -package=repo_mock github.com/jackc/pgx/v5 Tx
+	@mockgen -version >/dev/null 2>&1 || { echo "Installing mockgen..."; go install ${MOCKGEN_PKG}; }
+	@echo "Found mockgen, generating mocks..."
+	mockgen -source=internal/api/provider.go -destination=internal/api/mocks/provider.go -package=api_mock
+	mockgen -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/mocks/redis.go -package=cache_mock
+	mockgen -source=internal/facade/provider.go -destination=internal/facade/mocks/provider.go -package=facade_mock
+	mockgen -source=internal/auth/auth.go -destination=internal/auth/mocks/auth.go -package=auth_mock
+	mockgen -source=internal/middleware/auth.go -destination=internal/middleware/mocks/auth.go -package=middleware_mock
+	mockgen -source=internal/taskprocessor/task.go -destination=internal/taskprocessor/mocks/task.go -package=taskprocessor_mock
+	mockgen -destination=internal/repo/mocks/tx.go -package=repo_mock github.com/jackc/pgx/v5 Tx
+	mockgen -source=internal/api/grpc/infoapi/service.go -destination=internal/api/grpc/infoapi/mocks/service.go -package=infoapi_mock
 
-generate: generate-swag generate-mocks
+BUF_VERSION := v1.59
+PROTOC_GEN_GO_VERSION := v1.36.10
+PROTOC_GEN_GO_GRPC_VERSION := v1.5.1
+BUF_PKG := github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
+PROTOC_GEN_GO_PKG := google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}
+PROTOC_GEN_GO_GRPC_PKG := google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}
+generate-proto:
+	@buf --version >/dev/null 2>&1 || { echo "Installing buf..."; go install ${BUF_PKG}; }
+	@protoc-gen-go --version >/dev/null 2>&1 || { echo "Installing protoc-gen-go..."; go install ${PROTOC_GEN_GO_PKG}; }
+	@protoc-gen-go-grpc --version >/dev/null 2>&1 || { echo "Installing protoc-gen-go-grpc..."; go install ${PROTOC_GEN_GO_GRPC_PKG}; }
+	@echo "Generating protobuf code with buf..."; \
+	buf generate
 
-LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6
-LINT_BIN := $(shell command -v golangci-lint 2>/dev/null || echo $(shell go env GOPATH)/bin/golangci-lint)
+generate: generate-proto generate-swag generate-mocks
+
+LINT_VERSION := v2.6
+LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VERSION)
 lint:
-	@if [ ! -f ${LINT_BIN} ]; then \
-		echo "Installing golangci-lint..."; \
-    	go install ${LINT_PKG}; \
-		LINT_BIN=$(shell go env GOPATH)/bin/golangci-lint; \
-  	fi
-	@echo "Found golangci-lint at '$(LINT_BIN)', running..."; \
-	${LINT_BIN} run
+	@golangci-lint version >/dev/null 2>&1 || { echo "Installing golangci-lint..."; go install ${LINT_PKG}; }
+	@echo "Found golangci-lint, running..."
+	golangci-lint run
 
 dbuildapi:
 	docker build -t game-library:latest .
@@ -97,4 +91,3 @@ drunprom:
 
 dbuildmng:
 	docker build -f Dockerfile.mng -t game-library-mng:latest .
-

@@ -251,10 +251,12 @@ paths:
       operationId: get-games
       parameters:
       - description: page size
+        format: int32
         in: query
         name: pageSize
         type: integer
       - description: page
+        format: int32
         in: query
         name: page
         type: integer
@@ -272,14 +274,17 @@ paths:
         name: name
         type: string
       - description: genre filter
+        format: int32
         in: query
         name: genre
         type: integer
       - description: developer id filter
+        format: int32
         in: query
         name: developer
         type: integer
       - description: publisher id filter
+        format: int32
         in: query
         name: publisher
         type: integer
@@ -337,6 +342,7 @@ paths:
       operationId: delete-game
       parameters:
       - description: Game ID
+        format: int32
         in: path
         name: id
         required: true
@@ -370,6 +376,7 @@ paths:
       operationId: get-game-by-id
       parameters:
       - description: Game ID
+        format: int32
         in: path
         name: id
         required: true
@@ -401,6 +408,7 @@ paths:
       operationId: update-game
       parameters:
       - description: Game ID
+        format: int32
         in: path
         name: id
         required: true
@@ -441,6 +449,7 @@ paths:
       operationId: get-game-moderations
       parameters:
       - description: Game ID
+        format: int32
         in: path
         name: id
         required: true
@@ -481,6 +490,7 @@ paths:
       operationId: rate-game
       parameters:
       - description: game ID
+        format: int32
         in: path
         name: id
         required: true
@@ -646,6 +656,7 @@ paths:
           description: OK
           schema:
             additionalProperties:
+              format: int32
               type: integer
             type: object
         "400":

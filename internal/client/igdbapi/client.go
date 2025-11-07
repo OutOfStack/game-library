@@ -184,10 +184,6 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 	ctx, span := tracer.Start(ctx, "companyExists")
 	defer span.End()
 
-	if companyName == "" {
-		return false, nil
-	}
-
 	reqURL, err := url.JoinPath(c.conf.APIURL, companiesEndpoint)
 	if err != nil {
 		return false, fmt.Errorf("join url path: %v", err)
@@ -195,7 +191,7 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 
 	query := fmt.Sprintf(
 		`fields id, name;
-		where name ~ *"%s"*;`,
+		where name ~ "%s";`,
 		strings.ReplaceAll(companyName, `"`, `\"`))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))
 	if err != nil {
@@ -223,7 +219,7 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 		if rErr != nil {
 			return false, fmt.Errorf("read response body: %v", rErr)
 		}
-		return false, fmt.Errorf("%s", body)
+		return false, fmt.Errorf("igdb api error: %s", body)
 	}
 
 	var respBody []CompanyInfo
@@ -232,13 +228,7 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 		return false, fmt.Errorf("decode response body: %v", err)
 	}
 
-	for _, company := range respBody {
-		if strings.EqualFold(company.Name, companyName) {
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return len(respBody) > 0, nil
 }
 
 // GetImageByURL downloads image by url and image type and returns data as io.ReadSeeker and file name

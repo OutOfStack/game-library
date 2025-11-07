@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	"github.com/OutOfStack/game-library/internal/appconf"
+	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/shared"

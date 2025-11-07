@@ -22,7 +22,9 @@ It consists of three services:
 
 ## Installation
 
-Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps:
+Prerequisites: [`go`](https://go.dev/doc/install), [`Docker`](https://docs.docker.com/desktop/), [`Make`](https://www.gnu.org/software/make/)
+
+To set up the service, follow these steps:
 
 1. Clone the repository:
     ```bash
@@ -33,7 +35,6 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 2. Set up the database:
     ```bash
     make drunpg # runs postgres in docker container
-    make createdb # creates db
     make migrate # applies migrations
     # optionally
     make seed # applies test data
@@ -54,7 +55,7 @@ Prerequisites: `go`, `Docker`, `Make`. To set up the service, follow these steps
 
 5. _[Optional]_ Launch [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
-6. Create the `app.env` file based on [./app.example.env](./app.example.env) and update it with your local configuration settings.
+6. Create the `app.env` file based on [`./app.example.env`](./app.example.env) and update it with your local configuration settings.
 
 7.  Build and run the service:
     ```bash
@@ -71,7 +72,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 After installation, you can use the following Make commands to develop the service:
 
 - `make test`: Runs tests.
-- `make generate`: Generates documentation for Swagger UI and mocks for testing.
+- `make generate`: Generates proto files, documentation for Swagger UI and mocks for testing.
 - `make lint`: Runs golangci-lint for code analysis.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
@@ -85,14 +86,15 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 - Background task for fetching and updating games data using IGDB API.
 - Game image upload and storage with S3-compatible services (Cloudflare R2).
 - Automatic game moderation using OpenAI API.
+- gRPC service for internal service-to-service communication.
 - Code analysis with golangci-lint.
 - CI/CD with GitHub Actions and deploy to Kubernetes (microk8s) cluster.
 
 ## Configuration
 
-- The service can be configured using `app.env` or environment variables, described in [settings.go](./internal/appconf/settings.go)
-- CI/CD configs are in [./github/workflows/](./.github/workflows/)
-- k8s deployment configs are in [./k8s](./.k8s/)
+- The service can be configured using `app.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go)
+- CI/CD configs are in [`./github/workflows/`](./.github/workflows/)
+- k8s deployment configs are in [`./k8s`](./.k8s/)
 
 ## Documentation
 
@@ -101,6 +103,27 @@ For regenerating documentation after swagger description change run:
 ```bash
 make generate
 ```
+
+### gRPC Service
+
+The service exposes a gRPC endpoint for internal service-to-service communication.
+
+**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`app.example.env`](./app.example.env))
+
+**Testing with grpcurl:**
+```bash
+# list services
+grpcurl -plaintext localhost:9000 list
+
+# describe service
+grpcurl -plaintext localhost:9000 describe infoapi.InfoApiService
+
+# call method
+grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:9000 infoapi.InfoApiService/CompanyExists
+```
+
+**Protobuf Definition:**
+The protobuf schema is located in [`api/proto/infoapi.proto`](./api/proto/infoapi.proto)
 
 ## Examples
 
@@ -118,14 +141,12 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     build-mng     build manage app
     run           runs app
     test          runs tests for the whole project
-    generate      generates docs for swagger UI and mocks for testing
+    generate      generates proto files, docs for swagger UI and mocks for testing
     lint          runs golangci-lint
     cover         outputs tests coverage
 
 #### Database Commands
     drunpg        runs postgres server in docker container
-    createdb      creates database on postgres server started by 'dockerrunpg'
-    dropdb        drops database on postgres server created by 'dockerrunpg'
     migrate       applies all migrations to database (reads from config file)
     rollback      rollbacks last migration on database (reads from config file)
     seed          seeds test data to database (reads from config file)

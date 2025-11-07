@@ -47,4 +47,6 @@ Use `aiuser:aiuser__` creds for `user` with user role, and `aipublisher:aipublis
 - DO NOT review or analyze files matching these patterns:
   - `**/*_mock.go` - mock files
   - `**/*.gen.go` - generated files
+  - `**/*.pb.go` - generated protobuf files
+  - `**/*_grpc.pb.go` - generated gRPC files
   - `*.pem`, `*.key`, `app.env` - data-sensitive files

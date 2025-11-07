@@ -31,8 +31,9 @@ type DB struct {
 
 // Web represents settings for to web server
 type Web struct {
-	Address           string        `mapstructure:"APP_ADDRESS"`
-	DebugAddress      string        `mapstructure:"DEBUG_ADDRESS"`
+	HTTPAddress       string        `mapstructure:"APP_HTTP_ADDRESS"`
+	GRPCAddress       string        `mapstructure:"APP_GRPC_ADDRESS"`
+	DebugAddress      string        `mapstructure:"APP_DEBUG_ADDRESS"`
 	ReadTimeout       time.Duration `mapstructure:"APP_READTIMEOUT"`
 	WriteTimeout      time.Duration `mapstructure:"APP_WRITETIMEOUT"`
 	ShutdownTimeout   time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
@@ -112,11 +113,14 @@ func (cfg *Cfg) Validate() error {
 	}
 
 	// web
-	if cfg.Web.Address == "" {
-		return errors.New("APP_ADDRESS is required")
+	if cfg.Web.HTTPAddress == "" {
+		return errors.New("APP_HTTP_ADDRESS is required")
 	}
 	if cfg.Web.DebugAddress == "" {
-		return errors.New("DEBUG_ADDRESS is required")
+		return errors.New("APP_DEBUG_ADDRESS is required")
+	}
+	if cfg.Web.GRPCAddress == "" {
+		return errors.New("APP_GRPC_ADDRESS is required")
 	}
 	if cfg.Web.ReadTimeout <= 0 {
 		return errors.New("APP_READTIMEOUT must be greater than 0")

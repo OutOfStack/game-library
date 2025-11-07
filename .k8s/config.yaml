@@ -4,8 +4,9 @@ metadata:
     name: game-library-config
     namespace: game-library
 data:
-    APP_ADDRESS: "0.0.0.0:8000"
-    DEBUG_ADDRESS: "0.0.0.0:6060"
+    APP_HTTP_ADDRESS: "0.0.0.0:8000"
+    APP_DEBUG_ADDRESS: "0.0.0.0:6060"
+    APP_GRPC_ADDRESS: "0.0.0.0:9000"
     APP_READTIMEOUT: "30s"
     APP_WRITETIMEOUT: "15s"
     APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_,https://_UI_URL_"
@@ -14,6 +15,7 @@ data:
     SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
     SCHED_UPDATE_TRENDING_INDEX: "0 3 * * *"
     SCHED_UPDATE_GAME_INFO: "0 2 * * *"
+    SCHED_PROCESS_MODERATION: "*/2 * * * *"
     REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
     REDIS_TTL: "2h"
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"

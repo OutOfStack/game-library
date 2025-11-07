@@ -8,10 +8,10 @@ import (
 	"io"
 	"time"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/client/s3"
+	"github.com/OutOfStack/game-library/internal/model"
+	"github.com/OutOfStack/game-library/internal/repo"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )

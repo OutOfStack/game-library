@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/web"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/authapi"
+	"github.com/OutOfStack/game-library/internal/web"
 	"go.uber.org/zap"
 )
 

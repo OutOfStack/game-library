@@ -33,10 +33,12 @@ services:
     ports:
       - "8000:8000"
       - "6060:6060"
+      - "9000:9000"
     environment:
       DB_DSN: postgres://games-user:games-password@db/games?sslmode=disable
-      APP_ADDRESS: 0.0.0.0:8000
-      DEBUG_ADDRESS: 0.0.0.0:6060
+      APP_HTTP_ADDRESS: 0.0.0.0:8000
+      APP_DEBUG_ADDRESS: 0.0.0.0:6060
+      APP_GRPC_ADDRESS: 0.0.0.0:9000
     depends_on:
       - db
       - zipkin

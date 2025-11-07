@@ -15,9 +15,9 @@ import (
 	reflect "reflect"
 	time "time"
 
-	model "github.com/OutOfStack/game-library/internal/app/game-library-api/model"
 	igdbapi "github.com/OutOfStack/game-library/internal/client/igdbapi"
 	s3 "github.com/OutOfStack/game-library/internal/client/s3"
+	model "github.com/OutOfStack/game-library/internal/model"
 	gomock "go.uber.org/mock/gomock"
 )
 

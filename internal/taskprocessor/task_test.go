@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/model"
-	"github.com/OutOfStack/game-library/internal/app/game-library-api/repo"
+	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
+	"github.com/OutOfStack/game-library/internal/repo"
 	"go.uber.org/mock/gomock"
 )
 

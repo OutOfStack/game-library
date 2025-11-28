@@ -116,10 +116,10 @@ The service exposes a gRPC endpoint for internal service-to-service communicatio
 grpcurl -plaintext localhost:9000 list
 
 # describe service
-grpcurl -plaintext localhost:9000 describe infoapi.InfoApiService
+grpcurl -plaintext localhost:9000 describe infoapi.v1.InfoApiService
 
 # call method
-grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:9000 infoapi.InfoApiService/CompanyExists
+grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:9000 infoapi.v1.InfoApiService/CompanyExists
 ```
 
 **Protobuf Definition:**

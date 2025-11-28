@@ -58,12 +58,12 @@ jobs:
       - name: Buf lint
         run: buf lint
 
-      - name: Buf breaking change detection
-        if: github.event_name == 'pull_request'
-        run: buf breaking --against '.git#branch=main'
+      # Temporarily disabled - no gRPC consumers yet
+      #- name: Buf breaking change detection
+      #  run: buf breaking --against '.git#branch=main'
 
       - name: Push to Buf Schema Registry
-        if: github.ref_name == 'main'
+        if: ${{ github.ref_name == 'main' }}
         run: buf push
         env:
           BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
@@ -96,7 +96,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: image_build_push
+    needs: [image_build_push, publish_proto]
     steps:
     - name: Checkout
       uses: actions/checkout@v5

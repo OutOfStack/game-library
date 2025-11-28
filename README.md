@@ -123,7 +123,7 @@ grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:90
 ```
 
 **Protobuf Definition:**
-The protobuf schema is located in [`api/proto/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
+The protobuf schema is located in [`api/proto/infoapi/v1/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
 
 ## Examples
 

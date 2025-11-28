@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        (unknown)
-// source: infoapi.proto
+// source: infoapi/v1/infoapi.proto
 
 package infoapi
 
@@ -32,7 +32,7 @@ type CompanyExistsRequest struct {
 
 func (x *CompanyExistsRequest) Reset() {
 	*x = CompanyExistsRequest{}
-	mi := &file_infoapi_proto_msgTypes[0]
+	mi := &file_infoapi_v1_infoapi_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *CompanyExistsRequest) String() string {
 func (*CompanyExistsRequest) ProtoMessage() {}
 
 func (x *CompanyExistsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infoapi_proto_msgTypes[0]
+	mi := &file_infoapi_v1_infoapi_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +110,7 @@ type CompanyExistsResponse struct {
 
 func (x *CompanyExistsResponse) Reset() {
 	*x = CompanyExistsResponse{}
-	mi := &file_infoapi_proto_msgTypes[1]
+	mi := &file_infoapi_v1_infoapi_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -122,7 +122,7 @@ func (x *CompanyExistsResponse) String() string {
 func (*CompanyExistsResponse) ProtoMessage() {}
 
 func (x *CompanyExistsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infoapi_proto_msgTypes[1]
+	mi := &file_infoapi_v1_infoapi_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -174,26 +174,27 @@ func (b0 CompanyExistsResponse_builder) Build() *CompanyExistsResponse {
 	return m0
 }
 
-var File_infoapi_proto protoreflect.FileDescriptor
+var File_infoapi_v1_infoapi_proto protoreflect.FileDescriptor
 
-const file_infoapi_proto_rawDesc = "" +
+const file_infoapi_v1_infoapi_proto_rawDesc = "" +
 	"\n" +
-	"\rinfoapi.proto\x12\ainfoapi\x1a!google/protobuf/go_features.proto\"9\n" +
+	"\x18infoapi/v1/infoapi.proto\x12\n" +
+	"infoapi.v1\x1a!google/protobuf/go_features.proto\"9\n" +
 	"\x14CompanyExistsRequest\x12!\n" +
 	"\fcompany_name\x18\x01 \x01(\tR\vcompanyName\"/\n" +
 	"\x15CompanyExistsResponse\x12\x16\n" +
-	"\x06exists\x18\x01 \x01(\bR\x06exists2`\n" +
-	"\x0eInfoApiService\x12N\n" +
-	"\rCompanyExists\x12\x1d.infoapi.CompanyExistsRequest\x1a\x1e.infoapi.CompanyExistsResponseBFZ<github.com/OutOfStack/game-library/pkg/proto/infoapi;infoapi\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\x06exists\x18\x01 \x01(\bR\x06exists2f\n" +
+	"\x0eInfoApiService\x12T\n" +
+	"\rCompanyExists\x12 .infoapi.v1.CompanyExistsRequest\x1a!.infoapi.v1.CompanyExistsResponseBFZ<github.com/OutOfStack/game-library/pkg/proto/infoapi;infoapi\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_infoapi_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_infoapi_proto_goTypes = []any{
-	(*CompanyExistsRequest)(nil),  // 0: infoapi.CompanyExistsRequest
-	(*CompanyExistsResponse)(nil), // 1: infoapi.CompanyExistsResponse
+var file_infoapi_v1_infoapi_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_infoapi_v1_infoapi_proto_goTypes = []any{
+	(*CompanyExistsRequest)(nil),  // 0: infoapi.v1.CompanyExistsRequest
+	(*CompanyExistsResponse)(nil), // 1: infoapi.v1.CompanyExistsResponse
 }
-var file_infoapi_proto_depIdxs = []int32{
-	0, // 0: infoapi.InfoApiService.CompanyExists:input_type -> infoapi.CompanyExistsRequest
-	1, // 1: infoapi.InfoApiService.CompanyExists:output_type -> infoapi.CompanyExistsResponse
+var file_infoapi_v1_infoapi_proto_depIdxs = []int32{
+	0, // 0: infoapi.v1.InfoApiService.CompanyExists:input_type -> infoapi.v1.CompanyExistsRequest
+	1, // 1: infoapi.v1.InfoApiService.CompanyExists:output_type -> infoapi.v1.CompanyExistsResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -201,26 +202,26 @@ var file_infoapi_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_infoapi_proto_init() }
-func file_infoapi_proto_init() {
-	if File_infoapi_proto != nil {
+func init() { file_infoapi_v1_infoapi_proto_init() }
+func file_infoapi_v1_infoapi_proto_init() {
+	if File_infoapi_v1_infoapi_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_infoapi_proto_rawDesc), len(file_infoapi_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_infoapi_v1_infoapi_proto_rawDesc), len(file_infoapi_v1_infoapi_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_infoapi_proto_goTypes,
-		DependencyIndexes: file_infoapi_proto_depIdxs,
-		MessageInfos:      file_infoapi_proto_msgTypes,
+		GoTypes:           file_infoapi_v1_infoapi_proto_goTypes,
+		DependencyIndexes: file_infoapi_v1_infoapi_proto_depIdxs,
+		MessageInfos:      file_infoapi_v1_infoapi_proto_msgTypes,
 	}.Build()
-	File_infoapi_proto = out.File
-	file_infoapi_proto_goTypes = nil
-	file_infoapi_proto_depIdxs = nil
+	File_infoapi_v1_infoapi_proto = out.File
+	file_infoapi_v1_infoapi_proto_goTypes = nil
+	file_infoapi_v1_infoapi_proto_depIdxs = nil
 }

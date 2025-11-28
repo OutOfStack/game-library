@@ -1,6 +1,6 @@
-edition = "2023";
+edition = "2024";
 
-package infoapi;
+package infoapi.v1;
 
 option go_package = "github.com/OutOfStack/game-library/pkg/proto/infoapi;infoapi";
 

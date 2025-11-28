@@ -99,7 +99,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 ## Documentation
 
 API documentation is available via [Swagger UI](http://localhost:8000/swagger/index.html).
-For regenerating documentation after swagger description change run:
+To generate the documentation, run:
 ```bash
 make generate
 ```
@@ -123,7 +123,7 @@ grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:90
 ```
 
 **Protobuf Definition:**
-The protobuf schema is located in [`api/proto/infoapi.proto`](./api/proto/infoapi.proto)
+The protobuf schema is located in [`api/proto/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
 
 ## Examples
 

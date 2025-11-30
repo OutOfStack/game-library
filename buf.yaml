@@ -1,9 +1,12 @@
 version: v2
 modules:
   - path: api/proto
+    name: buf.build/outofstack/game-library
 lint:
   use:
-    - DEFAULT
+    - STANDARD
 breaking:
   use:
     - FILE
+deps:
+  - buf.build/protocolbuffers/gofeatures

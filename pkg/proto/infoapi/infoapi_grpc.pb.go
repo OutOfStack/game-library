@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             (unknown)
-// source: infoapi.proto
+// source: infoapi/v1/infoapi.proto
 
 package infoapi
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	InfoApiService_CompanyExists_FullMethodName = "/infoapi.InfoApiService/CompanyExists"
+	InfoApiService_CompanyExists_FullMethodName = "/infoapi.v1.InfoApiService/CompanyExists"
 )
 
 // InfoApiServiceClient is the client API for InfoApiService service.
@@ -110,7 +110,7 @@ func _InfoApiService_CompanyExists_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var InfoApiService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "infoapi.InfoApiService",
+	ServiceName: "infoapi.v1.InfoApiService",
 	HandlerType: (*InfoApiServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -119,5 +119,5 @@ var InfoApiService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "infoapi.proto",
+	Metadata: "infoapi/v1/infoapi.proto",
 }

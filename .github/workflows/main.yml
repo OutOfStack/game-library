@@ -41,6 +41,33 @@ jobs:
         name: coverage-report
         path: coverage.out
 
+  publish_proto:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Needed for breaking change detection
+
+      - name: Setup buf
+        uses: bufbuild/buf-action@v1.3
+        with:
+          setup_only: true
+
+      - name: Buf lint
+        run: buf lint
+
+      # Temporarily disabled - no gRPC consumers yet
+      #- name: Buf breaking change detection
+      #  run: buf breaking --against '.git#branch=main'
+
+      - name: Push to Buf Schema Registry
+        if: ${{ github.ref_name == 'main' }}
+        run: buf push
+        env:
+          BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
+
   image_build_push:
     runs-on: ubuntu-latest
     needs: test
@@ -69,7 +96,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: image_build_push
+    needs: [image_build_push, publish_proto]
     steps:
     - name: Checkout
       uses: actions/checkout@v5

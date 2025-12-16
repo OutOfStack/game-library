@@ -52,6 +52,7 @@ generate-mocks:
 BUF_VERSION := v1.61
 PROTOC_GEN_GO_VERSION := v1.36.10
 PROTOC_GEN_GO_GRPC_VERSION := v1.6.0
+PROTO_AUTHAPI_VERSION := ref=2a0af39 # or tag=v1.0.0
 BUF_PKG := github.com/bufbuild/buf/cmd/buf@${BUF_VERSION}
 PROTOC_GEN_GO_PKG := google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}
 PROTOC_GEN_GO_GRPC_PKG := google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}
@@ -62,12 +63,12 @@ generate-proto:
 	@echo "Generating local protos..."; \
 	buf generate api/proto
 	@echo "Generating external protos..."; \
-    buf generate https://github.com/OutOfStack/game-library-auth.git#ref=2a0af39 --path api/proto/authapi
+    buf generate https://github.com/OutOfStack/game-library-auth.git#${PROTO_AUTHAPI_VERSION} --path api/proto/authapi
 	buf lint
 
 generate: generate-proto generate-swag generate-mocks
 
-LINT_VERSION := v2.6
+LINT_VERSION := v2.7
 LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VERSION)
 lint:
 	@golangci-lint version >/dev/null 2>&1 || { echo "Installing golangci-lint..."; go install ${LINT_PKG}; }

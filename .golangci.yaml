@@ -96,6 +96,10 @@ linters:
         linters:
           - revive
         text: "var-naming"
+      - path: internal/api/
+        linters:
+          - revive
+        text: "var-naming"
       - linters:
           - revive # disable "should have a package comment"
         text: "package comment"

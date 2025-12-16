@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
+	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -20,6 +21,9 @@ const (
 )
 
 var tracer = otel.Tracer("auth")
+
+// ErrVerifyAPIUnavailable is returned when the auth API is unavailable
+var ErrVerifyAPIUnavailable = errors.New("auth API is unavailable")
 
 var (
 	tokenVerificationFailures = promauto.NewCounter(prometheus.CounterOpts{
@@ -30,7 +34,7 @@ var (
 
 // APIClient auth client api interface
 type APIClient interface {
-	VerifyToken(ctx context.Context, token string) (authapi.VerifyTokenResp, error)
+	VerifyToken(ctx context.Context, token string) (bool, error)
 }
 
 // Client represents auth client
@@ -67,12 +71,15 @@ func (c *Client) Verify(ctx context.Context, tokenStr string) error {
 	ctx, span := tracer.Start(ctx, "verify")
 	defer span.End()
 
-	result, err := c.authAPIClient.VerifyToken(ctx, tokenStr)
+	valid, err := c.authAPIClient.VerifyToken(ctx, tokenStr)
 	if err != nil {
+		if st, ok := status.FromError(err); ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded || st.Code() == codes.Canceled) {
+			return ErrVerifyAPIUnavailable
+		}
 		return fmt.Errorf("verify token: %w", err)
 	}
 
-	if !result.Valid {
+	if !valid {
 		tokenVerificationFailures.Inc()
 		return errors.New("invalid token")
 	}

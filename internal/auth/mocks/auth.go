@@ -13,7 +13,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	authapi "github.com/OutOfStack/game-library/internal/client/authapi"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +41,10 @@ func (m *MockAPIClient) EXPECT() *MockAPIClientMockRecorder {
 }
 
 // VerifyToken mocks base method.
-func (m *MockAPIClient) VerifyToken(ctx context.Context, token string) (authapi.VerifyTokenResp, error) {
+func (m *MockAPIClient) VerifyToken(ctx context.Context, token string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyToken", ctx, token)
-	ret0, _ := ret[0].(authapi.VerifyTokenResp)
+	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

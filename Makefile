@@ -49,18 +49,21 @@ generate-mocks:
 	mockgen -destination=internal/repo/mocks/tx.go -package=repo_mock github.com/jackc/pgx/v5 Tx
 	mockgen -source=internal/api/grpc/infoapi/service.go -destination=internal/api/grpc/infoapi/mocks/service.go -package=infoapi_mock
 
-BUF_VERSION := v1.59
+BUF_VERSION := v1.61
 PROTOC_GEN_GO_VERSION := v1.36.10
-PROTOC_GEN_GO_GRPC_VERSION := v1.5.1
-BUF_PKG := github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
+PROTOC_GEN_GO_GRPC_VERSION := v1.6.0
+BUF_PKG := github.com/bufbuild/buf/cmd/buf@${BUF_VERSION}
 PROTOC_GEN_GO_PKG := google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}
 PROTOC_GEN_GO_GRPC_PKG := google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}
 generate-proto:
 	@buf --version >/dev/null 2>&1 || { echo "Installing buf..."; go install ${BUF_PKG}; }
 	@protoc-gen-go --version >/dev/null 2>&1 || { echo "Installing protoc-gen-go..."; go install ${PROTOC_GEN_GO_PKG}; }
 	@protoc-gen-go-grpc --version >/dev/null 2>&1 || { echo "Installing protoc-gen-go-grpc..."; go install ${PROTOC_GEN_GO_GRPC_PKG}; }
-	@echo "Generating protobuf code with buf..."; \
-	buf generate
+	@echo "Generating local protos..."; \
+	buf generate api/proto
+	@echo "Generating external protos..."; \
+    buf generate https://github.com/OutOfStack/game-library-auth.git#ref=2a0af39 --path api/proto/authapi
+	buf lint
 
 generate: generate-proto generate-swag generate-mocks
 

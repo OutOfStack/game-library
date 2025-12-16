@@ -14,7 +14,6 @@ type Cfg struct {
 	Log       Log       `mapstructure:",squash"`
 	DB        DB        `mapstructure:",squash"`
 	Web       Web       `mapstructure:",squash"`
-	Auth      Auth      `mapstructure:",squash"`
 	Zipkin    Zipkin    `mapstructure:",squash"`
 	IGDB      IGDB      `mapstructure:",squash"`
 	Scheduler Scheduler `mapstructure:",squash"`
@@ -22,6 +21,7 @@ type Cfg struct {
 	Graylog   Graylog   `mapstructure:",squash"`
 	S3        S3        `mapstructure:",squash"`
 	OpenAI    OpenAI    `mapstructure:",squash"`
+	AuthAPI   AuthAPI   `mapstructure:",squash"`
 }
 
 // DB represents settings for database
@@ -36,18 +36,12 @@ type Web struct {
 	DebugAddress      string        `mapstructure:"APP_DEBUG_ADDRESS"`
 	ReadTimeout       time.Duration `mapstructure:"APP_READTIMEOUT"`
 	WriteTimeout      time.Duration `mapstructure:"APP_WRITETIMEOUT"`
-	ShutdownTimeout   time.Duration `mapstructure:"APP_SHUTDOWNTIMEOUT"`
 	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
 }
 
 // Zipkin represents settings for Zipkin trace storage
 type Zipkin struct {
 	ReporterURL string `mapstructure:"ZIPKIN_REPORTERURL"`
-}
-
-// Auth represents settings for authentication and authorization
-type Auth struct {
-	VerifyTokenAPIURL string `mapstructure:"AUTH_VERIFYTOKENURL"`
 }
 
 // IGDB represents settings for IGDB client
@@ -101,6 +95,12 @@ type Log struct {
 	Level string `mapstructure:"LOG_LEVEL"`
 }
 
+// AuthAPI represents settings for AuthAPI gRPC client
+type AuthAPI struct {
+	Address string        `mapstructure:"AUTHAPI_ADDRESS"`
+	Timeout time.Duration `mapstructure:"AUTHAPI_TIMEOUT"`
+}
+
 // Validate validates the config
 func (cfg *Cfg) Validate() error {
 	if cfg == nil {
@@ -128,18 +128,10 @@ func (cfg *Cfg) Validate() error {
 	if cfg.Web.WriteTimeout <= 0 {
 		return errors.New("APP_WRITETIMEOUT must be greater than 0")
 	}
-	if cfg.Web.ShutdownTimeout <= 0 {
-		return errors.New("APP_SHUTDOWNTIMEOUT must be greater than 0")
-	}
 
 	// zipkin
 	if cfg.Zipkin.ReporterURL == "" {
 		return errors.New("ZIPKIN_REPORTERURL is required")
-	}
-
-	// auth
-	if cfg.Auth.VerifyTokenAPIURL == "" {
-		return errors.New("AUTH_VERIFYTOKENURL is required")
 	}
 
 	// igdb
@@ -223,6 +215,14 @@ func (cfg *Cfg) Validate() error {
 	// log
 	if cfg.Log.Level == "" {
 		return errors.New("LOG_LEVEL is required")
+	}
+
+	// AuthAPI validation
+	if cfg.AuthAPI.Address == "" {
+		return errors.New("AUTHAPI_ADDRESS is required")
+	}
+	if cfg.AuthAPI.Timeout <= 0 {
+		return errors.New("AUTHAPI_TIMEOUT must be greater than 0")
 	}
 
 	return nil

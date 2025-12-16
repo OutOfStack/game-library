@@ -4,13 +4,13 @@ metadata:
     name: game-library-config
     namespace: game-library
 data:
+    LOG_LEVEL: "INFO"
     APP_HTTP_ADDRESS: "0.0.0.0:8000"
     APP_DEBUG_ADDRESS: "0.0.0.0:6060"
     APP_GRPC_ADDRESS: "0.0.0.0:9000"
     APP_READTIMEOUT: "30s"
     APP_WRITETIMEOUT: "15s"
     APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_,https://_UI_URL_"
-    AUTH_VERIFYTOKENURL: "https://_K8S_URL_/_auth/token/verify"
     ZIPKIN_REPORTERURL: "http://zipkin-service.game-library.svc.cluster.local:9411/api/v2/spans"
     SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
     SCHED_UPDATE_TRENDING_INDEX: "0 3 * * *"
@@ -21,7 +21,8 @@ data:
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
     S3_REGION: "auto"
     S3_BUCKET_NAME: "game-library"
-    LOG_LEVEL: "INFO"
+    AUTHAPI_ADDRESS: "game-library-auth-service.game-library.svc.cluster.local.:9000"
+    AUTHAPI_TIMEOUT: "2s"
 ---
 kind: ConfigMap
 apiVersion: v1

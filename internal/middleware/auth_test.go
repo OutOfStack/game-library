@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/OutOfStack/game-library/internal/auth"
-	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	mwmock "github.com/OutOfStack/game-library/internal/middleware/mocks"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
@@ -122,7 +121,7 @@ func (s *AuthTestSuite) Test_Authenticate_VerifyAPIUnavailable() {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(authapi.ErrVerifyAPIUnavailable)
+	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(auth.ErrVerifyAPIUnavailable)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)

@@ -3,7 +3,7 @@ package infoapi
 import (
 	"context"
 
-	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
+	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi/v1"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )

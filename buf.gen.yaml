@@ -1,10 +1,10 @@
 version: v2
 plugins:
   - local: protoc-gen-go
-    out: .
+    out: pkg/proto
     opt:
-      - module=github.com/OutOfStack/game-library
+      - paths=source_relative
   - local: protoc-gen-go-grpc
-    out: .
+    out: pkg/proto
     opt:
-      - module=github.com/OutOfStack/game-library
+      - paths=source_relative

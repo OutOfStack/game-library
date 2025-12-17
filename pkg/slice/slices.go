@@ -1,6 +1,8 @@
 package slice
 
-import "cmp"
+import (
+	"cmp"
+)
 
 // SameValues checks if two slices have the same values in any order
 func SameValues[T cmp.Ordered](a, b []T) bool {

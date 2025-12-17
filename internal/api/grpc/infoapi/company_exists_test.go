@@ -3,7 +3,7 @@ package infoapi_test
 import (
 	"errors"
 
-	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
+	pb "github.com/OutOfStack/game-library/pkg/proto/infoapi/v1"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

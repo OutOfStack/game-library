@@ -2,9 +2,10 @@ package auth_test
 
 import (
 	"github.com/OutOfStack/game-library/internal/auth"
-	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (s *TestSuite) TestExtractToken() {
@@ -30,9 +31,8 @@ func (s *TestSuite) TestExtractToken() {
 
 func (s *TestSuite) TestClient_Verify_Success() {
 	token := td.String()
-	resp := authapi.VerifyTokenResp{Valid: true}
 
-	s.authAPIClient.EXPECT().VerifyToken(gomock.Any(), token).Return(resp, nil)
+	s.authAPIClient.EXPECT().VerifyToken(gomock.Any(), token).Return(true, nil)
 
 	err := s.auth.Verify(s.ctx, token)
 
@@ -41,9 +41,8 @@ func (s *TestSuite) TestClient_Verify_Success() {
 
 func (s *TestSuite) TestClient_Verify_InvalidToken() {
 	token := td.String()
-	resp := authapi.VerifyTokenResp{Valid: false}
 
-	s.authAPIClient.EXPECT().VerifyToken(gomock.Any(), token).Return(resp, nil)
+	s.authAPIClient.EXPECT().VerifyToken(gomock.Any(), token).Return(false, nil)
 
 	err := s.auth.Verify(s.ctx, token)
 
@@ -54,11 +53,11 @@ func (s *TestSuite) TestClient_Verify_InvalidToken() {
 func (s *TestSuite) TestClient_Verify_APIUnavailable() {
 	token := td.String()
 
-	s.authAPIClient.EXPECT().VerifyToken(gomock.Any(), token).Return(authapi.VerifyTokenResp{}, authapi.ErrVerifyAPIUnavailable)
+	s.authAPIClient.EXPECT().VerifyToken(gomock.Any(), token).Return(false, status.Error(codes.Unavailable, "error"))
 
 	err := s.auth.Verify(s.ctx, token)
 
-	s.ErrorIs(err, authapi.ErrVerifyAPIUnavailable)
+	s.ErrorIs(err, auth.ErrVerifyAPIUnavailable)
 }
 
 func (s *TestSuite) TestClient_ParseToken() {

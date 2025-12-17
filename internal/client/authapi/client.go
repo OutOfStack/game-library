@@ -1,90 +1,96 @@
 package authapi
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
-	"github.com/OutOfStack/game-library/internal/pkg/observability"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
+	authapipb "github.com/OutOfStack/game-library/pkg/proto/authapi/v1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-const (
-	defaultTimeout = 10 * time.Second
-)
+const defaultTimeout = 5 * time.Second
 
-var tracer = otel.Tracer("authapi")
-
-// ErrVerifyAPIUnavailable - error representing unavailability of verify api
-var ErrVerifyAPIUnavailable = errors.New("verify API is unavailable")
-
-// Client represents dependencies for auth client
-type Client struct {
-	log                    *zap.Logger
-	httpClient             *http.Client
-	verifyTokenEndpointURL string
+// Config - settings for authapi service
+type Config struct {
+	Address     string
+	Timeout     time.Duration
+	DialOptions []grpc.DialOption
 }
 
-// New constructs Client instance
-func New(log *zap.Logger, verifyTokenEndpointURL string) (*Client, error) {
-	client := &http.Client{
-		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "game-library-auth"),
-		Timeout:   defaultTimeout,
+// Client wraps a gRPC AuthApiService client
+type Client struct {
+	cfg  Config
+	conn *grpc.ClientConn
+	api  authapipb.AuthApiServiceClient
+}
+
+// NewClient dials the authapi service and returns a ready client
+func NewClient(cfg Config) (*Client, error) {
+	if cfg.Address == "" {
+		return nil, errors.New("authapi address is required")
+	}
+	if cfg.Timeout <= 0 {
+		cfg.Timeout = defaultTimeout
+	}
+
+	dialOpts := append([]grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	}, cfg.DialOptions...)
+
+	conn, err := grpc.NewClient(cfg.Address, dialOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("dial authapi: %w", err)
 	}
 
 	return &Client{
-		log:                    log,
-		verifyTokenEndpointURL: verifyTokenEndpointURL,
-		httpClient:             client,
+		cfg:  cfg,
+		conn: conn,
+		api:  authapipb.NewAuthApiServiceClient(conn),
 	}, nil
 }
 
+// Close closes the underlying gRPC connection
+func (c *Client) Close() error {
+	if c == nil || c.conn == nil {
+		return nil
+	}
+
+	return c.conn.Close()
+}
+
 // VerifyToken returns result of token verification
-func (c *Client) VerifyToken(ctx context.Context, token string) (VerifyTokenResp, error) {
-	ctx, span := tracer.Start(ctx, "verifyToken")
-	defer span.End()
-
-	data := VerifyToken{
-		Token: token,
+func (c *Client) VerifyToken(ctx context.Context, token string) (bool, error) {
+	if token == "" {
+		return false, errors.New("token is required")
 	}
-	reqBody, err := json.Marshal(data)
+
+	ctx, cancel := CtxWithTimeout(ctx, c.cfg.Timeout)
+	defer cancel()
+
+	req := &authapipb.VerifyTokenRequest{}
+	req.SetToken(token)
+
+	resp, err := c.api.VerifyToken(ctx, req)
 	if err != nil {
-		return VerifyTokenResp{}, fmt.Errorf("marshal verify token body: %v", err)
+		return false, fmt.Errorf("call verify token: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.verifyTokenEndpointURL, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return VerifyTokenResp{}, fmt.Errorf("create verify request: %v", err)
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
+	return resp.GetValid(), nil
+}
 
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		c.log.Error("call verify api", zap.String("url", c.verifyTokenEndpointURL), zap.Error(err))
-		return VerifyTokenResp{}, ErrVerifyAPIUnavailable
-	}
-	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			c.log.Error("failed to close response body", zap.String("url", c.verifyTokenEndpointURL), zap.Error(err))
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return VerifyTokenResp{}, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
+// CtxWithTimeout returns context and cancel fn with provided timeout if no deadline set in context,
+// otherwise returns original context and cancel fc
+func CtxWithTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	if _, ok := ctx.Deadline(); ok {
+		return context.WithCancel(ctx)
 	}
 
-	var respBody VerifyTokenResp
-	if err = json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
-		return VerifyTokenResp{}, fmt.Errorf("invalid response: %v", err)
+	if timeout <= 0 {
+		return context.WithCancel(ctx)
 	}
 
-	return respBody, nil
+	return context.WithTimeout(ctx, timeout)
 }

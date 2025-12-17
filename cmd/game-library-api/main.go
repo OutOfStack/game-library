@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -29,10 +30,11 @@ import (
 	"github.com/OutOfStack/game-library/internal/repo"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
 	"github.com/OutOfStack/game-library/internal/web"
-	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi"
+	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	grpcrefl "google.golang.org/grpc/reflection"
@@ -101,11 +103,22 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		return fmt.Errorf("create IGDB client: %w", err)
 	}
 
-	// create auth api client
-	authAPIClient, err := authapi.New(logger, cfg.Auth.VerifyTokenAPIURL)
+	// create authapi client
+	authAPIClient, err := authapi.NewClient(authapi.Config{
+		Address: cfg.AuthAPI.Address,
+		Timeout: cfg.AuthAPI.Timeout,
+		DialOptions: []grpc.DialOption{
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		},
+	})
 	if err != nil {
 		return fmt.Errorf("create auth api client: %w", err)
 	}
+	defer func() {
+		if err = authAPIClient.Close(); err != nil {
+			logger.Error("close auth api client", zap.Error(err))
+		}
+	}()
 
 	// create openai client
 	openAIClient := openaiapi.New(logger, cfg.OpenAI)
@@ -149,20 +162,19 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}
 	scheduler.StartAsync()
 
+	serverErrors := make(chan error, 3)
+
 	// start debug service
+	profilerRouter := chi.NewRouter()
+	profilerRouter.Mount("/debug", middleware.Profiler())
+	debugService := http.Server{
+		Addr:        cfg.Web.DebugAddress,
+		Handler:     profilerRouter,
+		ReadTimeout: time.Second,
+	}
 	go func() {
 		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
-		profilerRouter := chi.NewRouter()
-		profilerRouter.Mount("/debug", middleware.Profiler())
-		debugService := http.Server{
-			Addr:        cfg.Web.DebugAddress,
-			Handler:     profilerRouter,
-			ReadTimeout: time.Second,
-		}
-		err = debugService.ListenAndServe()
-		if err != nil {
-			logger.Error("Debug service stopped", zap.Error(err))
-		}
+		serverErrors <- debugService.ListenAndServe()
 	}()
 
 	// start http API service
@@ -170,18 +182,15 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	if err != nil {
 		return fmt.Errorf("can't create service api: %w", err)
 	}
-
-	serverErrors := make(chan error, 1)
 	go func() {
 		logger.Info("API service started", zap.String("address", apiService.Addr))
 		serverErrors <- apiService.ListenAndServe()
 	}()
 
-	// start gRPC service
+	// start grpc service
 	grpcServer := grpc.NewServer()
 	igdbService := infoapi.NewInfoService(logger, gameFacade)
 	infopb.RegisterInfoApiServiceServer(grpcServer, igdbService)
-
 	// register reflection service for grpcurl and other tools
 	grpcrefl.Register(grpcServer)
 
@@ -190,35 +199,54 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	if err != nil {
 		return fmt.Errorf("failed to create gRPC listener: %w", err)
 	}
-
 	go func() {
 		logger.Info("gRPC service started", zap.String("address", cfg.Web.GRPCAddress))
 		serverErrors <- grpcServer.Serve(listener)
 	}()
 
+	// wait for shutdown signal
 	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
 	case err = <-serverErrors:
-		return fmt.Errorf("listening and serving: %w", err)
-	case <-shutdown:
-		logger.Info("Start shutdown")
+		return fmt.Errorf("server error: %w", err)
+	case sig := <-shutdown:
+		logger.Info("shutdown signal received", zap.String("signal", sig.String()))
 
-		// shutdown gRPC server
-		grpcServer.GracefulStop()
+		const timeout = 5 * time.Second
+		var wg sync.WaitGroup
 
-		// shutdown HTTP server
-		timeout := cfg.Web.ShutdownTimeout
-		bCtx, cancel := context.WithTimeout(context.Background(), timeout)
+		bCtx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		if err = apiService.Shutdown(bCtx); err != nil {
-			logger.Error("Shutdown did not complete", zap.Duration("timeout", timeout), zap.Error(err))
-			if err = apiService.Close(); err != nil {
-				return fmt.Errorf("shutdown: %w", err)
+		// stop grpc server
+		wg.Go(func() {
+			grpcServer.GracefulStop()
+		})
+
+		// stop http server
+		wg.Go(func() {
+			if shutdownErr := apiService.Shutdown(bCtx); shutdownErr != nil {
+				logger.Error("http service graceful shutdown failed", zap.Error(shutdownErr))
+				if shutdownErr = apiService.Close(); shutdownErr != nil {
+					logger.Error("http service force shutdown failed", zap.Error(shutdownErr))
+				}
 			}
-		}
+		})
+
+		// stop debug service
+		wg.Go(func() {
+			logger.Info("stop debug service")
+			if shutdownErr := debugService.Shutdown(bCtx); shutdownErr != nil {
+				logger.Error("debug service graceful shutdown failed", zap.Error(shutdownErr))
+				if shutdownErr = debugService.Close(); shutdownErr != nil {
+					logger.Error("debug service force shutdown failed", zap.Error(shutdownErr))
+				}
+			}
+		})
+
+		wg.Wait()
 	}
 
 	return nil

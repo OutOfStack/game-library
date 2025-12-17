@@ -110,6 +110,9 @@ The service exposes a gRPC endpoint for internal service-to-service communicatio
 
 **Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`app.example.env`](./app.example.env))
 
+**Protobuf Definition:**
+The protobuf schema is located in [`api/proto/infoapi/v1/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
+
 **Testing with grpcurl:**
 ```bash
 # list services
@@ -121,9 +124,6 @@ grpcurl -plaintext localhost:9000 describe infoapi.v1.InfoApiService
 # call method
 grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:9000 infoapi.v1.InfoApiService/CompanyExists
 ```
-
-**Protobuf Definition:**
-The protobuf schema is located in [`api/proto/infoapi/v1/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
 
 ## Examples
 

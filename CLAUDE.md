@@ -11,6 +11,15 @@
 
 # Code practices:
 - DO NOT use env variables unless it is specified, for dynamic configuring refer to previously read README.md to find out how configuration works
+- After adding new package, run `go mod tidy`
+
+## gRPC
+- Protocol buffer definitions are in @api/proto/*api/v*/*.proto for serviced (server)
+- Protocol buffer definitions for external services (clients) are in @api/proto/*api/v*/*.proto
+- Generated code is placed in @pkg/proto/*api/v*/*.pb.go and should NOT be manually edited
+- Use `buf.yaml` and `buf.gen.yaml` for protocol buffer build configuration
+- After modifying .proto files, run `make generate-proto` to regenerate code
+- The service exposes gRPC on port 9000 (configurable via APP_GRPC_ADDRESS)
 
 ## Testing Requirements
 - Write tests for all exported functions
@@ -22,7 +31,7 @@
 - Use t.Context() instead of context.Background() for context in tests
 - For local API tests refers to @docs/swagger.json. 
 Some endpoints require authorization, refers game-library-auth API in https://github.com/OutOfStack/game-library-auth/blob/main/docs/swagger.json. 
-Use `aiuser:aiuser__` creds for `user` with user role, and `aipublisher:aipublisher` creds for user with `publisher` role.
+Use `aiuser:aiuser__` creds for `user` with `user` role, and `aipublisher:aipublisher` creds for user with `publisher` role.
 
 ## Build and Quality Checks
 - Run validation commands before completing work:

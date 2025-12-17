@@ -8,6 +8,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9/maintnotifications"
 )
 
 var (
@@ -26,7 +27,9 @@ func New(cfg appconf.Redis) (*Client, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.Address,
 		Password: cfg.Password,
-		DB:       0, // use default DB
+		MaintNotificationsConfig: &maintnotifications.Config{
+			Mode: maintnotifications.ModeDisabled,
+		},
 	})
 
 	return &Client{

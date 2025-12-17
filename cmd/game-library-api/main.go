@@ -112,11 +112,11 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("create infoapi client: %w", err)
+		return fmt.Errorf("create auth api client: %w", err)
 	}
 	defer func() {
 		if err = authAPIClient.Close(); err != nil {
-			logger.Error("close infoapi client", zap.Error(err))
+			logger.Error("close auth api client", zap.Error(err))
 		}
 	}()
 
@@ -227,10 +227,10 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 
 		// stop http server
 		wg.Go(func() {
-			if err = apiService.Shutdown(bCtx); err != nil {
-				logger.Error("http service graceful shutdown failed", zap.Error(err))
-				if err = apiService.Close(); err != nil {
-					logger.Error("http service force shutdown failed", zap.Error(err))
+			if shutdownErr := apiService.Shutdown(bCtx); shutdownErr != nil {
+				logger.Error("http service graceful shutdown failed", zap.Error(shutdownErr))
+				if shutdownErr = apiService.Close(); shutdownErr != nil {
+					logger.Error("http service force shutdown failed", zap.Error(shutdownErr))
 				}
 			}
 		})
@@ -238,10 +238,10 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		// stop debug service
 		wg.Go(func() {
 			logger.Info("stop debug service")
-			if err = debugService.Shutdown(bCtx); err != nil {
-				logger.Error("debug service graceful shutdown failed", zap.Error(err))
-				if err = debugService.Close(); err != nil {
-					logger.Error("debug service force shutdown failed", zap.Error(err))
+			if shutdownErr := debugService.Shutdown(bCtx); shutdownErr != nil {
+				logger.Error("debug service graceful shutdown failed", zap.Error(shutdownErr))
+				if shutdownErr = debugService.Close(); shutdownErr != nil {
+					logger.Error("debug service force shutdown failed", zap.Error(shutdownErr))
 				}
 			}
 		})

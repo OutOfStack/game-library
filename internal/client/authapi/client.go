@@ -13,24 +13,24 @@ import (
 
 const defaultTimeout = 5 * time.Second
 
-// Config - settings for infoapi service
+// Config - settings for authapi service
 type Config struct {
 	Address     string
 	Timeout     time.Duration
 	DialOptions []grpc.DialOption
 }
 
-// Client wraps a gRPC InfoApiService client
+// Client wraps a gRPC AuthApiService client
 type Client struct {
 	cfg  Config
 	conn *grpc.ClientConn
 	api  authapipb.AuthApiServiceClient
 }
 
-// NewClient dials the infoapi service and returns a ready client
+// NewClient dials the authapi service and returns a ready client
 func NewClient(cfg Config) (*Client, error) {
 	if cfg.Address == "" {
-		return nil, errors.New("infoapi address is required")
+		return nil, errors.New("authapi address is required")
 	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = defaultTimeout
@@ -42,7 +42,7 @@ func NewClient(cfg Config) (*Client, error) {
 
 	conn, err := grpc.NewClient(cfg.Address, dialOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("dial infoapi: %w", err)
+		return nil, fmt.Errorf("dial authapi: %w", err)
 	}
 
 	return &Client{

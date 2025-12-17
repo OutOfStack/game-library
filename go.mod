@@ -22,7 +22,7 @@ require (
 	github.com/openai/openai-go v1.12.0
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/redis/go-redis/v9 v9.16.0
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/riandyrn/otelchi v0.12.2
 	github.com/snovichkov/zap-gelf v1.3.0
 	github.com/spf13/viper v1.21.0

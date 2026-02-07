@@ -15,7 +15,6 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/pkg/observability"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
@@ -44,7 +43,7 @@ type Client struct {
 // New constructs Client instance
 func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 	client := &http.Client{
-		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "igdb"),
+		Transport: observability.NewTransport("igdb", observability.WithOtel()),
 		Timeout:   defaultTimeout,
 	}
 

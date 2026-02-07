@@ -23,20 +23,6 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-    name: zipkin-service
-    namespace: game-library
-spec:
-    ports:
-      - protocol: TCP
-        name: zipkin
-        port: 9411
-        targetPort: zipkin
-    selector:
-        app: zipkin
----
-kind: Service
-apiVersion: v1
-metadata:
   name: redis-service
   namespace: game-library
 spec:
@@ -65,18 +51,3 @@ spec:
       targetPort: gelf
   selector:
     app: graylog
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: prometheus-service
-  namespace: game-library
-spec:
-  ports:
-    - protocol: TCP
-      name: prometheus
-      port: 9090
-      targetPort: prometheus
-  selector:
-    app: prometheus
-

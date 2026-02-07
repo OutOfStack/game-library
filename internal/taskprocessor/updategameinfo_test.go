@@ -17,7 +17,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_Success() {
 		Name:     "update_game_info",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedId":%d}`, lastProcessedID)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
 	}
 
 	gameIDs := []int32{td.Int31(), td.Int31()}
@@ -129,7 +129,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_GetPlatformsError() {
 		Name:     "update_game_info",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedId":%d}`, lastProcessedID)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
 	}
 
 	gameIDs := []int32{td.Int31()}
@@ -154,7 +154,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_GetGameError() {
 		Name:     "update_game_info",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedId":%d}`, lastProcessedID)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
 	}
 
 	gameIDs := []int32{td.Int31(), td.Int31()}
@@ -204,7 +204,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipGameWithZeroIGDBID() {
 		Name:     "update_game_info",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedId":%d}`, lastProcessedID)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
 	}
 
 	gameIDs := []int32{td.Int31(), td.Int31()}
@@ -260,7 +260,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_IGDBAPIError() {
 		Name:     "update_game_info",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedId":%d}`, lastProcessedID)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
 	}
 
 	gameIDs := []int32{td.Int31(), td.Int31()}
@@ -317,7 +317,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_UpdateGameIGDBInfoError() {
 		Name:     "update_game_info",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedId":%d}`, lastProcessedID)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
 	}
 
 	gameIDs := []int32{td.Int31(), td.Int31()}

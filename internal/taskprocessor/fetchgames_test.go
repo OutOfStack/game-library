@@ -21,7 +21,7 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		Name:     "fetch_igdb_games",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastReleasedAt":"%s"}`, lastReleasedAt.Format(time.RFC3339))),
+		Settings: fmt.Appendf(nil, `{"lastReleasedAt":"%s"}`, lastReleasedAt.Format(time.RFC3339)),
 	}
 
 	platforms := []model.Platform{

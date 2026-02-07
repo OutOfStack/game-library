@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -38,7 +37,7 @@ type Client struct {
 // New constructs Client instance
 func New(log *zap.Logger, conf appconf.S3) (*Client, error) {
 	httpClient := &http.Client{
-		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "s3"),
+		Transport: observability.NewTransport("s3", observability.WithOtel()),
 		Timeout:   defaultTimeout,
 	}
 

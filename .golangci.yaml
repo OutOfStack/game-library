@@ -39,6 +39,7 @@ linters:
     - makezero
     - mirror
     - misspell
+    - modernize
     - nakedret
     - nilerr
     - nilnil
@@ -103,6 +104,9 @@ linters:
       - linters:
           - revive # disable "should have a package comment"
         text: "package comment"
+      - linters:
+          - modernize
+        text: "interface{} can be replaced by any"
     paths:
       - docs
       - examples$

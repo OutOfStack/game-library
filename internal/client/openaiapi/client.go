@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/model"
+	"github.com/OutOfStack/game-library/internal/pkg/observability"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/shared"
@@ -21,6 +24,8 @@ import (
 const (
 	gameSummaryMaxLen = 2000
 	maxVisionTokens   = 1000
+
+	defaultTimeout = 30 * time.Second
 )
 
 var tracer = otel.Tracer("openaiapi")
@@ -35,9 +40,15 @@ type Client struct {
 
 // New creates new OpenAI client
 func New(log *zap.Logger, cfg appconf.OpenAI) *Client {
+	httpClient := &http.Client{
+		Timeout:   defaultTimeout,
+		Transport: observability.NewTransport("openai", observability.WithOtel()),
+	}
 	client := openai.NewClient(
 		option.WithAPIKey(cfg.APIKey),
 		option.WithBaseURL(cfg.APIURL),
+		option.WithRequestTimeout(defaultTimeout),
+		option.WithHTTPClient(httpClient),
 	)
 
 	return &Client{

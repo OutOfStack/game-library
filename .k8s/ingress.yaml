@@ -44,13 +44,6 @@ spec:
                         name: game-library-service
                         port:
                             number: 6060
-              - path: /_trace(/|$)(.*)
-                pathType: Prefix
-                backend:
-                    service:
-                        name: zipkin-service
-                        port:
-                            number: 9411
               - path: /_log(/|$)(.*)
                 pathType: Prefix
                 backend:
@@ -58,25 +51,3 @@ spec:
                         name: graylog-service
                         port:
                             number: 9000
----
-kind: Ingress
-apiVersion: networking.k8s.io/v1
-metadata:
-    name: prometheus-ingress
-    namespace: game-library
-    annotations:
-        nginx.ingress.kubernetes.io/auth-type: basic
-        nginx.ingress.kubernetes.io/auth-secret: basic-auth
-        nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - game library'
-spec:
-    rules:
-        - host: _K8S_URL_
-          http:
-              paths:
-                  - path: /_metrics
-                    pathType: Prefix
-                    backend:
-                        service:
-                            name: prometheus-service
-                            port:
-                                number: 9090

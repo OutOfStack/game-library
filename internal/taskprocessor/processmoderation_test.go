@@ -88,7 +88,7 @@ func (s *TestSuite) TestStartProcessModeration_NoPendingRecords() {
 		Name:     "process_moderation",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedGameId":%d}`, lastProcessed)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedGameId":%d}`, lastProcessed),
 	}
 
 	s.storageMock.EXPECT().
@@ -127,7 +127,7 @@ func (s *TestSuite) TestStartProcessModeration_GetPendingError() {
 		Name:     "process_moderation",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedGameId":%d}`, lastProcessed)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedGameId":%d}`, lastProcessed),
 	}
 
 	expectedErr := errors.New("db failure")

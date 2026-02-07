@@ -16,7 +16,7 @@ func (s *TestSuite) TestStartUpdateTrendingIndex_Success() {
 		Name:     "update_trending_index",
 		Status:   model.IdleTaskStatus,
 		RunCount: 0,
-		Settings: []byte(fmt.Sprintf(`{"lastProcessedId":%d}`, lastProcessedID)),
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
 	}
 
 	gameIDs := []int32{td.Int31(), td.Int31(), td.Int31()}

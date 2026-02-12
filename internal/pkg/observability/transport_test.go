@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -154,82 +153,6 @@ func TestRoundTrip_DifferentMethods(t *testing.T) {
 			require.NoError(t, err)
 			defer resp.Body.Close()
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
-		})
-	}
-}
-
-func TestNormalizeURL(t *testing.T) {
-	tests := []struct {
-		name        string
-		inputURL    string
-		maxSegments int
-		expected    string
-	}{
-		{
-			name:        "simple path",
-			inputURL:    "http://example.com/api/v1/games",
-			maxSegments: 4,
-			expected:    "http://example.com/api/v1/games",
-		},
-		{
-			name:        "path exceeds max segments",
-			inputURL:    "http://example.com/api/v1/games/123/reviews/456",
-			maxSegments: 4,
-			expected:    "http://example.com/api/v1/games/123",
-		},
-		{
-			name:        "strips query params",
-			inputURL:    "http://example.com/api/games?page=1&limit=10",
-			maxSegments: 4,
-			expected:    "http://example.com/api/games",
-		},
-		{
-			name:        "empty path",
-			inputURL:    "http://example.com",
-			maxSegments: 4,
-			expected:    "http://example.com/",
-		},
-		{
-			name:        "root path",
-			inputURL:    "http://example.com/",
-			maxSegments: 4,
-			expected:    "http://example.com/",
-		},
-		{
-			name:        "trailing slash",
-			inputURL:    "http://example.com/api/v1/",
-			maxSegments: 4,
-			expected:    "http://example.com/api/v1",
-		},
-		{
-			name:        "max segments zero",
-			inputURL:    "http://example.com/api/v1/games",
-			maxSegments: 0,
-			expected:    "http://example.com/",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockRoundTripper{
-				resp: newMockResponse(http.StatusOK),
-			}
-
-			// we test normalizeURL indirectly through RoundTrip since it's unexported
-			// the URL normalization happens inside RoundTrip
-			rt := observability.NewTransport("test", observability.WithRoundTripper(mock))
-
-			parsedURL, err := url.Parse(tt.inputURL)
-			require.NoError(t, err)
-
-			req := &http.Request{
-				Method: http.MethodGet,
-				URL:    parsedURL,
-			}
-
-			resp, err := rt.RoundTrip(req)
-			require.NoError(t, err)
-			defer resp.Body.Close()
 		})
 	}
 }

@@ -72,9 +72,10 @@ func Metrics(next http.Handler) http.Handler {
 		duration := time.Since(start).Seconds()
 
 		// use chi's route pattern to avoid high cardinality
-		path := chi.RouteContext(r.Context()).RoutePattern()
-		if path == "" {
-			path = r.URL.Path
+		path := r.URL.Path
+		chiCtx := chi.RouteContext(r.Context())
+		if chiCtx != nil {
+			path = chiCtx.RoutePattern()
 		}
 
 		code := strconv.Itoa(rw.statusCode)

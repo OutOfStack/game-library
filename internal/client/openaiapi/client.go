@@ -41,7 +41,6 @@ type Client struct {
 // New creates new OpenAI client
 func New(log *zap.Logger, cfg appconf.OpenAI) *Client {
 	httpClient := &http.Client{
-		Timeout:   defaultTimeout,
 		Transport: observability.NewTransport("openai", observability.WithOtel()),
 	}
 	client := openai.NewClient(

@@ -20,10 +20,6 @@ import (
 )
 
 const (
-	defaultTimeout = 10 * time.Second
-)
-
-const (
 	gamesEndpoint     = "games"
 	companiesEndpoint = "companies"
 
@@ -44,7 +40,7 @@ type Client struct {
 func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 	client := &http.Client{
 		Transport: observability.NewTransport("igdb", observability.WithOtel()),
-		Timeout:   defaultTimeout,
+		Timeout:   conf.Timeout,
 	}
 
 	return &Client{

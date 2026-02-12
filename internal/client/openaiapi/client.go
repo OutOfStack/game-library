@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/model"
@@ -24,8 +23,6 @@ import (
 const (
 	gameSummaryMaxLen = 2000
 	maxVisionTokens   = 1000
-
-	defaultTimeout = 30 * time.Second
 )
 
 var tracer = otel.Tracer("openaiapi")
@@ -46,7 +43,7 @@ func New(log *zap.Logger, cfg appconf.OpenAI) *Client {
 	client := openai.NewClient(
 		option.WithAPIKey(cfg.APIKey),
 		option.WithBaseURL(cfg.APIURL),
-		option.WithRequestTimeout(defaultTimeout),
+		option.WithRequestTimeout(cfg.Timeout),
 		option.WithHTTPClient(httpClient),
 	)
 

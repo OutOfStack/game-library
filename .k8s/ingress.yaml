@@ -43,11 +43,11 @@ spec:
                     service:
                         name: game-library-service
                         port:
-                            number: 6060
+                            name: debug
               - path: /_log(/|$)(.*)
                 pathType: Prefix
                 backend:
                     service:
                         name: graylog-service
                         port:
-                            number: 9000
+                            name: http

@@ -11,8 +11,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const defaultTimeout = 5 * time.Second
-
 // Config - settings for authapi service
 type Config struct {
 	Address     string
@@ -31,9 +29,6 @@ type Client struct {
 func NewClient(cfg Config) (*Client, error) {
 	if cfg.Address == "" {
 		return nil, errors.New("authapi address is required")
-	}
-	if cfg.Timeout <= 0 {
-		cfg.Timeout = defaultTimeout
 	}
 
 	dialOpts := append([]grpc.DialOption{

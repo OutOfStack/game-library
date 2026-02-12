@@ -46,10 +46,11 @@ type Zipkin struct {
 
 // IGDB represents settings for IGDB client
 type IGDB struct {
-	ClientID     string `mapstructure:"IGDB_CLIENT_ID"`
-	ClientSecret string `mapstructure:"IGDB_CLIENT_SECRET"`
-	TokenURL     string `mapstructure:"IGDB_TOKEN_URL"`
-	APIURL       string `mapstructure:"IGDB_API_URL"`
+	ClientID     string        `mapstructure:"IGDB_CLIENT_ID"`
+	ClientSecret string        `mapstructure:"IGDB_CLIENT_SECRET"`
+	TokenURL     string        `mapstructure:"IGDB_TOKEN_URL"`
+	APIURL       string        `mapstructure:"IGDB_API_URL"`
+	Timeout      time.Duration `mapstructure:"IGDB_API_TIMEOUT"`
 }
 
 // Scheduler represents settings for task scheduler
@@ -74,20 +75,22 @@ type Graylog struct {
 
 // S3 represents settings for S3 client
 type S3 struct {
-	Region          string `mapstructure:"S3_REGION"`
-	AccessKeyID     string `mapstructure:"S3_ACCESS_KEY_ID"`
-	SecretAccessKey string `mapstructure:"S3_SECRET_ACCESS_KEY"`
-	Endpoint        string `mapstructure:"S3_ENDPOINT"`
-	BucketName      string `mapstructure:"S3_BUCKET_NAME"`
-	CDNBaseURL      string `mapstructure:"S3_CDN_BASE_URL"`
+	Region          string        `mapstructure:"S3_REGION"`
+	AccessKeyID     string        `mapstructure:"S3_ACCESS_KEY_ID"`
+	SecretAccessKey string        `mapstructure:"S3_SECRET_ACCESS_KEY"`
+	Endpoint        string        `mapstructure:"S3_ENDPOINT"`
+	BucketName      string        `mapstructure:"S3_BUCKET_NAME"`
+	CDNBaseURL      string        `mapstructure:"S3_CDN_BASE_URL"`
+	Timeout         time.Duration `mapstructure:"S3_TIMEOUT"`
 }
 
 // OpenAI represents settings for OpenAI client
 type OpenAI struct {
-	APIKey          string `mapstructure:"OPENAI_API_KEY"`
-	APIURL          string `mapstructure:"OPENAI_API_URL"`
-	ModerationModel string `mapstructure:"OPENAI_MODERATION_MODEL"`
-	VisionModel     string `mapstructure:"OPENAI_VISION_MODEL"`
+	APIKey          string        `mapstructure:"OPENAI_API_KEY"`
+	APIURL          string        `mapstructure:"OPENAI_API_URL"`
+	ModerationModel string        `mapstructure:"OPENAI_MODERATION_MODEL"`
+	VisionModel     string        `mapstructure:"OPENAI_VISION_MODEL"`
+	Timeout         time.Duration `mapstructure:"OPENAI_API_TIMEOUT"`
 }
 
 // Log represents settings for logging
@@ -147,6 +150,9 @@ func (cfg *Cfg) Validate() error {
 	if cfg.IGDB.APIURL == "" {
 		return errors.New("IGDB_API_URL is required")
 	}
+	if cfg.IGDB.Timeout <= 0 {
+		return errors.New("IGDB_API_TIMEOUT must be greater than 0")
+	}
 
 	// scheduler
 	if cfg.Scheduler.FetchIGDBGames == "" {
@@ -197,6 +203,9 @@ func (cfg *Cfg) Validate() error {
 	if _, err := url.Parse(cfg.S3.CDNBaseURL); err != nil {
 		return errors.New("S3_CDN_BASE_URL is invalid")
 	}
+	if cfg.S3.Timeout <= 0 {
+		return errors.New("S3_TIMEOUT must be greater than 0")
+	}
 
 	// openai
 	if cfg.OpenAI.APIKey == "" {
@@ -210,6 +219,9 @@ func (cfg *Cfg) Validate() error {
 	}
 	if cfg.OpenAI.VisionModel == "" {
 		return errors.New("OPENAI_VISION_MODEL is required")
+	}
+	if cfg.OpenAI.Timeout <= 0 {
+		return errors.New("OPENAI_API_TIMEOUT must be greater than 0")
 	}
 
 	// log

@@ -36,21 +36,22 @@ type Client struct {
 }
 
 // New creates new OpenAI client
-func New(log *zap.Logger, cfg appconf.OpenAI) *Client {
+func New(log *zap.Logger, conf appconf.OpenAI) *Client {
 	httpClient := &http.Client{
 		Transport: observability.NewTransport("openai", observability.WithOtel()),
+		Timeout:   conf.Timeout,
 	}
 	client := openai.NewClient(
-		option.WithAPIKey(cfg.APIKey),
-		option.WithBaseURL(cfg.APIURL),
-		option.WithRequestTimeout(cfg.Timeout),
+		option.WithAPIKey(conf.APIKey),
+		option.WithBaseURL(conf.APIURL),
+		option.WithRequestTimeout(conf.Timeout),
 		option.WithHTTPClient(httpClient),
 	)
 
 	return &Client{
 		client:          &client,
-		moderationModel: cfg.ModerationModel,
-		visionModel:     cfg.VisionModel,
+		moderationModel: conf.ModerationModel,
+		visionModel:     conf.VisionModel,
 		log:             log,
 	}
 }

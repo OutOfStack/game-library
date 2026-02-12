@@ -30,10 +30,13 @@ var tracer = otel.Tracer("igdbapi")
 
 // Client represents dependencies for igdb client
 type Client struct {
-	log        *zap.Logger
-	conf       appconf.IGDB
-	token      *tokenInfo
-	httpClient *http.Client
+	log          *zap.Logger
+	clientID     string
+	clientSecret string
+	tokenURL     string
+	apiURL       string
+	token        *tokenInfo
+	httpClient   *http.Client
 }
 
 // New constructs Client instance
@@ -44,10 +47,13 @@ func New(log *zap.Logger, conf appconf.IGDB) (*Client, error) {
 	}
 
 	return &Client{
-		log:        log,
-		token:      &tokenInfo{},
-		conf:       conf,
-		httpClient: client,
+		log:          log,
+		token:        &tokenInfo{},
+		clientID:     conf.ClientID,
+		clientSecret: conf.ClientSecret,
+		tokenURL:     conf.TokenURL,
+		apiURL:       conf.APIURL,
+		httpClient:   client,
 	}, nil
 }
 
@@ -66,7 +72,7 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 	}
 	platforms := strings.Join(platformsStr, ",")
 
-	reqURL, err := url.JoinPath(c.conf.APIURL, gamesEndpoint)
+	reqURL, err := url.JoinPath(c.apiURL, gamesEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("join url path: %v", err)
 	}
@@ -123,7 +129,7 @@ func (c *Client) GetGameInfoForUpdate(ctx context.Context, igdbID int64) (GameIn
 	ctx, span := tracer.Start(ctx, "getGameInfoForUpdate")
 	defer span.End()
 
-	reqURL, err := url.JoinPath(c.conf.APIURL, gamesEndpoint)
+	reqURL, err := url.JoinPath(c.apiURL, gamesEndpoint)
 	if err != nil {
 		return GameInfoForUpdate{}, fmt.Errorf("join url path: %v", err)
 	}
@@ -179,7 +185,7 @@ func (c *Client) CompanyExists(ctx context.Context, companyName string) (bool, e
 	ctx, span := tracer.Start(ctx, "companyExists")
 	defer span.End()
 
-	reqURL, err := url.JoinPath(c.conf.APIURL, companiesEndpoint)
+	reqURL, err := url.JoinPath(c.apiURL, companiesEndpoint)
 	if err != nil {
 		return false, fmt.Errorf("join url path: %v", err)
 	}
@@ -282,7 +288,7 @@ func (c *Client) setAuthHeaders(ctx context.Context, req *http.Request) error {
 	if err != nil {
 		return fmt.Errorf("getting igdb access token: %v", err)
 	}
-	req.Header.Set("Client-ID", c.conf.ClientID)
+	req.Header.Set("Client-ID", c.clientID)
 	req.Header.Set("Authorization", "Bearer "+token)
 	return nil
 }
@@ -297,7 +303,7 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 		return token, nil
 	}
 
-	reqURL := c.conf.TokenURL
+	reqURL := c.tokenURL
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("error creating igdb get token request: %v", err)
@@ -305,13 +311,13 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 
 	q := req.URL.Query()
 	q.Add("grant_type", "client_credentials")
-	q.Add("client_id", c.conf.ClientID)
-	q.Add("client_secret", c.conf.ClientSecret)
+	q.Add("client_id", c.clientID)
+	q.Add("client_secret", c.clientSecret)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		c.log.Error("calling token api", zap.String("url", c.conf.TokenURL), zap.Error(err))
+		c.log.Error("calling token api", zap.String("url", c.tokenURL), zap.Error(err))
 		return "", fmt.Errorf("token api unavailable: %v", err)
 	}
 	defer func() {

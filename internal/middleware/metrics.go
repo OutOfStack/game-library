@@ -2,66 +2,68 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/OutOfStack/game-library/internal/pkg/observability"
+	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-const (
-	methodLabel     = "method"
-	pathLabel       = "path"
-	statusCodeLabel = "status_code"
-)
-
 var (
-	requestsTotal = promauto.NewCounterVec(
+	httpServerRequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_requests_total",
+			Name: "http_server_requests_total",
 			Help: "Total number of HTTP requests",
 		},
-		[]string{methodLabel, pathLabel},
+		[]string{observability.MethodLabel, observability.PathLabel, observability.CodeLabel},
 	)
-	errorsTotal = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_errors_total",
-			Help: "Total number of HTTP errors",
-		},
-		[]string{methodLabel, pathLabel, statusCodeLabel},
-	)
-	serverErrorsTotal = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_server_errors_total",
-			Help: "Total number of server errors (5xx)",
-		},
-		[]string{methodLabel, pathLabel, statusCodeLabel},
-	)
-	responseDuration = promauto.NewHistogramVec(
+	httpServerRequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_response_duration_seconds",
+			Name:    "http_server_request_duration_seconds",
 			Help:    "Histogram of response duration for HTTP requests",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{methodLabel, pathLabel, statusCodeLabel},
+		[]string{observability.MethodLabel, observability.PathLabel},
 	)
+	httpServerInFlight = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "http_server_in_flight_requests",
+		Help: "Number of HTTP requests currently being processed",
+	})
 )
 
-// wraps http.ResponseWriter to capture the HTTP status code
+// statusCodeResponseWriter wraps http.ResponseWriter to capture the HTTP status code
 type statusCodeResponseWriter struct {
 	http.ResponseWriter
-	StatusCode int
+	statusCode int
 }
 
 // WriteHeader writes the HTTP status code to the response
 func (w *statusCodeResponseWriter) WriteHeader(statusCode int) {
-	w.StatusCode = statusCode
+	w.statusCode = statusCode
 	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+// Flush implements http.Flusher interface for streaming responses
+func (w *statusCodeResponseWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Unwrap returns the underlying ResponseWriter for middleware compatibility
+func (w *statusCodeResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 // Metrics records metrics for each HTTP request
 func Metrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rw := &statusCodeResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
+		rw := &statusCodeResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		httpServerInFlight.Inc()
+		defer httpServerInFlight.Dec()
 
 		start := time.Now()
 
@@ -69,15 +71,16 @@ func Metrics(next http.Handler) http.Handler {
 
 		duration := time.Since(start).Seconds()
 
-		requestsTotal.WithLabelValues(r.Method, r.URL.Path).Inc()
-
-		if rw.StatusCode >= 400 {
-			errorsTotal.WithLabelValues(r.Method, r.URL.Path, http.StatusText(rw.StatusCode)).Inc()
-		}
-		if rw.StatusCode >= 500 {
-			serverErrorsTotal.WithLabelValues(r.Method, r.URL.Path, http.StatusText(rw.StatusCode)).Inc()
+		// use chi's route pattern to avoid high cardinality
+		path := r.URL.Path
+		chiCtx := chi.RouteContext(r.Context())
+		if chiCtx != nil {
+			path = chiCtx.RoutePattern()
 		}
 
-		responseDuration.WithLabelValues(r.Method, r.URL.Path, http.StatusText(rw.StatusCode)).Observe(duration)
+		code := strconv.Itoa(rw.statusCode)
+
+		httpServerRequestsTotal.WithLabelValues(r.Method, path, code).Inc()
+		httpServerRequestDuration.WithLabelValues(r.Method, path).Observe(duration)
 	})
 }

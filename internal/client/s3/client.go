@@ -6,7 +6,6 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"time"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/pkg/observability"
@@ -15,14 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
-)
-
-const (
-	defaultTimeout = 10 * time.Second
 )
 
 var tracer = otel.Tracer("s3")
@@ -38,8 +32,8 @@ type Client struct {
 // New constructs Client instance
 func New(log *zap.Logger, conf appconf.S3) (*Client, error) {
 	httpClient := &http.Client{
-		Transport: observability.NewMonitoredTransport(otelhttp.NewTransport(http.DefaultTransport), "s3"),
-		Timeout:   defaultTimeout,
+		Transport: observability.NewTransport("s3", observability.WithOtel()),
+		Timeout:   conf.Timeout,
 	}
 
 	ctx := context.Background()

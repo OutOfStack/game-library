@@ -21,16 +21,13 @@ data:
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
     S3_REGION: "auto"
     S3_BUCKET_NAME: "game-library"
+    S3_TIMEOUT: "10s"
+    IGDB_API_TIMEOUT: "10s"
+    OPENAI_MODERATION_MODEL: "omni-moderation-latest"
+    OPENAI_VISION_MODEL: "gpt-5-nano"
+    OPENAI_API_TIMEOUT: "30s"
     AUTHAPI_ADDRESS: "game-library-auth-service.game-library.svc.cluster.local.:9000"
     AUTHAPI_TIMEOUT: "2s"
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-    name: zipkin-config
-    namespace: game-library
-data:
-    ZIPKIN_UI_BASEPATH: "/_trace/zipkin"
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -39,36 +36,3 @@ metadata:
     namespace: game-library
 data:
     GRAYLOG_HTTP_EXTERNAL_URI: "https://_K8S_URL_/_log/"
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-    name: prometheus-config
-    namespace: game-library
-data:
-    prometheus.yml: |
-        global:
-            scrape_interval: 15s
-            evaluation_interval: 15s
-            scrape_timeout: 1s
-          
-        scrape_configs:
-          - job_name: 'prometheus'
-            # because of ingress prefix
-            metrics_path: '/_metrics/metrics'
-            static_configs:
-              - targets: [ 'localhost:9090' ]
-              
-          - job_name: 'game-library'
-            kubernetes_sd_configs:
-              - role: endpoints
-                namespaces:
-                    names:
-                      - game-library
-            relabel_configs:
-              - source_labels: [ __meta_kubernetes_service_name ]
-                action: keep
-                regex: game-library-service
-              - source_labels: [ __meta_kubernetes_endpoint_port_name ]
-                action: keep
-                regex: api

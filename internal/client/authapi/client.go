@@ -11,8 +11,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const defaultTimeout = 5 * time.Second
-
 // Config - settings for authapi service
 type Config struct {
 	Address     string
@@ -22,33 +20,30 @@ type Config struct {
 
 // Client wraps a gRPC AuthApiService client
 type Client struct {
-	cfg  Config
-	conn *grpc.ClientConn
-	api  authapipb.AuthApiServiceClient
+	conn    *grpc.ClientConn
+	api     authapipb.AuthApiServiceClient
+	timeout time.Duration
 }
 
 // NewClient dials the authapi service and returns a ready client
-func NewClient(cfg Config) (*Client, error) {
-	if cfg.Address == "" {
+func NewClient(conf Config) (*Client, error) {
+	if conf.Address == "" {
 		return nil, errors.New("authapi address is required")
-	}
-	if cfg.Timeout <= 0 {
-		cfg.Timeout = defaultTimeout
 	}
 
 	dialOpts := append([]grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	}, cfg.DialOptions...)
+	}, conf.DialOptions...)
 
-	conn, err := grpc.NewClient(cfg.Address, dialOpts...)
+	conn, err := grpc.NewClient(conf.Address, dialOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("dial authapi: %w", err)
 	}
 
 	return &Client{
-		cfg:  cfg,
-		conn: conn,
-		api:  authapipb.NewAuthApiServiceClient(conn),
+		timeout: conf.Timeout,
+		conn:    conn,
+		api:     authapipb.NewAuthApiServiceClient(conn),
 	}, nil
 }
 
@@ -67,7 +62,7 @@ func (c *Client) VerifyToken(ctx context.Context, token string) (bool, error) {
 		return false, errors.New("token is required")
 	}
 
-	ctx, cancel := CtxWithTimeout(ctx, c.cfg.Timeout)
+	ctx, cancel := CtxWithTimeout(ctx, c.timeout)
 	defer cancel()
 
 	req := &authapipb.VerifyTokenRequest{}

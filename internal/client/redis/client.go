@@ -23,10 +23,10 @@ type Client struct {
 }
 
 // New creates new redis client instance
-func New(cfg appconf.Redis) (*Client, error) {
+func New(conf appconf.Redis) (*Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.Address,
-		Password: cfg.Password,
+		Addr:     conf.Address,
+		Password: conf.Password,
 		MaintNotificationsConfig: &maintnotifications.Config{
 			Mode: maintnotifications.ModeDisabled,
 		},
@@ -34,7 +34,7 @@ func New(cfg appconf.Redis) (*Client, error) {
 
 	return &Client{
 		rdb: rdb,
-		ttl: cfg.TTL,
+		ttl: conf.TTL,
 	}, nil
 }
 

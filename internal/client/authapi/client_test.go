@@ -42,7 +42,7 @@ func TestVerifyToken(t *testing.T) {
 		assert.NoError(t, client.Close())
 	})
 
-	valid, err := client.VerifyToken(context.Background(), "jwt-token")
+	valid, err := client.VerifyToken(t.Context(), "jwt-token")
 	require.NoError(t, err)
 	assert.True(t, valid)
 }
@@ -60,13 +60,13 @@ func TestVerifyTokenRequiresToken(t *testing.T) {
 		assert.NoError(t, client.Close())
 	})
 
-	_, err = client.VerifyToken(context.Background(), "")
+	_, err = client.VerifyToken(t.Context(), "")
 	require.Error(t, err)
 }
 
 func TestCtxWithTimeout(t *testing.T) {
 	t.Run("sets timeout when context has no deadline", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		timeout := 100 * time.Millisecond
 
 		newCtx, cancel := authapi.CtxWithTimeout(ctx, timeout)
@@ -79,7 +79,7 @@ func TestCtxWithTimeout(t *testing.T) {
 
 	t.Run("respects existing deadline", func(t *testing.T) {
 		existingDeadline := time.Now().Add(200 * time.Millisecond)
-		ctx, cancel := context.WithDeadline(context.Background(), existingDeadline)
+		ctx, cancel := context.WithDeadline(t.Context(), existingDeadline)
 		defer cancel()
 
 		newCtx, newCancel := authapi.CtxWithTimeout(ctx, 100*time.Millisecond)
@@ -91,7 +91,7 @@ func TestCtxWithTimeout(t *testing.T) {
 	})
 
 	t.Run("returns working cancel function when deadline exists", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
 		defer cancel()
 
 		newCtx, newCancel := authapi.CtxWithTimeout(ctx, 100*time.Millisecond)
@@ -107,7 +107,7 @@ func TestCtxWithTimeout(t *testing.T) {
 	})
 
 	t.Run("handles zero timeout", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 
 		newCtx, cancel := authapi.CtxWithTimeout(ctx, 0)
 		defer cancel()
@@ -117,7 +117,7 @@ func TestCtxWithTimeout(t *testing.T) {
 	})
 
 	t.Run("handles negative timeout", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 
 		newCtx, cancel := authapi.CtxWithTimeout(ctx, -1*time.Second)
 		defer cancel()
@@ -127,7 +127,7 @@ func TestCtxWithTimeout(t *testing.T) {
 	})
 
 	t.Run("cancel function can be called multiple times", func(_ *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 
 		_, cancel := authapi.CtxWithTimeout(ctx, 100*time.Millisecond)
 
@@ -140,7 +140,7 @@ func startServer(t *testing.T, valid bool) (string, func()) {
 	t.Helper()
 
 	lc := &net.ListenConfig{}
-	lis, err := lc.Listen(context.Background(), "tcp", "127.0.0.1:0")
+	lis, err := lc.Listen(t.Context(), "tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
 	srv := grpc.NewServer()

@@ -3,6 +3,7 @@ package appconf
 import (
 	"errors"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -137,6 +138,9 @@ func (cfg *Cfg) Validate() error {
 		return errors.New("JAEGER_OTLP_ENDPOINT is required")
 	}
 	// validate endpoint format (must be host:port without scheme)
+	if strings.Contains(cfg.Jaeger.OTLPEndpoint, "://") {
+		return errors.New("JAEGER_OTLP_ENDPOINT must be host:port without scheme")
+	}
 	u, err := url.Parse("http://" + cfg.Jaeger.OTLPEndpoint)
 	if err != nil || u.Host != cfg.Jaeger.OTLPEndpoint {
 		return errors.New("JAEGER_OTLP_ENDPOINT must be host:port without scheme")

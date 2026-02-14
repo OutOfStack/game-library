@@ -102,10 +102,10 @@ services:
       # echo -n "Enter Password: " && head -1 < /dev/stdin | tr -d '\n' | sha256sum | cut -d " " -f1
       - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
       # https://go2docs.graylog.org/5-0/setting_up_graylog/server.conf.html
-      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9010/
       # "if the public IP address of the server is 203.0.113.10 and the Graylog web interface is listening on port 9000,
       # the value should be set to http://203.0.113.10:9000/ "
-      - GRAYLOG_HTTP_PUBLISH_URI=http://127.0.0.1:9000/
+      - GRAYLOG_HTTP_PUBLISH_URI=http://127.0.0.1:9010/
       - GRAYLOG_MONGODB_URI=mongodb://admin:password@mongo:27017/graylog?authSource=admin
       - GRAYLOG_ELASTICSEARCH_HOSTS=http://elastic:password@elasticsearch:9200
     entrypoint: /usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh
@@ -115,7 +115,7 @@ services:
       - elasticsearch
     ports:
       # Graylog web interface and REST API
-      - "9000:9000"
+      - "9010:9000"
       # GELF TCP
       - "12201:12201"
     networks:

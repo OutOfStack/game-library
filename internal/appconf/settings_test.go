@@ -87,6 +87,20 @@ func TestCfgValidateErrorCases(t *testing.T) {
 			wantError: "JAEGER_OTLP_ENDPOINT is required",
 		},
 		{
+			name: "jaeger otlp endpoint with scheme",
+			mutate: func(cfg *appconf.Cfg) {
+				cfg.Jaeger.OTLPEndpoint = "http://jaeger:4318"
+			},
+			wantError: "JAEGER_OTLP_ENDPOINT must be host:port without scheme",
+		},
+		{
+			name: "jaeger otlp endpoint invalid format",
+			mutate: func(cfg *appconf.Cfg) {
+				cfg.Jaeger.OTLPEndpoint = "not a valid endpoint"
+			},
+			wantError: "JAEGER_OTLP_ENDPOINT must be host:port without scheme",
+		},
+		{
 			name: "missing igdb client id",
 			mutate: func(cfg *appconf.Cfg) {
 				cfg.IGDB.ClientID = ""

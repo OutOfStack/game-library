@@ -58,7 +58,7 @@ func (c *Client) Set(ctx context.Context, key, value string, ttl time.Duration) 
 
 // GetStruct gets value by key from cache and sets value. If key does not exist, returns nil without error.
 // If value cannot be unmarshalled, InvalidTypeError returned
-func (c *Client) GetStruct(ctx context.Context, key string, value interface{}) error {
+func (c *Client) GetStruct(ctx context.Context, key string, value any) error {
 	bytes, err := c.rdb.Get(ctx, key).Bytes()
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (c *Client) GetStruct(ctx context.Context, key string, value interface{}) e
 
 // SetStruct sets struct value for provided key with ttl. If ttl == 0, default ttl is used.
 // If value cannot be marshaled, InvalidTypeError returned
-func (c *Client) SetStruct(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+func (c *Client) SetStruct(ctx context.Context, key string, value any, ttl time.Duration) error {
 	bytes, err := json.Marshal(value)
 	if err != nil {
 		return ErrInvalidType

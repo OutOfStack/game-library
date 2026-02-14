@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -120,7 +119,7 @@ func mapToUpdateGame(ugr *api.UpdateGameRequest, publisher string) model.UpdateG
 
 func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
 	if p.Page <= 0 || p.PageSize <= 0 {
-		return model.GamesFilter{}, errors.New("invalid page or page size param: should be greater than 0")
+		return model.GamesFilter{}, fmt.Errorf("invalid page or page size param: should be greater than 0")
 	}
 
 	var filter model.GamesFilter
@@ -134,7 +133,7 @@ func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
 	case "rating":
 		filter.OrderBy = model.OrderGamesByRating
 	default:
-		return model.GamesFilter{}, errors.New("invalid orderBy: should be one of [default, releaseDate, name, rating]")
+		return model.GamesFilter{}, fmt.Errorf("invalid orderBy: should be one of [default, releaseDate, name, rating]")
 	}
 	if len(p.Name) >= minLengthForSearch {
 		filter.Name = strings.ToLower(p.Name)

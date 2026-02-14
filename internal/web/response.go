@@ -7,7 +7,7 @@ import (
 )
 
 // Respond marshals a value to JSON and writes it to response
-func Respond(w http.ResponseWriter, val interface{}, statusCode int) {
+func Respond(w http.ResponseWriter, val any, statusCode int) {
 	if statusCode == http.StatusNoContent {
 		w.WriteHeader(statusCode)
 		return
@@ -49,8 +49,7 @@ func RespondError(w http.ResponseWriter, err error) {
 		Error: http.StatusText(statusCode),
 	}
 
-	var webErr *Error
-	if errors.As(err, &webErr) {
+	if webErr, ok := errors.AsType[*Error](err); ok {
 		statusCode = webErr.StatusCode
 		errMsg := webErr.Err.Error()
 		if statusCode >= 500 {

@@ -40,7 +40,7 @@ type GameFacade interface {
 
 // Decoder decodes request
 type Decoder interface {
-	Decode(r *http.Request, val interface{}) error
+	Decode(r *http.Request, val any) error
 }
 
 // Provider has all dependencies for handlers

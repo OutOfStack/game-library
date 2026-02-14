@@ -126,8 +126,7 @@ func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
 	var webErr *web.Error
 	require.ErrorAs(t, err, &webErr)
 
-	var validationErr *web.Error
-	ok := errors.As(err, &validationErr)
+	validationErr, ok := errors.AsType[*web.Error](err)
 	require.True(t, ok)
 	require.Equal(t, http.StatusBadRequest, validationErr.StatusCode)
 

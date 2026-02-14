@@ -34,7 +34,7 @@ func (ts TaskSettings) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner interface
-func (ts *TaskSettings) Scan(src interface{}) error {
+func (ts *TaskSettings) Scan(src any) error {
 	if src == nil {
 		return nil
 	}

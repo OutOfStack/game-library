@@ -110,8 +110,7 @@ func (e Error[T]) Error() string {
 
 // IsAppError checks if error is AppError
 func IsAppError(err error) (AppError, bool) {
-	var appErr AppError
-	if errors.As(err, &appErr) {
+	if appErr, ok := errors.AsType[AppError](err); ok {
 		return appErr, true
 	}
 	return nil, false

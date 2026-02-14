@@ -79,6 +79,8 @@ linters:
     govet:
       enable:
         - shadow
+    perfsprint:
+      errorf: false
   exclusions:
     generated: lax
     rules:
@@ -104,9 +106,6 @@ linters:
       - linters:
           - revive # disable "should have a package comment"
         text: "package comment"
-      - linters:
-          - modernize
-        text: "interface{} can be replaced by any"
     paths:
       - docs
       - examples$

@@ -49,9 +49,9 @@ generate-mocks:
 	mockgen -destination=internal/repo/mocks/tx.go -package=repo_mock github.com/jackc/pgx/v5 Tx
 	mockgen -source=internal/api/grpc/infoapi/service.go -destination=internal/api/grpc/infoapi/mocks/service.go -package=infoapi_mock
 
-BUF_VERSION := v1.61
-PROTOC_GEN_GO_VERSION := v1.36.10
-PROTOC_GEN_GO_GRPC_VERSION := v1.6.0
+BUF_VERSION := v1.65
+PROTOC_GEN_GO_VERSION := v1.36.11
+PROTOC_GEN_GO_GRPC_VERSION := v1.6.1
 PROTO_AUTHAPI_VERSION := ref=2a0af39 # or tag=v1.0.0
 BUF_PKG := github.com/bufbuild/buf/cmd/buf@${BUF_VERSION}
 PROTOC_GEN_GO_PKG := google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}

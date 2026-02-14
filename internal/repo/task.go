@@ -30,8 +30,7 @@ func (s *Storage) GetTask(ctx context.Context, name string) (task model.Task, er
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Task{}, apperr.NewNotFoundError("task", name)
 		}
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == codeLockNotAvailable {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == codeLockNotAvailable {
 			return model.Task{}, ErrTransactionLocked
 		}
 		return model.Task{}, err

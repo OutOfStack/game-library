@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -23,7 +22,7 @@ const (
 var tracer = otel.Tracer("auth")
 
 // ErrVerifyAPIUnavailable is returned when the auth API is unavailable
-var ErrVerifyAPIUnavailable = errors.New("auth API is unavailable")
+var ErrVerifyAPIUnavailable = fmt.Errorf("auth API is unavailable")
 
 var (
 	tokenVerificationFailures = promauto.NewCounter(prometheus.CounterOpts{
@@ -81,7 +80,7 @@ func (c *Client) Verify(ctx context.Context, tokenStr string) error {
 
 	if !valid {
 		tokenVerificationFailures.Inc()
-		return errors.New("invalid token")
+		return fmt.Errorf("invalid token")
 	}
 
 	return nil

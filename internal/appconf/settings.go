@@ -136,9 +136,10 @@ func (cfg *Cfg) Validate() error {
 	if cfg.Jaeger.OTLPEndpoint == "" {
 		return errors.New("JAEGER_OTLP_ENDPOINT is required")
 	}
-	// validate endpoint format (should not include http:// or https://)
-	if _, err := url.Parse("http://" + cfg.Jaeger.OTLPEndpoint); err != nil {
-		return errors.New("JAEGER_OTLP_ENDPOINT has invalid format")
+	// validate endpoint format (must be host:port without scheme)
+	u, err := url.Parse("http://" + cfg.Jaeger.OTLPEndpoint)
+	if err != nil || u.Host != cfg.Jaeger.OTLPEndpoint {
+		return errors.New("JAEGER_OTLP_ENDPOINT must be host:port without scheme")
 	}
 
 	// igdb

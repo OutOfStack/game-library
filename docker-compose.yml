@@ -31,7 +31,7 @@ services:
       APP_HTTP_ADDRESS: 0.0.0.0:8000
       APP_DEBUG_ADDRESS: 0.0.0.0:6060
       APP_GRPC_ADDRESS: 0.0.0.0:9000
-      JAEGER_OTLP_ENDPOINT: jaeger:4318
+      JAEGER_OTLP_ENDPOINT: host.docker.internal:4318
     depends_on:
       - db
       - redis

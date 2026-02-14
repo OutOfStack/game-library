@@ -34,6 +34,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron"
+	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -104,11 +106,17 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}
 
 	// create authapi client
+	grpcClientMetrics := grpcprom.NewClientMetrics()
+	err = prometheus.Register(grpcClientMetrics)
+	if err != nil {
+		return fmt.Errorf("register prometheus grpc client metrics: %w", err)
+	}
 	authAPIClient, err := authapi.NewClient(authapi.Config{
 		Address: cfg.AuthAPI.Address,
 		Timeout: cfg.AuthAPI.Timeout,
 		DialOptions: []grpc.DialOption{
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithChainUnaryInterceptor(grpcClientMetrics.UnaryClientInterceptor()),
 		},
 	})
 	if err != nil {
@@ -188,13 +196,20 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}()
 
 	// start grpc service
+	grpcServerMetrics := grpcprom.NewServerMetrics()
+	err = prometheus.Register(grpcServerMetrics)
+	if err != nil {
+		return fmt.Errorf("register prometheus grpc server metrics: %w", err)
+	}
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		grpc.ChainUnaryInterceptor(grpcServerMetrics.UnaryServerInterceptor()),
 	)
-	igdbService := infoapi.NewInfoService(logger, gameFacade)
-	infopb.RegisterInfoApiServiceServer(grpcServer, igdbService)
+	infoService := infoapi.NewInfoService(logger, gameFacade)
+	infopb.RegisterInfoApiServiceServer(grpcServer, infoService)
 	// register reflection service for grpcurl and other tools
 	grpcrefl.Register(grpcServer)
+	grpcServerMetrics.InitializeMetrics(grpcServer)
 
 	grpcListenConfig := net.ListenConfig{}
 	listener, err := grpcListenConfig.Listen(ctx, "tcp", cfg.Web.GRPCAddress)
@@ -216,11 +231,10 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	case sig := <-shutdown:
 		logger.Info("shutdown signal received", zap.String("signal", sig.String()))
 
-		const timeout = 5 * time.Second
-		var wg sync.WaitGroup
-
-		bCtx, cancel := context.WithTimeout(ctx, timeout)
+		bCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
+
+		var wg sync.WaitGroup
 
 		// stop grpc server
 		wg.Go(func() {
@@ -230,7 +244,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		// stop http server
 		wg.Go(func() {
 			if shutdownErr := apiService.Shutdown(bCtx); shutdownErr != nil {
-				logger.Error("http service graceful shutdown failed", zap.Error(shutdownErr))
+				logger.Error("http service shutdown failed", zap.Error(shutdownErr))
 				if shutdownErr = apiService.Close(); shutdownErr != nil {
 					logger.Error("http service force shutdown failed", zap.Error(shutdownErr))
 				}
@@ -241,7 +255,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		wg.Go(func() {
 			logger.Info("stop debug service")
 			if shutdownErr := debugService.Shutdown(bCtx); shutdownErr != nil {
-				logger.Error("debug service graceful shutdown failed", zap.Error(shutdownErr))
+				logger.Error("debug service shutdown failed", zap.Error(shutdownErr))
 				if shutdownErr = debugService.Close(); shutdownErr != nil {
 					logger.Error("debug service force shutdown failed", zap.Error(shutdownErr))
 				}

@@ -35,7 +35,7 @@ data:
     OPENAI_VISION_MODEL: "gpt-5-nano"
     OPENAI_API_TIMEOUT: "30s"
     # auth api
-    AUTHAPI_ADDRESS: "game-library-auth-service.game-library.svc.cluster.local.:9000"
+    AUTHAPI_ADDRESS: "game-library-auth-service.game-library.svc.cluster.local:9000"
     AUTHAPI_TIMEOUT: "2s"
 ---
 kind: ConfigMap

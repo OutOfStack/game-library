@@ -2,12 +2,13 @@
 
 ## Introduction
 
-game-library is a web application for exploring and rating games. 
-It consists of 3 services and infrastructure:
-- current service is responsible for fetching, storing games data and providing it to UI,
-- [auth service](https://github.com/OutOfStack/game-library-auth) is responsible for user authentication and authorization,
-- [ui service](https://github.com/OutOfStack/game-library-ui) is responsible for UI representation.
-- [game-library-infra](https://github.com/OutOfStack/game-library-infra) manages infrastructure (Jaeger and Prometheus; Graylog and certs migration are TBD)
+`game-library` is a web application for exploring and rating games.
+
+`game-library` consists of:
+- current service is responsible for fetching, storing games data and providing it to UI
+- [game-library-auth](https://github.com/OutOfStack/game-library-auth) - authentication and authorization
+- [game-library-ui](https://github.com/OutOfStack/game-library-ui) - UI service
+- [game-library-infra](https://github.com/OutOfStack/game-library-infra) - infrastructure and deployment configurations
 
 ## Table of Contents
 
@@ -43,14 +44,9 @@ To set up the service, follow these steps:
 
 3. Install and run dependencies:
     ```bash
-    make drunredis # [Optional] runs redis in docker container
+    make drunredis # runs redis in docker container
     make drunglog # [Optional] runs graylog in docker container
     ```
-   from [game-library-infra](https://github.com/OutOfStack/game-library-infra):
-   ```bash
-   make jaeger  # [Optional] runs jaeger in docker container
-   make prometheus # [Optional] runs prometheus in docker container
-   ```
 
 4. _[Optional]_ Set up fetching games data:
     - Get credentials from [IGDB API](https://api-docs.igdb.com/#account-creation) to run background tasks that fetch and update games
@@ -85,12 +81,13 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 
 - Data storage with PostgreSQL.
 - Caching with Redis.
-- Tracing with OTLP exporter (Jaeger).
-- Log management with Graylog.
 - Background task for fetching and updating games data using IGDB API.
 - Game image upload and storage with S3-compatible services (Cloudflare R2).
 - Automatic game moderation using OpenAI API.
-- gRPC service for internal service-to-service communication.
+- gRPC for internal service-to-service communication.
+- Tracing with OTLP exporter (Jaeger).
+- Log management with Graylog.
+- Metrics collection with Prometheus.
 - Code analysis with golangci-lint.
 - CI/CD with GitHub Actions and deploy to Kubernetes (microk8s) cluster.
 
@@ -108,14 +105,13 @@ To generate the documentation, run:
 make generate
 ```
 
-### gRPC Service
+### gRPC
 
 The service exposes a gRPC endpoint for internal service-to-service communication.
 
 **Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`app.example.env`](./app.example.env))
 
-**Protobuf Definition:**
-The protobuf schema is located in [`api/proto/infoapi/v1/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
+**Protobuf Definition:** [`api/proto/infoapi/v1/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
 
 **Testing with grpcurl:**
 ```bash
@@ -125,7 +121,7 @@ grpcurl -plaintext localhost:9000 list
 # describe service
 grpcurl -plaintext localhost:9000 describe infoapi.v1.InfoApiService
 
-# call method
+# call CompanyExists method
 grpcurl -plaintext -d '{"company_name": "Nintendo"}' -emit-defaults localhost:9000 infoapi.v1.InfoApiService/CompanyExists
 ```
 

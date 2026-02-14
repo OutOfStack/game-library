@@ -3,10 +3,11 @@
 ## Introduction
 
 game-library is a web application for exploring and rating games. 
-It consists of three services:
+It consists of 3 services and infrastructure:
 - current service is responsible for fetching, storing games data and providing it to UI,
 - [auth service](https://github.com/OutOfStack/game-library-auth) is responsible for user authentication and authorization,
 - [ui service](https://github.com/OutOfStack/game-library-ui) is responsible for UI representation.
+- [game-library-infra](https://github.com/OutOfStack/game-library-infra) manages infrastructure (Jaeger and Prometheus; Graylog and certs migration are TBD)
 
 ## Table of Contents
 
@@ -43,10 +44,13 @@ To set up the service, follow these steps:
 3. Install and run dependencies:
     ```bash
     make drunredis # [Optional] runs redis in docker container
-    make drunzipkin # [Optional] runs zipkin in docker container
     make drunglog # [Optional] runs graylog in docker container
-    make drunprom # [Optional] runs prometheus in docker container
     ```
+   from [game-library-infra](https://github.com/OutOfStack/game-library-infra):
+   ```bash
+   make jaeger  # [Optional] runs jaeger in docker container
+   make prometheus # [Optional] runs prometheus in docker container
+   ```
 
 4. _[Optional]_ Set up fetching games data:
     - Get credentials from [IGDB API](https://api-docs.igdb.com/#account-creation) to run background tasks that fetch and update games
@@ -81,7 +85,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 
 - Data storage with PostgreSQL.
 - Caching with Redis.
-- Tracing with Zipkin.
+- Tracing with OTLP exporter (Jaeger).
 - Log management with Graylog.
 - Background task for fetching and updating games data using IGDB API.
 - Game image upload and storage with S3-compatible services (Cloudflare R2).
@@ -155,10 +159,8 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     dbuildapi     builds app docker image
     dbuildmng     builds manage app docker image
     drunapi       runs app in docker container
-    drunzipkin    runs zipkin in docker container
     drunredis     runs redis in docker container
     drunglog      runs graylog in docker container
-    drunprom      runs prometheus in docker container
 
 ## License
 

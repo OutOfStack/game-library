@@ -14,7 +14,7 @@ type Cfg struct {
 	Log       Log       `mapstructure:",squash"`
 	DB        DB        `mapstructure:",squash"`
 	Web       Web       `mapstructure:",squash"`
-	Zipkin    Zipkin    `mapstructure:",squash"`
+	Jaeger    Jaeger    `mapstructure:",squash"`
 	IGDB      IGDB      `mapstructure:",squash"`
 	Scheduler Scheduler `mapstructure:",squash"`
 	Redis     Redis     `mapstructure:",squash"`
@@ -39,9 +39,9 @@ type Web struct {
 	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
 }
 
-// Zipkin represents settings for Zipkin trace storage
-type Zipkin struct {
-	ReporterURL string `mapstructure:"ZIPKIN_REPORTERURL"`
+// Jaeger represents settings for Jaeger OTLP trace export
+type Jaeger struct {
+	OTLPEndpoint string `mapstructure:"JAEGER_OTLP_ENDPOINT"`
 }
 
 // IGDB represents settings for IGDB client
@@ -132,9 +132,13 @@ func (cfg *Cfg) Validate() error {
 		return errors.New("APP_WRITETIMEOUT must be greater than 0")
 	}
 
-	// zipkin
-	if cfg.Zipkin.ReporterURL == "" {
-		return errors.New("ZIPKIN_REPORTERURL is required")
+	// jaeger
+	if cfg.Jaeger.OTLPEndpoint == "" {
+		return errors.New("JAEGER_OTLP_ENDPOINT is required")
+	}
+	// validate endpoint format (should not include http:// or https://)
+	if _, err := url.Parse("http://" + cfg.Jaeger.OTLPEndpoint); err != nil {
+		return errors.New("JAEGER_OTLP_ENDPOINT has invalid format")
 	}
 
 	// igdb

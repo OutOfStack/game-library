@@ -26,7 +26,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
-	zaplog "github.com/OutOfStack/game-library/internal/pkg/log"
+	"github.com/OutOfStack/game-library/internal/pkg/logging"
 	"github.com/OutOfStack/game-library/internal/repo"
 	"github.com/OutOfStack/game-library/internal/taskprocessor"
 	"github.com/OutOfStack/game-library/internal/web"
@@ -62,7 +62,7 @@ func main() {
 	}
 
 	// init logger
-	logger := zaplog.New(cfg.Log.Level, cfg.Graylog.Address)
+	logger := logging.New(cfg.Log.Level, cfg.Graylog.Address)
 	defer func() {
 		if sErr := logger.Sync(); sErr != nil {
 			logger.Error("can't sync logger: %v", zap.Error(sErr))
@@ -178,7 +178,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}()
 
 	// start http API service
-	apiService, err := api.Service(logger, db, authFacade, apiProvider, cfg)
+	apiService, tracerProvider, err := api.Service(logger, db, authFacade, apiProvider, cfg)
 	if err != nil {
 		return fmt.Errorf("can't create service api: %w", err)
 	}
@@ -188,7 +188,9 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}()
 
 	// start grpc service
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	igdbService := infoapi.NewInfoService(logger, gameFacade)
 	infopb.RegisterInfoApiServiceServer(grpcServer, igdbService)
 	// register reflection service for grpcurl and other tools
@@ -243,6 +245,14 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 				if shutdownErr = debugService.Close(); shutdownErr != nil {
 					logger.Error("debug service force shutdown failed", zap.Error(shutdownErr))
 				}
+			}
+		})
+
+		// stop tracer provider
+		wg.Go(func() {
+			logger.Info("stop tracer provider")
+			if shutdownErr := tracerProvider.Shutdown(bCtx); shutdownErr != nil {
+				logger.Error("tracer provider shutdown failed", zap.Error(shutdownErr))
 			}
 		})
 

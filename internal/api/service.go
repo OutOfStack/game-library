@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,7 +20,7 @@ import (
 	"github.com/riandyrn/otelchi"
 	swag "github.com/swaggo/http-swagger/v2"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/zipkin"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -34,10 +35,10 @@ func Service(
 	au *auth.Client,
 	pr *Provider,
 	conf *appconf.Cfg,
-) (http.Server, error) {
-	err := initTracer(log, conf.Zipkin.ReporterURL)
+) (http.Server, *trace.TracerProvider, error) {
+	tp, err := initTracer(log, conf.Jaeger.OTLPEndpoint)
 	if err != nil {
-		return http.Server{}, fmt.Errorf("initializing exporter: %w", err) //nolint:gosec
+		return http.Server{}, nil, fmt.Errorf("initializing tracer: %w", err) //nolint:gosec
 	}
 
 	r := chi.NewRouter()
@@ -137,13 +138,20 @@ func Service(
 		ReadTimeout:       conf.Web.ReadTimeout,
 		ReadHeaderTimeout: time.Second,
 		WriteTimeout:      conf.Web.WriteTimeout,
-	}, nil
+	}, tp, nil
 }
 
-func initTracer(log *zap.Logger, reporterURL string) error {
-	exporter, err := zipkin.New(reporterURL)
+func initTracer(log *zap.Logger, otlpEndpoint string) (*trace.TracerProvider, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	exporter, err := otlptracehttp.New(
+		ctx,
+		otlptracehttp.WithEndpoint(otlpEndpoint),
+		otlptracehttp.WithInsecure(),
+	)
 	if err != nil {
-		return fmt.Errorf("create new exporter: %v", err)
+		return nil, fmt.Errorf("create new exporter: %w", err)
 	}
 
 	tp := trace.NewTracerProvider(
@@ -156,11 +164,14 @@ func initTracer(log *zap.Logger, reporterURL string) error {
 			)),
 	)
 
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		log.Error("zipkin error", zap.Error(err))
+		log.Error("otel error", zap.Error(err))
 	}))
 	otel.SetTracerProvider(tp)
 
-	return nil
+	return tp, nil
 }

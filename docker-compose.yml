@@ -11,14 +11,6 @@ services:
       POSTGRES_PASSWORD: games-password
       POSTGRES_DB: games
 
-  zipkin:
-    container_name: zipkin
-    image: openzipkin/zipkin:3.5
-    ports:
-      - "9411:9411"
-    environment:
-      ZIPKIN_UI_BASEPATH: /zipkin
-
   redis:
     container_name: redis
     image: redis:8.2-alpine
@@ -39,9 +31,9 @@ services:
       APP_HTTP_ADDRESS: 0.0.0.0:8000
       APP_DEBUG_ADDRESS: 0.0.0.0:6060
       APP_GRPC_ADDRESS: 0.0.0.0:9000
+      JAEGER_OTLP_ENDPOINT: host.docker.internal:4318
     depends_on:
       - db
-      - zipkin
       - redis
 
   mng:
@@ -110,10 +102,10 @@ services:
       # echo -n "Enter Password: " && head -1 < /dev/stdin | tr -d '\n' | sha256sum | cut -d " " -f1
       - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
       # https://go2docs.graylog.org/5-0/setting_up_graylog/server.conf.html
-      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9010/
       # "if the public IP address of the server is 203.0.113.10 and the Graylog web interface is listening on port 9000,
       # the value should be set to http://203.0.113.10:9000/ "
-      - GRAYLOG_HTTP_PUBLISH_URI=http://127.0.0.1:9000/
+      - GRAYLOG_HTTP_PUBLISH_URI=http://127.0.0.1:9010/
       - GRAYLOG_MONGODB_URI=mongodb://admin:password@mongo:27017/graylog?authSource=admin
       - GRAYLOG_ELASTICSEARCH_HOSTS=http://elastic:password@elasticsearch:9200
     entrypoint: /usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh
@@ -123,26 +115,11 @@ services:
       - elasticsearch
     ports:
       # Graylog web interface and REST API
-      - "9000:9000"
+      - "9010:9000"
       # GELF TCP
       - "12201:12201"
     networks:
       - graylog
-        
-  prometheus:
-    container_name: prometheus
-    image: prom/prometheus:v3.2.1
-    ports:
-      - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    volumes:
-      - prometheus_data:/prometheus
-    restart: always
-    configs:
-      - source: prometheus_config
-        target: /etc/prometheus/prometheus.yml
 
 volumes:
   mongo_data:
@@ -151,25 +128,6 @@ volumes:
     driver: local
   graylog_data:
     driver: local
-  prometheus_data:
-    driver: local
-    
-configs:
-  prometheus_config:
-    content: |
-      global:
-        scrape_interval: 15s
-        evaluation_interval: 15s
-        scrape_timeout: 1s
-      
-      scrape_configs:
-        - job_name: 'prometheus'
-          static_configs:
-            - targets: ['localhost:9090']
-      
-        - job_name: 'game-library'
-          static_configs:
-            - targets: ['host.docker.internal:8000']
 
 networks:
   graylog:

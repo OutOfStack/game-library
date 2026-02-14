@@ -5,28 +5,37 @@ metadata:
     namespace: game-library
 data:
     LOG_LEVEL: "INFO"
+    # app
     APP_HTTP_ADDRESS: "0.0.0.0:8000"
     APP_DEBUG_ADDRESS: "0.0.0.0:6060"
     APP_GRPC_ADDRESS: "0.0.0.0:9000"
     APP_READTIMEOUT: "30s"
     APP_WRITETIMEOUT: "15s"
     APP_ALLOWEDCORSORIGIN: "https://_K8S_URL_,https://_UI_URL_"
-    ZIPKIN_REPORTERURL: "http://zipkin-service.game-library.svc.cluster.local:9411/api/v2/spans"
+    # tracing
+    JAEGER_OTLP_ENDPOINT: "jaeger-service.game-library-infra.svc.cluster.local:4318"
+    # scheduler
     SCHED_FETCH_IGDB_GAMES: "0 5 * * *"
     SCHED_UPDATE_TRENDING_INDEX: "0 3 * * *"
     SCHED_UPDATE_GAME_INFO: "0 2 * * *"
     SCHED_PROCESS_MODERATION: "*/2 * * * *"
+    # redis
     REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
     REDIS_TTL: "2h"
+    # graylog
     GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
+    # s3
     S3_REGION: "auto"
     S3_BUCKET_NAME: "game-library"
     S3_TIMEOUT: "10s"
+    # igdb api
     IGDB_API_TIMEOUT: "10s"
+    # openai api
     OPENAI_MODERATION_MODEL: "omni-moderation-latest"
     OPENAI_VISION_MODEL: "gpt-5-nano"
     OPENAI_API_TIMEOUT: "30s"
-    AUTHAPI_ADDRESS: "game-library-auth-service.game-library.svc.cluster.local.:9000"
+    # auth api
+    AUTHAPI_ADDRESS: "game-library-auth-service.game-library.svc.cluster.local:9000"
     AUTHAPI_TIMEOUT: "2s"
 ---
 kind: ConfigMap

@@ -80,11 +80,25 @@ func TestCfgValidateErrorCases(t *testing.T) {
 			wantError: "APP_WRITETIMEOUT must be greater than 0",
 		},
 		{
-			name: "missing zipkin reporter url",
+			name: "missing jaeger otlp endpoint",
 			mutate: func(cfg *appconf.Cfg) {
-				cfg.Zipkin.ReporterURL = ""
+				cfg.Jaeger.OTLPEndpoint = ""
 			},
-			wantError: "ZIPKIN_REPORTERURL is required",
+			wantError: "JAEGER_OTLP_ENDPOINT is required",
+		},
+		{
+			name: "jaeger otlp endpoint with scheme",
+			mutate: func(cfg *appconf.Cfg) {
+				cfg.Jaeger.OTLPEndpoint = "http://jaeger:4318"
+			},
+			wantError: "JAEGER_OTLP_ENDPOINT must be host:port without scheme",
+		},
+		{
+			name: "jaeger otlp endpoint invalid format",
+			mutate: func(cfg *appconf.Cfg) {
+				cfg.Jaeger.OTLPEndpoint = "not a valid endpoint"
+			},
+			wantError: "JAEGER_OTLP_ENDPOINT must be host:port without scheme",
 		},
 		{
 			name: "missing igdb client id",
@@ -317,8 +331,8 @@ func validTestCfg() *appconf.Cfg {
 			WriteTimeout:      time.Second,
 			AllowedCORSOrigin: "http://localhost:3000",
 		},
-		Zipkin: appconf.Zipkin{
-			ReporterURL: "http://localhost:9411/api/v2/spans",
+		Jaeger: appconf.Jaeger{
+			OTLPEndpoint: "jaeger-service:4318",
 		},
 		IGDB: appconf.IGDB{
 			ClientID:     "id",

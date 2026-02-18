@@ -32,7 +32,7 @@ func Int32() int32 {
 	if sign == 0 {
 		sign = -1
 	}
-	return random.Int31() * int32(sign) //nolint:gosec
+	return random.Int31() * int32(sign)
 }
 
 // Int31 returns a random non-negative int32 value

@@ -7,7 +7,7 @@ import (
 )
 
 // Respond marshals a value to JSON and writes it to response
-func Respond(w http.ResponseWriter, val interface{}, statusCode int) {
+func Respond(w http.ResponseWriter, val any, statusCode int) {
 	if statusCode == http.StatusNoContent {
 		w.WriteHeader(statusCode)
 		return
@@ -43,14 +43,13 @@ func Respond(w http.ResponseWriter, val interface{}, statusCode int) {
 // RespondError handles outgoing errors by marshaling an error response.
 // if error is not of type Error, then err is ignored.
 // if no err is provided, InternalServerError returns to client
-func RespondError(w http.ResponseWriter, err error) {
+func RespondError(w http.ResponseWriter, respErr error) {
 	var statusCode = http.StatusInternalServerError
 	response := ErrorResponse{
 		Error: http.StatusText(statusCode),
 	}
 
-	var webErr *Error
-	if errors.As(err, &webErr) {
+	if webErr, ok := errors.AsType[*Error](respErr); ok {
 		statusCode = webErr.StatusCode
 		errMsg := webErr.Err.Error()
 		if statusCode >= 500 {

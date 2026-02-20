@@ -11,8 +11,8 @@ import (
 
 // RedisClient provides methods for working with redis
 type RedisClient interface {
-	GetStruct(ctx context.Context, key string, value interface{}) error
-	SetStruct(ctx context.Context, key string, value interface{}, ttl time.Duration) error
+	GetStruct(ctx context.Context, key string, value any) error
+	SetStruct(ctx context.Context, key string, value any, ttl time.Duration) error
 	DeleteByMatch(ctx context.Context, pattern string) error
 	Delete(ctx context.Context, key string) error
 }

@@ -14,7 +14,7 @@ import (
 func TestRespond(t *testing.T) {
 	tests := []struct {
 		name       string
-		val        interface{}
+		val        any
 		statusCode int
 		expected   string
 	}{

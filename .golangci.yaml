@@ -79,25 +79,23 @@ linters:
     govet:
       enable:
         - shadow
+    perfsprint:
+      errorf: false
   exclusions:
     generated: lax
     rules:
       - path: _test\.go
-        text: G115 # integer overflow conversion warnings
-      - path: _test\.go
-        rules:
-          - G104  # errors not checked
         linters:
           - gocyclo
           - errcheck
           - dupl
           - wsl
           - goconst
-      - path: pkg/types/
+      - path: _test\.go
         linters:
-          - revive
-        text: "var-naming"
-      - path: internal/api/
+          - gosec
+        text: "G101|G115|G705" # fake credentials, integer overflow, and XSS false positives in tests
+      - path: "pkg/types/|internal/api/"
         linters:
           - revive
         text: "var-naming"
@@ -105,8 +103,11 @@ linters:
           - revive # disable "should have a package comment"
         text: "package comment"
       - linters:
-          - modernize
-        text: "interface{} can be replaced by any"
+          - gosec
+        text: "G704" # SSRF taint analysis - URLs are config-controlled, not user input
+      - linters:
+          - gosec
+        text: "G117" # config struct fields named after secrets are not actual secrets
     paths:
       - docs
       - examples$

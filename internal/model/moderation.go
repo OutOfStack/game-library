@@ -92,7 +92,7 @@ func (md ModerationData) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner for ModerationData
-func (md *ModerationData) Scan(src interface{}) error {
+func (md *ModerationData) Scan(src any) error {
 	if src == nil {
 		return nil
 	}

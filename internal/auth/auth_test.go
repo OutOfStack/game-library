@@ -61,7 +61,7 @@ func (s *TestSuite) TestClient_Verify_APIUnavailable() {
 }
 
 func (s *TestSuite) TestClient_ParseToken() {
-	tokenStr := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcl9yb2xlIjoibW9kZXJhdG9yIiwidXNlcm5hbWUiOiJqb2huZG9lIiwibmFtZSI6IkpvaG4gRG9lIn0.abc" //nolint
+	tokenStr := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcl9yb2xlIjoibW9kZXJhdG9yIiwidXNlcm5hbWUiOiJqb2huZG9lIiwibmFtZSI6IkpvaG4gRG9lIn0.abc"
 
 	claims, err := s.auth.ParseToken(tokenStr)
 

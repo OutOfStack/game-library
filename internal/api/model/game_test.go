@@ -312,15 +312,15 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 
 	t.Run("Valid UpdateGameRequest with all fields", func(t *testing.T) {
 		request := model.UpdateGameRequest{
-			Name:         strPtr("Updated Game"),
-			Developer:    strPtr("Updated Developer"),
-			ReleaseDate:  strPtr("2023-02-01"),
-			GenresIDs:    slicePtr([]int32{1, 2, 3}),
-			LogoURL:      strPtr(validImageURL),
-			Summary:      strPtr("Updated summary"),
-			PlatformsIDs: slicePtr([]int32{1, 2}),
-			Screenshots:  slicePtr([]string{validImageURL, validImageURL}),
-			Websites:     slicePtr([]string{validWebsiteURL}),
+			Name:         new("Updated Game"),
+			Developer:    new("Updated Developer"),
+			ReleaseDate:  new("2023-02-01"),
+			GenresIDs:    new([]int32{1, 2, 3}),
+			LogoURL:      new(validImageURL),
+			Summary:      new("Updated summary"),
+			PlatformsIDs: new([]int32{1, 2}),
+			Screenshots:  new([]string{validImageURL, validImageURL}),
+			Websites:     new([]string{validWebsiteURL}),
 		}
 
 		valid, errors := request.ValidateWith(v)
@@ -330,9 +330,9 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 
 	t.Run("Empty string values", func(t *testing.T) {
 		request := model.UpdateGameRequest{
-			Name:      strPtr(""), // Empty string
-			Developer: strPtr(""), // Empty string
-			Summary:   strPtr(""), // Empty string
+			Name:      new(""), // Empty string
+			Developer: new(""), // Empty string
+			Summary:   new(""), // Empty string
 		}
 
 		valid, errors := request.ValidateWith(v)
@@ -352,7 +352,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 
 	t.Run("Invalid date format", func(t *testing.T) {
 		request := model.UpdateGameRequest{
-			ReleaseDate: strPtr("01/01/2023"), // Invalid format
+			ReleaseDate: new("01/01/2023"), // Invalid format
 		}
 
 		valid, errors := request.ValidateWith(v)
@@ -370,9 +370,9 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 
 	t.Run("Empty arrays", func(t *testing.T) {
 		request := model.UpdateGameRequest{
-			GenresIDs:    slicePtr([]int32{}),  // Empty array
-			PlatformsIDs: slicePtr([]int32{}),  // Empty array
-			Screenshots:  slicePtr([]string{}), // Empty array
+			GenresIDs:    new([]int32{}),  // Empty array
+			PlatformsIDs: new([]int32{}),  // Empty array
+			Screenshots:  new([]string{}), // Empty array
 		}
 
 		valid, errors := request.ValidateWith(v)
@@ -392,8 +392,8 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 
 	t.Run("Non-positive IDs", func(t *testing.T) {
 		request := model.UpdateGameRequest{
-			GenresIDs:    slicePtr([]int32{1, -1, 3}), // Contains negative ID
-			PlatformsIDs: slicePtr([]int32{0, 2}),     // Contains zero ID
+			GenresIDs:    new([]int32{1, -1, 3}), // Contains negative ID
+			PlatformsIDs: new([]int32{0, 2}),     // Contains zero ID
 		}
 
 		valid, errors := request.ValidateWith(v)
@@ -412,9 +412,9 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 
 	t.Run("Invalid URLs", func(t *testing.T) {
 		request := model.UpdateGameRequest{
-			LogoURL:     strPtr("https://invalid-domain.com/image.jpg"),
-			Screenshots: slicePtr([]string{"https://invalid-domain.com/image.jpg"}),
-			Websites:    slicePtr([]string{"https://invalid-domain.com"}),
+			LogoURL:     new("https://invalid-domain.com/image.jpg"),
+			Screenshots: new([]string{"https://invalid-domain.com/image.jpg"}),
+			Websites:    new([]string{"https://invalid-domain.com"}),
 		}
 
 		valid, errors := request.ValidateWith(v)
@@ -441,18 +441,18 @@ func TestUpdateGameRequest_Sanitize(t *testing.T) {
 		{
 			name: "sanitize strings and remove duplicates",
 			request: model.UpdateGameRequest{
-				Name:         strPtr(" Game Name with <script>alert('XSS')</script> "),
-				Developer:    strPtr(" Developer <b>Name</b> "),
-				Summary:      strPtr(" Game summary with <iframe src='malicious.com'></iframe> "),
-				GenresIDs:    slicePtr([]int32{1, 2, 2, 3, 3, 3}),
-				PlatformsIDs: slicePtr([]int32{5, 5, 6, 7, 7}),
+				Name:         new(" Game Name with <script>alert('XSS')</script> "),
+				Developer:    new(" Developer <b>Name</b> "),
+				Summary:      new(" Game summary with <iframe src='malicious.com'></iframe> "),
+				GenresIDs:    new([]int32{1, 2, 2, 3, 3, 3}),
+				PlatformsIDs: new([]int32{5, 5, 6, 7, 7}),
 			},
 			expected: model.UpdateGameRequest{
-				Name:         strPtr("Game Name with"),
-				Developer:    strPtr("Developer Name"),
-				Summary:      strPtr("Game summary with"),
-				GenresIDs:    slicePtr([]int32{1, 2, 3}),
-				PlatformsIDs: slicePtr([]int32{5, 6, 7}),
+				Name:         new("Game Name with"),
+				Developer:    new("Developer Name"),
+				Summary:      new("Game summary with"),
+				GenresIDs:    new([]int32{1, 2, 3}),
+				PlatformsIDs: new([]int32{5, 6, 7}),
 			},
 		},
 		{
@@ -475,31 +475,31 @@ func TestUpdateGameRequest_Sanitize(t *testing.T) {
 		{
 			name: "empty strings should be trimmed",
 			request: model.UpdateGameRequest{
-				Name:         strPtr("   "),
-				Developer:    strPtr("   "),
-				Summary:      strPtr("   "),
-				GenresIDs:    slicePtr([]int32{}),
-				PlatformsIDs: slicePtr([]int32{}),
+				Name:         new("   "),
+				Developer:    new("   "),
+				Summary:      new("   "),
+				GenresIDs:    new([]int32{}),
+				PlatformsIDs: new([]int32{}),
 			},
 			expected: model.UpdateGameRequest{
-				Name:         strPtr(""),
-				Developer:    strPtr(""),
-				Summary:      strPtr(""),
-				GenresIDs:    slicePtr([]int32{}),
-				PlatformsIDs: slicePtr([]int32{}),
+				Name:         new(""),
+				Developer:    new(""),
+				Summary:      new(""),
+				GenresIDs:    new([]int32{}),
+				PlatformsIDs: new([]int32{}),
 			},
 		},
 		{
 			name: "complex HTML should be properly sanitized",
 			request: model.UpdateGameRequest{
-				Name:      strPtr("<p>Game <strong>Name</strong> with <a href='http://example.com'>Link</a></p>"),
-				Developer: strPtr("<div>Developer <em>Studios</em></div>"),
-				Summary:   strPtr("<ul><li>Feature 1</li><li>Feature 2</li></ul>"),
+				Name:      new("<p>Game <strong>Name</strong> with <a href='http://example.com'>Link</a></p>"),
+				Developer: new("<div>Developer <em>Studios</em></div>"),
+				Summary:   new("<ul><li>Feature 1</li><li>Feature 2</li></ul>"),
 			},
 			expected: model.UpdateGameRequest{
-				Name:      strPtr("Game Name with Link"),
-				Developer: strPtr("Developer Studios"),
-				Summary:   strPtr("Feature 1Feature 2"),
+				Name:      new("Game Name with Link"),
+				Developer: new("Developer Studios"),
+				Summary:   new("Feature 1Feature 2"),
 			},
 		},
 	}
@@ -535,16 +535,6 @@ func TestUpdateGameRequest_Sanitize(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Helper function to get string pointer
-func strPtr(s string) *string {
-	return &s
-}
-
-// Helper function to get slice pointer
-func slicePtr[T any](slice []T) *[]T {
-	return &slice
 }
 
 // Helper to create HTML strings
@@ -596,12 +586,12 @@ func areInt32SlicePointersEqual(a, b *[]int32) bool {
 }
 
 // Helper to display pointer values in error messages
-func valueOrNil(ptr interface{}) interface{} {
+func valueOrNil(ptr any) any {
 	if ptr == nil {
 		return "nil"
 	}
 	v := reflect.ValueOf(ptr)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return "nil"
 		}

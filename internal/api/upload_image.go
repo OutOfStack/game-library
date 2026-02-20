@@ -1,7 +1,7 @@
 package api
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	api "github.com/OutOfStack/game-library/internal/api/model"
@@ -47,7 +47,7 @@ func (p *Provider) UploadGameImages(w http.ResponseWriter, r *http.Request) {
 	// parse multipart form with a reasonable max memory
 	err = r.ParseMultipartForm(maxFormMemory)
 	if err != nil {
-		web.RespondError(w, web.NewError(errors.New("failed to parse form"), http.StatusBadRequest))
+		web.RespondError(w, web.NewError(fmt.Errorf("failed to parse form"), http.StatusBadRequest))
 		return
 	}
 

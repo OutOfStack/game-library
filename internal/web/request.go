@@ -35,7 +35,7 @@ type Sanitizable interface {
 }
 
 // Decode unmarshalls JSON request body
-func (d *Decoder) Decode(r *http.Request, val interface{}) error {
+func (d *Decoder) Decode(r *http.Request, val any) error {
 	err := json.NewDecoder(r.Body).Decode(val)
 	if err != nil {
 		d.log.Error("Decode request", zap.Error(err))

@@ -3,7 +3,6 @@ package openaiapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -91,7 +90,7 @@ func (c *Client) ModerateText(ctx context.Context, gameData model.ModerationData
 		return nil, fmt.Errorf("moderation API call: %w", err)
 	}
 	if resp == nil {
-		return nil, errors.New("moderation API returned nil response")
+		return nil, fmt.Errorf("moderation API returned nil response")
 	}
 
 	return convertModerationResponse(resp), nil
@@ -178,12 +177,12 @@ Respond ONLY with JSON:
 // parseVisionResponse extracts moderation result from vision API response
 func parseVisionResponse(resp *openai.ChatCompletion) (*VisionAnalysisResult, error) {
 	if len(resp.Choices) == 0 {
-		return nil, errors.New("no choices in response")
+		return nil, fmt.Errorf("no choices in response")
 	}
 
 	content := resp.Choices[0].Message.Content
 	if len(content) == 0 {
-		return nil, errors.New("no content in response")
+		return nil, fmt.Errorf("no content in response")
 	}
 
 	var result VisionAnalysisResult

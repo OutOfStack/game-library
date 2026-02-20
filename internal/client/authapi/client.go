@@ -2,7 +2,6 @@ package authapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -28,7 +27,7 @@ type Client struct {
 // NewClient dials the authapi service and returns a ready client
 func NewClient(conf Config) (*Client, error) {
 	if conf.Address == "" {
-		return nil, errors.New("authapi address is required")
+		return nil, fmt.Errorf("authapi address is required")
 	}
 
 	dialOpts := append([]grpc.DialOption{
@@ -59,7 +58,7 @@ func (c *Client) Close() error {
 // VerifyToken returns result of token verification
 func (c *Client) VerifyToken(ctx context.Context, token string) (bool, error) {
 	if token == "" {
-		return false, errors.New("token is required")
+		return false, fmt.Errorf("token is required")
 	}
 
 	ctx, cancel := CtxWithTimeout(ctx, c.timeout)

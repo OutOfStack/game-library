@@ -120,11 +120,7 @@ func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
 
 	var decoded ReqBody
 	err := decoder.Decode(req, &decoded)
-
-	// Ensure the error is of type *Error
 	require.Error(t, err)
-	var webErr *web.Error
-	require.ErrorAs(t, err, &webErr)
 
 	validationErr, ok := errors.AsType[*web.Error](err)
 	require.True(t, ok)

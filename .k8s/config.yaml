@@ -20,10 +20,10 @@ data:
     SCHED_UPDATE_GAME_INFO: "0 2 * * *"
     SCHED_PROCESS_MODERATION: "*/2 * * * *"
     # redis
-    REDIS_ADDR: "redis-service.game-library.svc.cluster.local:6379"
+    REDIS_ADDR: "redis-service:6379"
     REDIS_TTL: "2h"
     # graylog
-    GRAYLOG_ADDR: "graylog-service.game-library.svc.cluster.local:12201"
+    GRAYLOG_ADDR: "graylog-service.game-library-infra.svc.cluster.local:12201"
     # s3
     S3_REGION: "auto"
     S3_BUCKET_NAME: "game-library"
@@ -35,13 +35,5 @@ data:
     OPENAI_VISION_MODEL: "gpt-5-nano"
     OPENAI_API_TIMEOUT: "30s"
     # auth api
-    AUTHAPI_ADDRESS: "game-library-auth-service.game-library.svc.cluster.local:9000"
+    AUTHAPI_ADDRESS: "game-library-auth-service:9000"
     AUTHAPI_TIMEOUT: "2s"
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-    name: graylog-config
-    namespace: game-library
-data:
-    GRAYLOG_HTTP_EXTERNAL_URI: "https://_K8S_URL_/_log/"

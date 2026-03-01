@@ -45,7 +45,6 @@ To set up the service, follow these steps:
 3. Install and run dependencies:
     ```bash
     make drunredis # runs redis in docker container
-    make drunglog # [Optional] runs graylog in docker container
     ```
 
 4. _[Optional]_ Set up fetching games data:
@@ -156,7 +155,6 @@ To see other examples of API endpoints, refer to the [documentation](#documentat
     dbuildmng     builds manage app docker image
     drunapi       runs app in docker container
     drunredis     runs redis in docker container
-    drunglog      runs graylog in docker container
 
 ## License
 

@@ -89,10 +89,16 @@ jobs:
         -e 's/_UI_URL_/${{ vars.UI_URL }}/g' \
         .k8s/*.yaml
 
+    - name: Diff changes
+      run: |
+        kubectl diff -f .k8s/config.yaml || true
+        kubectl diff -f .k8s/deployment.yaml || true
+        kubectl diff -f .k8s/service.yaml || true
+        kubectl diff -f .k8s/ingress.yaml || true
+
     - name: Kubernetes Apply configs
       run: |
         kubectl apply -f .k8s/config.yaml
-        kubectl apply -f .k8s/volume.yaml
         kubectl apply -f .k8s/deployment.yaml
         kubectl apply -f .k8s/service.yaml
         kubectl apply -f .k8s/ingress.yaml

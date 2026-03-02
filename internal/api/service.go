@@ -48,10 +48,10 @@ func Service(
 	r.Use(mw.Recoverer)
 	r.Use(otelchi.Middleware(appconf.ServiceName))
 	r.Use(chicors.Handler(chicors.Options{
+		AllowedOrigins:   strings.Split(conf.Web.AllowedCORSOrigin, ","),
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
-		AllowedOrigins:   strings.Split(conf.Web.AllowedCORSOrigin, ","),
 	}))
 
 	hc := tools.NewHealthCheck(db)

@@ -84,8 +84,5 @@ drunapi:
 drunredis:
 	docker compose up -d redis
 
-drunglog:
-	docker compose up -d graylog
-
 dbuildmng:
 	docker build -f Dockerfile.mng -t game-library-mng:latest .

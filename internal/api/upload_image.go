@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -14,9 +15,9 @@ import (
 
 const (
 	// maxFormMemory maximum amount of memory used to store multipart form data
-	maxFormMemory = 32 << 20 // 32 MB
+	maxFormMemory = 16 << 20 // 32 MB
 	// maxRequestBodySize upper bound on the request body size to prevent memory exhaustion
-	maxRequestBodySize = 64 << 20 // 64 MB
+	maxRequestBodySize = 24 << 20 // 64 MB
 )
 
 // UploadGameImages godoc
@@ -50,6 +51,10 @@ func (p *Provider) UploadGameImages(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
 	err = r.ParseMultipartForm(maxFormMemory)
 	if err != nil {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			web.RespondError(w, web.NewError(fmt.Errorf("request body too large"), http.StatusRequestEntityTooLarge))
+			return
+		}
 		web.RespondError(w, web.NewError(fmt.Errorf("failed to parse form"), http.StatusBadRequest))
 		return
 	}

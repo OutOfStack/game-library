@@ -73,14 +73,12 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "page size",
                         "name": "pageSize",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "page",
                         "name": "page",
                         "in": "query"
@@ -105,21 +103,18 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "genre filter",
                         "name": "genre",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "developer id filter",
                         "name": "developer",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "publisher id filter",
                         "name": "publisher",
                         "in": "query"
@@ -267,7 +262,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Game ID",
                         "name": "id",
                         "in": "path",
@@ -319,7 +313,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Game ID",
                         "name": "id",
                         "in": "path",
@@ -374,7 +367,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Game ID",
                         "name": "id",
                         "in": "path",
@@ -437,7 +429,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Game ID",
                         "name": "id",
                         "in": "path",
@@ -500,7 +491,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "game ID",
                         "name": "id",
                         "in": "path",
@@ -682,8 +672,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
-                                "type": "integer",
-                                "format": "int32"
+                                "type": "integer"
                             }
                         }
                     },

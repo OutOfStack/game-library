@@ -23,12 +23,13 @@ func Logger(logger *zap.Logger) func(http.Handler) http.Handler {
 
 			// log the request and response details
 			statusCode := ww.Status()
-			logFields := []zap.Field{
+			logFields := make([]zap.Field, 0, 5)
+			logFields = append(logFields,
 				zap.Int("status", statusCode),
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path),
 				zap.Duration("duration", duration),
-			}
+			)
 
 			// error on 5xx
 			if statusCode >= 500 {

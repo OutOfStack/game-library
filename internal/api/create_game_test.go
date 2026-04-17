@@ -45,7 +45,7 @@ func (s *TestSuite) Test_CreateGame_Success() {
 	}
 
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
@@ -63,7 +63,7 @@ func (s *TestSuite) Test_CreateGame_Success() {
 }
 
 func (s *TestSuite) Test_CreateGame_DecodeError() {
-	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader([]byte("{invalid json}")))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader([]byte("{invalid json}")))
 
 	s.provider.CreateGame(s.httpResponse, req)
 
@@ -83,7 +83,7 @@ func (s *TestSuite) Test_CreateGame_MissingClaims() {
 		Websites:     []string{s.getWebsiteURL()},
 	}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader(requestBody))
 
 	s.provider.CreateGame(s.httpResponse, req)
 
@@ -105,7 +105,7 @@ func (s *TestSuite) Test_CreateGame_VerificationRequired() {
 		Websites:     []string{s.getWebsiteURL()},
 	}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role, VerificationRequired: true}, nil)
@@ -136,7 +136,7 @@ func (s *TestSuite) Test_CreateGame_FacadeError() {
 		Websites:     []string{s.getWebsiteURL()},
 	}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, "/games", bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)

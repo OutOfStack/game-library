@@ -47,7 +47,7 @@ func (s *TestSuite) Test_GetGameModerations_Success() {
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
@@ -72,7 +72,7 @@ func (s *TestSuite) Test_GetGameModerations_Success() {
 
 func (s *TestSuite) Test_GetGameModerations_MissingClaims() {
 	gameID := td.Int31()
-	req := httptest.NewRequest(http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
 
 	s.provider.GetGameModerations(s.httpResponse, req)
 
@@ -83,7 +83,7 @@ func (s *TestSuite) Test_GetGameModerations_InvalidID() {
 	authToken, userID, role := td.String(), td.String(), td.String()
 	publisherName := td.String()
 
-	req := httptest.NewRequest(http.MethodGet, "/games/invalid/moderations", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/invalid/moderations", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
@@ -105,7 +105,7 @@ func (s *TestSuite) Test_GetGameModerations_AppError() {
 	publisherName := td.String()
 	gameID := td.Int31()
 
-	req := httptest.NewRequest(http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	appErr := apperr.NewNotFoundError("game", gameID)
@@ -129,7 +129,7 @@ func (s *TestSuite) Test_GetGameModerations_FacadeError() {
 	publisherName := td.String()
 	gameID := td.Int31()
 
-	req := httptest.NewRequest(http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)

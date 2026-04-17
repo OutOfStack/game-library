@@ -16,7 +16,7 @@ import (
 func (s *TestSuite) Test_DeleteGame_Success() {
 	gameID, authToken, publisher, role := td.Int31(), td.String(), td.String(), td.String()
 
-	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
@@ -35,7 +35,7 @@ func (s *TestSuite) Test_DeleteGame_Success() {
 }
 
 func (s *TestSuite) Test_DeleteGame_InvalidID() {
-	req := httptest.NewRequest(http.MethodDelete, "/games/-100", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodDelete, "/games/-100", nil)
 
 	r := chi.NewRouter()
 	r.Delete("/games/{id}", s.provider.DeleteGame)
@@ -49,7 +49,7 @@ func (s *TestSuite) Test_DeleteGame_InvalidID() {
 func (s *TestSuite) Test_DeleteGame_MissingClaims() {
 	gameID := td.Int31()
 
-	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
 
 	handler := http.HandlerFunc(s.provider.DeleteGame)
 	r := chi.NewRouter()
@@ -63,7 +63,7 @@ func (s *TestSuite) Test_DeleteGame_MissingClaims() {
 func (s *TestSuite) Test_DeleteGame_FacadeError() {
 	gameID, authToken, publisher, role := td.Int31(), td.String(), td.String(), td.String()
 
-	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)

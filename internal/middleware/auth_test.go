@@ -45,7 +45,7 @@ func (s *AuthTestSuite) Test_Authenticate_Success() {
 
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 
@@ -59,7 +59,7 @@ func (s *AuthTestSuite) Test_Authenticate_NoAuthorizationHeader() {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -73,7 +73,7 @@ func (s *AuthTestSuite) Test_Authenticate_NoBearerToken() {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Basic abc123")
 	rr := httptest.NewRecorder()
 
@@ -91,7 +91,7 @@ func (s *AuthTestSuite) Test_Authenticate_InvalidToken() {
 
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(errors.New("invalid token"))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 
@@ -105,7 +105,7 @@ func (s *AuthTestSuite) Test_Authenticate_EmptyBearerToken() {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer ")
 	rr := httptest.NewRecorder()
 
@@ -123,7 +123,7 @@ func (s *AuthTestSuite) Test_Authenticate_VerifyAPIUnavailable() {
 
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(auth.ErrVerifyAPIUnavailable)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 
@@ -150,7 +150,7 @@ func (s *AuthTestSuite) Test_Authorize_Success() {
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(nil)
 	s.authClientMock.EXPECT().ParseToken(token).Return(claims, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 
@@ -166,7 +166,7 @@ func (s *AuthTestSuite) Test_Authorize_MissingToken() {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -192,7 +192,7 @@ func (s *AuthTestSuite) Test_Authorize_InvalidRole() {
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(nil)
 	s.authClientMock.EXPECT().ParseToken(token).Return(claims, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 
@@ -215,7 +215,7 @@ func (s *AuthTestSuite) Test_Authorize_ParseTokenError() {
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(nil)
 	s.authClientMock.EXPECT().ParseToken(token).Return(nil, errors.New("invalid token format"))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 
@@ -252,7 +252,7 @@ func (s *AuthTestSuite) Test_GetClaims_Success() {
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(nil)
 	s.authClientMock.EXPECT().ParseToken(token).Return(claims, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/games", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 
@@ -276,7 +276,7 @@ func (s *AuthTestSuite) Test_GetClaims_NotFound() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -310,7 +310,7 @@ func (s *AuthTestSuite) Test_AuthenticationFlow_MultipleRoles() {
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token1).Return(nil)
 	s.authClientMock.EXPECT().ParseToken(token1).Return(publisherClaims, nil)
 
-	req1 := httptest.NewRequest(http.MethodPost, "/games", nil)
+	req1 := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", nil)
 	req1.Header.Set("Authorization", "Bearer "+token1)
 	rr1 := httptest.NewRecorder()
 
@@ -321,7 +321,7 @@ func (s *AuthTestSuite) Test_AuthenticationFlow_MultipleRoles() {
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token2).Return(nil)
 	s.authClientMock.EXPECT().ParseToken(token2).Return(moderatorClaims, nil)
 
-	req2 := httptest.NewRequest(http.MethodPost, "/games", nil)
+	req2 := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", nil)
 	req2.Header.Set("Authorization", "Bearer "+token2)
 	rr2 := httptest.NewRecorder()
 
@@ -343,7 +343,7 @@ func (s *AuthTestSuite) Test_Authenticate_BearerTokenPassedToHandler() {
 
 	s.authClientMock.EXPECT().Verify(gomock.Any(), token).Return(nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 

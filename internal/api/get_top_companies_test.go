@@ -16,7 +16,7 @@ func (s *TestSuite) TestTopGetCompanies_Success() {
 		model.CompanyTypeDeveloper,
 	}
 	companyType := companies[td.Intn(len(companies))]
-	req := httptest.NewRequest(http.MethodGet, "/company/top/?type="+companyType, nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/company/top/?type="+companyType, nil)
 
 	s.gameFacadeMock.EXPECT().GetTopCompanies(mock.Any(), companyType, int64(10)).Return([]model.Company{
 		{ID: 1, Name: "Developer 1"},
@@ -38,7 +38,7 @@ func (s *TestSuite) TestTopGetCompanies_Error() {
 		model.CompanyTypeDeveloper,
 	}
 	companyType := companies[td.Intn(len(companies))]
-	req := httptest.NewRequest(http.MethodGet, "/company/top/?type="+companyType, nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/company/top/?type="+companyType, nil)
 
 	s.gameFacadeMock.EXPECT().GetTopCompanies(mock.Any(), companyType, int64(10)).Return(nil, errors.New("new error"))
 

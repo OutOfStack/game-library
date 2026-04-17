@@ -40,7 +40,7 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 	}
 
 	// create request with multipart form data
-	req := httptest.NewRequest(http.MethodPost, "/games/images", &b)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
@@ -86,7 +86,7 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 func (s *TestSuite) Test_UploadGameImages_ParseFormError() {
 	role, authToken := td.String(), td.String()
 
-	req := httptest.NewRequest(http.MethodPost, "/games/images", bytes.NewReader([]byte("invalid form data")))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", bytes.NewReader([]byte("invalid form data")))
 	req.Header.Set("Content-Type", "multipart/form-data")
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
@@ -104,7 +104,7 @@ func (s *TestSuite) Test_UploadGameImages_ParseFormError() {
 }
 
 func (s *TestSuite) Test_UploadGameImages_MissingClaims() {
-	req := httptest.NewRequest(http.MethodPost, "/games/images", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", nil)
 
 	s.provider.UploadGameImages(s.httpResponse, req)
 
@@ -127,7 +127,7 @@ func (s *TestSuite) Test_UploadGameImages_PublishingMonthlyLimitReached() {
 		s.T().Log(cErr)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/games/images", &b)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
@@ -160,7 +160,7 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 		s.T().Log(cErr)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/games/images", &b)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+authToken)
 

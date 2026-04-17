@@ -28,7 +28,7 @@ func TestMetrics_RecordsStatusCode(t *testing.T) {
 				w.WriteHeader(tt.statusCode)
 			}))
 
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/test", nil)
 			rr := httptest.NewRecorder()
 
 			handler.ServeHTTP(rr, req)
@@ -44,7 +44,7 @@ func TestMetrics_DefaultStatusCode(t *testing.T) {
 		_, _ = w.Write([]byte("OK"))
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/test", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -59,7 +59,7 @@ func TestMetrics_WithChiRoutePattern(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/games/123", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/games/123", nil)
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)
@@ -82,7 +82,7 @@ func TestMetrics_DifferentMethods(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			}))
 
-			req := httptest.NewRequest(method, "/test", nil)
+			req := httptest.NewRequestWithContext(t.Context(), method, "/test", nil)
 			rr := httptest.NewRecorder()
 
 			handler.ServeHTTP(rr, req)
@@ -103,7 +103,7 @@ func TestMetrics_Flusher(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/test", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -119,7 +119,7 @@ func TestMetrics_ResponseBodyWritten(t *testing.T) {
 		_, _ = w.Write([]byte(expectedBody))
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/test", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)

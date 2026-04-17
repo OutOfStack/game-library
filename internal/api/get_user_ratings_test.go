@@ -28,7 +28,7 @@ func (s *TestSuite) Test_GetUserRatings_Success() {
 	}
 
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
@@ -50,7 +50,7 @@ func (s *TestSuite) Test_GetUserRatings_Success() {
 func (s *TestSuite) Test_GetUserRatings_MissingClaims() {
 	requestData := api.GetUserRatingsRequest{}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
 
 	s.provider.GetUserRatings(s.httpResponse, req)
 
@@ -64,7 +64,7 @@ func (s *TestSuite) Test_GetUserRatings_FacadeError() {
 	requestData := api.GetUserRatingsRequest{}
 
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)

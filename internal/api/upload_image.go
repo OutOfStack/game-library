@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	// maxFormMemory maximum amount of memory used to store multipart form data
-	maxFormMemory = 12 << 20 // 32 MB
 	// maxRequestBodySize upper bound on the request body size to prevent memory exhaustion
-	maxRequestBodySize = 24 << 20 // 64 MB
+	maxRequestBodySize = 32 << 20 // 32 MB
+	// maxFormMemory maximum amount of memory used to store multipart form data
+	maxFormMemory = maxRequestBodySize / 2
 )
 
 // UploadGameImages godoc

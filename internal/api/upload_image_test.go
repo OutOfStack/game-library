@@ -110,7 +110,7 @@ func (s *TestSuite) Test_UploadGameImages_RequestBodyTooLarge() {
 	w := multipart.NewWriter(&b)
 	fileWriter, _ := w.CreateFormFile("cover", "huge.jpg")
 	// write a payload larger than maxRequestBodySize (24MB) so MaxBytesReader rejects it
-	_, err := io.Copy(fileWriter, bytes.NewReader(make([]byte, 25<<20)))
+	_, err := io.Copy(fileWriter, bytes.NewReader(make([]byte, 33<<20)))
 	s.Require().NoError(err)
 	if cErr := w.Close(); cErr != nil {
 		s.T().Log(cErr)

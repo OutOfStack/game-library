@@ -47,7 +47,7 @@ func (s *TestSuite) Test_GetUserGames_Success() {
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/user/games", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/user/games", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
@@ -74,7 +74,7 @@ func (s *TestSuite) Test_GetUserGames_Success() {
 }
 
 func (s *TestSuite) Test_GetUserGames_MissingClaims() {
-	req := httptest.NewRequest(http.MethodGet, "/user/games", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/user/games", nil)
 
 	s.provider.GetUserGames(s.httpResponse, req)
 
@@ -85,7 +85,7 @@ func (s *TestSuite) Test_GetUserGames_FacadeError() {
 	authToken, userID, role := td.String(), td.String(), td.String()
 	publisherName := td.String()
 
-	req := httptest.NewRequest(http.MethodGet, "/user/games", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/user/games", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
@@ -114,7 +114,7 @@ func (s *TestSuite) Test_GetUserGames_MapToGameResponseError() {
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/user/games", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/user/games", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)

@@ -56,7 +56,7 @@ func TestDecodeChi_Success(t *testing.T) {
 	}
 	body, _ := json.Marshal(input)
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
@@ -69,7 +69,7 @@ func TestDecodeChi_Success(t *testing.T) {
 
 func TestDecodeChi_InvalidJSON(t *testing.T) {
 	decoder := web.NewDecoder(zap.NewNop(), &appconf.Cfg{})
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("{invalid_json}")))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", bytes.NewReader([]byte("{invalid_json}")))
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
@@ -89,7 +89,7 @@ func TestDecodeChi_ValidationError(t *testing.T) {
 	}
 	body, _ := json.Marshal(input)
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody
@@ -115,7 +115,7 @@ func TestDecodeChi_ValidationErrorEmptyBody(t *testing.T) {
 	input := ReqBody{} // Empty struct triggers validation errors
 	body, _ := json.Marshal(input)
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	var decoded ReqBody

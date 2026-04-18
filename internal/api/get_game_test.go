@@ -16,7 +16,7 @@ import (
 func (s *TestSuite) Test_GetGame_Success() {
 	id, name := td.Int31(), td.String()
 
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
 
 	s.gameFacadeMock.EXPECT().GetGameByID(mock.Any(), id).Return(model.Game{ID: id, Name: name}, nil)
 	s.gameFacadeMock.EXPECT().GetGenresMap(mock.Any()).Return(nil, nil)
@@ -35,7 +35,7 @@ func (s *TestSuite) Test_GetGame_Success() {
 }
 
 func (s *TestSuite) Test_GetGame_InvalidID() {
-	req := httptest.NewRequest(http.MethodGet, "/games/-100", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/-100", nil)
 
 	r := chi.NewRouter()
 	r.Get("/games/{id}", s.provider.GetGame)
@@ -48,7 +48,7 @@ func (s *TestSuite) Test_GetGame_InvalidID() {
 func (s *TestSuite) Test_GetGame_NotFound() {
 	id := td.Int31()
 
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
 
 	s.gameFacadeMock.EXPECT().GetGameByID(mock.Any(), id).Return(model.Game{}, apperr.NewNotFoundError("game", id))
 
@@ -63,7 +63,7 @@ func (s *TestSuite) Test_GetGame_NotFound() {
 func (s *TestSuite) Test_GetGame_Error() {
 	id := td.Int31()
 
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
 
 	s.gameFacadeMock.EXPECT().GetGameByID(mock.Any(), id).Return(model.Game{}, errors.New("new error"))
 

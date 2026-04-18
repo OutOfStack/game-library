@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -13,8 +14,10 @@ import (
 )
 
 const (
+	// maxRequestBodySize upper bound on the request body size to prevent memory exhaustion
+	maxRequestBodySize = 32 << 20 // 32 MB
 	// maxFormMemory maximum amount of memory used to store multipart form data
-	maxFormMemory = 32 << 20 // 32 MB
+	maxFormMemory = maxRequestBodySize / 2
 )
 
 // UploadGameImages godoc
@@ -28,6 +31,7 @@ const (
 // @Param   screenshots formData []file false "Screenshot image files (.png, .jpg, .jpeg), up to 8 files, maximum 1MB each" collectionFormat(multi)
 // @Success 201 {object} api.UploadImagesResponse
 // @Failure 400 {object} web.ErrorResponse
+// @Failure 413 {object} web.ErrorResponse
 // @Failure 429 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/images [post]
@@ -44,9 +48,14 @@ func (p *Provider) UploadGameImages(w http.ResponseWriter, r *http.Request) {
 
 	span.SetAttributes(attribute.String("user.id", claims.UserID()))
 
-	// parse multipart form with a reasonable max memory
+	// limit request body size to prevent memory exhaustion, then parse multipart form
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
 	err = r.ParseMultipartForm(maxFormMemory)
 	if err != nil {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			web.RespondError(w, web.NewError(fmt.Errorf("request body too large"), http.StatusRequestEntityTooLarge))
+			return
+		}
 		web.RespondError(w, web.NewError(fmt.Errorf("failed to parse form"), http.StatusBadRequest))
 		return
 	}

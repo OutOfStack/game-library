@@ -46,7 +46,7 @@ func (s *TestSuite) Test_UpdateGame_Success() {
 		Websites:     requestData.Websites,
 	}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)
@@ -65,7 +65,7 @@ func (s *TestSuite) Test_UpdateGame_Success() {
 }
 
 func (s *TestSuite) Test_UpdateGame_InvalidID() {
-	req := httptest.NewRequest(http.MethodPatch, "/games/-100", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPatch, "/games/-100", nil)
 
 	r := chi.NewRouter()
 	r.Patch("/games/{id}", s.provider.UpdateGame)
@@ -81,7 +81,7 @@ func (s *TestSuite) Test_UpdateGame_MissingClaims() {
 
 	requestData := api.UpdateGameRequest{}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
 
 	handler := http.HandlerFunc(s.provider.UpdateGame)
 	r := chi.NewRouter()
@@ -97,7 +97,7 @@ func (s *TestSuite) Test_UpdateGame_FacadeError() {
 
 	requestData := api.UpdateGameRequest{}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: publisher, UserRole: role}, nil)

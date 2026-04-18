@@ -49,7 +49,7 @@ generate-mocks:
 	mockgen -destination=internal/repo/mocks/tx.go -package=repo_mock github.com/jackc/pgx/v5 Tx
 	mockgen -source=internal/api/grpc/infoapi/service.go -destination=internal/api/grpc/infoapi/mocks/service.go -package=infoapi_mock
 
-BUF_VERSION := v1.65
+BUF_VERSION := v1.68.1
 PROTOC_GEN_GO_VERSION := v1.36.11
 PROTOC_GEN_GO_GRPC_VERSION := v1.6.1
 PROTO_AUTHAPI_VERSION := ref=2a0af39 # or tag=v1.0.0
@@ -68,7 +68,7 @@ generate-proto:
 
 generate: generate-proto generate-swag generate-mocks
 
-LINT_VERSION := v2.10
+LINT_VERSION := v2.11
 LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VERSION)
 lint:
 	@golangci-lint version >/dev/null 2>&1 || { echo "Installing golangci-lint..."; go install ${LINT_PKG}; }

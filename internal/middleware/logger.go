@@ -23,7 +23,7 @@ func Logger(logger *zap.Logger) func(http.Handler) http.Handler {
 
 			// log the request and response details
 			statusCode := ww.Status()
-			logFields := []zap.Field{
+			logFields := []zap.Field{ //nolint:prealloc
 				zap.Int("status", statusCode),
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path),

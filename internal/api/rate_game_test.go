@@ -24,7 +24,7 @@ func (s *TestSuite) Test_RateGame_Success() {
 		Rating: rating,
 	}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
@@ -44,7 +44,7 @@ func (s *TestSuite) Test_RateGame_Success() {
 }
 
 func (s *TestSuite) Test_RateGame_InvalidID() {
-	req := httptest.NewRequest(http.MethodPost, "/-100/rate", nil)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/-100/rate", nil)
 
 	r := chi.NewRouter()
 	r.Post("/{id}/rate", s.provider.RateGame)
@@ -60,7 +60,7 @@ func (s *TestSuite) Test_RateGame_MissingClaims() {
 
 	requestData := api.CreateRatingRequest{}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
 
 	handler := http.HandlerFunc(s.provider.RateGame)
 	r := chi.NewRouter()
@@ -78,7 +78,7 @@ func (s *TestSuite) Test_RateGame_FacadeError() {
 		Rating: rating,
 	}
 	requestBody, _ := json.Marshal(requestData)
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)

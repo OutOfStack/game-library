@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	// maxRequestBodySize upper bound on the request body size to prevent memory exhaustion
-	maxRequestBodySize = 24 << 20 // 24 MB
 	// maxFormMemory maximum amount of memory used to store multipart form data
-	maxFormMemory = 0.5 * maxRequestBodySize
+	maxFormMemory = 12 << 20 // 32 MB
+	// maxRequestBodySize upper bound on the request body size to prevent memory exhaustion
+	maxRequestBodySize = 24 << 20 // 64 MB
 )
 
 // UploadGameImages godoc
@@ -31,6 +31,7 @@ const (
 // @Param   screenshots formData []file false "Screenshot image files (.png, .jpg, .jpeg), up to 8 files, maximum 1MB each" collectionFormat(multi)
 // @Success 201 {object} api.UploadImagesResponse
 // @Failure 400 {object} web.ErrorResponse
+// @Failure 413 {object} web.ErrorResponse
 // @Failure 429 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
 // @Router /games/images [post]

@@ -103,6 +103,36 @@ func (s *TestSuite) Test_UploadGameImages_ParseFormError() {
 	s.JSONEq(`{"error": "failed to parse form"}`, s.httpResponse.Body.String())
 }
 
+func (s *TestSuite) Test_UploadGameImages_RequestBodyTooLarge() {
+	role, authToken := td.String(), td.String()
+
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	fileWriter, _ := w.CreateFormFile("cover", "huge.jpg")
+	// write a payload larger than maxRequestBodySize (24MB) so MaxBytesReader rejects it
+	_, err := io.Copy(fileWriter, bytes.NewReader(make([]byte, 25<<20)))
+	s.Require().NoError(err)
+	if cErr := w.Close(); cErr != nil {
+		s.T().Log(cErr)
+	}
+
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+authToken)
+
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Name: td.String(), UserRole: role}, nil)
+	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
+
+	authenticator := middleware.Authenticate(s.log, s.authClientMock)
+	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
+	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UploadGameImages)))
+
+	handler.ServeHTTP(s.httpResponse, req)
+
+	s.Equal(http.StatusRequestEntityTooLarge, s.httpResponse.Code)
+	s.JSONEq(`{"error": "request body too large"}`, s.httpResponse.Body.String())
+}
+
 func (s *TestSuite) Test_UploadGameImages_MissingClaims() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", nil)
 

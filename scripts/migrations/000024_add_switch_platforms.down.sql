@@ -1,2 +1,2 @@
 DELETE FROM platforms 
-    WHERE name IN ('Nintendo Switch', 'Nintendo Switch 2');
+    WHERE igdb_id IN (130, 508);

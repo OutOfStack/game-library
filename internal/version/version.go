@@ -1,10 +1,16 @@
 package version
 
-import "runtime/debug"
+import (
+	"runtime/debug"
+	"sync"
+)
 
 var (
 	appVersion = "dev"
 	appCommit  = ""
+
+	cachedInfo Info
+	cacheOnce  sync.Once
 )
 
 // Info contains build and source metadata for the running binary.
@@ -18,7 +24,10 @@ type Info struct {
 
 // Get returns build metadata embedded by the Go toolchain and release build.
 func Get() Info {
-	return resolve(appVersion, appCommit, debug.ReadBuildInfo)
+	cacheOnce.Do(func() {
+		cachedInfo = resolve(appVersion, appCommit, debug.ReadBuildInfo)
+	})
+	return cachedInfo
 }
 
 func resolve(version, commit string, readBuildInfo func() (*debug.BuildInfo, bool)) Info {

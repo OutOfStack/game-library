@@ -1,5 +1,8 @@
 # game-library
 
+[![Build](https://github.com/OutOfStack/game-library/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/OutOfStack/game-library/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/OutOfStack/game-library/branch/main/graph/badge.svg)](https://codecov.io/gh/OutOfStack/game-library)
+
 ## Introduction
 
 `game-library` is a web application for exploring and rating games.

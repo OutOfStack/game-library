@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/model"
+	"github.com/OutOfStack/game-library/pkg/slice"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
@@ -96,7 +98,11 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 				continue
 			}
 
-			updatedData := mapGameToUpdateIGDBGameData(game, updatedInfo, igdbIDPlatformMap)
+			updatedData, changed := mapGameToUpdateIGDBGameData(game, updatedInfo, igdbIDPlatformMap)
+			if !changed {
+				s.LastProcessedID = gameID
+				continue
+			}
 
 			// update game info
 			err = tp.storage.UpdateGameIGDBInfo(ctx, gameID, updatedData)
@@ -124,14 +130,9 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 	return tp.DoTask(UpdateGameInfoTaskName, taskFn)
 }
 
-func mapGameToUpdateIGDBGameData(game model.Game, updateInfo igdbapi.GameInfoForUpdate, platformsMap map[int64]model.Platform) model.UpdateGameIGDBData {
-	name := game.Name
+func mapGameToUpdateIGDBGameData(game model.Game, updateInfo igdbapi.GameInfoForUpdate, platformsMap map[int64]model.Platform) (model.UpdateGameIGDBData, bool) {
 	var websites []string
 	var platformsIDs []int32
-
-	if updateInfo.Name != name {
-		name = updateInfo.Name
-	}
 
 	for _, ipID := range updateInfo.Platforms {
 		if p, ok := platformsMap[ipID]; ok {
@@ -145,11 +146,19 @@ func mapGameToUpdateIGDBGameData(game model.Game, updateInfo igdbapi.GameInfoFor
 		}
 	}
 
-	return model.UpdateGameIGDBData{
-		Name:            name,
+	data := model.UpdateGameIGDBData{
+		Name:            updateInfo.Name,
 		PlatformsIDs:    platformsIDs,
 		Websites:        websites,
 		IGDBRating:      updateInfo.TotalRating,
 		IGDBRatingCount: updateInfo.TotalRatingCount,
 	}
+
+	changed := game.Name != data.Name ||
+		math.Abs(game.IGDBRating-data.IGDBRating) >= 0.1 ||
+		game.IGDBRatingCount != data.IGDBRatingCount ||
+		!slice.SameValues(game.PlatformsIDs, data.PlatformsIDs) ||
+		!slice.SameValues(game.Websites, data.Websites)
+
+	return data, changed
 }

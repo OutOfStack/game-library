@@ -12,7 +12,11 @@ COPY ./app.example.env ./out/app.env
 COPY . .
 
 # build app
-RUN go build -o ./out/game-library-api cmd/game-library-api/main.go
+ARG APP_VERSION=dev
+ARG APP_COMMIT=unknown
+RUN go build \
+    -ldflags "-X github.com/OutOfStack/game-library/internal/version.appVersion=${APP_VERSION} -X github.com/OutOfStack/game-library/internal/version.appCommit=${APP_COMMIT}" \
+    -o ./out/game-library-api cmd/game-library-api/main.go
 
 # run
 FROM alpine:3.23

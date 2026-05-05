@@ -19,6 +19,7 @@
 - [Configuration](#configuration)
 - [Documentation](#documentation)
 - [Examples](#examples)
+- [Contributing](#contributing)
 - [List of Make commands](#list-of-make-commands)
 - [License](#license)
 
@@ -132,6 +133,10 @@ curl -X GET "http://localhost:8000/api/games?pageSize=3&page=1&orderBy=releaseDa
 ```
 
 To see other examples of API endpoints, refer to the [documentation](#documentation).
+
+## Contributing
+
+Commit message and release rules are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## List of Make commands:
 

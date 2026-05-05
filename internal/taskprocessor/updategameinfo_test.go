@@ -401,3 +401,81 @@ func (s *TestSuite) TestStartUpdateGameInfo_EmptySettings() {
 
 	s.Require().NoError(err)
 }
+
+func (s *TestSuite) TestStartUpdateGameInfo_SkipUnchangedGame() {
+	lastProcessedID := td.Int31()
+	task := model.Task{
+		Name:     "update_game_info",
+		Status:   model.IdleTaskStatus,
+		RunCount: 0,
+		Settings: fmt.Appendf(nil, `{"lastProcessedId":%d}`, lastProcessedID),
+	}
+
+	gameIDs := []int32{td.Int31(), td.Int31()}
+	platforms := []model.Platform{
+		{ID: td.Int31(), IGDBID: td.Int64()},
+		{ID: td.Int31(), IGDBID: td.Int64()},
+	}
+
+	website1URL := td.URL()
+	website2URL := td.URL()
+
+	game1 := model.Game{
+		ID:              gameIDs[0],
+		Name:            td.String(),
+		IGDBID:          td.Int64(),
+		PlatformsIDs:    []int32{platforms[1].ID, platforms[0].ID},
+		Websites:        []string{website2URL, website1URL},
+		IGDBRating:      td.Float64n(100),
+		IGDBRatingCount: td.Int31(),
+	}
+	game2 := model.Game{
+		ID:     gameIDs[1],
+		Name:   td.String(),
+		IGDBID: td.Int64(),
+	}
+
+	updatedInfo1 := igdbapi.GameInfoForUpdate{
+		ID:               game1.IGDBID,
+		Name:             game1.Name,
+		TotalRating:      game1.IGDBRating,
+		TotalRatingCount: game1.IGDBRatingCount,
+		Platforms:        []int64{platforms[0].IGDBID, platforms[1].IGDBID},
+		Websites: []igdbapi.Website{
+			{URL: website1URL, Type: igdbapi.WebsiteTypeSteam},
+			{URL: website2URL, Type: igdbapi.WebsiteTypeOfficial},
+		},
+	}
+
+	updatedInfo2 := igdbapi.GameInfoForUpdate{
+		ID:               game2.IGDBID,
+		Name:             td.String(),
+		TotalRating:      td.Float64n(100),
+		TotalRatingCount: td.Int31(),
+		Platforms:        []int64{platforms[0].IGDBID},
+		Websites: []igdbapi.Website{
+			{URL: td.String(), Type: igdbapi.WebsiteTypeSteam},
+		},
+	}
+
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
+
+	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
+	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
+
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[0]).Return(game1, nil)
+	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game1.IGDBID).Return(updatedInfo1, nil)
+	// game1 has no changes -> no UpdateGameIGDBInfo call expected
+
+	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[1]).Return(game2, nil)
+	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
+	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
+
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
+
+	err := s.provider.StartUpdateGameInfo()
+
+	s.Require().NoError(err)
+}

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/OutOfStack/game-library/internal/version"
 	"github.com/OutOfStack/game-library/internal/web"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -13,6 +14,7 @@ const (
 )
 
 type health struct {
+	version.Info
 	Status    string `json:"status,omitempty"`
 	Host      string `json:"host,omitempty"`
 	Pod       string `json:"pod,omitempty"`
@@ -33,13 +35,8 @@ func NewHealthCheck(db *pgxpool.Pool) *HealthCheck {
 
 // Readiness determines whether service is ready
 func (hc *HealthCheck) Readiness(w http.ResponseWriter, r *http.Request) {
-	var h health
-	host, err := os.Hostname()
-	if err != nil {
-		host = unavailable
-	}
-	h.Host = host
-	if err = hc.db.Ping(r.Context()); err != nil {
+	h := newHealth()
+	if err := hc.db.Ping(r.Context()); err != nil {
 		h.Status = "database not ready"
 		web.Respond(w, h, http.StatusServiceUnavailable)
 		return
@@ -50,18 +47,24 @@ func (hc *HealthCheck) Readiness(w http.ResponseWriter, r *http.Request) {
 
 // Liveness determines whether service is up
 func (hc *HealthCheck) Liveness(w http.ResponseWriter, _ *http.Request) {
+	h := newHealth()
+	h.Status = "OK"
+	h.Pod = os.Getenv("KUBERNETES_PODNAME")
+	h.PodIP = os.Getenv("KUBERNETES_PODIP")
+	h.Node = os.Getenv("KUBERNETES_NODENAME")
+	h.Namespace = os.Getenv("KUBERNETES_NAMESPACE")
+
+	web.Respond(w, h, http.StatusOK)
+}
+
+func newHealth() health {
 	host, err := os.Hostname()
 	if err != nil {
 		host = unavailable
 	}
-	h := health{
-		Host:      host,
-		Status:    "OK",
-		Pod:       os.Getenv("KUBERNETES_PODNAME"),
-		PodIP:     os.Getenv("KUBERNETES_PODIP"),
-		Node:      os.Getenv("KUBERNETES_NODENAME"),
-		Namespace: os.Getenv("KUBERNETES_NAMESPACE"),
-	}
 
-	web.Respond(w, h, http.StatusOK)
+	return health{
+		Info: version.Get(),
+		Host: host,
+	}
 }

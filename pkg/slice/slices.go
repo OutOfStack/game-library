@@ -9,7 +9,7 @@ func SameValues[T cmp.Ordered](a, b []T) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	aCountMap := map[T]int{}
+	aCountMap := make(map[T]int, len(a))
 	for _, v := range a {
 		aCountMap[v]++
 	}

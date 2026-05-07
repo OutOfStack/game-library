@@ -1,4 +1,4 @@
-name: "Test, build and push image, deploy"
+name: Test, build and push image, deploy
 
 on: [push]
 

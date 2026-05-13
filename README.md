@@ -1,5 +1,8 @@
 # game-library
 
+[![Build](https://img.shields.io/github/actions/workflow/status/OutOfStack/game-library/main.yml?branch=main&label=build)](https://github.com/OutOfStack/game-library/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/OutOfStack/game-library/graph/badge.svg?token=NRIKDH6OFR)](https://codecov.io/gh/OutOfStack/game-library)
+
 ## Introduction
 
 `game-library` is a web application for exploring and rating games.

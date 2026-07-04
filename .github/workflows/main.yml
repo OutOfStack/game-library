@@ -149,7 +149,7 @@ jobs:
         sed -i'' \
         -e 's/_K8S_URL_/${{ secrets.K8S_URL }}/g' \
         -e 's/_K8S_IP_/${{ secrets.K8S_IP }}/g' \
-        -e 's/_IMAGE_TAG_/${{ steps.image_tag.outputs.image_tag }}/g' \
+        -e 's/_IMAGE_TAG_/${{ needs.image_build_push.outputs.image_tag }}/g' \
         -e 's/_UI_URL_/${{ vars.UI_URL }}/g' \
         .k8s/*.yaml
 

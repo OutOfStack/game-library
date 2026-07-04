@@ -1,4 +1,4 @@
-name: OpenAI API integration tests
+name: Integration tests
 
 on:
   workflow_dispatch:
@@ -25,4 +25,4 @@ jobs:
     - name: Run OpenAI integration tests
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: go test -v -tags=integration -count=1 ./internal/client/openaiapi/
+      run: go test -v -tags=integration -count=1 ./...

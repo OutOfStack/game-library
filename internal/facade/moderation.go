@@ -237,19 +237,19 @@ func hasViolations(resp *openaiapi.ModerationResponse) bool {
 	return false
 }
 
-// getViolationDetails returns details about violations
+// getViolationDetails returns flagged categories with input types (text, image) they apply to
 func getViolationDetails(resp *openaiapi.ModerationResponse) string {
 	var violations []string
-	inputTypes := []string{"name", "summary", "developers", "publisher", "websites", "logo", "screenshot"}
-
-	for i, result := range resp.Results {
-		if result.Flagged {
-			inputType := "content"
-			if i < len(inputTypes) {
-				inputType = inputTypes[i]
+	for _, result := range resp.Results {
+		if !result.Flagged {
+			continue
+		}
+		for _, category := range result.Categories {
+			if types := result.CategoryInputTypes[category]; len(types) > 0 {
+				violations = append(violations, fmt.Sprintf("%s (%s)", category, strings.Join(types, ", ")))
+			} else {
+				violations = append(violations, category)
 			}
-
-			violations = append(violations, fmt.Sprintf("%s: %s\n", inputType, strings.Join(result.Categories, ", ")))
 		}
 	}
 	return strings.Join(violations, "; ")

@@ -368,7 +368,7 @@ func validTestCfg() *appconf.Cfg {
 			APIKey:          "key",
 			APIURL:          "https://api.openai.com/v1",
 			ModerationModel: "omni-moderation-latest",
-			VisionModel:     "gpt-5-nano",
+			VisionModel:     "gpt-5.4-nano",
 			Timeout:         30 * time.Second,
 		},
 		AuthAPI: appconf.AuthAPI{

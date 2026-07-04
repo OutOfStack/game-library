@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
@@ -201,32 +202,58 @@ func truncateText(s string, maxLen int) string {
 	return string(runes[:maxLen])
 }
 
-func getCategoriesFromResult(r *openai.Moderation) []string {
+// getFlaggedCategoriesFromResult returns flagged categories and input types (text, image) each category applies to
+func getFlaggedCategoriesFromResult(r *openai.Moderation) (categories []string, categoryInputTypes map[string][]string) {
 	if r == nil {
-		return nil
+		return nil, nil
 	}
 
-	var categories []string
-	if r.Categories.Harassment || r.Categories.HarassmentThreatening {
-		categories = append(categories, "harassment")
-	}
-	if r.Categories.Hate || r.Categories.HateThreatening {
-		categories = append(categories, "hate")
-	}
-	if r.Categories.Illicit || r.Categories.IllicitViolent {
-		categories = append(categories, "illicit")
-	}
-	if r.Categories.SelfHarm || r.Categories.SelfHarmInstructions || r.Categories.SelfHarmIntent {
-		categories = append(categories, "self-harm")
-	}
-	if r.Categories.Sexual || r.Categories.SexualMinors {
-		categories = append(categories, "sexual")
-	}
-	if r.Categories.Violence || r.Categories.ViolenceGraphic {
-		categories = append(categories, "violence")
+	groups := []struct {
+		name       string
+		flagged    bool
+		inputTypes [][]string
+	}{
+		{"harassment", r.Categories.Harassment || r.Categories.HarassmentThreatening,
+			[][]string{r.CategoryAppliedInputTypes.Harassment, r.CategoryAppliedInputTypes.HarassmentThreatening}},
+		{"hate", r.Categories.Hate || r.Categories.HateThreatening,
+			[][]string{r.CategoryAppliedInputTypes.Hate, r.CategoryAppliedInputTypes.HateThreatening}},
+		{"illicit", r.Categories.Illicit || r.Categories.IllicitViolent,
+			[][]string{r.CategoryAppliedInputTypes.Illicit, r.CategoryAppliedInputTypes.IllicitViolent}},
+		{"self-harm", r.Categories.SelfHarm || r.Categories.SelfHarmInstructions || r.Categories.SelfHarmIntent,
+			[][]string{r.CategoryAppliedInputTypes.SelfHarm, r.CategoryAppliedInputTypes.SelfHarmInstructions,
+				r.CategoryAppliedInputTypes.SelfHarmIntent}},
+		{"sexual", r.Categories.Sexual || r.Categories.SexualMinors,
+			[][]string{r.CategoryAppliedInputTypes.Sexual, r.CategoryAppliedInputTypes.SexualMinors}},
+		{"violence", r.Categories.Violence || r.Categories.ViolenceGraphic,
+			[][]string{r.CategoryAppliedInputTypes.Violence, r.CategoryAppliedInputTypes.ViolenceGraphic}},
 	}
 
-	return categories
+	categoryInputTypes = make(map[string][]string)
+	for _, g := range groups {
+		if !g.flagged {
+			continue
+		}
+		categories = append(categories, g.name)
+		if types := mergeUnique(g.inputTypes); len(types) > 0 {
+			categoryInputTypes[g.name] = types
+		}
+	}
+
+	return categories, categoryInputTypes
+}
+
+// mergeUnique returns sorted unique values from provided slices
+func mergeUnique(values [][]string) []string {
+	var res []string
+	for _, vs := range values {
+		for _, v := range vs {
+			if !slices.Contains(res, v) {
+				res = append(res, v)
+			}
+		}
+	}
+	slices.Sort(res)
+	return res
 }
 
 func convertModerationResponse(resp *openai.ModerationNewResponse) *ModerationResponse {
@@ -236,9 +263,11 @@ func convertModerationResponse(resp *openai.ModerationNewResponse) *ModerationRe
 
 	res := make([]ModerationResult, len(resp.Results))
 	for i, result := range resp.Results {
+		categories, categoryInputTypes := getFlaggedCategoriesFromResult(&result)
 		res[i] = ModerationResult{
-			Flagged:    result.Flagged,
-			Categories: getCategoriesFromResult(&result),
+			Flagged:            result.Flagged,
+			Categories:         categories,
+			CategoryInputTypes: categoryInputTypes,
 		}
 	}
 

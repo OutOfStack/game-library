@@ -1,0 +1,28 @@
+name: OpenAI API integration tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    # weekly on Monday 06:00 UTC
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  openai-integration:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.26'
+        cache: true
+
+    - name: Run OpenAI integration tests
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: go test -v -tags=integration -count=1 ./internal/client/openaiapi/

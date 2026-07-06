@@ -15,6 +15,9 @@ test:
 cover:
 	go test -cover -coverpkg=./... -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
 
+test-integration:
+	go test -v -tags=integration -count=1 ./...
+
 drunpg:
 	docker compose up -d --no-recreate db
 

@@ -32,7 +32,7 @@ data:
     IGDB_API_TIMEOUT: "10s"
     # openai api
     OPENAI_MODERATION_MODEL: "omni-moderation-latest"
-    OPENAI_VISION_MODEL: "gpt-5-nano"
+    OPENAI_VISION_MODEL: "gpt-5.4-nano"
     OPENAI_API_TIMEOUT: "30s"
     # auth api
     AUTHAPI_ADDRESS: "game-library-auth-service:9000"

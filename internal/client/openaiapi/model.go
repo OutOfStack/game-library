@@ -10,6 +10,8 @@ type ModerationResponse struct {
 type ModerationResult struct {
 	Flagged    bool     `json:"flagged"`
 	Categories []string `json:"categories"`
+	// CategoryInputTypes maps flagged category to input types (text, image) it applies to
+	CategoryInputTypes map[string][]string `json:"category_input_types"`
 }
 
 // VisionAnalysisResult represents the result from vision model image analysis

@@ -16,7 +16,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt/v4"
 	mock "go.uber.org/mock/gomock"
 )
 
@@ -50,7 +49,7 @@ func (s *TestSuite) Test_GetGameModerations_Success() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Subject: userID, UserRole: role, Name: publisherName}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().GetGameModerations(mock.Any(), gameID, publisherName).Return(moderations, nil)
 
@@ -86,7 +85,7 @@ func (s *TestSuite) Test_GetGameModerations_InvalidID() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/invalid/moderations", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Subject: userID, UserRole: role, Name: publisherName}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
@@ -109,7 +108,7 @@ func (s *TestSuite) Test_GetGameModerations_AppError() {
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	appErr := apperr.NewNotFoundError("game", gameID)
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Subject: userID, UserRole: role, Name: publisherName}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().GetGameModerations(mock.Any(), gameID, publisherName).Return(nil, appErr)
 
@@ -132,7 +131,7 @@ func (s *TestSuite) Test_GetGameModerations_FacadeError() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role, Name: publisherName}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Subject: userID, UserRole: role, Name: publisherName}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().GetGameModerations(mock.Any(), gameID, publisherName).Return(nil, errors.New("facade error"))
 

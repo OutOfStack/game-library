@@ -6,13 +6,12 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 )
 
 // GetPlatforms returns all platforms
 func (p *Provider) GetPlatforms(ctx context.Context) ([]model.Platform, error) {
 	list := make([]model.Platform, 0)
-	err := cache.Get(ctx, p.cache, getPlatformsKey(), &list, func() ([]model.Platform, error) {
+	err := p.cache.Get(ctx, getPlatformsKey(), &list, func() ([]model.Platform, error) {
 		return p.storage.GetPlatforms(ctx)
 	}, 0)
 	if err != nil {

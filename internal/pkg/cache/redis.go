@@ -33,7 +33,7 @@ func NewRedisStore(redisClient RedisClient, log *zap.Logger) *RedisStore {
 
 // Get gets value by key from cache. If key not present, runs fn and stores result in cache and returns result.
 // If ttl == 0, default ttl is used.
-func Get[T any](ctx context.Context, rs *RedisStore, key string, val *T, fn func() (T, error), ttl time.Duration) error {
+func (rs *RedisStore) Get[T any](ctx context.Context, key string, val *T, fn func() (T, error), ttl time.Duration) error {
 	err := rs.redisClient.GetStruct(ctx, key, val)
 	if err == nil {
 		return nil
@@ -58,13 +58,11 @@ func Get[T any](ctx context.Context, rs *RedisStore, key string, val *T, fn func
 }
 
 // Delete removes data by key from cache
-func Delete(ctx context.Context, c *RedisStore, key string) error {
-	return c.redisClient.Delete(ctx, key)
+func (rs *RedisStore) Delete(ctx context.Context, key string) error {
+	return rs.redisClient.Delete(ctx, key)
 }
 
 // DeleteByStartsWith removes data with key starting with provided key from cache
-func DeleteByStartsWith(ctx context.Context, rs *RedisStore, key string) error {
-	pattern := key + "*"
-
-	return rs.redisClient.DeleteByMatch(ctx, pattern)
+func (rs *RedisStore) DeleteByStartsWith(ctx context.Context, key string) error {
+	return rs.redisClient.DeleteByMatch(ctx, key+"*")
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt/v4"
 	mock "go.uber.org/mock/gomock"
 )
 
@@ -27,7 +26,7 @@ func (s *TestSuite) Test_RateGame_Success() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Subject: userID, UserRole: role}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().RateGame(mock.Any(), gameID, userID, rating).Return(nil)
 
@@ -81,7 +80,7 @@ func (s *TestSuite) Test_RateGame_FacadeError() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, fmt.Sprintf("/%d/rate", gameID), bytes.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: userID}, UserRole: role}, nil)
+	s.authClientMock.EXPECT().ParseToken(mock.Any()).Return(&auth.Claims{Subject: userID, UserRole: role}, nil)
 	s.authClientMock.EXPECT().Verify(mock.Any(), authToken).Return(nil)
 	s.gameFacadeMock.EXPECT().RateGame(mock.Any(), gameID, userID, rating).Return(errors.New("new error"))
 

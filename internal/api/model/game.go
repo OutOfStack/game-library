@@ -8,6 +8,14 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
+const (
+	fieldReleaseDate  = "releaseDate"
+	fieldGenresIDs    = "genresIds"
+	fieldLogoURL      = "logoUrl"
+	fieldPlatformsIDs = "platformsIds"
+	fieldScreenshots  = "screenshots"
+)
+
 // GetGamesQueryParams - get games query params
 type GetGamesQueryParams struct {
 	PageSize    uint32 `form:"pageSize"`
@@ -75,36 +83,36 @@ func (r *CreateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 
 	if r.ReleaseDate == "" {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "releaseDate",
+			Field: fieldReleaseDate,
 			Error: v.ErrRequiredMsg(),
 		})
 	} else if !v.ValidateDate(r.ReleaseDate) {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "releaseDate",
+			Field: fieldReleaseDate,
 			Error: v.ErrInvalidDateMsg(),
 		})
 	}
 
 	if len(r.GenresIDs) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "genresIds",
+			Field: fieldGenresIDs,
 			Error: v.ErrRequiredMsg(),
 		})
 	} else if !v.ValidatePositive(r.GenresIDs) {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "genresIds",
+			Field: fieldGenresIDs,
 			Error: v.ErrNonPositiveValuesMsg(),
 		})
 	}
 
 	if r.LogoURL == "" {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "logoUrl",
+			Field: fieldLogoURL,
 			Error: v.ErrRequiredMsg(),
 		})
 	} else if !v.ValidateImageURLs([]string{r.LogoURL}) {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "logoUrl",
+			Field: fieldLogoURL,
 			Error: v.ErrInvalidImageURLMsg(),
 		})
 	}
@@ -118,24 +126,24 @@ func (r *CreateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 
 	if len(r.PlatformsIDs) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "platformsIds",
+			Field: fieldPlatformsIDs,
 			Error: v.ErrRequiredMsg(),
 		})
 	} else if !v.ValidatePositive(r.PlatformsIDs) {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "platformsIds",
+			Field: fieldPlatformsIDs,
 			Error: v.ErrNonPositiveValuesMsg(),
 		})
 	}
 
 	if len(r.Screenshots) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "screenshots",
+			Field: fieldScreenshots,
 			Error: v.ErrRequiredMsg(),
 		})
 	} else if !v.ValidateImageURLs(r.Screenshots) {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "screenshots",
+			Field: fieldScreenshots,
 			Error: v.ErrInvalidImageURLsMsg(),
 		})
 	}
@@ -198,12 +206,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 	if r.ReleaseDate != nil {
 		if *r.ReleaseDate == "" {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "releaseDate",
+				Field: fieldReleaseDate,
 				Error: v.ErrRequiredMsg(),
 			})
 		} else if !v.ValidateDate(*r.ReleaseDate) {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "releaseDate",
+				Field: fieldReleaseDate,
 				Error: v.ErrInvalidDateMsg(),
 			})
 		}
@@ -212,12 +220,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 	if r.GenresIDs != nil {
 		if len(*r.GenresIDs) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "genresIds",
+				Field: fieldGenresIDs,
 				Error: v.ErrRequiredMsg(),
 			})
 		} else if !v.ValidatePositive(*r.GenresIDs) {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "genresIds",
+				Field: fieldGenresIDs,
 				Error: v.ErrNonPositiveValuesMsg(),
 			})
 		}
@@ -226,12 +234,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 	if r.LogoURL != nil {
 		if *r.LogoURL == "" {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "logoUrl",
+				Field: fieldLogoURL,
 				Error: v.ErrRequiredMsg(),
 			})
 		} else if !v.ValidateImageURLs([]string{*r.LogoURL}) {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "logoUrl",
+				Field: fieldLogoURL,
 				Error: v.ErrInvalidImageURLMsg(),
 			})
 		}
@@ -247,12 +255,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 	if r.PlatformsIDs != nil {
 		if len(*r.PlatformsIDs) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "platformsIds",
+				Field: fieldPlatformsIDs,
 				Error: v.ErrRequiredMsg(),
 			})
 		} else if !v.ValidatePositive(*r.PlatformsIDs) {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "platformsIds",
+				Field: fieldPlatformsIDs,
 				Error: v.ErrNonPositiveValuesMsg(),
 			})
 		}
@@ -261,12 +269,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 	if r.Screenshots != nil {
 		if len(*r.Screenshots) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "screenshots",
+				Field: fieldScreenshots,
 				Error: v.ErrRequiredMsg(),
 			})
 		} else if !v.ValidateImageURLs(*r.Screenshots) {
 			validationErrors = append(validationErrors, web.FieldError{
-				Field: "screenshots",
+				Field: fieldScreenshots,
 				Error: v.ErrInvalidImageURLsMsg(),
 			})
 		}

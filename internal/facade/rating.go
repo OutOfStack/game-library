@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/OutOfStack/game-library/internal/model"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"go.uber.org/zap"
 )
 
@@ -44,7 +43,7 @@ func (p *Provider) RateGame(ctx context.Context, gameID int32, userID string, ra
 		}
 
 		// invalidate game cache
-		gErr = cache.Delete(bCtx, p.cache, getGameKey(gameID))
+		gErr = p.cache.Delete(bCtx, getGameKey(gameID))
 		if gErr != nil {
 			p.log.Error("remove game cache", zap.Int32("id", gameID), zap.Error(gErr))
 		}
@@ -62,7 +61,7 @@ func (p *Provider) RateGame(ctx context.Context, gameID int32, userID string, ra
 
 		// invalidate user ratings
 		key := getUserRatingsKey(userID)
-		gErr := cache.Delete(bCtx, p.cache, key)
+		gErr := p.cache.Delete(bCtx, key)
 		if gErr != nil {
 			p.log.Error("remove cache by key", zap.String("key", key), zap.Error(gErr))
 		}
@@ -79,7 +78,7 @@ func (p *Provider) RateGame(ctx context.Context, gameID int32, userID string, ra
 // GetUserRatings returns user's rating for specified games
 func (p *Provider) GetUserRatings(ctx context.Context, userID string) (map[int32]uint8, error) {
 	list := make(map[int32]uint8)
-	err := cache.Get(ctx, p.cache, getUserRatingsKey(userID), &list, func() (map[int32]uint8, error) {
+	err := p.cache.Get(ctx, getUserRatingsKey(userID), &list, func() (map[int32]uint8, error) {
 		return p.storage.GetUserRatings(ctx, userID)
 	}, 0)
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/microcosm-cc/bluemonday"
 	"go.uber.org/zap"
 )
@@ -26,7 +25,7 @@ func (p *Provider) CreateCompany(ctx context.Context, company model.Company) (in
 
 		// invalidate companies as new developer or publisher is created
 		key := getCompaniesKey()
-		if cErr := cache.Delete(bCtx, p.cache, key); cErr != nil {
+		if cErr := p.cache.Delete(bCtx, key); cErr != nil {
 			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
 		}
 
@@ -42,7 +41,7 @@ func (p *Provider) CreateCompany(ctx context.Context, company model.Company) (in
 // GetCompanies returns companies
 func (p *Provider) GetCompanies(ctx context.Context) ([]model.Company, error) {
 	list := make([]model.Company, 0)
-	err := cache.Get(ctx, p.cache, getCompaniesKey(), &list, func() ([]model.Company, error) {
+	err := p.cache.Get(ctx, getCompaniesKey(), &list, func() ([]model.Company, error) {
 		return p.storage.GetCompanies(ctx)
 	}, 0)
 	if err != nil {
@@ -70,7 +69,7 @@ func (p *Provider) GetCompaniesMap(ctx context.Context) (map[int32]model.Company
 // GetTopCompanies returns top companies by type
 func (p *Provider) GetTopCompanies(ctx context.Context, companyType string, limit int64) ([]model.Company, error) {
 	list := make([]model.Company, 0)
-	err := cache.Get(ctx, p.cache, getTopCompaniesKey(companyType, limit), &list, func() ([]model.Company, error) {
+	err := p.cache.Get(ctx, getTopCompaniesKey(companyType, limit), &list, func() ([]model.Company, error) {
 		switch companyType {
 		case model.CompanyTypeDeveloper:
 			return p.storage.GetTopDevelopers(ctx, limit)

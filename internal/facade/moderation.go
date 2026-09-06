@@ -10,7 +10,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"go.uber.org/zap"
 )
 
@@ -186,11 +185,11 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 
 		// invalidate game in case moderation happens after game update and original game data is still cached
 		key := getGameKey(gameID)
-		err = cache.Delete(bCtx, p.cache, key)
+		err = p.cache.Delete(bCtx, key)
 		if err != nil {
 			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}
-		err = cache.Get(bCtx, p.cache, key, new(model.Game), func() (model.Game, error) {
+		err = p.cache.Get(bCtx, key, new(model.Game), func() (model.Game, error) {
 			return p.storage.GetGameByID(bCtx, gameID)
 		}, 0)
 		if err != nil {
@@ -202,14 +201,14 @@ func (p *Provider) ProcessModeration(ctx context.Context, gameID int32) error {
 		if namePrefix != "" {
 			// invalidate games lists: pattern games|*|*|*|<prefix>*|*|*|*
 			key = gamesKey + "|*|*|*|" + namePrefix
-			err = cache.DeleteByStartsWith(bCtx, p.cache, key)
+			err = p.cache.DeleteByStartsWith(bCtx, key)
 			if err != nil {
 				p.log.Error("remove games list cache by name prefix", zap.String("key", key), zap.Error(err))
 			}
 
 			// invalidate corresponding count caches: pattern games-count|<prefix>*|*|*|*
 			key = gamesCountKey + "|" + namePrefix
-			err = cache.DeleteByStartsWith(bCtx, p.cache, key)
+			err = p.cache.DeleteByStartsWith(bCtx, key)
 			if err != nil {
 				p.log.Error("remove games count cache by name prefix", zap.String("key", key), zap.Error(err))
 			}

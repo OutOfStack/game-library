@@ -23,5 +23,6 @@ test-data/*
 .vscode
 .idea
 .run
-CLAUDE.md
 .claude
+.codex
+graphify-out

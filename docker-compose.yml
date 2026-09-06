@@ -13,7 +13,7 @@ services:
 
   redis:
     container_name: redis
-    image: redis:8.6-alpine
+    image: redis:8.10-alpine3.23
     command: redis-server #--requirepass
     ports:
       - "6379:6379"

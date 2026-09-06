@@ -9,7 +9,6 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -32,13 +31,13 @@ func (p *Provider) GetGames(ctx context.Context, page, pageSize uint32, filter m
 	var eg errgroup.Group
 
 	eg.Go(func() error {
-		return cache.Get(ctx, p.cache, getGamesKey(pageSize, page, filter), &games, func() ([]model.Game, error) {
+		return p.cache.Get(ctx, getGamesKey(pageSize, page, filter), &games, func() ([]model.Game, error) {
 			return p.storage.GetGames(ctx, pageSize, page, filter)
 		}, 0)
 	})
 
 	eg.Go(func() error {
-		return cache.Get(ctx, p.cache, getGamesCountKey(filter), &count, func() (uint64, error) {
+		return p.cache.Get(ctx, getGamesCountKey(filter), &count, func() (uint64, error) {
 			return p.storage.GetGamesCount(ctx, filter)
 		}, 0)
 	})
@@ -53,7 +52,7 @@ func (p *Provider) GetGames(ctx context.Context, page, pageSize uint32, filter m
 // GetGameByID returns game by id
 func (p *Provider) GetGameByID(ctx context.Context, id int32) (model.Game, error) {
 	var game model.Game
-	err := cache.Get(ctx, p.cache, getGameKey(id), &game, func() (model.Game, error) {
+	err := p.cache.Get(ctx, getGameKey(id), &game, func() (model.Game, error) {
 		return p.storage.GetGameByID(ctx, id)
 	}, 0)
 	if err != nil {
@@ -131,7 +130,7 @@ func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int3
 
 		// invalidate companies as new developer and publisher might have been created
 		key := getCompaniesKey()
-		if cErr := cache.Delete(bCtx, p.cache, key); cErr != nil {
+		if cErr := p.cache.Delete(bCtx, key); cErr != nil {
 			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
 		}
 		// recache companies
@@ -222,7 +221,7 @@ func (p *Provider) UpdateGame(ctx context.Context, id int32, upd model.UpdateGam
 
 		// invalidate companies as new developer might have been created
 		key := getCompaniesKey()
-		if cErr := cache.Delete(bCtx, p.cache, key); cErr != nil {
+		if cErr := p.cache.Delete(bCtx, key); cErr != nil {
 			p.log.Error("remove companies cache", zap.String("key", key), zap.Error(cErr))
 		}
 		// recache companies
@@ -266,17 +265,17 @@ func (p *Provider) DeleteGame(ctx context.Context, id int32, publisher string) e
 
 		// invalidate games cache
 		key := gamesKey
-		if err = cache.DeleteByStartsWith(bCtx, p.cache, key); err != nil {
+		if err = p.cache.DeleteByStartsWith(bCtx, key); err != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate games count cache
 		key = gamesCountKey
-		if err = cache.DeleteByStartsWith(bCtx, p.cache, key); err != nil {
+		if err = p.cache.DeleteByStartsWith(bCtx, key); err != nil {
 			p.log.Error("remove cache by matching key", zap.String("key", key), zap.Error(err))
 		}
 		// invalidate game cache
 		key = getGameKey(id)
-		if err = cache.Delete(bCtx, p.cache, key); err != nil {
+		if err = p.cache.Delete(bCtx, key); err != nil {
 			p.log.Error("remove game cache by key", zap.String("key", key), zap.Error(err))
 		}
 	}()

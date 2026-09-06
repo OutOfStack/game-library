@@ -6,13 +6,12 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/apperr"
-	"github.com/OutOfStack/game-library/internal/pkg/cache"
 )
 
 // GetGenres returns all genres
 func (p *Provider) GetGenres(ctx context.Context) ([]model.Genre, error) {
 	list := make([]model.Genre, 0)
-	err := cache.Get(ctx, p.cache, getGenresKey(), &list, func() ([]model.Genre, error) {
+	err := p.cache.Get(ctx, getGenresKey(), &list, func() ([]model.Genre, error) {
 		return p.storage.GetGenres(ctx)
 	}, 0)
 	if err != nil {
@@ -40,7 +39,7 @@ func (p *Provider) GetGenresMap(ctx context.Context) (map[int32]model.Genre, err
 // GetTopGenres returns top genres
 func (p *Provider) GetTopGenres(ctx context.Context, limit int64) ([]model.Genre, error) {
 	list := make([]model.Genre, 0)
-	err := cache.Get(ctx, p.cache, getTopGenresKey(limit), &list, func() ([]model.Genre, error) {
+	err := p.cache.Get(ctx, getTopGenresKey(limit), &list, func() ([]model.Genre, error) {
 		return p.storage.GetTopGenres(ctx, limit)
 	}, 0)
 	if err != nil {

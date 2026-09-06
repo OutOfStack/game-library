@@ -50,7 +50,7 @@ func (p *Provider) UploadGameImages(w http.ResponseWriter, r *http.Request) {
 
 	// limit request body size to prevent memory exhaustion, then parse multipart form
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
-	err = r.ParseMultipartForm(maxFormMemory)
+	err = r.ParseMultipartForm(maxFormMemory) // #nosec G120 -- r.Body is bounded by http.MaxBytesReader above
 	if err != nil {
 		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			web.RespondError(w, web.NewError(fmt.Errorf("request body too large"), http.StatusRequestEntityTooLarge))

@@ -44,7 +44,8 @@ generate-mocks:
 	@mockgen -version >/dev/null 2>&1 || { echo "Installing mockgen..."; go install ${MOCKGEN_PKG}; }
 	@echo "Found mockgen, generating mocks..."
 	mockgen -source=internal/api/provider.go -destination=internal/api/mocks/provider.go -package=api_mock
-	mockgen -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/mocks/redis.go -package=cache_mock
+	# temp disable since mockgen returns `method must have no type parameters`
+	# mockgen -source=internal/pkg/cache/redis.go -destination=internal/pkg/cache/mocks/redis.go -package=cache_mock
 	mockgen -source=internal/facade/provider.go -destination=internal/facade/mocks/provider.go -package=facade_mock
 	mockgen -source=internal/auth/auth.go -destination=internal/auth/mocks/auth.go -package=auth_mock
 	mockgen -source=internal/middleware/auth.go -destination=internal/middleware/mocks/auth.go -package=middleware_mock
@@ -71,7 +72,7 @@ generate-proto:
 
 generate: generate-proto generate-swag generate-mocks
 
-LINT_VERSION := v2.11
+LINT_VERSION := v2.13
 LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VERSION)
 lint:
 	@golangci-lint version >/dev/null 2>&1 || { echo "Installing golangci-lint..."; go install ${LINT_PKG}; }

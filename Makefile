@@ -1,13 +1,20 @@
 build:
 	mkdir -p bin
-	go build -o bin/game-library-api cmd/game-library-api/main.go
+	go build -o bin/game-library-api cmd/api/main.go
 
 build-mng:
 	mkdir -p bin
-	go build -o bin/game-library-manage cmd/game-library-manage/main.go
+	go build -o bin/game-library-manage cmd/manage/main.go
+
+build-worker:
+	mkdir -p bin
+	go build -o bin/game-library-worker cmd/worker/main.go
 
 run:
-	go run ./cmd/game-library-api/.
+	go run ./cmd/api/.
+
+run-worker:
+	APP_HTTP_ADDRESS=localhost:8001 go run ./cmd/worker/.
 
 test:
 	go test -v -race ./...
@@ -22,13 +29,13 @@ drunpg:
 	docker compose up -d --no-recreate db
 
 migrate:
-	go run ./cmd/game-library-manage/. -from-file migrate
+	go run ./cmd/manage/. -from-file migrate
 
 rollback:
-	go run ./cmd/game-library-manage/. -from-file rollback
+	go run ./cmd/manage/. -from-file rollback
 
 seed:
-	go run ./cmd/game-library-manage/. -from-file seed
+	go run ./cmd/manage/. -from-file seed
 
 SWAG_VERSION := v1.16
 SWAG_PKG := github.com/swaggo/swag/cmd/swag@$(SWAG_VERSION)
@@ -36,7 +43,7 @@ generate-swag:
 	@swag --version >/dev/null 2>&1 || { echo "Installing swag..."; go install ${SWAG_PKG}; }
 	@echo "Found swag, generating documentation..."
 	swag init \
-	-d cmd/game-library-api,internal/api,internal/api/model,internal/web
+	-d cmd/api,internal/api,internal/api/model,internal/web
 
 MOCKGEN_VERSION := v0.6
 MOCKGEN_PKG := go.uber.org/mock/mockgen@$(MOCKGEN_VERSION)
@@ -71,7 +78,7 @@ generate-proto:
 
 generate: generate-proto generate-swag generate-mocks
 
-LINT_VERSION := v2.13
+LINT_VERSION := v2.14.0
 LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VERSION)
 lint:
 	@golangci-lint version >/dev/null 2>&1 || { echo "Installing golangci-lint..."; go install ${LINT_PKG}; }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"uuid"
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/pkg/observability"
@@ -13,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -75,7 +75,7 @@ func (c *Client) Upload(ctx context.Context, data io.ReadSeeker, contentType str
 	} else {
 		fileContentType = aws.String(contentType)
 	}
-	objectKey := uuid.NewString() + fileExt
+	objectKey := uuid.New().String() + fileExt
 
 	span.SetAttributes(attribute.String("objectKey", objectKey))
 

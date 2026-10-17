@@ -4,7 +4,7 @@
 
 Read `README.md` for service context. This repository contains the Go backend; UI, authentication, and infrastructure live elsewhere.
 
-- `cmd/game-library-api/` and `cmd/game-library-manage/`: service and database-management entry points.
+- `cmd/api/`, `cmd/worker/`, and `cmd/manage/`: API service, background-task worker, and database-management entry points.
 - `internal/api/`: HTTP/gRPC handlers; `internal/facade/`: business logic; `internal/repo/`: PostgreSQL persistence; `internal/model/`: domain models.
 - `internal/client/`, `internal/taskprocessor/`, and `internal/appconf/`: external integrations, background jobs, and configuration.
 - `pkg/`: shared utilities and generated protobuf code; `api/proto/`: protobuf sources.

@@ -105,7 +105,12 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 - CI/CD configs are in [`./github/workflows/`](./.github/workflows/)
 - k8s deployment configs are in [`./k8s`](./.k8s/)
 
-The worker exports traces to `JAEGER_OTLP_ENDPOINT` under service name `game-library-worker`. Its `/metrics` endpoint exposes the worker's own Prometheus registry. In Kubernetes, the endpoint is available at `game-library-worker-service.game-library.svc.cluster.local:8001`. The `game-library-infra` Prometheus configuration discovers opted-in pods in the `game-library` namespace using `prometheus.io/scrape`, `prometheus.io/port`, and `prometheus.io/path` annotations. The pod `app` label becomes the scrape job name (`game-library` or `game-library-worker`). New components only need these annotations and a matching declared TCP container port; no infra edit is needed. During migration, deploy the annotated API, auth, and worker manifests before switching Prometheus to generic pod discovery.
+The worker exports traces to `JAEGER_OTLP_ENDPOINT` under service name `game-library-worker`. Its `/metrics` endpoint 
+exposes the worker's own Prometheus registry. The `game-library-infra` Prometheus configuration discovers opted-in pods 
+in the `game-library` namespace using `prometheus.io/scrape`, `prometheus.io/port`, and `prometheus.io/path` annotations. 
+The pod `app` label becomes the scrape job name (`game-library` or `game-library-worker`). New components only need these 
+annotations and a matching declared TCP container port; no infra edit is needed. During migration, deploy the annotated 
+API, auth, and worker manifests before switching Prometheus to generic pod discovery.
 
 ## Documentation
 

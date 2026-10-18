@@ -23,17 +23,14 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/facade"
-	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/OutOfStack/game-library/internal/pkg/logging"
 	"github.com/OutOfStack/game-library/internal/repo"
-	"github.com/OutOfStack/game-library/internal/taskprocessor"
 	"github.com/OutOfStack/game-library/internal/web"
 	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-co-op/gocron"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -151,24 +148,6 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 
 	// create api provider
 	apiProvider := api.NewProvider(logger, cacheStore, gameFacade, decoder)
-
-	// run background tasks
-	taskProvider := taskprocessor.New(logger, storage, igdbAPIClient, s3Client, gameFacade, gameFacade)
-	scheduler := gocron.NewScheduler(time.UTC)
-	tasks := map[string]model.TaskInfo{
-		taskprocessor.FetchIGDBGamesTaskName:      {Schedule: cfg.Scheduler.FetchIGDBGames, Fn: taskProvider.StartFetchIGDBGames},
-		taskprocessor.UpdateTrendingIndexTaskName: {Schedule: cfg.Scheduler.UpdateTrendingIndex, Fn: taskProvider.StartUpdateTrendingIndex},
-		taskprocessor.UpdateGameInfoTaskName:      {Schedule: cfg.Scheduler.UpdateGameInfo, Fn: taskProvider.StartUpdateGameInfo},
-		taskprocessor.ProcessModerationTaskName:   {Schedule: cfg.Scheduler.ProcessModeration, Fn: taskProvider.StartProcessModeration},
-	}
-	for name, task := range tasks {
-		_, err = scheduler.Cron(task.Schedule).Name(name).Do(task.Fn)
-		if err != nil {
-			logger.Error("run task", zap.String("task", name), zap.Error(err))
-			return fmt.Errorf("run task %s: %v", name, err)
-		}
-	}
-	scheduler.StartAsync()
 
 	serverErrors := make(chan error, 3)
 

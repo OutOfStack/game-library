@@ -16,7 +16,10 @@ ARG APP_VERSION=dev
 ARG APP_COMMIT=unknown
 RUN go build \
     -ldflags "-X github.com/OutOfStack/game-library/internal/version.appVersion=${APP_VERSION} -X github.com/OutOfStack/game-library/internal/version.appCommit=${APP_COMMIT}" \
-    -o ./out/game-library-api cmd/game-library-api/main.go
+    -o ./out/game-library-api cmd/api/main.go
+RUN go build \
+    -ldflags "-X github.com/OutOfStack/game-library/internal/version.appVersion=${APP_VERSION} -X github.com/OutOfStack/game-library/internal/version.appCommit=${APP_COMMIT}" \
+    -o ./out/game-library-worker cmd/worker/main.go
 
 # run
 FROM alpine:3.24

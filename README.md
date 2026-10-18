@@ -65,6 +65,11 @@ To set up the service, follow these steps:
     make build
     make run
     ```
+    Background tasks (IGDB fetch, trending index, game info updates, moderation) run in a separate worker:
+    ```bash
+    make run-worker
+    ```
+    `make run-worker` overrides `APP_HTTP_ADDRESS` to `localhost:8001` for the worker's `/metrics` endpoint, so it can run alongside the API.
 
 _Optional_ steps are not required for minimal install but required for full functionality.
 
@@ -99,6 +104,13 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 - The service can be configured using `app.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go)
 - CI/CD configs are in [`./github/workflows/`](./.github/workflows/)
 - k8s deployment configs are in [`./k8s`](./.k8s/)
+
+The worker exports traces to `JAEGER_OTLP_ENDPOINT` under service name `game-library-worker`. Its `/metrics` endpoint 
+exposes the worker's own Prometheus registry. The `game-library-infra` Prometheus configuration discovers opted-in pods 
+in the `game-library` namespace using `prometheus.io/scrape`, `prometheus.io/port`, and `prometheus.io/path` annotations. 
+The pod `app` label becomes the scrape job name (`game-library` or `game-library-worker`). New components only need these 
+annotations and a matching declared TCP container port; no infra edit is needed. During migration, deploy the annotated 
+API, auth, and worker manifests before switching Prometheus to generic pod discovery.
 
 ## Documentation
 
@@ -146,7 +158,9 @@ Commit message and release rules are documented in [CONTRIBUTING.md](./CONTRIBUT
 #### Main Commands
     build         builds app
     build-mng     build manage app
+    build-worker  builds background tasks worker
     run           runs app
+    run-worker    runs background tasks worker
     test          runs tests for the whole project
     generate      generates proto files, docs for swagger UI and mocks for testing
     lint          runs golangci-lint

@@ -22,7 +22,7 @@ import (
 
 const (
 	gameSummaryMaxLen = 2000
-	maxVisionTokens   = 1000
+	maxVisionTokens   = 4000
 )
 
 var tracer = otel.Tracer("openaiapi")
@@ -102,7 +102,8 @@ func (c *Client) AnalyzeGameImages(ctx context.Context, gameData model.Moderatio
 	ctx, span := tracer.Start(ctx, "AnalyzeGameImages", trace.WithAttributes(
 		attribute.String("game.name", gameData.Name),
 		attribute.String("openai.model", c.visionModel),
-		attribute.Int("openai.max_completion_tokens", maxVisionTokens)))
+		attribute.Int("openai.max_completion_tokens", maxVisionTokens),
+		attribute.String("openai.reasoning_effort", string(shared.ReasoningEffortLow))))
 	defer span.End()
 
 	// prompt
@@ -132,6 +133,7 @@ func (c *Client) AnalyzeGameImages(ctx context.Context, gameData model.Moderatio
 			openai.UserMessage(contentParts),
 		},
 		MaxCompletionTokens: openai.Int(int64(maxVisionTokens)),
+		ReasoningEffort:     shared.ReasoningEffortLow,
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONObject: &responseFormat,
 		},

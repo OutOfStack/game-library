@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
+	"github.com/OutOfStack/game-library/internal/pkg/observability"
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
 	chicors "github.com/go-chi/cors"
@@ -19,12 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/riandyrn/otelchi"
 	swag "github.com/swaggo/http-swagger/v2"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +31,7 @@ func Service(
 	pr *Provider,
 	conf *appconf.Cfg,
 ) (http.Server, *trace.TracerProvider, error) {
-	tp, err := initTracer(log, conf.Jaeger.OTLPEndpoint)
+	tp, err := observability.InitTracer(log, conf.Jaeger.OTLPEndpoint, appconf.ServiceName)
 	if err != nil {
 		return http.Server{}, nil, fmt.Errorf("initializing tracer: %w", err) //nolint:gosec
 	}
@@ -139,39 +134,4 @@ func Service(
 		ReadHeaderTimeout: time.Second,
 		WriteTimeout:      conf.Web.WriteTimeout,
 	}, tp, nil
-}
-
-func initTracer(log *zap.Logger, otlpEndpoint string) (*trace.TracerProvider, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	exporter, err := otlptracehttp.New(
-		ctx,
-		otlptracehttp.WithEndpoint(otlpEndpoint),
-		otlptracehttp.WithInsecure(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("create new exporter: %w", err)
-	}
-
-	tp := trace.NewTracerProvider(
-		trace.WithSampler(trace.AlwaysSample()),
-		trace.WithBatcher(exporter),
-		trace.WithResource(
-			resource.NewWithAttributes(
-				semconv.SchemaURL,
-				semconv.ServiceNameKey.String(appconf.ServiceName),
-			)),
-	)
-
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	))
-	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		log.Error("otel error", zap.Error(err))
-	}))
-	otel.SetTracerProvider(tp)
-
-	return tp, nil
 }

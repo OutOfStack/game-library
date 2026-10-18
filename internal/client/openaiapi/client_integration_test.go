@@ -20,7 +20,7 @@ import (
 const (
 	defaultAPIURL          = "https://api.openai.com/v1"
 	defaultModerationModel = "omni-moderation-latest"
-	defaultVisionModel     = "gpt-5.4-nano"
+	defaultVisionModel     = "gpt-6-luna"
 	defaultTimeout         = 60 * time.Second
 
 	// stable public test image (dog photo)

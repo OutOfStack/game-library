@@ -1,24 +1,26 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	_ "github.com/OutOfStack/game-library/docs" // swagger docs
+	"github.com/OutOfStack/game-library/api"
 	"github.com/OutOfStack/game-library/internal/api/tools"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/observability"
+	"github.com/OutOfStack/game-library/internal/web"
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
 	chicors "github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/riandyrn/otelchi"
-	swag "github.com/swaggo/http-swagger/v2"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/zap"
 )
@@ -50,6 +52,7 @@ func Service(
 	}))
 
 	hc := tools.NewHealthCheck(db)
+	h := NewHandler(pr)
 
 	// metrics
 	r.Handle("/metrics", promhttp.Handler())
@@ -61,39 +64,39 @@ func Service(
 
 	// games
 	r.Route("/api/games", func(r chi.Router) {
-		r.Get("/", pr.GetGames)
+		r.Get("/", h.GetGames)
 
-		r.Get("/{id}", pr.GetGame)
-
-		r.With(
-			middleware.Authenticate(log, au),
-			middleware.Authorize(log, au, auth.RolePublisher),
-		).Post("/", pr.CreateGame)
+		r.Get("/{id}", h.GetGame)
 
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
-		).Delete("/{id}", pr.DeleteGame)
+		).Post("/", h.CreateGame)
 
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
-		).Patch("/{id}", pr.UpdateGame)
+		).Delete("/{id}", h.DeleteGame)
+
+		r.With(
+			middleware.Authenticate(log, au),
+			middleware.Authorize(log, au, auth.RolePublisher),
+		).Patch("/{id}", h.UpdateGame)
 
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RoleRegisteredUser),
-		).Post("/{id}/rate", pr.RateGame)
+		).Post("/{id}/rate", h.RateGame)
 
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
-		).Post("/images", pr.UploadGameImages)
+		).Post("/images", h.UploadGameImages)
 
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
-		).Get("/{id}/moderations", pr.GetGameModerations)
+		).Get("/{id}/moderations", h.GetGameModerations)
 	})
 
 	// user
@@ -102,30 +105,34 @@ func Service(
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RoleRegisteredUser),
-		).Post("/ratings", pr.GetUserRatings)
+		).Post("/ratings", h.GetUserRatings)
 
 		// published games
 		r.With(
 			middleware.Authenticate(log, au),
 			middleware.Authorize(log, au, auth.RolePublisher),
-		).Get("/games", pr.GetUserGames)
+		).Get("/games", h.GetUserGames)
 	})
 
 	// genres
 	r.Route("/api/genres", func(r chi.Router) {
-		r.Get("/", pr.GetGenres)
+		r.Get("/", h.GetGenres)
 
-		r.Get("/top", pr.GetTopGenres)
+		r.Get("/top", h.GetTopGenres)
 	})
 
 	// platforms
-	r.Get("/api/platforms", pr.GetPlatforms)
+	r.Get("/api/platforms", h.GetPlatforms)
 
 	// companies
-	r.Get("/api/companies/top", pr.GetTopCompanies)
+	r.Get("/api/companies/top", h.GetTopCompanies)
 
 	// swagger
-	r.Get("/swagger/*", swag.Handler())
+	r.Get("/swagger/openapi.yaml", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/yaml")
+		_, _ = w.Write(api.OpenAPISpec)
+	})
+	r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/openapi.yaml")))
 
 	return http.Server{
 		Addr:              conf.Web.HTTPAddress,
@@ -134,4 +141,33 @@ func Service(
 		ReadHeaderTimeout: time.Second,
 		WriteTimeout:      conf.Web.WriteTimeout,
 	}, tp, nil
+}
+
+// NewHandler returns HTTP handlers for API operations generated from OpenAPI spec
+func NewHandler(pr *Provider) *ServerInterfaceWrapper {
+	return &ServerInterfaceWrapper{
+		Handler: pr,
+		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
+			web.RespondError(w, paramError(err))
+		},
+	}
+}
+
+// paramError maps request parameter binding error to web error
+func paramError(err error) error {
+	var name string
+	if formatErr, isFormatErr := errors.AsType[*InvalidParamFormatError](err); isFormatErr {
+		name = formatErr.ParamName
+	} else if requiredErr, isRequiredErr := errors.AsType[*RequiredParamError](err); isRequiredErr {
+		name = requiredErr.ParamName
+	}
+
+	switch name {
+	case "id":
+		return errInvalidID
+	case "type": //nolint:goconst // param name from OpenAPI spec
+		return errInvalidCompanyType
+	default:
+		return errInvalidQueryParams
+	}
 }

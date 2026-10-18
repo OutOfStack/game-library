@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: api
+output: internal/api/openapi.gen.go
+generate:
+  chi-server: true
+  models: true
+compatibility:
+  always-prefix-enum-values: true
+output-options:
+  name-normalizer: ToCamelCaseWithInitialisms
+  prefer-skip-optional-pointer: true

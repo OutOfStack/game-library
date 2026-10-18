@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 	"mime/multipart"
-	"net/http"
 
+	"github.com/OutOfStack/game-library/internal/api/validation"
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"go.opentelemetry.io/otel"
@@ -38,25 +38,20 @@ type GameFacade interface {
 	GetGameModerations(ctx context.Context, gameID int32, publisher string) ([]model.Moderation, error)
 }
 
-// Decoder decodes request
-type Decoder interface {
-	Decode(r *http.Request, val any) error
-}
-
 // Provider has all dependencies for handlers
 type Provider struct {
 	log        *zap.Logger
 	cache      *cache.RedisStore
 	gameFacade GameFacade
-	decoder    Decoder
+	rules      *validation.Rules
 }
 
 // NewProvider creates new provider
-func NewProvider(log *zap.Logger, redisStore *cache.RedisStore, gameFacade GameFacade, decoder Decoder) *Provider {
+func NewProvider(log *zap.Logger, redisStore *cache.RedisStore, gameFacade GameFacade, rules *validation.Rules) *Provider {
 	return &Provider{
 		log:        log,
 		cache:      redisStore,
 		gameFacade: gameFacade,
-		decoder:    decoder,
+		rules:      rules,
 	}
 }

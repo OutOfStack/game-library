@@ -15,6 +15,7 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/api/grpc/infoapi"
+	"github.com/OutOfStack/game-library/internal/api/validation"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/authapi"
@@ -27,7 +28,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/OutOfStack/game-library/internal/pkg/logging"
 	"github.com/OutOfStack/game-library/internal/repo"
-	"github.com/OutOfStack/game-library/internal/web"
 	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -39,20 +39,6 @@ import (
 	grpcrefl "google.golang.org/grpc/reflection"
 )
 
-// @title Game library API
-// @version 0.4
-// @description API for game library service
-// @termsOfService http://swagger.io/terms/
-
-// @host localhost:8000
-// @BasePath /api
-// @query.collection.format multi
-// @schemes http
-
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @security BearerAuth
 func main() {
 	// load config
 	cfg, err := appconf.Get()
@@ -143,11 +129,11 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	// create game facade
 	gameFacade := facade.NewProvider(logger, storage, cacheStore, s3Client, openAIClient, igdbAPIClient)
 
-	// create web decoder
-	decoder := web.NewDecoder(logger, cfg)
+	// create request validation rules
+	validationRules := validation.NewRules(logger, cfg)
 
 	// create api provider
-	apiProvider := api.NewProvider(logger, cacheStore, gameFacade, decoder)
+	apiProvider := api.NewProvider(logger, cacheStore, gameFacade, validationRules)
 
 	serverErrors := make(chan error, 3)
 

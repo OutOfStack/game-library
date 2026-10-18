@@ -8,7 +8,11 @@ bin
 .DS_Store
 requirements
 
+# local files
+docs/local
+
 # config
+.env
 app.env
 
 # Test binary, built with `go test -c`
@@ -25,4 +29,4 @@ test-data/*
 .run
 .claude
 .codex
-graphify-out
+graphify*

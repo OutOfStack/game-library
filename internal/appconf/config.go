@@ -9,7 +9,7 @@ import (
 
 const (
 	appEnvFilePath = "."
-	appEnvFileName = "app"
+	appEnvFileName = ".env"
 	appEnvFileExt  = "env"
 )
 

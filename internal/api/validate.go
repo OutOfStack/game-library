@@ -1,6 +1,8 @@
-package model
+package api
 
 import (
+	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/OutOfStack/game-library/internal/api/validation"
@@ -9,6 +11,8 @@ import (
 )
 
 const (
+	fieldName         = "name"
+	fieldDeveloper    = "developer"
 	fieldReleaseDate  = "releaseDate"
 	fieldGenresIDs    = "genresIds"
 	fieldLogoURL      = "logoUrl"
@@ -16,167 +20,116 @@ const (
 	fieldScreenshots  = "screenshots"
 )
 
-// GetGamesQueryParams - get games query params
-type GetGamesQueryParams struct {
-	PageSize    uint32 `form:"pageSize"`
-	Page        uint32 `form:"page"`
-	OrderBy     string `form:"orderBy"`
-	Name        string `form:"name"`
-	GenreID     int32  `form:"genre"`
-	DeveloperID int32  `form:"developer"`
-	PublisherID int32  `form:"publisher"`
+// validatable is a request with validation rules
+type validatable interface {
+	ValidateWith(rules *validation.Rules) (bool, []web.FieldError)
 }
 
-// GameResponse - game response
-type GameResponse struct {
-	ID          int32      `json:"id"`
-	Name        string     `json:"name"`
-	Developers  []Company  `json:"developers"`
-	Publishers  []Company  `json:"publishers"`
-	ReleaseDate string     `json:"releaseDate"`
-	Genres      []Genre    `json:"genres"`
-	LogoURL     string     `json:"logoUrl,omitempty"`
-	Rating      float64    `json:"rating"`
-	Summary     string     `json:"summary,omitempty"`
-	Slug        string     `json:"slug,omitempty"`
-	Platforms   []Platform `json:"platforms"`
-	Screenshots []string   `json:"screenshots"`
-	Websites    []string   `json:"websites"`
+// sanitizable is a request that cleans up its input
+type sanitizable interface {
+	Sanitize()
 }
 
-// GameMode is an IGDB game mode
-type GameMode struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-}
-
-// GameSummary contains fields used by related game cards
-type GameSummary struct {
-	ID          int32   `json:"id"`
-	Name        string  `json:"name"`
-	ReleaseDate string  `json:"releaseDate"`
-	LogoURL     string  `json:"logoUrl"`
-	Rating      float64 `json:"rating"`
-	Slug        string  `json:"slug"`
-}
-
-// GameDetailsResponse contains detail-only game fields
-type GameDetailsResponse struct {
-	GameResponse
-	Trailers       []string      `json:"trailers"`
-	GameModes      []GameMode    `json:"gameModes"`
-	SimilarGames   []GameSummary `json:"similarGames"`
-	FranchiseGames []GameSummary `json:"franchiseGames"`
-}
-
-// GamesResponse - games response
-type GamesResponse struct {
-	Games []GameResponse `json:"games"`
-	Count uint64         `json:"count"`
-}
-
-// CreateGameRequest - create game request
-type CreateGameRequest struct {
-	Name         string   `json:"name"`
-	Developer    string   `json:"developer"`
-	ReleaseDate  string   `json:"releaseDate"`
-	GenresIDs    []int32  `json:"genresIds"`
-	LogoURL      string   `json:"logoUrl"`
-	Summary      string   `json:"summary"`
-	PlatformsIDs []int32  `json:"platformsIds"`
-	Screenshots  []string `json:"screenshots"`
-	Websites     []string `json:"websites"`
+// validateRequest checks request against its validation rules and sanitizes it if valid
+func (p *Provider) validateRequest(req validatable) error {
+	if valid, fields := req.ValidateWith(p.rules); !valid {
+		return web.NewErrorWithFields(errors.New("validation error"), http.StatusBadRequest, fields)
+	}
+	if s, ok := req.(sanitizable); ok {
+		s.Sanitize()
+	}
+	return nil
 }
 
 // ValidateWith validates CreateGameRequest
-func (r *CreateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.FieldError) {
+func (r *CreateGameRequest) ValidateWith(rules *validation.Rules) (bool, []web.FieldError) {
 	var validationErrors []web.FieldError
 
 	if r.Name == "" {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "name",
-			Error: v.ErrRequiredMsg(),
+			Field: fieldName,
+			Error: rules.ErrRequiredMsg(),
 		})
 	}
 
 	if r.Developer == "" {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "developer",
-			Error: v.ErrRequiredMsg(),
+			Field: fieldDeveloper,
+			Error: rules.ErrRequiredMsg(),
 		})
 	}
 
 	if r.ReleaseDate == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldReleaseDate,
-			Error: v.ErrRequiredMsg(),
+			Error: rules.ErrRequiredMsg(),
 		})
-	} else if !v.ValidateDate(r.ReleaseDate) {
+	} else if !rules.ValidateDate(r.ReleaseDate) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldReleaseDate,
-			Error: v.ErrInvalidDateMsg(),
+			Error: rules.ErrInvalidDateMsg(),
 		})
 	}
 
 	if len(r.GenresIDs) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldGenresIDs,
-			Error: v.ErrRequiredMsg(),
+			Error: rules.ErrRequiredMsg(),
 		})
-	} else if !v.ValidatePositive(r.GenresIDs) {
+	} else if !rules.ValidatePositive(r.GenresIDs) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldGenresIDs,
-			Error: v.ErrNonPositiveValuesMsg(),
+			Error: rules.ErrNonPositiveValuesMsg(),
 		})
 	}
 
 	if r.LogoURL == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldLogoURL,
-			Error: v.ErrRequiredMsg(),
+			Error: rules.ErrRequiredMsg(),
 		})
-	} else if !v.ValidateImageURLs([]string{r.LogoURL}) {
+	} else if !rules.ValidateImageURLs([]string{r.LogoURL}) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldLogoURL,
-			Error: v.ErrInvalidImageURLMsg(),
+			Error: rules.ErrInvalidImageURLMsg(),
 		})
 	}
 
 	if r.Summary == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "summary",
-			Error: v.ErrRequiredMsg(),
+			Error: rules.ErrRequiredMsg(),
 		})
 	}
 
 	if len(r.PlatformsIDs) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldPlatformsIDs,
-			Error: v.ErrRequiredMsg(),
+			Error: rules.ErrRequiredMsg(),
 		})
-	} else if !v.ValidatePositive(r.PlatformsIDs) {
+	} else if !rules.ValidatePositive(r.PlatformsIDs) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldPlatformsIDs,
-			Error: v.ErrNonPositiveValuesMsg(),
+			Error: rules.ErrNonPositiveValuesMsg(),
 		})
 	}
 
 	if len(r.Screenshots) == 0 {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldScreenshots,
-			Error: v.ErrRequiredMsg(),
+			Error: rules.ErrRequiredMsg(),
 		})
-	} else if !v.ValidateImageURLs(r.Screenshots) {
+	} else if !rules.ValidateImageURLs(r.Screenshots) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: fieldScreenshots,
-			Error: v.ErrInvalidImageURLsMsg(),
+			Error: rules.ErrInvalidImageURLsMsg(),
 		})
 	}
 
-	if !v.ValidateWebsiteURLs(r.Websites) {
+	if !rules.ValidateWebsiteURLs(r.Websites) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "websites",
-			Error: v.ErrInvalidWebsitesURLMsg(),
+			Error: rules.ErrInvalidWebsitesURLMsg(),
 		})
 	}
 
@@ -197,34 +150,21 @@ func (r *CreateGameRequest) Sanitize() {
 	r.PlatformsIDs = validation.RemoveDuplicates(r.PlatformsIDs)
 }
 
-// UpdateGameRequest - update game request. All fields are optional
-type UpdateGameRequest struct {
-	Name         *string   `json:"name"`
-	Developer    *string   `json:"developer"`
-	ReleaseDate  *string   `json:"releaseDate"`
-	GenresIDs    *[]int32  `json:"genresIds"`
-	LogoURL      *string   `json:"logoUrl"`
-	Summary      *string   `json:"summary"`
-	PlatformsIDs *[]int32  `json:"platformsIds"`
-	Screenshots  *[]string `json:"screenshots"`
-	Websites     *[]string `json:"websites"`
-}
-
 // ValidateWith validates UpdateGameRequest
-func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.FieldError) {
+func (r *UpdateGameRequest) ValidateWith(rules *validation.Rules) (bool, []web.FieldError) {
 	var validationErrors []web.FieldError
 
 	if r.Name != nil && *r.Name == "" {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "name",
-			Error: v.ErrRequiredMsg(),
+			Field: fieldName,
+			Error: rules.ErrRequiredMsg(),
 		})
 	}
 
 	if r.Developer != nil && *r.Developer == "" {
 		validationErrors = append(validationErrors, web.FieldError{
-			Field: "developer",
-			Error: v.ErrRequiredMsg(),
+			Field: fieldDeveloper,
+			Error: rules.ErrRequiredMsg(),
 		})
 	}
 
@@ -232,12 +172,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 		if *r.ReleaseDate == "" {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldReleaseDate,
-				Error: v.ErrRequiredMsg(),
+				Error: rules.ErrRequiredMsg(),
 			})
-		} else if !v.ValidateDate(*r.ReleaseDate) {
+		} else if !rules.ValidateDate(*r.ReleaseDate) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldReleaseDate,
-				Error: v.ErrInvalidDateMsg(),
+				Error: rules.ErrInvalidDateMsg(),
 			})
 		}
 	}
@@ -246,12 +186,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 		if len(*r.GenresIDs) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldGenresIDs,
-				Error: v.ErrRequiredMsg(),
+				Error: rules.ErrRequiredMsg(),
 			})
-		} else if !v.ValidatePositive(*r.GenresIDs) {
+		} else if !rules.ValidatePositive(*r.GenresIDs) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldGenresIDs,
-				Error: v.ErrNonPositiveValuesMsg(),
+				Error: rules.ErrNonPositiveValuesMsg(),
 			})
 		}
 	}
@@ -260,12 +200,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 		if *r.LogoURL == "" {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldLogoURL,
-				Error: v.ErrRequiredMsg(),
+				Error: rules.ErrRequiredMsg(),
 			})
-		} else if !v.ValidateImageURLs([]string{*r.LogoURL}) {
+		} else if !rules.ValidateImageURLs([]string{*r.LogoURL}) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldLogoURL,
-				Error: v.ErrInvalidImageURLMsg(),
+				Error: rules.ErrInvalidImageURLMsg(),
 			})
 		}
 	}
@@ -273,7 +213,7 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 	if r.Summary != nil && *r.Summary == "" {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "summary",
-			Error: v.ErrRequiredMsg(),
+			Error: rules.ErrRequiredMsg(),
 		})
 	}
 
@@ -281,12 +221,12 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 		if len(*r.PlatformsIDs) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldPlatformsIDs,
-				Error: v.ErrRequiredMsg(),
+				Error: rules.ErrRequiredMsg(),
 			})
-		} else if !v.ValidatePositive(*r.PlatformsIDs) {
+		} else if !rules.ValidatePositive(*r.PlatformsIDs) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldPlatformsIDs,
-				Error: v.ErrNonPositiveValuesMsg(),
+				Error: rules.ErrNonPositiveValuesMsg(),
 			})
 		}
 	}
@@ -295,20 +235,20 @@ func (r *UpdateGameRequest) ValidateWith(v *validation.Validator) (bool, []web.F
 		if len(*r.Screenshots) == 0 {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldScreenshots,
-				Error: v.ErrRequiredMsg(),
+				Error: rules.ErrRequiredMsg(),
 			})
-		} else if !v.ValidateImageURLs(*r.Screenshots) {
+		} else if !rules.ValidateImageURLs(*r.Screenshots) {
 			validationErrors = append(validationErrors, web.FieldError{
 				Field: fieldScreenshots,
-				Error: v.ErrInvalidImageURLsMsg(),
+				Error: rules.ErrInvalidImageURLsMsg(),
 			})
 		}
 	}
 
-	if r.Websites != nil && !v.ValidateWebsiteURLs(*r.Websites) {
+	if r.Websites != nil && !rules.ValidateWebsiteURLs(*r.Websites) {
 		validationErrors = append(validationErrors, web.FieldError{
 			Field: "websites",
-			Error: v.ErrInvalidWebsitesURLMsg(),
+			Error: rules.ErrInvalidWebsitesURLMsg(),
 		})
 	}
 
@@ -337,4 +277,32 @@ func (r *UpdateGameRequest) Sanitize() {
 	if r.PlatformsIDs != nil {
 		*r.PlatformsIDs = validation.RemoveDuplicates(*r.PlatformsIDs)
 	}
+}
+
+// ValidateWith validates CreateRatingRequest
+func (r *CreateRatingRequest) ValidateWith(rules *validation.Rules) (bool, []web.FieldError) {
+	var validationErrors []web.FieldError
+
+	if r.Rating > 5 {
+		validationErrors = append(validationErrors, web.FieldError{
+			Field: "rating",
+			Error: rules.ErrInvalidRatingMsg(),
+		})
+	}
+
+	return len(validationErrors) == 0, validationErrors
+}
+
+// ValidateWith validates GetUserRatingsRequest
+func (r *GetUserRatingsRequest) ValidateWith(rules *validation.Rules) (bool, []web.FieldError) {
+	var validationErrors []web.FieldError
+
+	if !rules.ValidatePositive(r.GameIDs) {
+		validationErrors = append(validationErrors, web.FieldError{
+			Field: "gameIds",
+			Error: rules.ErrNonPositiveValuesMsg(),
+		})
+	}
+
+	return len(validationErrors) == 0, validationErrors
 }

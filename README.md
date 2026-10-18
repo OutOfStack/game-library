@@ -58,7 +58,7 @@ To set up the service, follow these steps:
 
 5. _[Optional]_ Launch [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
-6. Create the `app.env` file based on [`./app.example.env`](./app.example.env) and update it with your local configuration settings.
+6. Create the `.env` file based on [`./.example.env`](./.example.env) and update it with your local configuration settings.
 
 7.  Build and run the service:
     ```bash
@@ -80,7 +80,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 After installation, you can use the following Make commands to develop the service:
 
 - `make test`: Runs tests.
-- `make generate`: Generates proto files, documentation for Swagger UI and mocks for testing.
+- `make generate`: Generates proto files, HTTP server code from the OpenAPI spec and mocks for testing.
 - `make lint`: Runs golangci-lint for code analysis.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
@@ -101,7 +101,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 
 ## Configuration
 
-- The service can be configured using `app.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go)
+- The service can be configured using `.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go)
 - CI/CD configs are in [`./github/workflows/`](./.github/workflows/)
 - k8s deployment configs are in [`./k8s`](./.k8s/)
 
@@ -114,17 +114,23 @@ API, auth, and worker manifests before switching Prometheus to generic pod disco
 
 ## Documentation
 
-API documentation is available via [Swagger UI](http://localhost:8000/swagger/index.html).
-To generate the documentation, run:
+The HTTP API is defined spec-first in [`api/http/openapi.yaml`](api/http/openapi.yaml) (OpenAPI 3).
+Server interfaces and routing helpers in `internal/api/openapi.gen.go` are generated from it with
+[oapi-codegen](https://github.com/oapi-codegen/oapi-codegen); handlers implement the generated `ServerInterface` and respond with `web.Respond`/`respondError`.
+After changing the spec, regenerate the code:
+
 ```bash
-make generate
+make generate-openapi
 ```
+
+API documentation is available via [Swagger UI](http://localhost:8000/swagger/index.html), which serves the embedded spec
+from `/swagger/openapi.yaml`.
 
 ### gRPC
 
 The service exposes a gRPC endpoint for internal service-to-service communication.
 
-**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`app.example.env`](./app.example.env))
+**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`.example.env`](./.example.env))
 
 **Protobuf Definition:** [`api/proto/infoapi/v1/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
 
@@ -162,7 +168,7 @@ Commit message and release rules are documented in [CONTRIBUTING.md](./CONTRIBUT
     run           runs app
     run-worker    runs background tasks worker
     test          runs tests for the whole project
-    generate      generates proto files, docs for swagger UI and mocks for testing
+    generate      generates proto files, OpenAPI server code and mocks for testing
     lint          runs golangci-lint
     cover         outputs tests coverage
 

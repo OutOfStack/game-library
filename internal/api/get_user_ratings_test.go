@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
+	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
@@ -36,7 +36,7 @@ func (s *TestSuite) Test_GetUserRatings_Success() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetUserRatings)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetUserRatings)))
 	r := chi.NewRouter()
 	r.Post("/user/ratings/", handler.ServeHTTP)
 
@@ -51,7 +51,7 @@ func (s *TestSuite) Test_GetUserRatings_MissingClaims() {
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/user/ratings/", bytes.NewReader(requestBody))
 
-	s.provider.GetUserRatings(s.httpResponse, req)
+	s.handler.GetUserRatings(s.httpResponse, req)
 
 	fmt.Println(s.httpResponse.Body.String())
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
@@ -72,7 +72,7 @@ func (s *TestSuite) Test_GetUserRatings_FacadeError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetUserRatings)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetUserRatings)))
 	r := chi.NewRouter()
 	r.Post("/user/ratings/", handler.ServeHTTP)
 

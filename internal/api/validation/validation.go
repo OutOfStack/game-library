@@ -17,13 +17,13 @@ var allowedWebsiteDomains = []string{
 	"twitch.tv", "steampowered.com", "twitter.com", "facebook.com", "xbox.com",
 	"youtube.com", "gog.com", "epicgames.com", "playstation.com"}
 
-// Validator struct
-type Validator struct {
+// Rules validates request fields and provides validation error messages
+type Rules struct {
 	allowedImageDomain string
 }
 
-// NewValidator creates new validator
-func NewValidator(log *zap.Logger, cfg *appconf.Cfg) *Validator {
+// NewRules creates validation rules; allowed image domain is taken from CDN base URL
+func NewRules(log *zap.Logger, cfg *appconf.Cfg) *Rules {
 	var allowedImageDomain string
 	u, err := url.Parse(cfg.S3.CDNBaseURL)
 	if err != nil {
@@ -34,48 +34,48 @@ func NewValidator(log *zap.Logger, cfg *appconf.Cfg) *Validator {
 		allowedImageDomain = u.Host
 	}
 
-	return &Validator{allowedImageDomain: allowedImageDomain}
+	return &Rules{allowedImageDomain: allowedImageDomain}
 }
 
 // Common validation errors
 
 // ErrRequiredMsg returns error message
-func (v *Validator) ErrRequiredMsg() string {
+func (r *Rules) ErrRequiredMsg() string {
 	return "required"
 }
 
 // ErrInvalidDateMsg returns error message
-func (v *Validator) ErrInvalidDateMsg() string {
+func (r *Rules) ErrInvalidDateMsg() string {
 	return "must be in format 'YYYY-MM-DD'"
 }
 
 // ErrInvalidRatingMsg returns error message
-func (v *Validator) ErrInvalidRatingMsg() string {
+func (r *Rules) ErrInvalidRatingMsg() string {
 	return "must be less or equal to 5"
 }
 
 // ErrInvalidImageURLMsg returns error message
-func (v *Validator) ErrInvalidImageURLMsg() string {
-	return "must be a valid image URL from domain " + v.allowedImageDomain
+func (r *Rules) ErrInvalidImageURLMsg() string {
+	return "must be a valid image URL from domain " + r.allowedImageDomain
 }
 
 // ErrInvalidImageURLsMsg returns error message
-func (v *Validator) ErrInvalidImageURLsMsg() string {
-	return "must be valid images URLs from domain " + v.allowedImageDomain
+func (r *Rules) ErrInvalidImageURLsMsg() string {
+	return "must be valid images URLs from domain " + r.allowedImageDomain
 }
 
 // ErrInvalidWebsitesURLMsg returns error message
-func (v *Validator) ErrInvalidWebsitesURLMsg() string {
+func (r *Rules) ErrInvalidWebsitesURLMsg() string {
 	return "must be valid website URLs from domain list: " + strings.Join(allowedWebsiteDomains, ", ")
 }
 
 // ErrNonPositiveValuesMsg returns error message
-func (v *Validator) ErrNonPositiveValuesMsg() string {
+func (r *Rules) ErrNonPositiveValuesMsg() string {
 	return "must be greater than zero"
 }
 
 // ValidateDate validates date format (YYYY-MM-DD)
-func (v *Validator) ValidateDate(date string) bool {
+func (r *Rules) ValidateDate(date string) bool {
 	if len(date) != dateFieldLength {
 		return false
 	}
@@ -84,13 +84,13 @@ func (v *Validator) ValidateDate(date string) bool {
 }
 
 // ValidateImageURLs checks if URLs are from an allowed image CDN domain
-func (v *Validator) ValidateImageURLs(urls []string) bool {
+func (r *Rules) ValidateImageURLs(urls []string) bool {
 	if len(urls) == 0 {
 		return true
 	}
 
 	for _, imageURL := range urls {
-		if !v.IsValidURL(imageURL, []string{v.allowedImageDomain}) {
+		if !r.IsValidURL(imageURL, []string{r.allowedImageDomain}) {
 			return false
 		}
 	}
@@ -98,13 +98,13 @@ func (v *Validator) ValidateImageURLs(urls []string) bool {
 }
 
 // ValidateWebsiteURLs checks if URLs are from allowed websites
-func (v *Validator) ValidateWebsiteURLs(urls []string) bool {
+func (r *Rules) ValidateWebsiteURLs(urls []string) bool {
 	if len(urls) == 0 {
 		return true
 	}
 
 	for _, websiteURL := range urls {
-		if !v.IsValidURL(websiteURL, allowedWebsiteDomains) {
+		if !r.IsValidURL(websiteURL, allowedWebsiteDomains) {
 			return false
 		}
 	}
@@ -112,7 +112,7 @@ func (v *Validator) ValidateWebsiteURLs(urls []string) bool {
 }
 
 // IsValidURL checks if the URL is from an allowed domain list
-func (v *Validator) IsValidURL(urlStr string, allowedList []string) bool {
+func (r *Rules) IsValidURL(urlStr string, allowedList []string) bool {
 	if urlStr == "" {
 		return false
 	}
@@ -133,7 +133,7 @@ func (v *Validator) IsValidURL(urlStr string, allowedList []string) bool {
 }
 
 // ValidatePositive checks if all slice values are positive
-func (v *Validator) ValidatePositive(slice []int32) bool {
+func (r *Rules) ValidatePositive(slice []int32) bool {
 	for _, v := range slice {
 		if v <= 0 {
 			return false

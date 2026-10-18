@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
+	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/model"
@@ -55,7 +55,7 @@ func (s *TestSuite) Test_UpdateGame_Success() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UpdateGame)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.UpdateGame)))
 	r := chi.NewRouter()
 	r.Patch("/games/{id}", handler.ServeHTTP)
 
@@ -68,7 +68,7 @@ func (s *TestSuite) Test_UpdateGame_InvalidID() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPatch, "/games/-100", nil)
 
 	r := chi.NewRouter()
-	r.Patch("/games/{id}", s.provider.UpdateGame)
+	r.Patch("/games/{id}", s.handler.UpdateGame)
 
 	r.ServeHTTP(s.httpResponse, req)
 
@@ -83,7 +83,7 @@ func (s *TestSuite) Test_UpdateGame_MissingClaims() {
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPatch, fmt.Sprintf("/games/%d", gameID), bytes.NewReader(requestBody))
 
-	handler := http.HandlerFunc(s.provider.UpdateGame)
+	handler := http.HandlerFunc(s.handler.UpdateGame)
 	r := chi.NewRouter()
 	r.Patch("/games/{id}", handler.ServeHTTP)
 
@@ -106,7 +106,7 @@ func (s *TestSuite) Test_UpdateGame_FacadeError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UpdateGame)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.UpdateGame)))
 	r := chi.NewRouter()
 	r.Patch("/games/{id}", handler.ServeHTTP)
 

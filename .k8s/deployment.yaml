@@ -24,7 +24,7 @@ spec:
         spec:
             containers:
               - name: game-library
-                image: asctod/game-library:_IMAGE_TAG_
+                image: ghcr.io/outofstack/game-library:_IMAGE_TAG_
                 readinessProbe:
                     httpGet:
                         path: /api/readiness
@@ -106,7 +106,7 @@ spec:
         spec:
             containers:
               - name: game-library-worker
-                image: asctod/game-library:_IMAGE_TAG_
+                image: ghcr.io/outofstack/game-library:_IMAGE_TAG_
                 command: ["./game-library-worker"]
                 ports:
                   - name: metrics

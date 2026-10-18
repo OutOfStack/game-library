@@ -1,10 +1,10 @@
-package model_test
+package api_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/OutOfStack/game-library/internal/api/model"
+	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/api/validation"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
@@ -17,13 +17,13 @@ func TestCreateGameRequestValidation(t *testing.T) {
 	cfg := getCfg()
 	cfg.S3.CDNBaseURL = td.URL()
 	log := zap.NewNop()
-	v := validation.NewValidator(log, cfg)
+	v := validation.NewRules(log, cfg)
 
 	validImageURL := cfg.S3.CDNBaseURL + "/" + td.String() + ".jpg"
 	validWebsiteURL := "https://steampowered.com/game/" + td.String()
 
 	t.Run("Valid CreateGameRequest", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "Test Game",
 			Developer:    "Test Developer",
 			ReleaseDate:  "2023-01-01",
@@ -41,7 +41,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Required Fields", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			// All fields empty
 		}
 
@@ -71,7 +71,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Invalid Date Format", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "Test Game",
 			Developer:    "Test Developer",
 			ReleaseDate:  "01/01/2023", // Invalid format
@@ -96,7 +96,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Non-positive Genre IDs", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "Test Game",
 			Developer:    "Test Developer",
 			ReleaseDate:  "2023-01-01",
@@ -121,7 +121,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Invalid Image URL", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "Test Game",
 			Developer:    "Test Developer",
 			ReleaseDate:  "2023-01-01",
@@ -146,7 +146,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Invalid Screenshots", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "Test Game",
 			Developer:    "Test Developer",
 			ReleaseDate:  "2023-01-01",
@@ -171,7 +171,7 @@ func TestCreateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Invalid Website URLs", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "Test Game",
 			Developer:    "Test Developer",
 			ReleaseDate:  "2023-01-01",
@@ -205,7 +205,7 @@ func TestCreateGameRequestSanitize(t *testing.T) {
 		htmlString := createHTMLString()
 		expected := p.Sanitize(htmlString)
 
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         htmlString,
 			Developer:    htmlString,
 			Summary:      htmlString,
@@ -221,7 +221,7 @@ func TestCreateGameRequestSanitize(t *testing.T) {
 	})
 
 	t.Run("Trims whitespace", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "  Game Name with spaces  ",
 			Developer:    "\t Developer Name \n",
 			Summary:      " \n Summary with whitespace \t ",
@@ -237,7 +237,7 @@ func TestCreateGameRequestSanitize(t *testing.T) {
 	})
 
 	t.Run("Removes duplicate IDs", func(t *testing.T) {
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			GenresIDs:    []int32{1, 2, 2, 3, 3, 3, 4},
 			PlatformsIDs: []int32{5, 5, 6, 7, 7, 8},
 		}
@@ -271,7 +271,7 @@ func TestCreateGameRequestSanitize(t *testing.T) {
 		p := bluemonday.StrictPolicy()
 		htmlString := createHTMLString()
 
-		request := model.CreateGameRequest{
+		request := api.CreateGameRequest{
 			Name:         "  " + htmlString + "  ",
 			Developer:    "\t" + htmlString + "\n",
 			Summary:      " \n" + htmlString + "\t ",
@@ -295,13 +295,13 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 	cfg := getCfg()
 	cfg.S3.CDNBaseURL = td.URL()
 	log := zap.NewNop()
-	v := validation.NewValidator(log, cfg)
+	v := validation.NewRules(log, cfg)
 
 	validImageURL := cfg.S3.CDNBaseURL + "/" + td.String() + ".jpg"
 	validWebsiteURL := "https://steampowered.com/game/" + td.String()
 
 	t.Run("Empty UpdateGameRequest is valid", func(t *testing.T) {
-		request := model.UpdateGameRequest{
+		request := api.UpdateGameRequest{
 			// All fields nil (valid for update)
 		}
 
@@ -311,7 +311,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Valid UpdateGameRequest with all fields", func(t *testing.T) {
-		request := model.UpdateGameRequest{
+		request := api.UpdateGameRequest{
 			Name:         new("Updated Game"),
 			Developer:    new("Updated Developer"),
 			ReleaseDate:  new("2023-02-01"),
@@ -329,7 +329,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Empty string values", func(t *testing.T) {
-		request := model.UpdateGameRequest{
+		request := api.UpdateGameRequest{
 			Name:      new(""), // Empty string
 			Developer: new(""), // Empty string
 			Summary:   new(""), // Empty string
@@ -351,7 +351,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Invalid date format", func(t *testing.T) {
-		request := model.UpdateGameRequest{
+		request := api.UpdateGameRequest{
 			ReleaseDate: new("01/01/2023"), // Invalid format
 		}
 
@@ -369,7 +369,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Empty arrays", func(t *testing.T) {
-		request := model.UpdateGameRequest{
+		request := api.UpdateGameRequest{
 			GenresIDs:    new([]int32{}),  // Empty array
 			PlatformsIDs: new([]int32{}),  // Empty array
 			Screenshots:  new([]string{}), // Empty array
@@ -391,7 +391,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Non-positive IDs", func(t *testing.T) {
-		request := model.UpdateGameRequest{
+		request := api.UpdateGameRequest{
 			GenresIDs:    new([]int32{1, -1, 3}), // Contains negative ID
 			PlatformsIDs: new([]int32{0, 2}),     // Contains zero ID
 		}
@@ -411,7 +411,7 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 	})
 
 	t.Run("Invalid URLs", func(t *testing.T) {
-		request := model.UpdateGameRequest{
+		request := api.UpdateGameRequest{
 			LogoURL:     new("https://invalid-domain.com/image.jpg"),
 			Screenshots: new([]string{"https://invalid-domain.com/image.jpg"}),
 			Websites:    new([]string{"https://invalid-domain.com"}),
@@ -435,19 +435,19 @@ func TestUpdateGameRequestValidation(t *testing.T) {
 func TestUpdateGameRequest_Sanitize(t *testing.T) {
 	tests := []struct {
 		name     string
-		request  model.UpdateGameRequest
-		expected model.UpdateGameRequest
+		request  api.UpdateGameRequest
+		expected api.UpdateGameRequest
 	}{
 		{
 			name: "sanitize strings and remove duplicates",
-			request: model.UpdateGameRequest{
+			request: api.UpdateGameRequest{
 				Name:         new(" Game Name with <script>alert('XSS')</script> "),
 				Developer:    new(" Developer <b>Name</b> "),
 				Summary:      new(" Game summary with <iframe src='malicious.com'></iframe> "),
 				GenresIDs:    new([]int32{1, 2, 2, 3, 3, 3}),
 				PlatformsIDs: new([]int32{5, 5, 6, 7, 7}),
 			},
-			expected: model.UpdateGameRequest{
+			expected: api.UpdateGameRequest{
 				Name:         new("Game Name with"),
 				Developer:    new("Developer Name"),
 				Summary:      new("Game summary with"),
@@ -457,14 +457,14 @@ func TestUpdateGameRequest_Sanitize(t *testing.T) {
 		},
 		{
 			name: "nil fields should not cause panic",
-			request: model.UpdateGameRequest{
+			request: api.UpdateGameRequest{
 				Name:         nil,
 				Developer:    nil,
 				Summary:      nil,
 				GenresIDs:    nil,
 				PlatformsIDs: nil,
 			},
-			expected: model.UpdateGameRequest{
+			expected: api.UpdateGameRequest{
 				Name:         nil,
 				Developer:    nil,
 				Summary:      nil,
@@ -474,14 +474,14 @@ func TestUpdateGameRequest_Sanitize(t *testing.T) {
 		},
 		{
 			name: "empty strings should be trimmed",
-			request: model.UpdateGameRequest{
+			request: api.UpdateGameRequest{
 				Name:         new("   "),
 				Developer:    new("   "),
 				Summary:      new("   "),
 				GenresIDs:    new([]int32{}),
 				PlatformsIDs: new([]int32{}),
 			},
-			expected: model.UpdateGameRequest{
+			expected: api.UpdateGameRequest{
 				Name:         new(""),
 				Developer:    new(""),
 				Summary:      new(""),
@@ -491,12 +491,12 @@ func TestUpdateGameRequest_Sanitize(t *testing.T) {
 		},
 		{
 			name: "complex HTML should be properly sanitized",
-			request: model.UpdateGameRequest{
+			request: api.UpdateGameRequest{
 				Name:      new("<p>Game <strong>Name</strong> with <a href='http://example.com'>Link</a></p>"),
 				Developer: new("<div>Developer <em>Studios</em></div>"),
 				Summary:   new("<ul><li>Feature 1</li><li>Feature 2</li></ul>"),
 			},
-			expected: model.UpdateGameRequest{
+			expected: api.UpdateGameRequest{
 				Name:      new("Game Name with Link"),
 				Developer: new("Developer Studios"),
 				Summary:   new("Feature 1Feature 2"),
@@ -598,6 +598,78 @@ func valueOrNil(ptr any) any {
 		return v.Elem().Interface()
 	}
 	return ptr
+}
+
+func TestCreateRatingRequestValidation(t *testing.T) {
+	v := validation.NewRules(zap.NewNop(), getCfg())
+
+	t.Run("Valid rating", func(t *testing.T) {
+		request := api.CreateRatingRequest{
+			Rating: 4,
+		}
+
+		valid, errors := request.ValidateWith(v)
+		require.True(t, valid, "Expected valid request")
+		require.Empty(t, errors, "Expected no validation errors")
+	})
+
+	t.Run("Zero rating is valid", func(t *testing.T) {
+		request := api.CreateRatingRequest{
+			Rating: 0,
+		}
+
+		valid, errors := request.ValidateWith(v)
+		require.True(t, valid, "Expected valid request")
+		require.Empty(t, errors, "Expected no validation errors")
+	})
+
+	t.Run("Rating too high", func(t *testing.T) {
+		request := api.CreateRatingRequest{
+			Rating: 6, // Above max of 5
+		}
+
+		valid, errors := request.ValidateWith(v)
+		require.False(t, valid, "Expected invalid request")
+		require.Len(t, errors, 1, "Expected 1 validation error")
+		require.Equal(t, "rating", errors[0].Field)
+		require.Equal(t, v.ErrInvalidRatingMsg(), errors[0].Error)
+	})
+}
+
+func TestGetUserRatingsRequestValidation(t *testing.T) {
+	v := validation.NewRules(zap.NewNop(), getCfg())
+
+	t.Run("Valid GameIDs", func(t *testing.T) {
+		request := api.GetUserRatingsRequest{
+			GameIDs: []int32{1, 2, 3},
+		}
+
+		valid, errors := request.ValidateWith(v)
+		require.True(t, valid, "Expected valid request")
+		require.Empty(t, errors, "Expected no validation errors")
+	})
+
+	t.Run("Empty GameIDs is valid", func(t *testing.T) {
+		request := api.GetUserRatingsRequest{
+			GameIDs: []int32{},
+		}
+
+		valid, errors := request.ValidateWith(v)
+		require.True(t, valid, "Expected valid request")
+		require.Empty(t, errors, "Expected no validation errors")
+	})
+
+	t.Run("Non-positive GameIDs", func(t *testing.T) {
+		request := api.GetUserRatingsRequest{
+			GameIDs: []int32{1, 0, 3}, // Contains zero
+		}
+
+		valid, errors := request.ValidateWith(v)
+		require.False(t, valid, "Expected invalid request")
+		require.Len(t, errors, 1, "Expected 1 validation error")
+		require.Equal(t, "gameIds", errors[0].Field)
+		require.Equal(t, v.ErrNonPositiveValuesMsg(), errors[0].Error)
+	})
 }
 
 func getCfg() *appconf.Cfg {

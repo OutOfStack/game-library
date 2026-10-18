@@ -1,0 +1,804 @@
+openapi: 3.0.3
+info:
+  title: Game library API
+  description: API for game library service
+  version: "0.5"
+servers:
+  - url: /api
+
+tags:
+  - name: games
+  - name: user
+  - name: dictionaries
+
+paths:
+  /games:
+    get:
+      tags: [games]
+      operationId: GetGames
+      summary: Get games
+      description: returns paginated games
+      parameters:
+        - name: pageSize
+          in: query
+          description: page size, must be greater than 0
+          schema:
+            type: integer
+            format: uint32
+        - name: page
+          in: query
+          description: page, must be greater than 0
+          schema:
+            type: integer
+            format: uint32
+        - name: orderBy
+          in: query
+          description: order by
+          schema:
+            type: string
+            enum: [default, name, releaseDate, rating]
+        - name: name
+          in: query
+          description: name filter, applied when at least 2 characters long
+          schema:
+            type: string
+        - name: genre
+          in: query
+          description: genre id filter
+          schema:
+            type: integer
+            format: int32
+        - name: developer
+          in: query
+          description: developer id filter
+          schema:
+            type: integer
+            format: int32
+        - name: publisher
+          in: query
+          description: publisher id filter
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GamesResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+    post:
+      tags: [games]
+      operationId: CreateGame
+      summary: Create game
+      description: creates new game. Requires publisher role
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGameRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IDResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /games/{id}:
+    parameters:
+      - $ref: "#/components/parameters/GameID"
+    get:
+      tags: [games]
+      operationId: GetGame
+      summary: Get game
+      description: returns game by ID
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameDetailsResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+    patch:
+      tags: [games]
+      operationId: UpdateGame
+      summary: Update game
+      description: updates game by ID. Requires publisher role
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGameRequest"
+      responses:
+        "204":
+          description: No Content
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+    delete:
+      tags: [games]
+      operationId: DeleteGame
+      summary: Delete game
+      description: deletes game by ID. Requires publisher role
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: No Content
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /games/{id}/rate:
+    parameters:
+      - $ref: "#/components/parameters/GameID"
+    post:
+      tags: [games]
+      operationId: RateGame
+      summary: Rate game
+      description: rates game. Requires registered user role
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRatingRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /games/{id}/moderations:
+    parameters:
+      - $ref: "#/components/parameters/GameID"
+    get:
+      tags: [games]
+      operationId: GetGameModerations
+      summary: Get game moderations
+      description: returns all moderation records for specified game id. Requires publisher role
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModerationItem"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /games/images:
+    post:
+      tags: [games]
+      operationId: UploadGameImages
+      summary: Upload game images
+      description: uploads cover and screenshots images. Requires publisher role. Request body is limited to 32MB
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                cover:
+                  description: Cover image file (.png, .jpg, .jpeg), maximum 1MB
+                  type: string
+                  format: binary
+                screenshots:
+                  description: Screenshot image files (.png, .jpg, .jpeg), up to 8 files, maximum 1MB each
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadImagesResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "413":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /user/games:
+    get:
+      tags: [user]
+      operationId: GetUserGames
+      summary: Get user games
+      description: returns all games for current user-publisher. Requires publisher role
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameResponse"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /user/ratings:
+    post:
+      tags: [user]
+      operationId: GetUserRatings
+      summary: Get user ratings for specified games
+      description: returns user ratings for specified games. Requires registered user role
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetUserRatingsRequest"
+      responses:
+        "200":
+          description: map of game id to rating
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRatingsResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /genres:
+    get:
+      tags: [dictionaries]
+      operationId: GetGenres
+      summary: Get genres
+      description: returns all genres
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Genre"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /genres/top:
+    get:
+      tags: [dictionaries]
+      operationId: GetTopGenres
+      summary: Get top genres
+      description: returns top genres based on amount of games having it
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Genre"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /platforms:
+    get:
+      tags: [dictionaries]
+      operationId: GetPlatforms
+      summary: Get platforms
+      description: returns all platforms
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Platform"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /companies/top:
+    get:
+      tags: [dictionaries]
+      operationId: GetTopCompanies
+      summary: Get top companies
+      description: returns top companies based on amount of games having it
+      parameters:
+        - name: type
+          in: query
+          required: true
+          description: company type (dev or pub)
+          schema:
+            type: string
+            enum: [pub, dev]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Company"
+        "400":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    GameID:
+      name: id
+      in: path
+      required: true
+      description: Game ID, must be greater than 0
+      schema:
+        type: integer
+        format: int32
+
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    # error schemas map to internal/web types shared with middleware
+    ErrorResponse:
+      x-go-type: web.ErrorResponse
+      x-go-type-import:
+        path: github.com/OutOfStack/game-library/internal/web
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldError"
+
+    FieldError:
+      x-go-type: web.FieldError
+      x-go-type-import:
+        path: github.com/OutOfStack/game-library/internal/web
+      type: object
+      required: [field, error]
+      properties:
+        field:
+          type: string
+        error:
+          type: string
+
+    IDResponse:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          format: int32
+
+    Company:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+
+    Genre:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+
+    Platform:
+      type: object
+      required: [id, name, abbreviation]
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        abbreviation:
+          type: string
+
+    GameMode:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+
+    GameResponse:
+      type: object
+      required: [id, name, developers, publishers, releaseDate, genres, rating, platforms, screenshots, websites]
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        developers:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/Company"
+        publishers:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/Company"
+        releaseDate:
+          type: string
+          description: date in format YYYY-MM-DD
+        genres:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/Genre"
+        logoUrl:
+          type: string
+        rating:
+          type: number
+          format: double
+        summary:
+          type: string
+        slug:
+          type: string
+        platforms:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/Platform"
+        screenshots:
+          type: array
+          nullable: true
+          items:
+            type: string
+        websites:
+          type: array
+          nullable: true
+          items:
+            type: string
+
+    GameSummary:
+      type: object
+      required: [id, name, releaseDate, logoUrl, rating, slug]
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        releaseDate:
+          type: string
+          description: date in format YYYY-MM-DD
+        logoUrl:
+          type: string
+        rating:
+          type: number
+          format: double
+        slug:
+          type: string
+
+    GameDetailsResponse:
+      allOf:
+        - $ref: "#/components/schemas/GameResponse"
+        - type: object
+          required: [trailers, gameModes, similarGames, franchiseGames]
+          properties:
+            trailers:
+              type: array
+              items:
+                type: string
+            gameModes:
+              type: array
+              items:
+                $ref: "#/components/schemas/GameMode"
+            similarGames:
+              type: array
+              items:
+                $ref: "#/components/schemas/GameSummary"
+            franchiseGames:
+              type: array
+              items:
+                $ref: "#/components/schemas/GameSummary"
+
+    GamesResponse:
+      type: object
+      required: [games, count]
+      properties:
+        games:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameResponse"
+        count:
+          type: integer
+          format: uint64
+
+    CreateGameRequest:
+      type: object
+      required: [name, developer, releaseDate, genresIds, logoUrl, summary, platformsIds, screenshots]
+      properties:
+        name:
+          type: string
+        developer:
+          type: string
+        releaseDate:
+          type: string
+          description: date in format YYYY-MM-DD
+        genresIds:
+          x-go-name: GenresIDs
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+        logoUrl:
+          type: string
+          description: image URL from the configured CDN domain
+        summary:
+          type: string
+        platformsIds:
+          x-go-name: PlatformsIDs
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+        screenshots:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            description: image URL from the configured CDN domain
+        websites:
+          type: array
+          items:
+            type: string
+            description: URL from an allowed website domain
+
+    UpdateGameRequest:
+      description: all fields are optional; provided fields follow the same rules as in CreateGameRequest
+      type: object
+      properties:
+        name:
+          x-go-type-skip-optional-pointer: false
+          type: string
+        developer:
+          x-go-type-skip-optional-pointer: false
+          type: string
+        releaseDate:
+          x-go-type-skip-optional-pointer: false
+          type: string
+          description: date in format YYYY-MM-DD
+        genresIds:
+          x-go-name: GenresIDs
+          x-go-type-skip-optional-pointer: false
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+        logoUrl:
+          x-go-type-skip-optional-pointer: false
+          type: string
+        summary:
+          x-go-type-skip-optional-pointer: false
+          type: string
+        platformsIds:
+          x-go-name: PlatformsIDs
+          x-go-type-skip-optional-pointer: false
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+        screenshots:
+          x-go-type-skip-optional-pointer: false
+          type: array
+          minItems: 1
+          items:
+            type: string
+        websites:
+          x-go-type-skip-optional-pointer: false
+          type: array
+          items:
+            type: string
+
+    CreateRatingRequest:
+      type: object
+      properties:
+        rating:
+          description: 0 - remove rating
+          type: integer
+          format: uint8
+          minimum: 0
+          maximum: 5
+
+    RatingResponse:
+      type: object
+      required: [gameId, rating]
+      properties:
+        gameId:
+          type: integer
+          format: int32
+        rating:
+          type: integer
+          format: uint8
+          minimum: 0
+          maximum: 5
+
+    GetUserRatingsRequest:
+      type: object
+      properties:
+        gameIds:
+          x-go-name: GameIDs
+          type: array
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+
+    UserRatingsResponse:
+      x-go-type: map[int32]uint8
+      description: map of game id to user rating
+      type: object
+      additionalProperties:
+        type: integer
+        minimum: 1
+        maximum: 5
+
+    ModerationItem:
+      type: object
+      required: [id, resultStatus, details]
+      properties:
+        id:
+          type: integer
+          format: int32
+        resultStatus:
+          type: string
+        details:
+          type: string
+        createdAt:
+          type: string
+          description: RFC3339 timestamp
+        updatedAt:
+          type: string
+          description: RFC3339 timestamp
+
+    UploadImagesResponse:
+      type: object
+      required: [files]
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadedFileInfo"
+
+    UploadedFileInfo:
+      type: object
+      required: [fileName, fileId, fileUrl, type]
+      properties:
+        fileName:
+          type: string
+        fileId:
+          type: string
+        fileUrl:
+          type: string
+        type:
+          type: string
+          enum: [cover, screenshot]

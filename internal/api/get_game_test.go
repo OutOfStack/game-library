@@ -18,7 +18,14 @@ func (s *TestSuite) Test_GetGame_Success() {
 
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
 
-	s.gameFacadeMock.EXPECT().GetGameByID(mock.Any(), id).Return(model.Game{ID: id, Name: name}, nil)
+	s.gameFacadeMock.EXPECT().GetGameDetailsByID(mock.Any(), id).Return(model.GameDetails{
+		ID:             id,
+		Name:           name,
+		Trailers:       []string{"https://www.youtube.com/watch?v=trailer"},
+		GameModeIDs:    []int32{1, 3},
+		SimilarGames:   []model.GameSummary{{ID: 2, Name: "Similar"}},
+		FranchiseGames: []model.GameSummary{{ID: 3, Name: "Franchise"}},
+	}, nil)
 	s.gameFacadeMock.EXPECT().GetGenresMap(mock.Any()).Return(nil, nil)
 	s.gameFacadeMock.EXPECT().GetPlatformsMap(mock.Any()).Return(nil, nil)
 	s.gameFacadeMock.EXPECT().GetCompaniesMap(mock.Any()).Return(nil, nil)
@@ -30,7 +37,7 @@ func (s *TestSuite) Test_GetGame_Success() {
 
 	s.Equal(http.StatusOK, s.httpResponse.Code)
 	s.JSONEq(fmt.Sprintf(
-		`{"id":%d,"name":"%s","developers":null,"publishers":null,"releaseDate":"","genres":null,"rating":0,"platforms":null,"screenshots":null,"websites":null}`, id, name),
+		`{"id":%d,"name":"%s","developers":null,"publishers":null,"releaseDate":"","genres":null,"rating":0,"platforms":null,"screenshots":null,"websites":null,"trailers":["https://www.youtube.com/watch?v=trailer"],"gameModes":[{"id":1,"name":"Single player"},{"id":3,"name":"Co-operative"}],"similarGames":[{"id":2,"name":"Similar","releaseDate":"","logoUrl":"","rating":0,"slug":""}],"franchiseGames":[{"id":3,"name":"Franchise","releaseDate":"","logoUrl":"","rating":0,"slug":""}]}`, id, name),
 		s.httpResponse.Body.String())
 }
 
@@ -50,7 +57,7 @@ func (s *TestSuite) Test_GetGame_NotFound() {
 
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
 
-	s.gameFacadeMock.EXPECT().GetGameByID(mock.Any(), id).Return(model.Game{}, apperr.NewNotFoundError("game", id))
+	s.gameFacadeMock.EXPECT().GetGameDetailsByID(mock.Any(), id).Return(model.GameDetails{}, apperr.NewNotFoundError("game", id))
 
 	r := chi.NewRouter()
 	r.Get("/games/{id}", s.provider.GetGame)
@@ -65,7 +72,7 @@ func (s *TestSuite) Test_GetGame_Error() {
 
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, fmt.Sprintf("/games/%d", id), nil)
 
-	s.gameFacadeMock.EXPECT().GetGameByID(mock.Any(), id).Return(model.Game{}, errors.New("new error"))
+	s.gameFacadeMock.EXPECT().GetGameDetailsByID(mock.Any(), id).Return(model.GameDetails{}, errors.New("new error"))
 
 	r := chi.NewRouter()
 	r.Get("/games/{id}", s.provider.GetGame)

@@ -498,11 +498,15 @@ func TestUpdateGameIGDBInfo_Valid_ShouldUpdateIGDBInfo(t *testing.T) {
 	require.NoError(t, err)
 
 	igdbData := model.UpdateGameIGDBData{
-		Name:            td.String(),
-		PlatformsIDs:    []int32{td.Int32(), td.Int32()},
-		Websites:        []string{td.String(), td.String()},
-		IGDBRating:      td.Float64n(100),
-		IGDBRatingCount: int32(td.Intn(10000)),
+		Name:             td.String(),
+		PlatformsIDs:     []int32{td.Int32(), td.Int32()},
+		Websites:         []string{td.String(), td.String()},
+		Trailers:         []string{td.String(), td.String()},
+		GameModeIDs:      []int32{1, 3},
+		SimilarGameIDs:   []int32{td.Int32(), td.Int32()},
+		FranchiseGameIDs: []int32{td.Int32(), td.Int32()},
+		IGDBRating:       td.Float64n(100),
+		IGDBRatingCount:  int32(td.Intn(10000)),
 	}
 
 	err = s.UpdateGameIGDBInfo(ctx, id, igdbData)
@@ -514,8 +518,33 @@ func TestUpdateGameIGDBInfo_Valid_ShouldUpdateIGDBInfo(t *testing.T) {
 	require.Equal(t, igdbData.Name, game.Name, "name should be equal")
 	require.Equal(t, igdbData.PlatformsIDs, game.PlatformsIDs, "platforms should be equal")
 	require.Equal(t, igdbData.Websites, game.Websites, "websites should be equal")
+	require.Equal(t, igdbData.Trailers, game.Trailers, "trailers should be equal")
+	require.Equal(t, igdbData.GameModeIDs, game.GameModeIDs, "game modes should be equal")
+	require.Equal(t, igdbData.SimilarGameIDs, game.SimilarGameIDs, "similar games should be equal")
+	require.Equal(t, igdbData.FranchiseGameIDs, game.FranchiseGameIDs, "franchise games should be equal")
 	require.InDelta(t, igdbData.IGDBRating, game.IGDBRating, 0.01, "igdb rating should be equal")
 	require.Equal(t, igdbData.IGDBRatingCount, game.IGDBRatingCount, "igdb rating count should be equal")
+}
+
+// TestUpdateGameIGDBInfo_NilDetails_ShouldStoreEmptyArrays tests case when IGDB omits game details
+func TestUpdateGameIGDBInfo_NilDetails_ShouldStoreEmptyArrays(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+
+	id, err := s.CreateGame(ctx, getCreateGameData())
+	require.NoError(t, err)
+
+	err = s.UpdateGameIGDBInfo(ctx, id, model.UpdateGameIGDBData{Name: td.String()})
+	require.NoError(t, err)
+
+	game, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
+	require.Empty(t, game.Trailers)
+	require.Empty(t, game.GameModeIDs)
+	require.Empty(t, game.SimilarGameIDs)
+	require.Empty(t, game.FranchiseGameIDs)
 }
 
 // TestUpdateGameIGDBInfo_NotExist_ShouldReturnNotFoundError tests case when we update IGDB info of a non-existing game
@@ -868,6 +897,25 @@ func TestGetGameIDByIGDBID_GameNotExists_ShouldReturnNotFoundError(t *testing.T)
 	require.Zero(t, id, "id should be 0")
 }
 
+func TestGetGamesIGDBIDMap_ReturnsStoredIGDBGames(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	game := getCreateGameData()
+	game.IGDBID = 123
+	id, err := s.CreateGame(ctx, game)
+	require.NoError(t, err)
+	manualGame := getCreateGameData()
+	manualGame.IGDBID = 0
+	_, err = s.CreateGame(ctx, manualGame)
+	require.NoError(t, err)
+
+	gameIDs, err := s.GetGamesIGDBIDMap(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[int64]int32{123: id}, gameIDs)
+}
+
 // TestCreateGame_Valid_ShouldCreateAndReturnID tests case when creating a valid game
 func TestCreateGame_Valid_ShouldCreateAndReturnID(t *testing.T) {
 	s := setup(t)
@@ -885,6 +933,85 @@ func TestCreateGame_Valid_ShouldCreateAndReturnID(t *testing.T) {
 	game, err := s.GetGameByID(ctx, id)
 	require.NoError(t, err)
 	compareCreateGameAndGame(t, cg, game)
+}
+
+func TestCreateGame_RichFieldsDefaultToEmpty(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	id, err := s.CreateGame(ctx, getCreateGameData())
+	require.NoError(t, err)
+
+	var trailers []string
+	var gameModeIDs, similarGameIDs, franchiseGameIDs []int32
+	err = db.QueryRow(ctx, `
+		SELECT trailers, game_mode_ids, similar_game_ids, franchise_game_ids
+		FROM games
+		WHERE id = $1`, id).Scan(&trailers, &gameModeIDs, &similarGameIDs, &franchiseGameIDs)
+	require.NoError(t, err)
+	require.Empty(t, trailers)
+	require.Empty(t, gameModeIDs)
+	require.Empty(t, similarGameIDs)
+	require.Empty(t, franchiseGameIDs)
+}
+
+func TestCreateGame_RichFieldsRoundTrip(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	cg := getCreateGameData()
+	cg.Trailers = []string{"https://www.youtube.com/watch?v=one", "https://www.youtube.com/watch?v=two"}
+	cg.GameModeIDs = []int32{1, 3}
+	cg.SimilarGameIDs = []int32{7, 8}
+	cg.FranchiseGameIDs = []int32{9, 10}
+
+	id, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
+
+	game, err := s.GetGameByID(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, cg.Trailers, game.Trailers)
+	require.Equal(t, cg.GameModeIDs, game.GameModeIDs)
+	require.Equal(t, cg.SimilarGameIDs, game.SimilarGameIDs)
+	require.Equal(t, cg.FranchiseGameIDs, game.FranchiseGameIDs)
+}
+
+func TestGetGameSummariesByIDs_PreservesOrderAndOmitsMissing(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	first := getCreateGameData()
+	second := getCreateGameData()
+	firstID, err := s.CreateGame(ctx, first)
+	require.NoError(t, err)
+	secondID, err := s.CreateGame(ctx, second)
+	require.NoError(t, err)
+
+	summaries, err := s.GetGameSummariesByIDs(ctx, []int32{secondID, -1, firstID})
+	require.NoError(t, err)
+	require.Len(t, summaries, 2)
+	require.Equal(t, secondID, summaries[0].ID)
+	require.Equal(t, second.Name, summaries[0].Name)
+	require.Equal(t, firstID, summaries[1].ID)
+	require.Equal(t, first.Name, summaries[1].Name)
+}
+
+func TestGetGameSummariesByIDs_NotReady_ShouldBeOmitted(t *testing.T) {
+	s := setup(t)
+	defer teardown(t)
+
+	ctx := t.Context()
+	cg := getCreateGameData()
+	cg.ModerationStatus = model.ModerationStatusPending
+	id, err := s.CreateGame(ctx, cg)
+	require.NoError(t, err)
+
+	summaries, err := s.GetGameSummariesByIDs(ctx, []int32{id})
+	require.NoError(t, err)
+	require.Empty(t, summaries)
 }
 
 // TestUpdateGameModerationID_Valid_ShouldUpdateModerationID tests updating game moderation ID

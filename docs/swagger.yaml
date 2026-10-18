@@ -44,6 +44,70 @@ definitions:
         minimum: 0
         type: integer
     type: object
+  model.GameDetailsResponse:
+    properties:
+      developers:
+        items:
+          $ref: '#/definitions/model.Company'
+        type: array
+      franchiseGames:
+        items:
+          $ref: '#/definitions/model.GameSummary'
+        type: array
+      gameModes:
+        items:
+          $ref: '#/definitions/model.GameMode'
+        type: array
+      genres:
+        items:
+          $ref: '#/definitions/model.Genre'
+        type: array
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      name:
+        type: string
+      platforms:
+        items:
+          $ref: '#/definitions/model.Platform'
+        type: array
+      publishers:
+        items:
+          $ref: '#/definitions/model.Company'
+        type: array
+      rating:
+        type: number
+      releaseDate:
+        type: string
+      screenshots:
+        items:
+          type: string
+        type: array
+      similarGames:
+        items:
+          $ref: '#/definitions/model.GameSummary'
+        type: array
+      slug:
+        type: string
+      summary:
+        type: string
+      trailers:
+        items:
+          type: string
+        type: array
+      websites:
+        items:
+          type: string
+        type: array
+    type: object
+  model.GameMode:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   model.GameResponse:
     properties:
       developers:
@@ -84,6 +148,21 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  model.GameSummary:
+    properties:
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      name:
+        type: string
+      rating:
+        type: number
+      releaseDate:
+        type: string
+      slug:
+        type: string
     type: object
   model.GamesResponse:
     properties:
@@ -387,7 +466,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.GameResponse'
+            $ref: '#/definitions/model.GameDetailsResponse'
         "400":
           description: Bad Request
           schema:

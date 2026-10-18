@@ -36,6 +36,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_Success() {
 		Name:   td.String(),
 		IGDBID: td.Int64(),
 	}
+	relatedIGDBID, relatedGameID := td.Int64(), td.Int31()
 
 	updatedInfo1 := igdbapi.GameInfoForUpdate{
 		ID:               game1.IGDBID,
@@ -46,6 +47,10 @@ func (s *TestSuite) TestStartUpdateGameInfo_Success() {
 		Websites: []igdbapi.Website{
 			{URL: td.String(), Type: igdbapi.WebsiteTypeSteam},
 		},
+		Videos:       []igdbapi.Video{{VideoID: "trailer"}},
+		GameModes:    []int32{1, 3},
+		SimilarGames: []int64{game1.IGDBID, relatedIGDBID},
+		Franchise:    igdbapi.Franchise{Games: []int64{relatedIGDBID}},
 	}
 
 	updatedInfo2 := igdbapi.GameInfoForUpdate{
@@ -65,14 +70,29 @@ func (s *TestSuite) TestStartUpdateGameInfo_Success() {
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{
+		game1.IGDBID:  game1.ID,
+		game2.IGDBID:  game2.ID,
+		relatedIGDBID: relatedGameID,
+	}, nil)
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[0]).Return(game1, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game1.IGDBID).Return(updatedInfo1, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[0], gomock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[0], model.UpdateGameIGDBData{
+		Name:             updatedInfo1.Name,
+		PlatformsIDs:     []int32{platforms[0].ID, platforms[1].ID},
+		Websites:         []string{updatedInfo1.Websites[0].URL},
+		Trailers:         []string{"https://www.youtube.com/watch?v=trailer"},
+		GameModeIDs:      []int32{1, 3},
+		SimilarGameIDs:   []int32{relatedGameID},
+		FranchiseGameIDs: []int32{relatedGameID},
+		IGDBRating:       updatedInfo1.TotalRating,
+		IGDBRatingCount:  updatedInfo1.TotalRatingCount,
+	}).Return(nil)
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[1]).Return(game2, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
@@ -185,11 +205,12 @@ func (s *TestSuite) TestStartUpdateGameInfo_GetGameError() {
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{}, nil)
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[0]).Return(model.Game{}, errors.New("get game error"))
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[1]).Return(game2, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
@@ -240,12 +261,13 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipGameWithZeroIGDBID() {
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{}, nil)
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[0]).Return(game1, nil)
 	// game1 should be skipped, no IGDB call for it
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[1]).Return(game2, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
@@ -296,13 +318,14 @@ func (s *TestSuite) TestStartUpdateGameInfo_IGDBAPIError() {
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{}, nil)
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[0]).Return(game1, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game1.IGDBID).Return(igdbapi.GameInfoForUpdate{}, errors.New("igdb api error"))
 	// game1 should continue to game2 despite error
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[1]).Return(game2, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
@@ -364,14 +387,15 @@ func (s *TestSuite) TestStartUpdateGameInfo_UpdateGameIGDBInfoError() {
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{}, nil)
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[0]).Return(game1, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game1.IGDBID).Return(updatedInfo1, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[0], gomock.Any()).Return(errors.New("update error"))
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[0], gomock.Any()).Return(errors.New("update error"))
 	// continue to game2 despite error
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[1]).Return(game2, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 
@@ -419,15 +443,20 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipUnchangedGame() {
 
 	website1URL := td.URL()
 	website2URL := td.URL()
+	relatedIGDBID, relatedGameID := td.Int64(), td.Int31()
 
 	game1 := model.Game{
-		ID:              gameIDs[0],
-		Name:            td.String(),
-		IGDBID:          td.Int64(),
-		PlatformsIDs:    []int32{platforms[1].ID, platforms[0].ID},
-		Websites:        []string{website2URL, website1URL},
-		IGDBRating:      td.Float64n(100),
-		IGDBRatingCount: td.Int31(),
+		ID:               gameIDs[0],
+		Name:             td.String(),
+		IGDBID:           td.Int64(),
+		PlatformsIDs:     []int32{platforms[1].ID, platforms[0].ID},
+		Websites:         []string{website2URL, website1URL},
+		IGDBRating:       td.Float64n(100),
+		IGDBRatingCount:  td.Int31(),
+		Trailers:         []string{"https://www.youtube.com/watch?v=trailer"},
+		GameModeIDs:      []int32{1},
+		SimilarGameIDs:   []int32{relatedGameID},
+		FranchiseGameIDs: []int32{relatedGameID},
 	}
 	game2 := model.Game{
 		ID:     gameIDs[1],
@@ -445,6 +474,10 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipUnchangedGame() {
 			{URL: website1URL, Type: igdbapi.WebsiteTypeSteam},
 			{URL: website2URL, Type: igdbapi.WebsiteTypeOfficial},
 		},
+		Videos:       []igdbapi.Video{{VideoID: "trailer"}},
+		GameModes:    []int32{1},
+		SimilarGames: []int64{relatedIGDBID},
+		Franchise:    igdbapi.Franchise{Games: []int64{relatedIGDBID}},
 	}
 
 	updatedInfo2 := igdbapi.GameInfoForUpdate{
@@ -464,6 +497,10 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipUnchangedGame() {
 
 	s.storageMock.EXPECT().GetGamesIDsAfterID(gomock.Any(), lastProcessedID, 200).Return(gameIDs, nil)
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{
+		game1.IGDBID:  game1.ID,
+		relatedIGDBID: relatedGameID,
+	}, nil)
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[0]).Return(game1, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game1.IGDBID).Return(updatedInfo1, nil)
@@ -471,7 +508,7 @@ func (s *TestSuite) TestStartUpdateGameInfo_SkipUnchangedGame() {
 
 	s.storageMock.EXPECT().GetGameByID(gomock.Any(), gameIDs[1]).Return(game2, nil)
 	s.igdbClientMock.EXPECT().GetGameInfoForUpdate(gomock.Any(), game2.IGDBID).Return(updatedInfo2, nil)
-	s.storageMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
+	s.gameFacadeMock.EXPECT().UpdateGameIGDBInfo(gomock.Any(), gameIDs[1], gomock.Any()).Return(nil)
 
 	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
 

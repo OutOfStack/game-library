@@ -178,6 +178,21 @@ func (mr *MockStorageMockRecorder) GetGameByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameByID", reflect.TypeOf((*MockStorage)(nil).GetGameByID), ctx, id)
 }
 
+// GetGameSummariesByIDs mocks base method.
+func (m *MockStorage) GetGameSummariesByIDs(ctx context.Context, ids []int32) ([]model.GameSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameSummariesByIDs", ctx, ids)
+	ret0, _ := ret[0].([]model.GameSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameSummariesByIDs indicates an expected call of GetGameSummariesByIDs.
+func (mr *MockStorageMockRecorder) GetGameSummariesByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameSummariesByIDs", reflect.TypeOf((*MockStorage)(nil).GetGameSummariesByIDs), ctx, ids)
+}
+
 // GetGameTrendingData mocks base method.
 func (m *MockStorage) GetGameTrendingData(ctx context.Context, gameID int32) (model.GameTrendingData, error) {
 	m.ctrl.T.Helper()
@@ -486,6 +501,20 @@ func (m *MockStorage) UpdateGame(ctx context.Context, id int32, ug model.UpdateG
 func (mr *MockStorageMockRecorder) UpdateGame(ctx, id, ug any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGame", reflect.TypeOf((*MockStorage)(nil).UpdateGame), ctx, id, ug)
+}
+
+// UpdateGameIGDBInfo mocks base method.
+func (m *MockStorage) UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.UpdateGameIGDBData) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGameIGDBInfo", ctx, id, ug)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGameIGDBInfo indicates an expected call of UpdateGameIGDBInfo.
+func (mr *MockStorageMockRecorder) UpdateGameIGDBInfo(ctx, id, ug any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameIGDBInfo", reflect.TypeOf((*MockStorage)(nil).UpdateGameIGDBInfo), ctx, id, ug)
 }
 
 // UpdateGameModerationID mocks base method.

@@ -284,7 +284,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.GameResponse"
+                            "$ref": "#/definitions/model.GameDetailsResponse"
                         }
                     },
                     "400": {
@@ -776,6 +776,103 @@ const docTemplate = `{
                 }
             }
         },
+        "model.GameDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "developers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Company"
+                    }
+                },
+                "franchiseGames": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GameSummary"
+                    }
+                },
+                "gameModes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GameMode"
+                    }
+                },
+                "genres": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Genre"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "platforms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Platform"
+                    }
+                },
+                "publishers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Company"
+                    }
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "releaseDate": {
+                    "type": "string"
+                },
+                "screenshots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "similarGames": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GameSummary"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "trailers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "websites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.GameMode": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "model.GameResponse": {
             "type": "object",
             "properties": {
@@ -835,6 +932,29 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "model.GameSummary": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "releaseDate": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
                 }
             }
         },

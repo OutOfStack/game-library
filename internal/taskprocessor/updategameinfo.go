@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/model"
@@ -19,6 +20,9 @@ const (
 	UpdateGameInfoTaskName = "update_game_info"
 
 	updateGameInfoBatchSize = 200
+	maxGameTrailers         = 2
+	maxRelatedGames         = 6
+	youtubeWatchURL         = "https://www.youtube.com/watch?v="
 )
 
 type updateGameInfoSettings struct {
@@ -73,6 +77,10 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 		for _, p := range platforms {
 			igdbIDPlatformMap[p.IGDBID] = p
 		}
+		gameIDMap, err := tp.storage.GetGamesIGDBIDMap(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get games igdb id map in update games info task: %v", err)
+		}
 
 		var updatedCount int
 		for _, gameID := range gameIDs {
@@ -98,14 +106,14 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 				continue
 			}
 
-			updatedData, changed := mapGameToUpdateIGDBGameData(game, updatedInfo, igdbIDPlatformMap)
+			updatedData, changed := mapGameToUpdateIGDBGameData(game, updatedInfo, igdbIDPlatformMap, gameIDMap)
 			if !changed {
 				s.LastProcessedID = gameID
 				continue
 			}
 
 			// update game info
-			err = tp.storage.UpdateGameIGDBInfo(ctx, gameID, updatedData)
+			err = tp.gameFacade.UpdateGameIGDBInfo(ctx, gameID, updatedData)
 			if err != nil {
 				tp.log.Error("failed to update game info", zap.Int32("game_id", gameID), zap.Error(err))
 				continue
@@ -130,7 +138,7 @@ func (tp *TaskProvider) StartUpdateGameInfo() error {
 	return tp.DoTask(UpdateGameInfoTaskName, taskFn)
 }
 
-func mapGameToUpdateIGDBGameData(game model.Game, updateInfo igdbapi.GameInfoForUpdate, platformsMap map[int64]model.Platform) (model.UpdateGameIGDBData, bool) {
+func mapGameToUpdateIGDBGameData(game model.Game, updateInfo igdbapi.GameInfoForUpdate, platformsMap map[int64]model.Platform, gameIDs map[int64]int32) (model.UpdateGameIGDBData, bool) {
 	var websites []string
 	var platformsIDs []int32
 
@@ -145,20 +153,75 @@ func mapGameToUpdateIGDBGameData(game model.Game, updateInfo igdbapi.GameInfoFor
 			websites = append(websites, w.URL)
 		}
 	}
-
 	data := model.UpdateGameIGDBData{
-		Name:            updateInfo.Name,
-		PlatformsIDs:    platformsIDs,
-		Websites:        websites,
-		IGDBRating:      updateInfo.TotalRating,
-		IGDBRatingCount: updateInfo.TotalRatingCount,
+		Name:             updateInfo.Name,
+		PlatformsIDs:     platformsIDs,
+		Websites:         websites,
+		Trailers:         mapTrailerURLs(updateInfo.Videos),
+		GameModeIDs:      updateInfo.GameModes,
+		SimilarGameIDs:   resolveRelatedGameIDs(game.IGDBID, updateInfo.SimilarGames, gameIDs),
+		FranchiseGameIDs: resolveRelatedGameIDs(game.IGDBID, franchiseGameIDs(updateInfo.Franchise, updateInfo.Franchises), gameIDs),
+		IGDBRating:       updateInfo.TotalRating,
+		IGDBRatingCount:  updateInfo.TotalRatingCount,
 	}
 
 	changed := game.Name != data.Name ||
 		math.Abs(game.IGDBRating-data.IGDBRating) >= 0.1 ||
 		game.IGDBRatingCount != data.IGDBRatingCount ||
 		!slice.SameValues(game.PlatformsIDs, data.PlatformsIDs) ||
-		!slice.SameValues(game.Websites, data.Websites)
+		!slice.SameValues(game.Websites, data.Websites) ||
+		!slice.SameValues(game.Trailers, data.Trailers) ||
+		!slice.SameValues(game.GameModeIDs, data.GameModeIDs) ||
+		!slice.SameValues(game.SimilarGameIDs, data.SimilarGameIDs) ||
+		!slice.SameValues(game.FranchiseGameIDs, data.FranchiseGameIDs)
 
 	return data, changed
+}
+
+func mapTrailerURLs(videos []igdbapi.Video) []string {
+	trailers := make([]string, 0, maxGameTrailers)
+	seen := make(map[string]struct{}, maxGameTrailers)
+	for _, video := range videos {
+		id := strings.TrimSpace(video.VideoID)
+		if id == "" {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		trailers = append(trailers, youtubeWatchURL+id)
+		if len(trailers) == maxGameTrailers {
+			break
+		}
+	}
+	return trailers
+}
+
+func franchiseGameIDs(franchise igdbapi.Franchise, franchises []igdbapi.Franchise) []int64 {
+	ids := append([]int64(nil), franchise.Games...)
+	for _, additional := range franchises {
+		ids = append(ids, additional.Games...)
+	}
+	return ids
+}
+
+func resolveRelatedGameIDs(currentIGDBID int64, relatedIGDBIDs []int64, gameIDs map[int64]int32) []int32 {
+	ids := make([]int32, 0, maxRelatedGames)
+	seen := make(map[int32]struct{}, maxRelatedGames)
+	for _, igdbID := range relatedIGDBIDs {
+		id, ok := gameIDs[igdbID]
+		if !ok || igdbID == currentIGDBID {
+			continue
+		}
+		if _, ok = seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+		if len(ids) == maxRelatedGames {
+			break
+		}
+	}
+	return ids
 }

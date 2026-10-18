@@ -101,6 +101,57 @@ func (s *TestSuite) TestGetGameByID_Error() {
 	s.Equal(model.Game{}, res)
 }
 
+func (s *TestSuite) TestGetGameDetailsByID_HydratesRelatedGamesInStoredOrder() {
+	game := model.Game{
+		ID:               td.Int32(),
+		SimilarGameIDs:   []int32{2, 99, 1},
+		FranchiseGameIDs: []int32{3, 2},
+	}
+	summaries := []model.GameSummary{{ID: 2}, {ID: 1}, {ID: 3}, {ID: 2}}
+	s.storageMock.EXPECT().GetGameByID(s.ctx, game.ID).Return(game, nil)
+	s.storageMock.EXPECT().GetGameSummariesByIDs(s.ctx, []int32{2, 99, 1, 3, 2}).Return(summaries, nil)
+	s.redisClientMock.EXPECT().GetStruct(s.ctx, mock.Any(), mock.Any()).Return(goredis.Nil)
+	s.redisClientMock.EXPECT().SetStruct(s.ctx, mock.Any(), game, time.Duration(0)).Return(nil)
+
+	details, err := s.provider.GetGameDetailsByID(s.ctx, game.ID)
+
+	s.Require().NoError(err)
+	s.Equal([]int32{2, 1}, []int32{details.SimilarGames[0].ID, details.SimilarGames[1].ID})
+	s.Equal([]int32{3, 2}, []int32{details.FranchiseGames[0].ID, details.FranchiseGames[1].ID})
+}
+
+func (s *TestSuite) TestUpdateGameIGDBInfo_InvalidatesGameCache() {
+	gameID := td.Int32()
+	data := model.UpdateGameIGDBData{Name: td.String()}
+	s.storageMock.EXPECT().UpdateGameIGDBInfo(s.ctx, gameID, data).Return(nil)
+	s.redisClientMock.EXPECT().Delete(s.ctx, fmt.Sprintf("game|%d", gameID)).Return(nil)
+
+	err := s.provider.UpdateGameIGDBInfo(s.ctx, gameID, data)
+
+	s.Require().NoError(err)
+}
+
+func (s *TestSuite) TestUpdateGameIGDBInfo_CacheDeleteError_ShouldNotFail() {
+	gameID := td.Int32()
+	data := model.UpdateGameIGDBData{Name: td.String()}
+	s.storageMock.EXPECT().UpdateGameIGDBInfo(s.ctx, gameID, data).Return(nil)
+	s.redisClientMock.EXPECT().Delete(s.ctx, fmt.Sprintf("game|%d", gameID)).Return(errors.New("cache error"))
+
+	err := s.provider.UpdateGameIGDBInfo(s.ctx, gameID, data)
+
+	s.Require().NoError(err)
+}
+
+func (s *TestSuite) TestUpdateGameIGDBInfo_UpdateErrorDoesNotInvalidateCache() {
+	gameID := td.Int32()
+	data := model.UpdateGameIGDBData{Name: td.String()}
+	s.storageMock.EXPECT().UpdateGameIGDBInfo(s.ctx, gameID, data).Return(errors.New("update error"))
+
+	err := s.provider.UpdateGameIGDBInfo(s.ctx, gameID, data)
+
+	s.Require().Error(err)
+}
+
 func (s *TestSuite) TestCreateGame_Success() {
 	gameID := td.Int31()
 	developerID, publisherID := td.Int31(), td.Int31()

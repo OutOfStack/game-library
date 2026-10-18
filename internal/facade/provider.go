@@ -39,8 +39,10 @@ type Storage interface {
 	GetGames(ctx context.Context, pageSize, page uint32, filter model.GamesFilter) (list []model.Game, err error)
 	GetGamesCount(ctx context.Context, filter model.GamesFilter) (count uint64, err error)
 	GetGameByID(ctx context.Context, id int32) (game model.Game, err error)
+	GetGameSummariesByIDs(ctx context.Context, ids []int32) (list []model.GameSummary, err error)
 	CreateGame(ctx context.Context, cg model.CreateGameData) (id int32, err error)
 	UpdateGame(ctx context.Context, id int32, ug model.UpdateGameData) error
+	UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.UpdateGameIGDBData) error
 	DeleteGame(ctx context.Context, id int32) error
 	UpdateGameRating(ctx context.Context, id int32) error
 	GetPublisherGamesCount(ctx context.Context, publisherID int32, startDate, endDate time.Time) (count int, err error)

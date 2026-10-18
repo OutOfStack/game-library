@@ -42,12 +42,33 @@ type Game struct {
 	PlatformsIDs     []int32          `db:"platforms"`
 	Screenshots      []string         `db:"screenshots"`
 	Websites         []string         `db:"websites"`
+	Trailers         []string         `db:"trailers"`
+	GameModeIDs      []int32          `db:"game_mode_ids"`
+	SimilarGameIDs   []int32          `db:"similar_game_ids"`
+	FranchiseGameIDs []int32          `db:"franchise_game_ids"`
 	IGDBRating       float64          `db:"igdb_rating"`
 	IGDBRatingCount  int32            `db:"igdb_rating_count"`
 	IGDBID           int64            `db:"igdb_id"`
 	ModerationStatus ModerationStatus `db:"moderation_status"`
 	ModerationID     sql.NullInt32    `db:"moderation_id"`
 	TrendingIndex    float64          `db:"trending_index"`
+}
+
+// GameSummary contains fields used for related game cards
+type GameSummary struct {
+	ID          int32      `db:"id"`
+	Name        string     `db:"name"`
+	ReleaseDate types.Date `db:"release_date"`
+	LogoURL     string     `db:"logo_url"`
+	Rating      float64    `db:"rating"`
+	Slug        string     `db:"slug"`
+}
+
+// GameDetails contains a game and its hydrated related games
+type GameDetails struct {
+	Game
+	SimilarGames   []GameSummary
+	FranchiseGames []GameSummary
 }
 
 // CreateGameData - data for creating game in db
@@ -63,6 +84,10 @@ type CreateGameData struct {
 	PlatformsIDs     []int32
 	Screenshots      []string
 	Websites         []string
+	Trailers         []string
+	GameModeIDs      []int32
+	SimilarGameIDs   []int32
+	FranchiseGameIDs []int32
 	IGDBRating       float64
 	IGDBRatingCount  int32
 	IGDBID           int64
@@ -102,11 +127,15 @@ type UpdateGameData struct {
 
 // UpdateGameIGDBData - igdb data for updating game in db
 type UpdateGameIGDBData struct {
-	Name            string
-	PlatformsIDs    []int32
-	Websites        []string
-	IGDBRating      float64
-	IGDBRatingCount int32
+	Name             string
+	PlatformsIDs     []int32
+	Websites         []string
+	Trailers         []string
+	GameModeIDs      []int32
+	SimilarGameIDs   []int32
+	FranchiseGameIDs []int32
+	IGDBRating       float64
+	IGDBRatingCount  int32
 }
 
 // UpdateGame - update game fields

@@ -13,6 +13,15 @@ const (
 	minLengthForSearch = 2
 )
 
+var gameModeNames = map[int32]string{
+	1: "Single player",
+	2: "Multiplayer",
+	3: "Co-operative",
+	4: "Split screen",
+	5: "MMO",
+	6: "Battle Royale",
+}
+
 // Mappings
 
 func mapToCreateGame(cgr *api.CreateGameRequest, publisher string) model.CreateGame {
@@ -100,6 +109,44 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	}
 
 	return resp, nil
+}
+
+func (p *Provider) mapToGameDetailsResponse(ctx context.Context, details model.GameDetails) (api.GameDetailsResponse, error) {
+	game, err := p.mapToGameResponse(ctx, details.Game)
+	if err != nil {
+		return api.GameDetailsResponse{}, err
+	}
+
+	resp := api.GameDetailsResponse{
+		GameResponse:   game,
+		Trailers:       append([]string{}, details.Trailers...),
+		GameModes:      make([]api.GameMode, 0, len(details.GameModeIDs)),
+		SimilarGames:   make([]api.GameSummary, 0, len(details.SimilarGames)),
+		FranchiseGames: make([]api.GameSummary, 0, len(details.FranchiseGames)),
+	}
+	for _, id := range details.GameModeIDs {
+		if name, ok := gameModeNames[id]; ok {
+			resp.GameModes = append(resp.GameModes, api.GameMode{ID: id, Name: name})
+		}
+	}
+	for _, summary := range details.SimilarGames {
+		resp.SimilarGames = append(resp.SimilarGames, mapToGameSummary(summary))
+	}
+	for _, summary := range details.FranchiseGames {
+		resp.FranchiseGames = append(resp.FranchiseGames, mapToGameSummary(summary))
+	}
+	return resp, nil
+}
+
+func mapToGameSummary(game model.GameSummary) api.GameSummary {
+	return api.GameSummary{
+		ID:          game.ID,
+		Name:        game.Name,
+		ReleaseDate: game.ReleaseDate.String(),
+		LogoURL:     game.LogoURL,
+		Rating:      game.Rating,
+		Slug:        game.Slug,
+	}
 }
 
 func mapToUpdateGame(ugr *api.UpdateGameRequest, publisher string) model.UpdateGame {

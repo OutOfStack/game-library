@@ -105,21 +105,6 @@ func (mr *MockStorageMockRecorder) GetGameByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameByID", reflect.TypeOf((*MockStorage)(nil).GetGameByID), ctx, id)
 }
 
-// GetGameIDByIGDBID mocks base method.
-func (m *MockStorage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (int32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGameIDByIGDBID", ctx, igdbID)
-	ret0, _ := ret[0].(int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetGameIDByIGDBID indicates an expected call of GetGameIDByIGDBID.
-func (mr *MockStorageMockRecorder) GetGameIDByIGDBID(ctx, igdbID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameIDByIGDBID", reflect.TypeOf((*MockStorage)(nil).GetGameIDByIGDBID), ctx, igdbID)
-}
-
 // GetGamesIDsAfterID mocks base method.
 func (m *MockStorage) GetGamesIDsAfterID(ctx context.Context, lastID int32, batchSize int) ([]int32, error) {
 	m.ctrl.T.Helper()
@@ -133,6 +118,21 @@ func (m *MockStorage) GetGamesIDsAfterID(ctx context.Context, lastID int32, batc
 func (mr *MockStorageMockRecorder) GetGamesIDsAfterID(ctx, lastID, batchSize any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGamesIDsAfterID", reflect.TypeOf((*MockStorage)(nil).GetGamesIDsAfterID), ctx, lastID, batchSize)
+}
+
+// GetGamesIGDBIDMap mocks base method.
+func (m *MockStorage) GetGamesIGDBIDMap(ctx context.Context) (map[int64]int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGamesIGDBIDMap", ctx)
+	ret0, _ := ret[0].(map[int64]int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGamesIGDBIDMap indicates an expected call of GetGamesIGDBIDMap.
+func (mr *MockStorageMockRecorder) GetGamesIGDBIDMap(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGamesIGDBIDMap", reflect.TypeOf((*MockStorage)(nil).GetGamesIGDBIDMap), ctx)
 }
 
 // GetGenres mocks base method.
@@ -221,20 +221,6 @@ func (m *MockStorage) SetModerationRecordsStatus(ctx context.Context, gameIDs []
 func (mr *MockStorageMockRecorder) SetModerationRecordsStatus(ctx, gameIDs, status any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModerationRecordsStatus", reflect.TypeOf((*MockStorage)(nil).SetModerationRecordsStatus), ctx, gameIDs, status)
-}
-
-// UpdateGameIGDBInfo mocks base method.
-func (m *MockStorage) UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.UpdateGameIGDBData) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateGameIGDBInfo", ctx, id, ug)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateGameIGDBInfo indicates an expected call of UpdateGameIGDBInfo.
-func (mr *MockStorageMockRecorder) UpdateGameIGDBInfo(ctx, id, ug any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameIGDBInfo", reflect.TypeOf((*MockStorage)(nil).UpdateGameIGDBInfo), ctx, id, ug)
 }
 
 // UpdateTask mocks base method.
@@ -396,6 +382,20 @@ func (m *MockGameFacade) CreateCompany(ctx context.Context, company model.Compan
 func (mr *MockGameFacadeMockRecorder) CreateCompany(ctx, company any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCompany", reflect.TypeOf((*MockGameFacade)(nil).CreateCompany), ctx, company)
+}
+
+// UpdateGameIGDBInfo mocks base method.
+func (m *MockGameFacade) UpdateGameIGDBInfo(ctx context.Context, gameID int32, data model.UpdateGameIGDBData) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGameIGDBInfo", ctx, gameID, data)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGameIGDBInfo indicates an expected call of UpdateGameIGDBInfo.
+func (mr *MockGameFacadeMockRecorder) UpdateGameIGDBInfo(ctx, gameID, data any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGameIGDBInfo", reflect.TypeOf((*MockGameFacade)(nil).UpdateGameIGDBInfo), ctx, gameID, data)
 }
 
 // UpdateGameTrendingIndex mocks base method.

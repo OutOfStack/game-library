@@ -9,7 +9,6 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/model"
-	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
@@ -80,6 +79,11 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			s.LastReleasedAt = time.Now()
 		}
 
+		gameIDs, err := tp.storage.GetGamesIGDBIDMap(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get games igdb id map: %v", err)
+		}
+
 		// get stored platform
 		platforms, err := tp.storage.GetPlatforms(ctx)
 		if err != nil {
@@ -129,14 +133,11 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 			}
 
 			for _, g := range igdbGames {
-				_, err = tp.storage.GetGameIDByIGDBID(ctx, g.ID)
-				if err == nil {
+				if _, ok := gameIDs[g.ID]; ok {
 					fetchGamesSkippedTotal.Inc()
 					s.LastReleasedAt = time.Unix(g.FirstReleaseDate, 0)
 					settings = s.convertToTaskSettings()
 					continue
-				} else if !apperr.IsStatusCode(err, apperr.NotFound) {
-					return settings, fmt.Errorf("get game id by igdb id: %v", err)
 				}
 
 				// get developers, publishers ids
@@ -250,16 +251,21 @@ func (tp *TaskProvider) StartFetchIGDBGames() error {
 					PlatformsIDs:     platformsIDs,
 					Screenshots:      screenshots,
 					Websites:         websites,
+					Trailers:         mapTrailerURLs(g.Videos),
+					GameModeIDs:      g.GameModes,
+					SimilarGameIDs:   resolveRelatedGameIDs(g.ID, g.SimilarGames, gameIDs),
+					FranchiseGameIDs: resolveRelatedGameIDs(g.ID, franchiseGameIDs(g.Franchise, g.Franchises), gameIDs),
 					IGDBRating:       g.TotalRating,
 					IGDBRatingCount:  g.TotalRatingCount,
 					IGDBID:           g.ID,
 					ModerationStatus: model.ModerationStatusReady,
 				}
 
-				_, cErr := tp.storage.CreateGame(ctx, cg)
+				id, cErr := tp.storage.CreateGame(ctx, cg)
 				if cErr != nil {
 					return settings, fmt.Errorf("create game %s with igdb id %d: %v", cg.Name, cg.IGDBID, cErr)
 				}
+				gameIDs[g.ID] = id
 
 				fetchGamesAddedTotal.Inc()
 				gamesAdded++

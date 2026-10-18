@@ -44,6 +44,31 @@ type GameResponse struct {
 	Websites    []string   `json:"websites"`
 }
 
+// GameMode is an IGDB game mode
+type GameMode struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
+// GameSummary contains fields used by related game cards
+type GameSummary struct {
+	ID          int32   `json:"id"`
+	Name        string  `json:"name"`
+	ReleaseDate string  `json:"releaseDate"`
+	LogoURL     string  `json:"logoUrl"`
+	Rating      float64 `json:"rating"`
+	Slug        string  `json:"slug"`
+}
+
+// GameDetailsResponse contains detail-only game fields
+type GameDetailsResponse struct {
+	GameResponse
+	Trailers       []string      `json:"trailers"`
+	GameModes      []GameMode    `json:"gameModes"`
+	SimilarGames   []GameSummary `json:"similarGames"`
+	FranchiseGames []GameSummary `json:"franchiseGames"`
+}
+
 // GamesResponse - games response
 type GamesResponse struct {
 	Games []GameResponse `json:"games"`

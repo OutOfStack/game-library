@@ -79,7 +79,8 @@ func (c *Client) GetTopRatedGames(ctx context.Context, platformsIDs []int64, rel
 
 	query := fmt.Sprintf(
 		`fields id, cover.url, first_release_date, genres.name, name, platforms, total_rating, total_rating_count,
-		slug, summary, screenshots.url, websites.type, websites.url,
+		slug, summary, screenshots.url, websites.type, websites.url, videos.video_id, game_modes, similar_games,
+		franchise.games, franchises.games,
 		involved_companies.company.name, involved_companies.developer, involved_companies.publisher;
 		sort first_release_date desc;
 		where total_rating != null & total_rating_count > %d & total_rating > %d & first_release_date < %d &
@@ -135,7 +136,8 @@ func (c *Client) GetGameInfoForUpdate(ctx context.Context, igdbID int64) (GameIn
 	}
 
 	query := fmt.Sprintf(
-		`fields id, name, platforms, total_rating, total_rating_count, websites.type, websites.url;
+		`fields id, name, platforms, total_rating, total_rating_count, websites.type, websites.url,
+		videos.video_id, game_modes, similar_games, franchise.games, franchises.games;
 		where id = %d;`,
 		igdbID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBufferString(query))

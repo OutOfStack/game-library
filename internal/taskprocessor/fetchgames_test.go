@@ -9,7 +9,6 @@ import (
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/model"
-	"github.com/OutOfStack/game-library/internal/pkg/apperr"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
 	"go.uber.org/mock/gomock"
 )
@@ -32,9 +31,11 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	developerID, developerIGDBID, developerName := td.Int31(), td.Int64(), td.String()
 	publisherID, publisherIGDBID, publisherName := td.Int31(), td.Int64(), td.String()
 	genreID, genreIGDBID, genreName := td.Int31(), td.Int64(), td.String()
+	relatedIGDBID, relatedGameID := td.Int64(), td.Int31()
+	igdbGameID := td.Int64()
 
 	igdbGame := igdbapi.TopRatedGames{
-		ID:               td.Int64(),
+		ID:               igdbGameID,
 		Name:             td.String(),
 		TotalRating:      td.Float64n(100),
 		TotalRatingCount: td.Int32(),
@@ -69,6 +70,10 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 			{URL: td.String(), Type: igdbapi.WebsiteTypeSteam},
 			{URL: td.String(), Type: int8(-1)},
 		},
+		Videos:       []igdbapi.Video{{VideoID: "trailer"}},
+		GameModes:    []int32{1, 3},
+		SimilarGames: []int64{igdbGameID, relatedIGDBID},
+		Franchise:    igdbapi.Franchise{Games: []int64{relatedIGDBID}},
 	}
 
 	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error {
@@ -80,13 +85,13 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(platforms, nil)
 	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return(nil, nil)
 	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return(nil, nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{relatedIGDBID: relatedGameID}, nil)
 
 	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, gomock.Cond(func(x time.Time) bool { return x.Sub(lastReleasedAt) < time.Second }), gomock.Any(), int64(50), gomock.Any()).
 		Return([]igdbapi.TopRatedGames{igdbGame}, nil).Times(1)
 	// next iterations - return no games in order to stop
 	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), []int64{platforms[0].IGDBID}, time.Unix(igdbGame.FirstReleaseDate, 0), gomock.Any(), int64(50), gomock.Any()).
 		Return(nil, nil).Times(4)
-	s.storageMock.EXPECT().GetGameIDByIGDBID(gomock.Any(), igdbGame.ID).Return(int32(0), apperr.NewNotFoundError("game", igdbGame.ID))
 	s.gameFacadeMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: developerName, IGDBID: sql.NullInt64{Valid: true, Int64: developerIGDBID}}).
 		Return(developerID, nil)
 	s.gameFacadeMock.EXPECT().CreateCompany(gomock.Any(), model.Company{Name: publisherName, IGDBID: sql.NullInt64{Valid: true, Int64: publisherIGDBID}}).Return(publisherID, nil)
@@ -111,6 +116,10 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 		PlatformsIDs:     []int32{platforms[0].ID},
 		Screenshots:      []string{screenshotURL},
 		Websites:         []string{igdbGame.Websites[0].URL},
+		Trailers:         []string{"https://www.youtube.com/watch?v=trailer"},
+		GameModeIDs:      []int32{1, 3},
+		SimilarGameIDs:   []int32{relatedGameID},
+		FranchiseGameIDs: []int32{relatedGameID},
 		IGDBRating:       igdbGame.TotalRating,
 		IGDBRatingCount:  igdbGame.TotalRatingCount,
 		IGDBID:           igdbGame.ID,
@@ -122,4 +131,53 @@ func (s *TestSuite) TestStartFetchIGDBGames_Success() {
 	err := s.provider.StartFetchIGDBGames()
 
 	s.Require().NoError(err)
+}
+
+func (s *TestSuite) TestStartFetchIGDBGames_ResolvesGamesInsertedEarlierInBatch() {
+	lastReleasedAt := time.Now()
+	task := model.Task{
+		Name:     "fetch_igdb_games",
+		Status:   model.IdleTaskStatus,
+		Settings: fmt.Appendf(nil, `{"lastReleasedAt":"%s"}`, lastReleasedAt.Format(time.RFC3339)),
+	}
+	first := igdbapi.TopRatedGames{
+		ID:               101,
+		Name:             "First",
+		Cover:            igdbapi.URL{URL: "https://example.com/first.jpg"},
+		FirstReleaseDate: lastReleasedAt.Add(-2 * time.Minute).Unix(),
+	}
+	second := igdbapi.TopRatedGames{
+		ID:               102,
+		Name:             "Second",
+		Cover:            igdbapi.URL{URL: "https://example.com/second.jpg"},
+		FirstReleaseDate: lastReleasedAt.Add(-time.Minute).Unix(),
+		SimilarGames:     []int64{first.ID},
+	}
+
+	s.storageMock.EXPECT().RunWithTx(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, f func(context.Context) error) error { return f(ctx) })
+	s.storageMock.EXPECT().GetTask(gomock.Any(), task.Name).Return(task, nil)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
+	s.storageMock.EXPECT().GetGamesIGDBIDMap(gomock.Any()).Return(map[int64]int32{}, nil)
+	s.storageMock.EXPECT().GetPlatforms(gomock.Any()).Return(nil, nil)
+	s.storageMock.EXPECT().GetCompanies(gomock.Any()).Return(nil, nil)
+	s.storageMock.EXPECT().GetGenres(gomock.Any()).Return(nil, nil)
+	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), nil, gomock.Any(), gomock.Any(), int64(50), gomock.Any()).Return([]igdbapi.TopRatedGames{first, second}, nil)
+	s.igdbClientMock.EXPECT().GetTopRatedGames(gomock.Any(), nil, gomock.Any(), gomock.Any(), int64(50), gomock.Any()).Return(nil, nil).Times(4)
+	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), first.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias).Return(igdbapi.GetImageResp{FileName: "first.jpg", ContentType: "image/jpeg"}, nil)
+	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), "image/jpeg", gomock.Any()).Return(s3.UploadResult{FileURL: "first.jpg"}, nil)
+	s.igdbClientMock.EXPECT().GetImageByURL(gomock.Any(), second.Cover.URL, igdbapi.ImageTypeCoverBig2xAlias).Return(igdbapi.GetImageResp{FileName: "second.jpg", ContentType: "image/jpeg"}, nil)
+	s.s3ClientMock.EXPECT().Upload(gomock.Any(), gomock.Any(), "image/jpeg", gomock.Any()).Return(s3.UploadResult{FileURL: "second.jpg"}, nil)
+
+	var created []model.CreateGameData
+	s.storageMock.EXPECT().CreateGame(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, game model.CreateGameData) (int32, error) {
+		created = append(created, game)
+		return int32(len(created)), nil
+	}).Times(2)
+	s.storageMock.EXPECT().UpdateTask(gomock.Any(), gomock.Any()).Return(nil)
+
+	err := s.provider.StartFetchIGDBGames()
+
+	s.Require().NoError(err)
+	s.Require().Len(created, 2)
+	s.Equal([]int32{1}, created[1].SimilarGameIDs)
 }

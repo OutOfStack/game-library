@@ -16,7 +16,7 @@ import (
 // @ID get-game-by-id
 // @Produce json
 // @Param 	id  path int32 true "Game ID"
-// @Success 200 {object} api.GameResponse
+// @Success 200 {object} api.GameDetailsResponse
 // @Failure 400 {object} web.ErrorResponse
 // @Failure 404 {object} web.ErrorResponse
 // @Failure 500 {object} web.ErrorResponse
@@ -32,7 +32,7 @@ func (p *Provider) GetGame(w http.ResponseWriter, r *http.Request) {
 	}
 	span.SetAttributes(att.Int("data.id", int(id)))
 
-	game, err := p.gameFacade.GetGameByID(ctx, id)
+	details, err := p.gameFacade.GetGameDetailsByID(ctx, id)
 	if err != nil {
 		if appErr, ok := apperr.IsAppError(err); ok {
 			web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))
@@ -43,8 +43,8 @@ func (p *Provider) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp api.GameResponse
-	resp, err = p.mapToGameResponse(ctx, game)
+	var resp api.GameDetailsResponse
+	resp, err = p.mapToGameDetailsResponse(ctx, details)
 	if err != nil {
 		web.RespondError(w, web.NewErrorFromMessage("error converting response", http.StatusInternalServerError))
 		return

@@ -65,6 +65,52 @@ func (p *Provider) GetGameByID(ctx context.Context, id int32) (model.Game, error
 	return game, nil
 }
 
+// GetGameDetailsByID returns a game with its available related games
+func (p *Provider) GetGameDetailsByID(ctx context.Context, id int32) (model.GameDetails, error) {
+	game, err := p.GetGameByID(ctx, id)
+	if err != nil {
+		return model.GameDetails{}, err
+	}
+
+	ids := append(slices.Clone(game.SimilarGameIDs), game.FranchiseGameIDs...)
+	if len(ids) == 0 {
+		return model.GameDetails{Game: game}, nil
+	}
+	summaries, err := p.storage.GetGameSummariesByIDs(ctx, ids)
+	if err != nil {
+		return model.GameDetails{}, fmt.Errorf("get related games for game %d: %w", id, err)
+	}
+
+	byID := make(map[int32]model.GameSummary, len(summaries))
+	for _, summary := range summaries {
+		byID[summary.ID] = summary
+	}
+	details := model.GameDetails{Game: game}
+	for _, relatedID := range game.SimilarGameIDs {
+		if summary, ok := byID[relatedID]; ok {
+			details.SimilarGames = append(details.SimilarGames, summary)
+		}
+	}
+	for _, relatedID := range game.FranchiseGameIDs {
+		if summary, ok := byID[relatedID]; ok {
+			details.FranchiseGames = append(details.FranchiseGames, summary)
+		}
+	}
+	return details, nil
+}
+
+// UpdateGameIGDBInfo updates IGDB fields and invalidates the game cache
+func (p *Provider) UpdateGameIGDBInfo(ctx context.Context, id int32, data model.UpdateGameIGDBData) error {
+	if err := p.storage.UpdateGameIGDBInfo(ctx, id, data); err != nil {
+		return fmt.Errorf("update game %d igdb info: %w", id, err)
+	}
+	key := getGameKey(id)
+	if err := p.cache.Delete(ctx, key); err != nil {
+		p.log.Error("remove game cache", zap.String("key", key), zap.Error(err))
+	}
+	return nil
+}
+
 // CreateGame creates new game
 func (p *Provider) CreateGame(ctx context.Context, cg model.CreateGame) (id int32, err error) {
 	var developerID, publisherID int32

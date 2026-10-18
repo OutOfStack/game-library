@@ -104,7 +104,8 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, e
 
 	const q = `
 		SELECT id, name, developers, publishers, release_date, genres, logo_url, rating, summary, platforms,
-       		screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status, moderation_id, trending_index
+			screenshots, websites, trailers, game_mode_ids, similar_game_ids, franchise_game_ids,
+			slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status, moderation_id, trending_index
 		FROM games
 		WHERE id = $1
 		FOR UPDATE`
@@ -117,6 +118,26 @@ func (s *Storage) GetGameByID(ctx context.Context, id int32) (game model.Game, e
 	}
 
 	return game, nil
+}
+
+// GetGameSummariesByIDs returns game summaries in the requested order
+func (s *Storage) GetGameSummariesByIDs(ctx context.Context, ids []int32) (list []model.GameSummary, err error) {
+	ctx, span := tracer.Start(ctx, "getGameSummariesByIds")
+	defer span.End()
+
+	const q = `
+		SELECT g.id, g.name, g.release_date, g.logo_url,
+		       COALESCE(NULLIF(g.rating, 0), g.igdb_rating * $2) AS rating, g.slug
+		FROM unnest($1::int[]) WITH ORDINALITY AS requested(id, position)
+		JOIN games g ON g.id = requested.id
+		WHERE g.moderation_status = $3
+		ORDER BY requested.position`
+
+	if err = pgxscan.Select(ctx, s.querier(ctx), &list, q, ids, igdbGameRatingMultiplier, model.ModerationStatusReady); err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 // GetGameIDByIGDBID returns game id by igdb id.
@@ -140,6 +161,31 @@ func (s *Storage) GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32
 	return id, nil
 }
 
+// GetGamesIGDBIDMap returns local game IDs keyed by IGDB ID
+func (s *Storage) GetGamesIGDBIDMap(ctx context.Context) (map[int64]int32, error) {
+	ctx, span := tracer.Start(ctx, "getGamesIgdbIdMap")
+	defer span.End()
+
+	const q = `
+		SELECT id, igdb_id
+		FROM games
+		WHERE igdb_id <> 0`
+
+	var games []struct {
+		ID     int32 `db:"id"`
+		IGDBID int64 `db:"igdb_id"`
+	}
+	if err := pgxscan.Select(ctx, s.querier(ctx), &games, q); err != nil {
+		return nil, err
+	}
+
+	ids := make(map[int64]int32, len(games))
+	for _, game := range games {
+		ids[game.IGDBID] = game.ID
+	}
+	return ids, nil
+}
+
 // CreateGame creates new game
 func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGameData) (id int32, err error) {
 	ctx, span := tracer.Start(ctx, "createGame")
@@ -148,13 +194,16 @@ func (s *Storage) CreateGame(ctx context.Context, cg model.CreateGameData) (id i
 	const q = `
 		INSERT INTO games
     		(name, developers, publishers, release_date, genres, logo_url, summary,
-    		 platforms, screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id, moderation_status, created_at)
+			 platforms, screenshots, websites, slug, igdb_rating, igdb_rating_count, igdb_id,
+			 trailers, game_mode_ids, similar_game_ids, franchise_game_ids, moderation_status, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7,
-		        $8, $9, $10, $11::varchar(50), $12, $13, $14, $15, $16)
+		        $8, $9, $10, $11::varchar(50), $12, $13, $14,
+				COALESCE($15, '{}'::text[]), COALESCE($16, '{}'::int[]), COALESCE($17, '{}'::int[]), COALESCE($18, '{}'::int[]), $19, $20)
 		RETURNING id`
 
 	err = s.querier(ctx).QueryRow(ctx, q, cg.Name, cg.DevelopersIDs, cg.PublishersIDs, cg.ReleaseDate, cg.GenresIDs, cg.LogoURL, cg.Summary,
-		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBRatingCount, cg.IGDBID, cg.ModerationStatus, time.Now()).
+		cg.PlatformsIDs, cg.Screenshots, cg.Websites, cg.Slug, cg.IGDBRating, cg.IGDBRatingCount, cg.IGDBID,
+		cg.Trailers, cg.GameModeIDs, cg.SimilarGameIDs, cg.FranchiseGameIDs, cg.ModerationStatus, time.Now()).
 		Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("inserting game %s: %w", cg.Name, err)
@@ -220,10 +269,13 @@ func (s *Storage) UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.Upd
 
 	const q = `
 		UPDATE games
-		SET name = $2, platforms = $3, websites = $4, igdb_rating = $5, igdb_rating_count = $6, updated_at = $7
+		SET name = $2, platforms = $3, websites = $4, trailers = COALESCE($5, '{}'::text[]), game_mode_ids = COALESCE($6, '{}'::int[]),
+		    similar_game_ids = COALESCE($7, '{}'::int[]), franchise_game_ids = COALESCE($8, '{}'::int[]),
+		    igdb_rating = $9, igdb_rating_count = $10, updated_at = $11
 		WHERE id = $1`
 
-	res, err := s.querier(ctx).Exec(ctx, q, id, ug.Name, ug.PlatformsIDs, ug.Websites, ug.IGDBRating, ug.IGDBRatingCount, time.Now())
+	res, err := s.querier(ctx).Exec(ctx, q, id, ug.Name, ug.PlatformsIDs, ug.Websites, ug.Trailers, ug.GameModeIDs,
+		ug.SimilarGameIDs, ug.FranchiseGameIDs, ug.IGDBRating, ug.IGDBRatingCount, time.Now())
 	if err != nil {
 		return fmt.Errorf("updating game %d igdb info: %v", id, err)
 	}
@@ -240,6 +292,7 @@ func (s *Storage) DeleteGame(ctx context.Context, id int32) error {
 	const q = `
 		DELETE FROM games
 		WHERE id = $1`
+
 	res, err := s.querier(ctx).Exec(ctx, q, id)
 	if err != nil {
 		return fmt.Errorf("deleting game %d: %v", id, err)

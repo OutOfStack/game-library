@@ -31,9 +31,8 @@ type Storage interface {
 	UpdateTask(ctx context.Context, task model.Task) error
 
 	CreateGame(ctx context.Context, cgd model.CreateGameData) (id int32, err error)
-	GetGameIDByIGDBID(ctx context.Context, igdbID int64) (id int32, err error)
+	GetGamesIGDBIDMap(ctx context.Context) (map[int64]int32, error)
 	GetGameByID(ctx context.Context, id int32) (game model.Game, err error)
-	UpdateGameIGDBInfo(ctx context.Context, id int32, ug model.UpdateGameIGDBData) error
 	GetPlatforms(ctx context.Context) ([]model.Platform, error)
 	CreateGenre(ctx context.Context, g model.Genre) (int32, error)
 	GetGenres(ctx context.Context) ([]model.Genre, error)
@@ -59,6 +58,7 @@ type S3Client interface {
 // GameFacade game facade interface
 type GameFacade interface {
 	CreateCompany(ctx context.Context, company model.Company) (int32, error)
+	UpdateGameIGDBInfo(ctx context.Context, gameID int32, data model.UpdateGameIGDBData) error
 	UpdateGameTrendingIndex(ctx context.Context, gameID int32) error
 }
 

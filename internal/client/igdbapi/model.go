@@ -18,19 +18,34 @@ type TokenResp struct {
 
 // TopRatedGames - top-rated games
 type TopRatedGames struct {
-	ID                int64     `json:"id"`
-	Name              string    `json:"name"`
-	TotalRating       float64   `json:"total_rating"`
-	TotalRatingCount  int32     `json:"total_rating_count"`
-	Cover             URL       `json:"cover"`
-	FirstReleaseDate  int64     `json:"first_release_date"`
-	Genres            []IDName  `json:"genres"`
-	InvolvedCompanies []Company `json:"involved_companies"`
-	Platforms         []int64   `json:"platforms"`
-	Screenshots       []URL     `json:"screenshots"`
-	Slug              string    `json:"slug"`
-	Summary           string    `json:"summary"`
-	Websites          []Website `json:"websites"`
+	ID                int64       `json:"id"`
+	Name              string      `json:"name"`
+	TotalRating       float64     `json:"total_rating"`
+	TotalRatingCount  int32       `json:"total_rating_count"`
+	Cover             URL         `json:"cover"`
+	FirstReleaseDate  int64       `json:"first_release_date"`
+	Genres            []IDName    `json:"genres"`
+	InvolvedCompanies []Company   `json:"involved_companies"`
+	Platforms         []int64     `json:"platforms"`
+	Screenshots       []URL       `json:"screenshots"`
+	Slug              string      `json:"slug"`
+	Summary           string      `json:"summary"`
+	Websites          []Website   `json:"websites"`
+	Videos            []Video     `json:"videos"`
+	GameModes         []int32     `json:"game_modes"`
+	SimilarGames      []int64     `json:"similar_games"`
+	Franchise         Franchise   `json:"franchise"`
+	Franchises        []Franchise `json:"franchises"`
+}
+
+// Video contains an IGDB YouTube video identifier
+type Video struct {
+	VideoID string `json:"video_id"`
+}
+
+// Franchise contains IGDB game identifiers in a franchise
+type Franchise struct {
+	Games []int64 `json:"games"`
 }
 
 // URL - struct containing url
@@ -92,12 +107,17 @@ type GetImageResp struct {
 
 // GameInfoForUpdate - game info for update
 type GameInfoForUpdate struct {
-	ID               int64     `json:"id"`
-	Name             string    `json:"name"`
-	TotalRating      float64   `json:"total_rating"`
-	TotalRatingCount int32     `json:"total_rating_count"`
-	Platforms        []int64   `json:"platforms"`
-	Websites         []Website `json:"websites"`
+	ID               int64       `json:"id"`
+	Name             string      `json:"name"`
+	TotalRating      float64     `json:"total_rating"`
+	TotalRatingCount int32       `json:"total_rating_count"`
+	Platforms        []int64     `json:"platforms"`
+	Websites         []Website   `json:"websites"`
+	Videos           []Video     `json:"videos"`
+	GameModes        []int32     `json:"game_modes"`
+	SimilarGames     []int64     `json:"similar_games"`
+	Franchise        Franchise   `json:"franchise"`
+	Franchises       []Franchise `json:"franchises"`
 }
 
 // CompanyInfo - company information from IGDB

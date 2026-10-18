@@ -87,19 +87,19 @@ func (mr *MockGameFacadeMockRecorder) GetCompaniesMap(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompaniesMap", reflect.TypeOf((*MockGameFacade)(nil).GetCompaniesMap), ctx)
 }
 
-// GetGameByID mocks base method.
-func (m *MockGameFacade) GetGameByID(ctx context.Context, id int32) (model.Game, error) {
+// GetGameDetailsByID mocks base method.
+func (m *MockGameFacade) GetGameDetailsByID(ctx context.Context, id int32) (model.GameDetails, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGameByID", ctx, id)
-	ret0, _ := ret[0].(model.Game)
+	ret := m.ctrl.Call(m, "GetGameDetailsByID", ctx, id)
+	ret0, _ := ret[0].(model.GameDetails)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetGameByID indicates an expected call of GetGameByID.
-func (mr *MockGameFacadeMockRecorder) GetGameByID(ctx, id any) *gomock.Call {
+// GetGameDetailsByID indicates an expected call of GetGameDetailsByID.
+func (mr *MockGameFacadeMockRecorder) GetGameDetailsByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameByID", reflect.TypeOf((*MockGameFacade)(nil).GetGameByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameDetailsByID", reflect.TypeOf((*MockGameFacade)(nil).GetGameDetailsByID), ctx, id)
 }
 
 // GetGameModerations mocks base method.

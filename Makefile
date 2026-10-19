@@ -90,6 +90,9 @@ dbuildapi:
 drunapi:
 	docker compose up -d api
 
+drunworker:
+	docker compose up -d worker
+
 drunredis:
 	docker compose up -d redis
 

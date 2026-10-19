@@ -25,12 +25,14 @@ paths:
           schema:
             type: integer
             format: uint32
+            minimum: 1
         - name: page
           in: query
           description: page, must be greater than 0
           schema:
             type: integer
             format: uint32
+            minimum: 1
         - name: orderBy
           in: query
           description: order by

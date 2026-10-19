@@ -182,6 +182,7 @@ Commit message and release rules are documented in [CONTRIBUTING.md](./CONTRIBUT
     dbuildapi     builds app docker image
     dbuildmng     builds manage app docker image
     drunapi       runs app in docker container
+    drunworker    runs background tasks worker in docker container
     drunredis     runs redis in docker container
 
 ## License

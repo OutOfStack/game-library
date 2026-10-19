@@ -36,6 +36,19 @@ services:
       - db
       - redis
 
+  worker:
+    container_name: game-library-worker
+    image: game-library:latest
+    entrypoint: ["./game-library-worker"]
+    ports:
+      - "8001:8001"
+    environment:
+      DB_DSN: postgres://games-user:games-password@db/games?sslmode=disable
+      APP_HTTP_ADDRESS: 0.0.0.0:8001
+      JAEGER_OTLP_ENDPOINT: host.docker.internal:4318
+    depends_on:
+      - db
+
   mng:
     container_name: game-library-mng
     image: game-library-mng:latest

@@ -3,6 +3,7 @@ package tools
 import (
 	"net/http"
 	"os"
+	"sync/atomic"
 
 	"github.com/OutOfStack/game-library/internal/version"
 	"github.com/OutOfStack/game-library/internal/web"
@@ -25,7 +26,8 @@ type health struct {
 
 // HealthCheck has methods for readiness and liveness probes
 type HealthCheck struct {
-	db *pgxpool.Pool
+	db    *pgxpool.Pool
+	ready atomic.Bool
 }
 
 // NewHealthCheck creates new HealthCheck
@@ -33,9 +35,19 @@ func NewHealthCheck(db *pgxpool.Pool) *HealthCheck {
 	return &HealthCheck{db: db}
 }
 
+// SetReady marks whether service accepts traffic. Set it after listeners are bound and clear it on shutdown
+func (hc *HealthCheck) SetReady(ready bool) {
+	hc.ready.Store(ready)
+}
+
 // Readiness determines whether service is ready
 func (hc *HealthCheck) Readiness(w http.ResponseWriter, r *http.Request) {
 	h := newHealth()
+	if !hc.ready.Load() {
+		h.Status = "not ready"
+		web.Respond(w, h, http.StatusServiceUnavailable)
+		return
+	}
 	if err := hc.db.Ping(r.Context()); err != nil {
 		h.Status = "database not ready"
 		web.Respond(w, h, http.StatusServiceUnavailable)

@@ -31,7 +31,7 @@ func TestHealthCheck_Liveness(t *testing.T) {
 				t.Setenv(key, value)
 			}
 			response := httptest.NewRecorder()
-			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/liveness", nil)
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/liveness", nil)
 			tools.NewHealthCheck(nil).Liveness(response, req)
 
 			require.Equal(t, http.StatusOK, response.Code)
@@ -56,11 +56,30 @@ func TestHealthCheck_Readiness_DatabaseUnavailable(t *testing.T) {
 	pool.Close()
 
 	response := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/readiness", nil)
-	tools.NewHealthCheck(pool).Readiness(response, req)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/readiness", nil)
+	hc := tools.NewHealthCheck(pool)
+	hc.SetReady(true)
+	hc.Readiness(response, req)
 
 	require.Equal(t, http.StatusServiceUnavailable, response.Code)
 	checkHealthResponse(t, response, "database not ready")
+}
+
+func TestHealthCheck_Readiness_NotReady(t *testing.T) {
+	for _, setReady := range []func(*tools.HealthCheck){
+		func(*tools.HealthCheck) {},
+		func(hc *tools.HealthCheck) { hc.SetReady(true); hc.SetReady(false) },
+	} {
+		response := httptest.NewRecorder()
+		req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/readiness", nil)
+		// nil db: not-ready check must short-circuit before the database ping
+		hc := tools.NewHealthCheck(nil)
+		setReady(hc)
+		hc.Readiness(response, req)
+
+		require.Equal(t, http.StatusServiceUnavailable, response.Code)
+		checkHealthResponse(t, response, "not ready")
+	}
 }
 
 func checkHealthResponse(t *testing.T, response *httptest.ResponseRecorder, status string) map[string]string {

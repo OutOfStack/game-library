@@ -40,7 +40,7 @@ func (s *TestSuite) SetupTest() {
 	s.authClientMock = mwmock.NewMockAuthClient(s.ctrl)
 	s.httpResponse = httptest.NewRecorder()
 	s.httpRequest, _ = http.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
-	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock, validation.NewRules(s.log, &appconf.Cfg{}))
+	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock, validation.NewRules(s.log, &appconf.API{}))
 	s.handler = api.NewHandler(s.provider)
 }
 

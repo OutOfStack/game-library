@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/OutOfStack/game-library/api"
-	"github.com/OutOfStack/game-library/internal/api/tools"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
@@ -17,8 +16,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
 	chicors "github.com/go-chi/cors"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/riandyrn/otelchi"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -28,10 +25,9 @@ import (
 // Service constructs router with all API routes
 func Service(
 	log *zap.Logger,
-	db *pgxpool.Pool,
 	au *auth.Client,
 	pr *Provider,
-	conf *appconf.Cfg,
+	conf *appconf.API,
 ) (http.Server, *trace.TracerProvider, error) {
 	tp, err := observability.InitTracer(log, conf.Jaeger.OTLPEndpoint, appconf.ServiceName)
 	if err != nil {
@@ -51,16 +47,7 @@ func Service(
 		AllowCredentials: true,
 	}))
 
-	hc := tools.NewHealthCheck(db)
 	h := NewHandler(pr)
-
-	// metrics
-	r.Handle("/metrics", promhttp.Handler())
-
-	// tools
-	r.Get("/api/readiness", hc.Readiness)
-
-	r.Get("/api/liveness", hc.Liveness)
 
 	// games
 	r.Route("/api/games", func(r chi.Router) {

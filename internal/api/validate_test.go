@@ -672,6 +672,6 @@ func TestGetUserRatingsRequestValidation(t *testing.T) {
 	})
 }
 
-func getCfg() *appconf.Cfg {
-	return &appconf.Cfg{}
+func getCfg() *appconf.API {
+	return &appconf.API{}
 }

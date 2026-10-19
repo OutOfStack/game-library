@@ -66,9 +66,24 @@ func TestMetricsServer_ExposesClientMetrics(t *testing.T) {
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	server := observability.NewMetricsServer(":8001")
+	server := observability.NewDebugServer(":6060", http.NotFound, http.NotFound)
 	recorder := httptest.NewRecorder()
 	server.Handler.ServeHTTP(recorder, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/metrics", nil))
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Contains(t, recorder.Body.String(), "worker-metrics-test")
+}
+
+func TestNewDebugServer_ServesProbes(t *testing.T) {
+	probe := func(status int) http.HandlerFunc {
+		return func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(status) }
+	}
+	server := observability.NewDebugServer(":6060", probe(http.StatusOK), probe(http.StatusServiceUnavailable))
+
+	for path, want := range map[string]int{
+		"/liveness": http.StatusOK, "/readiness": http.StatusServiceUnavailable, "/debug/pprof/": http.StatusOK, "/debug/vars": http.StatusOK,
+	} {
+		recorder := httptest.NewRecorder()
+		server.Handler.ServeHTTP(recorder, httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil))
+		assert.Equal(t, want, recorder.Code, path)
+	}
 }

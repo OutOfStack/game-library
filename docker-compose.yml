@@ -22,6 +22,7 @@ services:
   api:
     container_name: game-library
     image: game-library:latest
+    env_file: .env
     ports:
       - "8000:8000"
       - "6060:6060"
@@ -39,12 +40,13 @@ services:
   worker:
     container_name: game-library-worker
     image: game-library:latest
+    env_file: .env
     entrypoint: ["./game-library-worker"]
     ports:
-      - "8001:8001"
+      - "6061:6060"
     environment:
       DB_DSN: postgres://games-user:games-password@db/games?sslmode=disable
-      APP_HTTP_ADDRESS: 0.0.0.0:8001
+      APP_DEBUG_ADDRESS: 0.0.0.0:6060
       JAEGER_OTLP_ENDPOINT: host.docker.internal:4318
     depends_on:
       - db

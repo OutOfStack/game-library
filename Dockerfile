@@ -7,8 +7,7 @@ WORKDIR /tmp/game-library-api
 COPY go.mod go.sum  ./
 RUN go mod download
 
-# copy config and code into container
-COPY ./.example.env ./out/.env
+# copy code into container
 COPY . .
 
 # build app

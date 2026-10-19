@@ -46,7 +46,10 @@ PRs should describe changes, link issues, report validation, and identify migrat
 
 ## Configuration
 
-Follow the documented configuration mechanism in `internal/appconf/`; introduce environment variables only when specified. Keep credentials out of commits and document settings in `.example.env`. gRPC defaults to port 9000 (`APP_GRPC_ADDRESS`).
+Follow the documented configuration mechanism in `internal/appconf/`; introduce environment variables only when specified. 
+Each binary loads its own struct (`appconf.API`, `Worker`, `Manage`) with `appconf.Load`; every field of these structs 
+is a section type with a value-receiver `Validate` method, add a new setting to an existing section or create a section 
+with `Validate`. Keep credentials out of commits and document settings in `.example.env`.
 
 ## Workflow Restrictions
 

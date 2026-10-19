@@ -69,7 +69,7 @@ To set up the service, follow these steps:
     ```bash
     make run-worker
     ```
-    `make run-worker` overrides `APP_HTTP_ADDRESS` to `localhost:8001` for the worker's `/metrics` endpoint, so it can run alongside the API.
+    `make run-worker` overrides `APP_DEBUG_ADDRESS` to `localhost:6061` for the worker's debug server, so it can run alongside the API.
 
 _Optional_ steps are not required for minimal install but required for full functionality.
 
@@ -101,13 +101,18 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 
 ## Configuration
 
-- The service can be configured using `.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go)
+- The service can be configured using `.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go). 
+  The API, worker and manage binaries each load and validate only the settings they use (`appconf.API`, `appconf.Worker`, `appconf.Manage`); 
+  Docker images contain no `.env`, so every required setting must come from the environment
 - CI/CD configs are in [`./github/workflows/`](./.github/workflows/)
 - k8s deployment configs are in [`./k8s`](./.k8s/)
 
-The worker exports traces to `JAEGER_OTLP_ENDPOINT` under service name `game-library-worker`. Its `/metrics` endpoint 
-exposes the worker's own Prometheus registry. The `game-library-infra` Prometheus configuration discovers opted-in pods 
-in the `game-library` namespace using `prometheus.io/scrape`, `prometheus.io/port`, and `prometheus.io/path` annotations. 
+Both the API and the worker serve operational endpoints on a separate debug server (`APP_DEBUG_ADDRESS`, port 6060 in k8s): 
+`/metrics` (Prometheus), `/liveness` and `/readiness` (k8s probes) and `/debug/pprof`. Readiness fails until all listeners are bound 
+and again as soon as shutdown starts. Outside the cluster the debug server is reachable only through the basic-auth ingress (`/_debug/api/`). 
+The worker exports traces to `JAEGER_OTLP_ENDPOINT` under service name `game-library-worker`. The `game-library-infra` 
+Prometheus configuration discovers opted-in pods in the `game-library` namespace using `prometheus.io/scrape`, 
+`prometheus.io/port`, and `prometheus.io/path` annotations. 
 The pod `app` label becomes the scrape job name (`game-library` or `game-library-worker`). New components only need these 
 annotations and a matching declared TCP container port; no infra edit is needed. During migration, deploy the annotated 
 API, auth, and worker manifests before switching Prometheus to generic pod discovery.

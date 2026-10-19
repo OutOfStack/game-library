@@ -23,7 +23,7 @@ type Rules struct {
 }
 
 // NewRules creates validation rules; allowed image domain is taken from CDN base URL
-func NewRules(log *zap.Logger, cfg *appconf.Cfg) *Rules {
+func NewRules(log *zap.Logger, cfg *appconf.API) *Rules {
 	var allowedImageDomain string
 	u, err := url.Parse(cfg.S3.CDNBaseURL)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_Get_LoadsDotEnv(t *testing.T) {
+func Test_Load_DotEnv(t *testing.T) {
 	t.Chdir(t.TempDir())
 	const config = `DB_DSN=postgres://test:test@localhost/games
 APP_HTTP_ADDRESS=localhost:8000
@@ -54,10 +54,51 @@ AUTHAPI_TIMEOUT=5s
 	t.Setenv("APP_HTTP_ADDRESS", "localhost:8001")
 	require.NoError(t, os.WriteFile(".env", []byte(config), 0o600))
 
-	cfg, err := appconf.Get()
+	cfg, err := appconf.Load[appconf.API]()
 
 	require.NoError(t, err)
 	require.Equal(t, "postgres://test:test@localhost/games", cfg.DB.DSN)
 	require.Equal(t, "localhost:8001", cfg.Web.HTTPAddress)
 	require.Equal(t, 5*time.Second, cfg.Web.ReadTimeout)
+}
+
+func Test_Load_EnvOnly(t *testing.T) {
+	t.Chdir(t.TempDir())
+	t.Setenv("DB_DSN", "postgres://env:env@localhost/games")
+
+	cfg, err := appconf.Load[appconf.Manage]()
+
+	require.NoError(t, err)
+	require.Equal(t, "postgres://env:env@localhost/games", cfg.DB.DSN)
+}
+
+func Test_Load_ReportsAllMissingKeys(t *testing.T) {
+	t.Chdir(t.TempDir())
+	t.Setenv("DB_DSN", "")
+	t.Setenv("APP_DEBUG_ADDRESS", "")
+
+	_, err := appconf.Load[struct {
+		DB    appconf.DB    `mapstructure:",squash"`
+		Debug appconf.Debug `mapstructure:",squash"`
+	}]()
+
+	require.EqualError(t, err, "DB_DSN is required\nAPP_DEBUG_ADDRESS is required")
+}
+
+func Test_Validate_SectionWithoutValidate(t *testing.T) {
+	err := appconf.Validate(struct {
+		DB  appconf.DB
+		Bad struct{ X string }
+	}{})
+
+	require.EqualError(t, err, "config section Bad has no Validate method")
+}
+
+func Test_Validate_AllConfigsHaveValidatableSections(t *testing.T) {
+	for _, cfg := range []any{appconf.API{}, appconf.Worker{}, appconf.Manage{}} {
+		err := appconf.Validate(cfg)
+
+		require.Error(t, err)
+		require.NotContains(t, err.Error(), "has no Validate method")
+	}
 }

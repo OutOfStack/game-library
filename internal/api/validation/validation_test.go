@@ -9,7 +9,7 @@ import (
 )
 
 func TestValidateDate(t *testing.T) {
-	v := NewRules(zap.NewNop(), &appconf.Cfg{})
+	v := NewRules(zap.NewNop(), &appconf.API{})
 	tests := []struct {
 		name     string
 		date     string
@@ -30,7 +30,7 @@ func TestValidateDate(t *testing.T) {
 }
 
 func TestValidateImageURLs(t *testing.T) {
-	cfg := &appconf.Cfg{
+	cfg := &appconf.API{
 		S3: appconf.S3{
 			CDNBaseURL: "https://cdn.example.com",
 		},
@@ -56,7 +56,7 @@ func TestValidateImageURLs(t *testing.T) {
 }
 
 func TestValidateWebsiteURLs(t *testing.T) {
-	v := NewRules(zap.NewNop(), &appconf.Cfg{})
+	v := NewRules(zap.NewNop(), &appconf.API{})
 	tests := []struct {
 		name     string
 		urls     []string
@@ -76,7 +76,7 @@ func TestValidateWebsiteURLs(t *testing.T) {
 }
 
 func TestValidatePositive(t *testing.T) {
-	v := NewRules(zap.NewNop(), &appconf.Cfg{})
+	v := NewRules(zap.NewNop(), &appconf.API{})
 	tests := []struct {
 		name     string
 		slice    []int32

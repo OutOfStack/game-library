@@ -25,7 +25,7 @@ func (s *TestSuite) Test_DeleteGame_Success() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.DeleteGame)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.DeleteGame)))
 	r := chi.NewRouter()
 	r.Delete("/games/{id}", handler.ServeHTTP)
 
@@ -38,7 +38,7 @@ func (s *TestSuite) Test_DeleteGame_InvalidID() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodDelete, "/games/-100", nil)
 
 	r := chi.NewRouter()
-	r.Delete("/games/{id}", s.provider.DeleteGame)
+	r.Delete("/games/{id}", s.handler.DeleteGame)
 
 	r.ServeHTTP(s.httpResponse, req)
 
@@ -51,7 +51,7 @@ func (s *TestSuite) Test_DeleteGame_MissingClaims() {
 
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodDelete, fmt.Sprintf("/games/%d", gameID), nil)
 
-	handler := http.HandlerFunc(s.provider.DeleteGame)
+	handler := http.HandlerFunc(s.handler.DeleteGame)
 	r := chi.NewRouter()
 	r.Delete("/games/{id}", handler.ServeHTTP)
 
@@ -72,7 +72,7 @@ func (s *TestSuite) Test_DeleteGame_FacadeError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.DeleteGame)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.DeleteGame)))
 	r := chi.NewRouter()
 	r.Delete("/games/{id}", handler.ServeHTTP)
 

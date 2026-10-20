@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
+	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/model"
@@ -38,11 +38,11 @@ func (s *TestSuite) Test_GetGameModerations_Success() {
 
 	expectedResponse := []api.ModerationItem{
 		{
-			ID:        moderations[0].ID,
-			Status:    moderations[0].Status,
-			Details:   moderations[0].Details,
-			CreatedAt: createdAt.Format(time.RFC3339),
-			UpdatedAt: updatedAt.Format(time.RFC3339),
+			ID:           moderations[0].ID,
+			ResultStatus: moderations[0].Status,
+			Details:      moderations[0].Details,
+			CreatedAt:    createdAt.Format(time.RFC3339),
+			UpdatedAt:    updatedAt.Format(time.RFC3339),
 		},
 	}
 
@@ -55,7 +55,7 @@ func (s *TestSuite) Test_GetGameModerations_Success() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetGameModerations)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetGameModerations)))
 	r := chi.NewRouter()
 	r.Get("/games/{id}/moderations", handler.ServeHTTP)
 
@@ -73,7 +73,10 @@ func (s *TestSuite) Test_GetGameModerations_MissingClaims() {
 	gameID := td.Int31()
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/"+strconv.Itoa(int(gameID))+"/moderations", nil)
 
-	s.provider.GetGameModerations(s.httpResponse, req)
+	r := chi.NewRouter()
+	r.Get("/games/{id}/moderations", s.handler.GetGameModerations)
+
+	r.ServeHTTP(s.httpResponse, req)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }
@@ -90,7 +93,7 @@ func (s *TestSuite) Test_GetGameModerations_InvalidID() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetGameModerations)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetGameModerations)))
 	r := chi.NewRouter()
 	r.Get("/games/{id}/moderations", handler.ServeHTTP)
 
@@ -114,7 +117,7 @@ func (s *TestSuite) Test_GetGameModerations_AppError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetGameModerations)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetGameModerations)))
 	r := chi.NewRouter()
 	r.Get("/games/{id}/moderations", handler.ServeHTTP)
 
@@ -137,7 +140,7 @@ func (s *TestSuite) Test_GetGameModerations_FacadeError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetGameModerations)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetGameModerations)))
 	r := chi.NewRouter()
 	r.Get("/games/{id}/moderations", handler.ServeHTTP)
 

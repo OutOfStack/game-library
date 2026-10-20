@@ -29,8 +29,11 @@ data:
     S3_BUCKET_NAME: "game-library"
     S3_TIMEOUT: "10s"
     # igdb api
+    IGDB_TOKEN_URL: "https://id.twitch.tv/oauth2/token"
+    IGDB_API_URL: "https://api.igdb.com/v4/"
     IGDB_API_TIMEOUT: "10s"
     # openai api
+    OPENAI_API_URL: "https://api.openai.com/v1"
     OPENAI_MODERATION_MODEL: "omni-moderation-latest"
     OPENAI_VISION_MODEL: "gpt-6-luna"
     OPENAI_API_TIMEOUT: "30s"

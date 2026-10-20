@@ -2,15 +2,26 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
 	"github.com/OutOfStack/game-library/internal/model"
+	"github.com/OutOfStack/game-library/internal/pkg/apperr"
+	"github.com/OutOfStack/game-library/internal/web"
+	"go.uber.org/zap"
 )
 
 const (
 	minLengthForSearch = 2
+)
+
+var (
+	errInvalidID          = web.NewErrorFromMessage("invalid id", http.StatusBadRequest)
+	errInvalidCompanyType = web.NewErrorFromMessage("invalid company type: should be one of [dev, pub]", http.StatusBadRequest)
+	errInvalidQueryParams = web.NewErrorFromMessage("invalid query params", http.StatusBadRequest)
+	errInvalidRequest     = web.NewErrorFromMessage("invalid request", http.StatusBadRequest)
 )
 
 var gameModeNames = map[int32]string{
@@ -24,7 +35,7 @@ var gameModeNames = map[int32]string{
 
 // Mappings
 
-func mapToCreateGame(cgr *api.CreateGameRequest, publisher string) model.CreateGame {
+func mapToCreateGame(cgr *CreateGameRequest, publisher string) model.CreateGame {
 	return model.CreateGame{
 		Name:         cgr.Name,
 		ReleaseDate:  cgr.ReleaseDate,
@@ -40,8 +51,8 @@ func mapToCreateGame(cgr *api.CreateGameRequest, publisher string) model.CreateG
 	}
 }
 
-func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.GameResponse, error) {
-	resp := api.GameResponse{
+func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (GameResponse, error) {
+	resp := GameResponse{
 		ID:          game.ID,
 		Name:        game.Name,
 		ReleaseDate: game.ReleaseDate.String(),
@@ -55,23 +66,23 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 
 	genres, err := p.gameFacade.GetGenresMap(ctx)
 	if err != nil {
-		return api.GameResponse{}, fmt.Errorf("get genres: %v", err)
+		return GameResponse{}, fmt.Errorf("get genres: %v", err)
 	}
 	companies, err := p.gameFacade.GetCompaniesMap(ctx)
 	if err != nil {
-		return api.GameResponse{}, fmt.Errorf("get companies: %v", err)
+		return GameResponse{}, fmt.Errorf("get companies: %v", err)
 	}
 	platforms, err := p.gameFacade.GetPlatformsMap(ctx)
 	if err != nil {
-		return api.GameResponse{}, fmt.Errorf("get platforms: %v", err)
+		return GameResponse{}, fmt.Errorf("get platforms: %v", err)
 	}
 
 	for _, gID := range game.GenresIDs {
 		genre, ok := genres[gID]
 		if !ok {
-			return api.GameResponse{}, fmt.Errorf("genre %d not found", gID)
+			return GameResponse{}, fmt.Errorf("genre %d not found", gID)
 		}
-		resp.Genres = append(resp.Genres, api.Genre{
+		resp.Genres = append(resp.Genres, Genre{
 			ID:   genre.ID,
 			Name: genre.Name,
 		})
@@ -79,9 +90,9 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	for _, plID := range game.PlatformsIDs {
 		pl, ok := platforms[plID]
 		if !ok {
-			return api.GameResponse{}, fmt.Errorf("platform %d not found", plID)
+			return GameResponse{}, fmt.Errorf("platform %d not found", plID)
 		}
-		resp.Platforms = append(resp.Platforms, api.Platform{
+		resp.Platforms = append(resp.Platforms, Platform{
 			ID:           pl.ID,
 			Name:         pl.Name,
 			Abbreviation: pl.Abbreviation,
@@ -90,9 +101,9 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	for _, cID := range game.DevelopersIDs {
 		c, ok := companies[cID]
 		if !ok {
-			return api.GameResponse{}, fmt.Errorf("company %d not found", cID)
+			return GameResponse{}, fmt.Errorf("company %d not found", cID)
 		}
-		resp.Developers = append(resp.Developers, api.Company{
+		resp.Developers = append(resp.Developers, Company{
 			ID:   c.ID,
 			Name: c.Name,
 		})
@@ -100,9 +111,9 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	for _, cID := range game.PublishersIDs {
 		c, ok := companies[cID]
 		if !ok {
-			return api.GameResponse{}, fmt.Errorf("company %d not found", cID)
+			return GameResponse{}, fmt.Errorf("company %d not found", cID)
 		}
-		resp.Publishers = append(resp.Publishers, api.Company{
+		resp.Publishers = append(resp.Publishers, Company{
 			ID:   c.ID,
 			Name: c.Name,
 		})
@@ -111,22 +122,34 @@ func (p *Provider) mapToGameResponse(ctx context.Context, game model.Game) (api.
 	return resp, nil
 }
 
-func (p *Provider) mapToGameDetailsResponse(ctx context.Context, details model.GameDetails) (api.GameDetailsResponse, error) {
+func (p *Provider) mapToGameDetailsResponse(ctx context.Context, details model.GameDetails) (GameDetailsResponse, error) {
 	game, err := p.mapToGameResponse(ctx, details.Game)
 	if err != nil {
-		return api.GameDetailsResponse{}, err
+		return GameDetailsResponse{}, err
 	}
 
-	resp := api.GameDetailsResponse{
-		GameResponse:   game,
+	resp := GameDetailsResponse{
+		ID:             game.ID,
+		Name:           game.Name,
+		Developers:     game.Developers,
+		Publishers:     game.Publishers,
+		ReleaseDate:    game.ReleaseDate,
+		Genres:         game.Genres,
+		LogoURL:        game.LogoURL,
+		Rating:         game.Rating,
+		Summary:        game.Summary,
+		Slug:           game.Slug,
+		Platforms:      game.Platforms,
+		Screenshots:    game.Screenshots,
+		Websites:       game.Websites,
 		Trailers:       append([]string{}, details.Trailers...),
-		GameModes:      make([]api.GameMode, 0, len(details.GameModeIDs)),
-		SimilarGames:   make([]api.GameSummary, 0, len(details.SimilarGames)),
-		FranchiseGames: make([]api.GameSummary, 0, len(details.FranchiseGames)),
+		GameModes:      make([]GameMode, 0, len(details.GameModeIDs)),
+		SimilarGames:   make([]GameSummary, 0, len(details.SimilarGames)),
+		FranchiseGames: make([]GameSummary, 0, len(details.FranchiseGames)),
 	}
 	for _, id := range details.GameModeIDs {
 		if name, ok := gameModeNames[id]; ok {
-			resp.GameModes = append(resp.GameModes, api.GameMode{ID: id, Name: name})
+			resp.GameModes = append(resp.GameModes, GameMode{ID: id, Name: name})
 		}
 	}
 	for _, summary := range details.SimilarGames {
@@ -138,8 +161,8 @@ func (p *Provider) mapToGameDetailsResponse(ctx context.Context, details model.G
 	return resp, nil
 }
 
-func mapToGameSummary(game model.GameSummary) api.GameSummary {
-	return api.GameSummary{
+func mapToGameSummary(game model.GameSummary) GameSummary {
+	return GameSummary{
 		ID:          game.ID,
 		Name:        game.Name,
 		ReleaseDate: game.ReleaseDate.String(),
@@ -149,7 +172,7 @@ func mapToGameSummary(game model.GameSummary) api.GameSummary {
 	}
 }
 
-func mapToUpdateGame(ugr *api.UpdateGameRequest, publisher string) model.UpdateGame {
+func mapToUpdateGame(ugr *UpdateGameRequest, publisher string) model.UpdateGame {
 	return model.UpdateGame{
 		Name:         ugr.Name,
 		Developer:    ugr.Developer,
@@ -164,20 +187,20 @@ func mapToUpdateGame(ugr *api.UpdateGameRequest, publisher string) model.UpdateG
 	}
 }
 
-func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
-	if p.Page <= 0 || p.PageSize <= 0 {
+func mapToGamesFilter(p GetGamesParams) (model.GamesFilter, error) {
+	if p.Page == 0 || p.PageSize == 0 {
 		return model.GamesFilter{}, fmt.Errorf("invalid page or page size param: should be greater than 0")
 	}
 
 	var filter model.GamesFilter
 	switch p.OrderBy {
-	case "", "default":
+	case "", GetGamesParamsOrderByDefault:
 		filter.OrderBy = model.OrderGamesByDefault
-	case "name":
+	case GetGamesParamsOrderByName:
 		filter.OrderBy = model.OrderGamesByName
-	case "releaseDate":
+	case GetGamesParamsOrderByReleaseDate:
 		filter.OrderBy = model.OrderGamesByReleaseDate
-	case "rating":
+	case GetGamesParamsOrderByRating:
 		filter.OrderBy = model.OrderGamesByRating
 	default:
 		return model.GamesFilter{}, fmt.Errorf("invalid orderBy: should be one of [default, releaseDate, name, rating]")
@@ -185,15 +208,29 @@ func mapToGamesFilter(p *api.GetGamesQueryParams) (model.GamesFilter, error) {
 	if len(p.Name) >= minLengthForSearch {
 		filter.Name = strings.ToLower(p.Name)
 	}
-	if p.GenreID != 0 {
-		filter.GenreID = p.GenreID
-	}
-	if p.DeveloperID != 0 {
-		filter.DeveloperID = p.DeveloperID
-	}
-	if p.PublisherID != 0 {
-		filter.PublisherID = p.PublisherID
-	}
+	filter.GenreID = p.Genre
+	filter.DeveloperID = p.Developer
+	filter.PublisherID = p.Publisher
 
 	return filter, nil
+}
+
+// decodeRequest decodes JSON request body, validates and sanitizes it
+func (p *Provider) decodeRequest(r *http.Request, req validatable) error {
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		p.log.Error("decode request", zap.Error(err))
+		return errInvalidRequest
+	}
+	return p.validateRequest(req)
+}
+
+// respondError responds with app error status code if err is an app error,
+// otherwise logs err with msg and fields and responds with 500 Internal Server Error
+func (p *Provider) respondError(w http.ResponseWriter, msg string, err error, fields ...zap.Field) {
+	if appErr, ok := apperr.IsAppError(err); ok {
+		web.RespondError(w, web.NewError(appErr, appErr.HTTPStatusCode()))
+		return
+	}
+	p.log.Error(msg, append(fields, zap.Error(err))...)
+	web.Respond500(w)
 }

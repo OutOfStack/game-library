@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/OutOfStack/game-library/internal/api/tools"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
 	"github.com/OutOfStack/game-library/internal/client/openaiapi"
@@ -31,7 +32,7 @@ import (
 
 func main() {
 	// load config
-	cfg, err := appconf.Get()
+	cfg, err := appconf.Load[appconf.Worker]()
 	if err != nil {
 		log.Fatalf("can't parse config: %v", err)
 	}
@@ -50,7 +51,7 @@ func main() {
 	}
 }
 
-func run(logger *zap.Logger, cfg *appconf.Cfg) error {
+func run(logger *zap.Logger, cfg *appconf.Worker) error {
 	ctx := context.Background()
 	tracerProvider, err := observability.InitTracer(logger, cfg.Jaeger.OTLPEndpoint, "game-library-worker")
 	if err != nil {
@@ -116,24 +117,25 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 			return fmt.Errorf("run task %s: %v", name, err)
 		}
 	}
-	// bind before starting jobs so a metrics port conflict fails startup
-	metricsServer := observability.NewMetricsServer(cfg.Web.HTTPAddress)
+
+	hc := tools.NewHealthCheck(db)
+	debugServer := observability.NewDebugServer(cfg.Debug.Address, hc.Liveness, hc.Readiness)
 	listenConfig := net.ListenConfig{}
-	listener, err := listenConfig.Listen(ctx, "tcp", metricsServer.Addr)
+	listener, err := listenConfig.Listen(ctx, "tcp", debugServer.Addr)
 	if err != nil {
-		return fmt.Errorf("listen for metrics: %w", err)
+		return fmt.Errorf("listen for debug server: %w", err)
 	}
 	serverErrors := make(chan error, 1)
 	go func() {
-		serverErrors <- metricsServer.Serve(listener)
+		serverErrors <- debugServer.Serve(listener)
 	}()
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		if shutdownErr := metricsServer.Shutdown(shutdownCtx); shutdownErr != nil {
-			logger.Error("metrics shutdown failed", zap.Error(shutdownErr))
-			if closeErr := metricsServer.Close(); closeErr != nil {
-				logger.Error("metrics close failed", zap.Error(closeErr))
+		if shutdownErr := debugServer.Shutdown(shutdownCtx); shutdownErr != nil {
+			logger.Error("debug server shutdown failed", zap.Error(shutdownErr))
+			if closeErr := debugServer.Close(); closeErr != nil {
+				logger.Error("debug server close failed", zap.Error(closeErr))
 			}
 		}
 	}()
@@ -143,6 +145,8 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	defer signal.Stop(shutdown)
 	scheduler.StartAsync()
 	defer scheduler.Stop()
+	hc.SetReady(true)
+	defer hc.SetReady(false)
 	logger.Info("Worker started")
 
 	select {
@@ -150,7 +154,7 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		logger.Info("shutdown signal received", zap.String("signal", sig.String()))
 	case err = <-serverErrors:
 		if !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("metrics server: %w", err)
+			return fmt.Errorf("debug server: %w", err)
 		}
 	}
 

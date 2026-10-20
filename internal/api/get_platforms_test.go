@@ -14,7 +14,7 @@ func (s *TestSuite) TestGetPlatforms_Success() {
 		{ID: 2, Name: "Linux", Abbreviation: "Linux"},
 	}, nil)
 
-	s.provider.GetPlatforms(s.httpResponse, s.httpRequest)
+	s.handler.GetPlatforms(s.httpResponse, s.httpRequest)
 
 	s.Equal(http.StatusOK, s.httpResponse.Code)
 	s.JSONEq(`[
@@ -26,7 +26,7 @@ func (s *TestSuite) TestGetPlatforms_Success() {
 func (s *TestSuite) TestGetPlatforms_Error() {
 	s.gameFacadeMock.EXPECT().GetPlatforms(mock.Any()).Return(nil, errors.New("new error"))
 
-	s.provider.GetPlatforms(s.httpResponse, s.httpRequest)
+	s.handler.GetPlatforms(s.httpResponse, s.httpRequest)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }

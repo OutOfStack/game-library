@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
+	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/pkg/td"
+	"github.com/OutOfStack/game-library/internal/web"
 	mock "go.uber.org/mock/gomock"
 )
 
@@ -54,7 +55,7 @@ func (s *TestSuite) Test_CreateGame_Success() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.CreateGame)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.CreateGame)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 
@@ -65,9 +66,22 @@ func (s *TestSuite) Test_CreateGame_Success() {
 func (s *TestSuite) Test_CreateGame_DecodeError() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader([]byte("{invalid json}")))
 
-	s.provider.CreateGame(s.httpResponse, req)
+	s.handler.CreateGame(s.httpResponse, req)
 
 	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid request"}`, s.httpResponse.Body.String())
+}
+
+func (s *TestSuite) Test_CreateGame_ValidationError() {
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader([]byte(`{"websites":[]}`)))
+
+	s.handler.CreateGame(s.httpResponse, req)
+
+	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	var resp web.ErrorResponse
+	s.Require().NoError(json.Unmarshal(s.httpResponse.Body.Bytes(), &resp))
+	s.Equal("validation error", resp.Error)
+	s.NotEmpty(resp.Fields)
 }
 
 func (s *TestSuite) Test_CreateGame_MissingClaims() {
@@ -85,7 +99,7 @@ func (s *TestSuite) Test_CreateGame_MissingClaims() {
 	requestBody, _ := json.Marshal(requestData)
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games", bytes.NewReader(requestBody))
 
-	s.provider.CreateGame(s.httpResponse, req)
+	s.handler.CreateGame(s.httpResponse, req)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }
@@ -113,7 +127,7 @@ func (s *TestSuite) Test_CreateGame_VerificationRequired() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.CreateGame)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.CreateGame)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 
@@ -145,7 +159,7 @@ func (s *TestSuite) Test_CreateGame_FacadeError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.CreateGame)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.CreateGame)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 

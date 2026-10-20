@@ -3,33 +3,23 @@ package api
 import (
 	"net/http"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
 	"github.com/OutOfStack/game-library/internal/web"
-	"go.uber.org/zap"
 )
 
-// GetPlatforms godoc
-// @Summary Get platforms
-// @Description returns all platforms
-// @ID get-platforms
-// @Produce json
-// @Success 200 {array}  api.Platform
-// @Failure 500 {object} web.ErrorResponse
-// @Router /platforms [get]
+// GetPlatforms returns all platforms
 func (p *Provider) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "getPlatforms")
 	defer span.End()
 
 	list, err := p.gameFacade.GetPlatforms(ctx)
 	if err != nil {
-		p.log.Error("get platforms", zap.Error(err))
-		web.Respond500(w)
+		p.respondError(w, "get platforms", err)
 		return
 	}
 
-	resp := make([]api.Platform, 0, len(list))
+	resp := make([]Platform, 0, len(list))
 	for _, pl := range list {
-		resp = append(resp, api.Platform{
+		resp = append(resp, Platform{
 			ID:           pl.ID,
 			Name:         pl.Name,
 			Abbreviation: pl.Abbreviation,

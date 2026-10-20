@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,22 +14,21 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/api/grpc/infoapi"
+	"github.com/OutOfStack/game-library/internal/api/tools"
+	"github.com/OutOfStack/game-library/internal/api/validation"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/client/authapi"
 	"github.com/OutOfStack/game-library/internal/client/igdbapi"
-	"github.com/OutOfStack/game-library/internal/client/openaiapi"
 	"github.com/OutOfStack/game-library/internal/client/redis"
 	"github.com/OutOfStack/game-library/internal/client/s3"
 	"github.com/OutOfStack/game-library/internal/facade"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	"github.com/OutOfStack/game-library/internal/pkg/database"
 	"github.com/OutOfStack/game-library/internal/pkg/logging"
+	"github.com/OutOfStack/game-library/internal/pkg/observability"
 	"github.com/OutOfStack/game-library/internal/repo"
-	"github.com/OutOfStack/game-library/internal/web"
 	infopb "github.com/OutOfStack/game-library/pkg/proto/infoapi/v1"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -39,23 +37,9 @@ import (
 	grpcrefl "google.golang.org/grpc/reflection"
 )
 
-// @title Game library API
-// @version 0.4
-// @description API for game library service
-// @termsOfService http://swagger.io/terms/
-
-// @host localhost:8000
-// @BasePath /api
-// @query.collection.format multi
-// @schemes http
-
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @security BearerAuth
 func main() {
 	// load config
-	cfg, err := appconf.Get()
+	cfg, err := appconf.Load[appconf.API]()
 	if err != nil {
 		log.Fatalf("can't parse config: %v", err)
 	}
@@ -74,7 +58,7 @@ func main() {
 	}
 }
 
-func run(logger *zap.Logger, cfg *appconf.Cfg) error {
+func run(logger *zap.Logger, cfg *appconf.API) error {
 	ctx := context.Background()
 
 	// connect to database
@@ -125,9 +109,6 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		}
 	}()
 
-	// create openai client
-	openAIClient := openaiapi.New(logger, cfg.OpenAI)
-
 	// create redis cache service
 	cacheStore := cache.NewRedisStore(redisClient, logger)
 
@@ -141,37 +122,37 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 	}
 
 	// create game facade
-	gameFacade := facade.NewProvider(logger, storage, cacheStore, s3Client, openAIClient, igdbAPIClient)
+	gameFacade := facade.NewProvider(logger, storage, cacheStore, s3Client, nil, igdbAPIClient)
 
-	// create web decoder
-	decoder := web.NewDecoder(logger, cfg)
+	// create request validation rules
+	validationRules := validation.NewRules(logger, cfg)
 
 	// create api provider
-	apiProvider := api.NewProvider(logger, cacheStore, gameFacade, decoder)
+	apiProvider := api.NewProvider(logger, cacheStore, gameFacade, validationRules)
 
 	serverErrors := make(chan error, 3)
 
-	// start debug service
-	profilerRouter := chi.NewRouter()
-	profilerRouter.Mount("/debug", middleware.Profiler())
-	debugService := http.Server{
-		Addr:        cfg.Web.DebugAddress,
-		Handler:     profilerRouter,
-		ReadTimeout: time.Second,
-	}
+	// start debug service; it serves probes, so it starts first
+	hc := tools.NewHealthCheck(db)
+	debugService := observability.NewDebugServer(cfg.Debug.Address, hc.Liveness, hc.Readiness)
 	go func() {
-		logger.Info("Debug service started", zap.String("address", cfg.Web.DebugAddress))
+		logger.Info("Debug service started", zap.String("address", cfg.Debug.Address))
 		serverErrors <- debugService.ListenAndServe()
 	}()
 
 	// start http API service
-	apiService, tracerProvider, err := api.Service(logger, db, authFacade, apiProvider, cfg)
+	apiService, tracerProvider, err := api.Service(logger, authFacade, apiProvider, cfg)
 	if err != nil {
 		return fmt.Errorf("can't create service api: %w", err)
 	}
+	apiListenConfig := net.ListenConfig{}
+	apiListener, err := apiListenConfig.Listen(ctx, "tcp", apiService.Addr)
+	if err != nil {
+		return fmt.Errorf("failed to create http listener: %w", err)
+	}
 	go func() {
 		logger.Info("API service started", zap.String("address", apiService.Addr))
-		serverErrors <- apiService.ListenAndServe()
+		serverErrors <- apiService.Serve(apiListener)
 	}()
 
 	// start grpc service
@@ -200,6 +181,8 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		serverErrors <- grpcServer.Serve(listener)
 	}()
 
+	hc.SetReady(true)
+
 	// wait for shutdown signal
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
@@ -209,6 +192,9 @@ func run(logger *zap.Logger, cfg *appconf.Cfg) error {
 		return fmt.Errorf("server error: %w", err)
 	case sig := <-shutdown:
 		logger.Info("shutdown signal received", zap.String("signal", sig.String()))
+
+		hc.SetReady(false)
+		time.Sleep(5 * time.Second)
 
 		bCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()

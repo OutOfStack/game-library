@@ -7,11 +7,11 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/api"
 	apimock "github.com/OutOfStack/game-library/internal/api/mocks"
+	"github.com/OutOfStack/game-library/internal/api/validation"
 	"github.com/OutOfStack/game-library/internal/appconf"
 	mwmock "github.com/OutOfStack/game-library/internal/middleware/mocks"
 	"github.com/OutOfStack/game-library/internal/pkg/cache"
 	cachemock "github.com/OutOfStack/game-library/internal/pkg/cache/mocks"
-	"github.com/OutOfStack/game-library/internal/web"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -28,6 +28,7 @@ type TestSuite struct {
 	httpResponse    *httptest.ResponseRecorder
 	httpRequest     *http.Request
 	provider        *api.Provider
+	handler         *api.ServerInterfaceWrapper
 }
 
 func (s *TestSuite) SetupTest() {
@@ -39,7 +40,8 @@ func (s *TestSuite) SetupTest() {
 	s.authClientMock = mwmock.NewMockAuthClient(s.ctrl)
 	s.httpResponse = httptest.NewRecorder()
 	s.httpRequest, _ = http.NewRequestWithContext(s.T().Context(), http.MethodGet, "/", nil)
-	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock, web.NewDecoder(s.log, &appconf.Cfg{}))
+	s.provider = api.NewProvider(s.log, s.cacheStore, s.gameFacadeMock, validation.NewRules(s.log, &appconf.API{}))
+	s.handler = api.NewHandler(s.provider)
 }
 
 func (s *TestSuite) TearDownTest() {

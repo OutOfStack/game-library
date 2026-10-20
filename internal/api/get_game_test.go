@@ -31,7 +31,7 @@ func (s *TestSuite) Test_GetGame_Success() {
 	s.gameFacadeMock.EXPECT().GetCompaniesMap(mock.Any()).Return(nil, nil)
 
 	r := chi.NewRouter()
-	r.Get("/games/{id}", s.provider.GetGame)
+	r.Get("/games/{id}", s.handler.GetGame)
 
 	r.ServeHTTP(s.httpResponse, req)
 
@@ -45,11 +45,24 @@ func (s *TestSuite) Test_GetGame_InvalidID() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/-100", nil)
 
 	r := chi.NewRouter()
-	r.Get("/games/{id}", s.provider.GetGame)
+	r.Get("/games/{id}", s.handler.GetGame)
 
 	r.ServeHTTP(s.httpResponse, req)
 
 	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid id"}`, s.httpResponse.Body.String())
+}
+
+func (s *TestSuite) Test_GetGame_NonNumericID() {
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/abc", nil)
+
+	r := chi.NewRouter()
+	r.Get("/games/{id}", s.handler.GetGame)
+
+	r.ServeHTTP(s.httpResponse, req)
+
+	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid id"}`, s.httpResponse.Body.String())
 }
 
 func (s *TestSuite) Test_GetGame_NotFound() {
@@ -60,7 +73,7 @@ func (s *TestSuite) Test_GetGame_NotFound() {
 	s.gameFacadeMock.EXPECT().GetGameDetailsByID(mock.Any(), id).Return(model.GameDetails{}, apperr.NewNotFoundError("game", id))
 
 	r := chi.NewRouter()
-	r.Get("/games/{id}", s.provider.GetGame)
+	r.Get("/games/{id}", s.handler.GetGame)
 
 	r.ServeHTTP(s.httpResponse, req)
 
@@ -75,7 +88,7 @@ func (s *TestSuite) Test_GetGame_Error() {
 	s.gameFacadeMock.EXPECT().GetGameDetailsByID(mock.Any(), id).Return(model.GameDetails{}, errors.New("new error"))
 
 	r := chi.NewRouter()
-	r.Get("/games/{id}", s.provider.GetGame)
+	r.Get("/games/{id}", s.handler.GetGame)
 
 	r.ServeHTTP(s.httpResponse, req)
 

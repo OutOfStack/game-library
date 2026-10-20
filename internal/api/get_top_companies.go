@@ -3,8 +3,6 @@ package api
 import (
 	"net/http"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
-	"github.com/OutOfStack/game-library/internal/model"
 	"github.com/OutOfStack/game-library/internal/web"
 	att "go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -14,38 +12,28 @@ const (
 	topCompaniesLimit = 10
 )
 
-// GetTopCompanies godoc
-// @Summary Get top companies
-// @Description returns top companies based on amount of games having it
-// @ID get-top-companies
-// @Produce json
-// @Param   type query string true "company type (dev or pub)" Enums(pub, dev)
-// @Success 200 {array}  api.Company
-// @Failure 400 {object} web.ErrorResponse "Invalid or missing company type"
-// @Failure 500 {object} web.ErrorResponse
-// @Router /companies/top [get]
-func (p *Provider) GetTopCompanies(w http.ResponseWriter, r *http.Request) {
+// GetTopCompanies returns top companies based on amount of games having it
+func (p *Provider) GetTopCompanies(w http.ResponseWriter, r *http.Request, params GetTopCompaniesParams) {
 	ctx, span := tracer.Start(r.Context(), "getTopCompanies")
 	defer span.End()
 
-	companyType := r.URL.Query().Get("type")
-	if companyType != model.CompanyTypeDeveloper && companyType != model.CompanyTypePublisher {
-		web.RespondError(w, web.NewErrorFromMessage("invalid company type: should be one of [dev, pub]", http.StatusBadRequest))
+	companyType := params.Type
+	if !companyType.Valid() {
+		web.RespondError(w, errInvalidCompanyType)
 		return
 	}
 
-	span.SetAttributes(att.String("type", companyType))
+	span.SetAttributes(att.String("type", string(companyType)))
 
-	list, err := p.gameFacade.GetTopCompanies(ctx, companyType, topCompaniesLimit)
+	list, err := p.gameFacade.GetTopCompanies(ctx, string(companyType), topCompaniesLimit)
 	if err != nil {
-		p.log.Error("get top companies", zap.String("type", companyType), zap.Error(err))
-		web.Respond500(w)
+		p.respondError(w, "get top companies", err, zap.String("type", string(companyType)))
 		return
 	}
 
-	resp := make([]api.Company, 0, len(list))
+	resp := make([]Company, 0, len(list))
 	for _, company := range list {
-		resp = append(resp, api.Company{
+		resp = append(resp, Company{
 			ID:   company.ID,
 			Name: company.Name,
 		})

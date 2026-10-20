@@ -5,10 +5,11 @@ import (
 
 	"github.com/OutOfStack/game-library/internal/appconf"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestValidateDate(t *testing.T) {
-	v := NewValidator(nil, &appconf.Cfg{})
+	v := NewRules(zap.NewNop(), &appconf.API{})
 	tests := []struct {
 		name     string
 		date     string
@@ -29,12 +30,12 @@ func TestValidateDate(t *testing.T) {
 }
 
 func TestValidateImageURLs(t *testing.T) {
-	cfg := &appconf.Cfg{
+	cfg := &appconf.API{
 		S3: appconf.S3{
 			CDNBaseURL: "https://cdn.example.com",
 		},
 	}
-	v := NewValidator(nil, cfg)
+	v := NewRules(zap.NewNop(), cfg)
 
 	tests := []struct {
 		name     string
@@ -55,7 +56,7 @@ func TestValidateImageURLs(t *testing.T) {
 }
 
 func TestValidateWebsiteURLs(t *testing.T) {
-	v := NewValidator(nil, &appconf.Cfg{})
+	v := NewRules(zap.NewNop(), &appconf.API{})
 	tests := []struct {
 		name     string
 		urls     []string
@@ -75,7 +76,7 @@ func TestValidateWebsiteURLs(t *testing.T) {
 }
 
 func TestValidatePositive(t *testing.T) {
-	v := NewValidator(nil, &appconf.Cfg{})
+	v := NewRules(zap.NewNop(), &appconf.API{})
 	tests := []struct {
 		name     string
 		slice    []int32

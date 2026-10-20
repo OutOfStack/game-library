@@ -14,7 +14,7 @@ run:
 	go run ./cmd/api/.
 
 run-worker:
-	APP_HTTP_ADDRESS=localhost:8001 go run ./cmd/worker/.
+	APP_DEBUG_ADDRESS=localhost:6061 go run ./cmd/worker/.
 
 test:
 	go test -v -race ./...
@@ -37,13 +37,12 @@ rollback:
 seed:
 	go run ./cmd/manage/. -from-file seed
 
-SWAG_VERSION := v1.16
-SWAG_PKG := github.com/swaggo/swag/cmd/swag@$(SWAG_VERSION)
-generate-swag:
-	@swag --version >/dev/null 2>&1 || { echo "Installing swag..."; go install ${SWAG_PKG}; }
-	@echo "Found swag, generating documentation..."
-	swag init \
-	-d cmd/api,internal/api,internal/api/model,internal/web
+OAPI_CODEGEN_VERSION := v2.8.0
+OAPI_CODEGEN_PKG := github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@$(OAPI_CODEGEN_VERSION)
+generate-openapi:
+	@oapi-codegen -version >/dev/null 2>&1 || { echo "Installing oapi-codegen..."; go install ${OAPI_CODEGEN_PKG}; }
+	@echo "Found oapi-codegen, generating server code..."
+	oapi-codegen -config oapi-codegen.yaml api/http/openapi.yaml
 
 MOCKGEN_VERSION := v0.6
 MOCKGEN_PKG := go.uber.org/mock/mockgen@$(MOCKGEN_VERSION)
@@ -76,9 +75,9 @@ generate-proto:
     buf generate https://github.com/OutOfStack/game-library-auth.git#${PROTO_AUTHAPI_VERSION} --path api/proto/authapi
 	buf lint
 
-generate: generate-proto generate-swag generate-mocks
+generate: generate-proto generate-openapi generate-mocks
 
-LINT_VERSION := v2.14.0
+LINT_VERSION := v2.15.0
 LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VERSION)
 lint:
 	@golangci-lint version >/dev/null 2>&1 || { echo "Installing golangci-lint..."; go install ${LINT_PKG}; }
@@ -90,6 +89,9 @@ dbuildapi:
 
 drunapi:
 	docker compose up -d api
+
+drunworker:
+	docker compose up -d worker
 
 drunredis:
 	docker compose up -d redis

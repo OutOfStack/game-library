@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
+	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/model"
@@ -66,7 +66,7 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UploadGameImages)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.UploadGameImages)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 
@@ -80,7 +80,7 @@ func (s *TestSuite) Test_UploadGameImages_Success() {
 		s.Equal(expectedFiles[i].FileName, file.FileName)
 		s.Equal(expectedFiles[i].FileID, file.FileID)
 		s.Equal(expectedFiles[i].FileURL, file.FileURL)
-		s.Equal(expectedFiles[i].Type, file.Type)
+		s.Equal(expectedFiles[i].Type, string(file.Type))
 	}
 }
 
@@ -96,7 +96,7 @@ func (s *TestSuite) Test_UploadGameImages_ParseFormError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UploadGameImages)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.UploadGameImages)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 
@@ -126,7 +126,7 @@ func (s *TestSuite) Test_UploadGameImages_RequestBodyTooLarge() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UploadGameImages)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.UploadGameImages)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 
@@ -135,9 +135,14 @@ func (s *TestSuite) Test_UploadGameImages_RequestBodyTooLarge() {
 }
 
 func (s *TestSuite) Test_UploadGameImages_MissingClaims() {
-	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", nil)
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	s.Require().NoError(w.Close())
 
-	s.provider.UploadGameImages(s.httpResponse, req)
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodPost, "/games/images", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	s.handler.UploadGameImages(s.httpResponse, req)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 	s.JSONEq(`{"error": "Internal Server Error"}`, s.httpResponse.Body.String())
@@ -168,7 +173,7 @@ func (s *TestSuite) Test_UploadGameImages_PublishingMonthlyLimitReached() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UploadGameImages)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.UploadGameImages)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 
@@ -201,7 +206,7 @@ func (s *TestSuite) Test_UploadGameImages_FacadeError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.UploadGameImages)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.UploadGameImages)))
 
 	handler.ServeHTTP(s.httpResponse, req)
 

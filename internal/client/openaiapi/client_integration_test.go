@@ -27,14 +27,14 @@ const (
 	testLogoURL = "https://picsum.photos/id/237/400/300"
 )
 
-// newTestClient creates OpenAI client configured from app.env in repo root
+// newTestClient creates OpenAI client configured from .env in repo root
 // (same source the app uses) with fallback to env variables,
 // fails the test if OPENAI_API_KEY is not set
 func newTestClient(t *testing.T) *openaiapi.Client {
 	t.Helper()
 
 	v := viper.New()
-	envFile := filepath.Join("..", "..", "..", "app.env")
+	envFile := filepath.Join("..", "..", "..", ".env")
 	if _, err := os.Stat(envFile); err == nil {
 		v.SetConfigFile(envFile)
 		v.SetConfigType("env")
@@ -50,7 +50,7 @@ func newTestClient(t *testing.T) *openaiapi.Client {
 		Timeout:         v.GetDuration("OPENAI_API_TIMEOUT"),
 	}
 	if conf.APIKey == "" {
-		t.Fatal("OPENAI_API_KEY is not set (neither in app.env nor in env)")
+		t.Fatal("OPENAI_API_KEY is not set (neither in .env nor in env)")
 	}
 	if conf.APIURL == "" {
 		conf.APIURL = defaultAPIURL

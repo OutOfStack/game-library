@@ -58,7 +58,7 @@ To set up the service, follow these steps:
 
 5. _[Optional]_ Launch [auth service](https://github.com/OutOfStack/game-library-auth) for using handlers that require authentication
 
-6. Create the `app.env` file based on [`./app.example.env`](./app.example.env) and update it with your local configuration settings.
+6. Create the `.env` file based on [`./.example.env`](./.example.env) and update it with your local configuration settings.
 
 7.  Build and run the service:
     ```bash
@@ -69,7 +69,7 @@ To set up the service, follow these steps:
     ```bash
     make run-worker
     ```
-    `make run-worker` overrides `APP_HTTP_ADDRESS` to `localhost:8001` for the worker's `/metrics` endpoint, so it can run alongside the API.
+    `make run-worker` overrides `APP_DEBUG_ADDRESS` to `localhost:6061` for the worker's debug server, so it can run alongside the API.
 
 _Optional_ steps are not required for minimal install but required for full functionality.
 
@@ -80,7 +80,7 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 After installation, you can use the following Make commands to develop the service:
 
 - `make test`: Runs tests.
-- `make generate`: Generates proto files, documentation for Swagger UI and mocks for testing.
+- `make generate`: Generates proto files, HTTP server code from the OpenAPI spec and mocks for testing.
 - `make lint`: Runs golangci-lint for code analysis.
 
 Refer to the [List of Make commands](#list-of-make-commands) for a complete list of commands.
@@ -101,30 +101,41 @@ Refer to the [List of Make commands](#list-of-make-commands) for a complete list
 
 ## Configuration
 
-- The service can be configured using `app.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go)
+- The service can be configured using `.env` or environment variables, described in [`settings.go`](./internal/appconf/settings.go). 
+  The API, worker and manage binaries each load and validate only the settings they use (`appconf.API`, `appconf.Worker`, `appconf.Manage`); 
+  Docker images contain no `.env`, so every required setting must come from the environment
 - CI/CD configs are in [`./github/workflows/`](./.github/workflows/)
 - k8s deployment configs are in [`./k8s`](./.k8s/)
 
-The worker exports traces to `JAEGER_OTLP_ENDPOINT` under service name `game-library-worker`. Its `/metrics` endpoint 
-exposes the worker's own Prometheus registry. The `game-library-infra` Prometheus configuration discovers opted-in pods 
-in the `game-library` namespace using `prometheus.io/scrape`, `prometheus.io/port`, and `prometheus.io/path` annotations. 
+Both the API and the worker serve operational endpoints on a separate debug server (`APP_DEBUG_ADDRESS`, port 6060 in k8s): 
+`/metrics` (Prometheus), `/liveness` and `/readiness` (k8s probes) and `/debug/pprof`. Readiness fails until all listeners are bound 
+and again as soon as shutdown starts. Outside the cluster the debug server is reachable only through the basic-auth ingress (`/_debug/api/`). 
+The worker exports traces to `JAEGER_OTLP_ENDPOINT` under service name `game-library-worker`. The `game-library-infra` 
+Prometheus configuration discovers opted-in pods in the `game-library` namespace using `prometheus.io/scrape`, 
+`prometheus.io/port`, and `prometheus.io/path` annotations. 
 The pod `app` label becomes the scrape job name (`game-library` or `game-library-worker`). New components only need these 
 annotations and a matching declared TCP container port; no infra edit is needed. During migration, deploy the annotated 
 API, auth, and worker manifests before switching Prometheus to generic pod discovery.
 
 ## Documentation
 
-API documentation is available via [Swagger UI](http://localhost:8000/swagger/index.html).
-To generate the documentation, run:
+The HTTP API is defined spec-first in [`api/http/openapi.yaml`](api/http/openapi.yaml) (OpenAPI 3).
+Server interfaces and routing helpers in `internal/api/openapi.gen.go` are generated from it with
+[oapi-codegen](https://github.com/oapi-codegen/oapi-codegen); handlers implement the generated `ServerInterface` and respond with `web.Respond`/`respondError`.
+After changing the spec, regenerate the code:
+
 ```bash
-make generate
+make generate-openapi
 ```
+
+API documentation is available via [Swagger UI](http://localhost:8000/swagger/index.html), which serves the embedded spec
+from `/swagger/openapi.yaml`.
 
 ### gRPC
 
 The service exposes a gRPC endpoint for internal service-to-service communication.
 
-**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`app.example.env`](./app.example.env))
+**Endpoint:** `localhost:9000` (`APP_GRPC_ADDRESS` environment variable in [`.example.env`](./.example.env))
 
 **Protobuf Definition:** [`api/proto/infoapi/v1/infoapi.proto`](api/proto/infoapi/v1/infoapi.proto)
 
@@ -162,7 +173,7 @@ Commit message and release rules are documented in [CONTRIBUTING.md](./CONTRIBUT
     run           runs app
     run-worker    runs background tasks worker
     test          runs tests for the whole project
-    generate      generates proto files, docs for swagger UI and mocks for testing
+    generate      generates proto files, OpenAPI server code and mocks for testing
     lint          runs golangci-lint
     cover         outputs tests coverage
 
@@ -176,6 +187,7 @@ Commit message and release rules are documented in [CONTRIBUTING.md](./CONTRIBUT
     dbuildapi     builds app docker image
     dbuildmng     builds manage app docker image
     drunapi       runs app in docker container
+    drunworker    runs background tasks worker in docker container
     drunredis     runs redis in docker container
 
 ## License

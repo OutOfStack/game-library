@@ -60,7 +60,7 @@ func (s *TestSuite) Test_GetGames_Success() {
 	s.gameFacadeMock.EXPECT().GetPlatformsMap(mock.Any()).Return(platformsMap, nil)
 	s.gameFacadeMock.EXPECT().GetCompaniesMap(mock.Any()).Return(companiesMap, nil)
 
-	s.provider.GetGames(s.httpResponse, req)
+	s.handler.GetGames(s.httpResponse, req)
 
 	s.Equal(http.StatusOK, s.httpResponse.Code)
 	s.JSONEq(fmt.Sprintf(
@@ -72,9 +72,28 @@ func (s *TestSuite) Test_GetGames_Success() {
 func (s *TestSuite) Test_GetGames_InvalidFilter() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/", nil)
 
-	s.provider.GetGames(s.httpResponse, req)
+	s.handler.GetGames(s.httpResponse, req)
 
 	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid page or page size param: should be greater than 0"}`, s.httpResponse.Body.String())
+}
+
+func (s *TestSuite) Test_GetGames_InvalidQueryParams() {
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/?page=abc&pageSize=10", nil)
+
+	s.handler.GetGames(s.httpResponse, req)
+
+	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid query params"}`, s.httpResponse.Body.String())
+}
+
+func (s *TestSuite) Test_GetGames_InvalidOrderBy() {
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/games/?page=1&pageSize=10&orderBy=invalid", nil)
+
+	s.handler.GetGames(s.httpResponse, req)
+
+	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid orderBy: should be one of [default, releaseDate, name, rating]"}`, s.httpResponse.Body.String())
 }
 
 func (s *TestSuite) Test_GetGames_Error() {
@@ -84,7 +103,7 @@ func (s *TestSuite) Test_GetGames_Error() {
 
 	s.gameFacadeMock.EXPECT().GetGames(mock.Any(), page, pageSize, mock.Any()).Return(nil, uint64(0), errors.New("new error"))
 
-	s.provider.GetGames(s.httpResponse, req)
+	s.handler.GetGames(s.httpResponse, req)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }

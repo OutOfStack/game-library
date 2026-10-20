@@ -14,7 +14,7 @@ func (s *TestSuite) TestGetGenres_Success() {
 		{ID: 2, Name: "Quest"},
 	}, nil)
 
-	s.provider.GetGenres(s.httpResponse, s.httpRequest)
+	s.handler.GetGenres(s.httpResponse, s.httpRequest)
 
 	s.Equal(http.StatusOK, s.httpResponse.Code)
 	s.JSONEq(`[
@@ -26,7 +26,7 @@ func (s *TestSuite) TestGetGenres_Success() {
 func (s *TestSuite) TestGetGenres_Error() {
 	s.gameFacadeMock.EXPECT().GetGenres(mock.Any()).Return(nil, errors.New("new error"))
 
-	s.provider.GetGenres(s.httpResponse, s.httpRequest)
+	s.handler.GetGenres(s.httpResponse, s.httpRequest)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }

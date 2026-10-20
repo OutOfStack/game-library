@@ -20,23 +20,23 @@ spec:
             annotations:
                 prometheus.io/scrape: "true"
                 prometheus.io/path: "/metrics"
-                prometheus.io/port: "8000"
+                prometheus.io/port: "6060"
         spec:
             containers:
               - name: game-library
-                image: asctod/game-library:_IMAGE_TAG_
+                image: ghcr.io/outofstack/game-library:_IMAGE_TAG_
                 readinessProbe:
                     httpGet:
-                        path: /api/readiness
-                        port: 8000
+                        path: /readiness
+                        port: debug
                     initialDelaySeconds: 10
                     periodSeconds: 30
                     timeoutSeconds: 5
                     failureThreshold: 2
                 livenessProbe:
                     httpGet:
-                        path: /api/liveness
-                        port: 8000
+                        path: /liveness
+                        port: debug
                     initialDelaySeconds: 10
                     periodSeconds: 30
                     timeoutSeconds: 2
@@ -102,18 +102,32 @@ spec:
             annotations:
                 prometheus.io/scrape: "true"
                 prometheus.io/path: "/metrics"
-                prometheus.io/port: "8001"
+                prometheus.io/port: "6060"
         spec:
             containers:
               - name: game-library-worker
-                image: asctod/game-library:_IMAGE_TAG_
+                image: ghcr.io/outofstack/game-library:_IMAGE_TAG_
                 command: ["./game-library-worker"]
+                readinessProbe:
+                    httpGet:
+                        path: /readiness
+                        port: debug
+                    initialDelaySeconds: 10
+                    periodSeconds: 30
+                    timeoutSeconds: 5
+                    failureThreshold: 2
+                livenessProbe:
+                    httpGet:
+                        path: /liveness
+                        port: debug
+                    initialDelaySeconds: 10
+                    periodSeconds: 30
+                    timeoutSeconds: 2
+                    failureThreshold: 2
                 ports:
-                  - name: metrics
-                    containerPort: 8001
+                  - name: debug
+                    containerPort: 6060
                 env:
-                  - name: APP_HTTP_ADDRESS
-                    value: "0.0.0.0:8001"
                   - name: KUBERNETES_NAMESPACE
                     valueFrom:
                         fieldRef:

@@ -10,11 +10,25 @@ import (
 // ServiceName - service name
 const ServiceName = "game-library-api"
 
-// Cfg - app configuration
-type Cfg struct {
+// API - api service configuration
+type API struct {
+	Log     Log     `mapstructure:",squash"`
+	DB      DB      `mapstructure:",squash"`
+	Web     Web     `mapstructure:",squash"`
+	Debug   Debug   `mapstructure:",squash"`
+	Jaeger  Jaeger  `mapstructure:",squash"`
+	IGDB    IGDB    `mapstructure:",squash"`
+	Redis   Redis   `mapstructure:",squash"`
+	Graylog Graylog `mapstructure:",squash"`
+	S3      S3      `mapstructure:",squash"`
+	AuthAPI AuthAPI `mapstructure:",squash"`
+}
+
+// Worker - background worker configuration
+type Worker struct {
 	Log       Log       `mapstructure:",squash"`
 	DB        DB        `mapstructure:",squash"`
-	Web       Web       `mapstructure:",squash"`
+	Debug     Debug     `mapstructure:",squash"`
 	Jaeger    Jaeger    `mapstructure:",squash"`
 	IGDB      IGDB      `mapstructure:",squash"`
 	Scheduler Scheduler `mapstructure:",squash"`
@@ -22,7 +36,11 @@ type Cfg struct {
 	Graylog   Graylog   `mapstructure:",squash"`
 	S3        S3        `mapstructure:",squash"`
 	OpenAI    OpenAI    `mapstructure:",squash"`
-	AuthAPI   AuthAPI   `mapstructure:",squash"`
+}
+
+// Manage - database management tool configuration
+type Manage struct {
+	DB DB `mapstructure:",squash"`
 }
 
 // DB represents settings for database
@@ -34,10 +52,14 @@ type DB struct {
 type Web struct {
 	HTTPAddress       string        `mapstructure:"APP_HTTP_ADDRESS"`
 	GRPCAddress       string        `mapstructure:"APP_GRPC_ADDRESS"`
-	DebugAddress      string        `mapstructure:"APP_DEBUG_ADDRESS"`
 	ReadTimeout       time.Duration `mapstructure:"APP_READTIMEOUT"`
 	WriteTimeout      time.Duration `mapstructure:"APP_WRITETIMEOUT"`
 	AllowedCORSOrigin string        `mapstructure:"APP_ALLOWEDCORSORIGIN"`
+}
+
+// Debug represents settings for debug server (pprof, metrics, health probes)
+type Debug struct {
+	Address string `mapstructure:"APP_DEBUG_ADDRESS"`
 }
 
 // Jaeger represents settings for Jaeger OTLP trace export
@@ -105,146 +127,174 @@ type AuthAPI struct {
 	Timeout time.Duration `mapstructure:"AUTHAPI_TIMEOUT"`
 }
 
-// Validate validates the config
-func (cfg *Cfg) Validate() error {
-	if cfg == nil {
-		return errors.New("cfg is nil")
-	}
-
-	// db
-	if cfg.DB.DSN == "" {
+// Validate validates db settings
+func (c DB) Validate() error {
+	if c.DSN == "" {
 		return errors.New("DB_DSN is required")
 	}
+	return nil
+}
 
-	// web
-	if cfg.Web.HTTPAddress == "" {
+// Validate validates web server settings
+func (c Web) Validate() error {
+	if c.HTTPAddress == "" {
 		return errors.New("APP_HTTP_ADDRESS is required")
 	}
-	if cfg.Web.DebugAddress == "" {
-		return errors.New("APP_DEBUG_ADDRESS is required")
-	}
-	if cfg.Web.GRPCAddress == "" {
+	if c.GRPCAddress == "" {
 		return errors.New("APP_GRPC_ADDRESS is required")
 	}
-	if cfg.Web.ReadTimeout <= 0 {
+	if c.ReadTimeout <= 0 {
 		return errors.New("APP_READTIMEOUT must be greater than 0")
 	}
-	if cfg.Web.WriteTimeout <= 0 {
+	if c.WriteTimeout <= 0 {
 		return errors.New("APP_WRITETIMEOUT must be greater than 0")
 	}
+	return nil
+}
 
-	// jaeger
-	if cfg.Jaeger.OTLPEndpoint == "" {
+// Validate validates debug server settings
+func (c Debug) Validate() error {
+	if c.Address == "" {
+		return errors.New("APP_DEBUG_ADDRESS is required")
+	}
+	return nil
+}
+
+// Validate validates Jaeger settings
+func (c Jaeger) Validate() error {
+	if c.OTLPEndpoint == "" {
 		return errors.New("JAEGER_OTLP_ENDPOINT is required")
 	}
-	// validate endpoint format (must be host:port without scheme)
-	if strings.Contains(cfg.Jaeger.OTLPEndpoint, "://") {
+	if strings.Contains(c.OTLPEndpoint, "://") {
 		return errors.New("JAEGER_OTLP_ENDPOINT must be host:port without scheme")
 	}
-	u, err := url.Parse("http://" + cfg.Jaeger.OTLPEndpoint)
-	if err != nil || u.Host != cfg.Jaeger.OTLPEndpoint {
+	u, err := url.Parse("http://" + c.OTLPEndpoint)
+	if err != nil || u.Host != c.OTLPEndpoint {
 		return errors.New("JAEGER_OTLP_ENDPOINT must be host:port without scheme")
 	}
+	return nil
+}
 
-	// igdb
-	if cfg.IGDB.ClientID == "" {
+// Validate validates IGDB settings
+func (c IGDB) Validate() error {
+	if c.ClientID == "" {
 		return errors.New("IGDB_CLIENT_ID is required")
 	}
-	if cfg.IGDB.ClientSecret == "" {
+	if c.ClientSecret == "" {
 		return errors.New("IGDB_CLIENT_SECRET is required")
 	}
-	if cfg.IGDB.TokenURL == "" {
+	if c.TokenURL == "" {
 		return errors.New("IGDB_TOKEN_URL is required")
 	}
-	if cfg.IGDB.APIURL == "" {
+	if c.APIURL == "" {
 		return errors.New("IGDB_API_URL is required")
 	}
-	if cfg.IGDB.Timeout <= 0 {
+	if c.Timeout <= 0 {
 		return errors.New("IGDB_API_TIMEOUT must be greater than 0")
 	}
+	return nil
+}
 
-	// scheduler
-	if cfg.Scheduler.FetchIGDBGames == "" {
+// Validate validates scheduler settings
+func (c Scheduler) Validate() error {
+	if c.FetchIGDBGames == "" {
 		return errors.New("SCHED_FETCH_IGDB_GAMES is required")
 	}
-	if cfg.Scheduler.UpdateTrendingIndex == "" {
+	if c.UpdateTrendingIndex == "" {
 		return errors.New("SCHED_UPDATE_TRENDING_INDEX is required")
 	}
-	if cfg.Scheduler.UpdateGameInfo == "" {
+	if c.UpdateGameInfo == "" {
 		return errors.New("SCHED_UPDATE_GAME_INFO is required")
 	}
-	if cfg.Scheduler.ProcessModeration == "" {
+	if c.ProcessModeration == "" {
 		return errors.New("SCHED_PROCESS_MODERATION is required")
 	}
+	return nil
+}
 
-	// redis
-	if cfg.Redis.Address == "" {
+// Validate validates Redis settings
+func (c Redis) Validate() error {
+	if c.Address == "" {
 		return errors.New("REDIS_ADDR is required")
 	}
-	if cfg.Redis.TTL < 0 {
+	if c.TTL < 0 {
 		return errors.New("REDIS_TTL must be greater or equal to 0")
 	}
+	return nil
+}
 
-	// graylog
-	if cfg.Graylog.Address == "" {
+// Validate validates Graylog settings
+func (c Graylog) Validate() error {
+	if c.Address == "" {
 		return errors.New("GRAYLOG_ADDR is required")
 	}
+	return nil
+}
 
-	// s3
-	if cfg.S3.Region == "" {
+// Validate validates S3 settings
+func (c S3) Validate() error {
+	if c.Region == "" {
 		return errors.New("S3_REGION is required")
 	}
-	if cfg.S3.AccessKeyID == "" {
+	if c.AccessKeyID == "" {
 		return errors.New("S3_ACCESS_KEY_ID is required")
 	}
-	if cfg.S3.SecretAccessKey == "" {
+	if c.SecretAccessKey == "" {
 		return errors.New("S3_SECRET_ACCESS_KEY is required")
 	}
-	if cfg.S3.Endpoint == "" {
+	if c.Endpoint == "" {
 		return errors.New("S3_ENDPOINT is required")
 	}
-	if cfg.S3.BucketName == "" {
+	if c.BucketName == "" {
 		return errors.New("S3_BUCKET_NAME is required")
 	}
-	if cfg.S3.CDNBaseURL == "" {
+	if c.CDNBaseURL == "" {
 		return errors.New("S3_CDN_BASE_URL is required")
 	}
-	if _, err := url.Parse(cfg.S3.CDNBaseURL); err != nil {
+	if _, err := url.Parse(c.CDNBaseURL); err != nil {
 		return errors.New("S3_CDN_BASE_URL is invalid")
 	}
-	if cfg.S3.Timeout <= 0 {
+	if c.Timeout <= 0 {
 		return errors.New("S3_TIMEOUT must be greater than 0")
 	}
+	return nil
+}
 
-	// openai
-	if cfg.OpenAI.APIKey == "" {
+// Validate validates OpenAI settings
+func (c OpenAI) Validate() error {
+	if c.APIKey == "" {
 		return errors.New("OPENAI_API_KEY is required")
 	}
-	if cfg.OpenAI.APIURL == "" {
+	if c.APIURL == "" {
 		return errors.New("OPENAI_API_URL is required")
 	}
-	if cfg.OpenAI.ModerationModel == "" {
+	if c.ModerationModel == "" {
 		return errors.New("OPENAI_MODERATION_MODEL is required")
 	}
-	if cfg.OpenAI.VisionModel == "" {
+	if c.VisionModel == "" {
 		return errors.New("OPENAI_VISION_MODEL is required")
 	}
-	if cfg.OpenAI.Timeout <= 0 {
+	if c.Timeout <= 0 {
 		return errors.New("OPENAI_API_TIMEOUT must be greater than 0")
 	}
+	return nil
+}
 
-	// log
-	if cfg.Log.Level == "" {
+// Validate validates log settings
+func (c Log) Validate() error {
+	if c.Level == "" {
 		return errors.New("LOG_LEVEL is required")
 	}
+	return nil
+}
 
-	// AuthAPI validation
-	if cfg.AuthAPI.Address == "" {
+// Validate validates AuthAPI settings
+func (c AuthAPI) Validate() error {
+	if c.Address == "" {
 		return errors.New("AUTHAPI_ADDRESS is required")
 	}
-	if cfg.AuthAPI.Timeout <= 0 {
+	if c.Timeout <= 0 {
 		return errors.New("AUTHAPI_TIMEOUT must be greater than 0")
 	}
-
 	return nil
 }

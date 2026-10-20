@@ -23,7 +23,7 @@ func (s *TestSuite) TestTopGetCompanies_Success() {
 		{ID: 2, Name: "Publisher 2"},
 	}, nil)
 
-	s.provider.GetTopCompanies(s.httpResponse, req)
+	s.handler.GetTopCompanies(s.httpResponse, req)
 
 	s.Equal(http.StatusOK, s.httpResponse.Code)
 	s.JSONEq(`[
@@ -42,13 +42,23 @@ func (s *TestSuite) TestTopGetCompanies_Error() {
 
 	s.gameFacadeMock.EXPECT().GetTopCompanies(mock.Any(), companyType, int64(10)).Return(nil, errors.New("new error"))
 
-	s.provider.GetTopCompanies(s.httpResponse, req)
+	s.handler.GetTopCompanies(s.httpResponse, req)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }
 
 func (s *TestSuite) TestTopGetCompanies_NoTypeProvided() {
-	s.provider.GetTopCompanies(s.httpResponse, s.httpRequest)
+	s.handler.GetTopCompanies(s.httpResponse, s.httpRequest)
 
 	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid company type: should be one of [dev, pub]"}`, s.httpResponse.Body.String())
+}
+
+func (s *TestSuite) TestTopGetCompanies_InvalidType() {
+	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/company/top/?type=invalid", nil)
+
+	s.handler.GetTopCompanies(s.httpResponse, req)
+
+	s.Equal(http.StatusBadRequest, s.httpResponse.Code)
+	s.JSONEq(`{"error":"invalid company type: should be one of [dev, pub]"}`, s.httpResponse.Body.String())
 }

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	api "github.com/OutOfStack/game-library/internal/api/model"
+	"github.com/OutOfStack/game-library/internal/api"
 	"github.com/OutOfStack/game-library/internal/auth"
 	"github.com/OutOfStack/game-library/internal/middleware"
 	"github.com/OutOfStack/game-library/internal/model"
@@ -58,7 +58,7 @@ func (s *TestSuite) Test_GetUserGames_Success() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetUserGames)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetUserGames)))
 	r := chi.NewRouter()
 	r.Get("/user/games", handler.ServeHTTP)
 
@@ -75,7 +75,7 @@ func (s *TestSuite) Test_GetUserGames_Success() {
 func (s *TestSuite) Test_GetUserGames_MissingClaims() {
 	req := httptest.NewRequestWithContext(s.T().Context(), http.MethodGet, "/user/games", nil)
 
-	s.provider.GetUserGames(s.httpResponse, req)
+	s.handler.GetUserGames(s.httpResponse, req)
 
 	s.Equal(http.StatusInternalServerError, s.httpResponse.Code)
 }
@@ -93,7 +93,7 @@ func (s *TestSuite) Test_GetUserGames_FacadeError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetUserGames)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetUserGames)))
 	r := chi.NewRouter()
 	r.Get("/user/games", handler.ServeHTTP)
 
@@ -123,7 +123,7 @@ func (s *TestSuite) Test_GetUserGames_MapToGameResponseError() {
 
 	authenticator := middleware.Authenticate(s.log, s.authClientMock)
 	authorizer := middleware.Authorize(s.log, s.authClientMock, role)
-	handler := authenticator(authorizer(http.HandlerFunc(s.provider.GetUserGames)))
+	handler := authenticator(authorizer(http.HandlerFunc(s.handler.GetUserGames)))
 	r := chi.NewRouter()
 	r.Get("/user/games", handler.ServeHTTP)
 

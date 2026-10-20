@@ -19,7 +19,7 @@ func main() {
 
 	var dsn string
 	if fromFile {
-		cfg, err := appconf.Get()
+		cfg, err := appconf.Load[appconf.Manage]()
 		if err != nil {
 			log.Fatal("read config file:", err)
 		}
